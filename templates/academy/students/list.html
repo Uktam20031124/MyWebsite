@@ -18,6 +18,8 @@
     {% endfor %}
   </select>
   <button class="btn quiet" type="submit">Qidirish</button>
+  <span class="spacer"></span>
+  <a class="btn quiet" href="{% url 'student_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">Eksport (CSV)</a>
 </form>
 <div class="card table-wrap">
   <table>

@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -90,6 +91,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+if len(sys.argv) > 1 and sys.argv[1] == "test":
+    # Testlarda kuchli hash shart emas — to'plam bir necha barobar tezlashadi.
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
 LANGUAGE_CODE = "uz"
 TIME_ZONE = "Asia/Tashkent"
 USE_I18N = True
@@ -109,7 +114,23 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Kesh: login urinishlari hisoblagichi uchun. gunicorn bir nechta worker bilan
+# ishlaganda hisob umumiy bo'lishi uchun DJANGO_CACHE_DIR (fayl kesh) bering.
+_CACHE_DIR = os.environ.get("DJANGO_CACHE_DIR")
+CACHES = {
+    "default": (
+        {"BACKEND": "django.core.cache.backends.filebased.FileBasedCache", "LOCATION": _CACHE_DIR}
+        if _CACHE_DIR
+        else {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
+    )
+}
+
 LOGIN_URL = "login"
+# Brute-force himoyasi: shuncha xato urinishdan keyin IP vaqtincha bloklanadi.
+LOGIN_FAILURE_LIMIT = int(os.environ.get("DJANGO_LOGIN_FAILURE_LIMIT", 5))
+LOGIN_LOCKOUT_SECONDS = int(os.environ.get("DJANGO_LOGIN_LOCKOUT_SECONDS", 15 * 60))
+# Faqat ilova nginx (yoki boshqa ishonchli proxy) ortida bo'lsa yoqing.
+TRUST_X_FORWARDED_FOR = env_bool("DJANGO_TRUST_X_FORWARDED_FOR", False)
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
 
@@ -124,6 +145,8 @@ X_FRAME_OPTIONS = "DENY"
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = env_bool("DJANGO_SSL_REDIRECT", True)
+    # Monitoring server ichidan oddiy HTTP bilan tekshira olsin.
+    SECURE_REDIRECT_EXEMPT = [r"^healthz/$"]
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", 60 * 60 * 24 * 30))

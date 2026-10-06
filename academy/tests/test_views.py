@@ -1,4 +1,7 @@
-from django.test import TestCase
+from django.core.cache import cache
+from django.db import connection
+from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from academy.models import Attendance, Lesson, Module, Student, SyllabusItem, Topic
@@ -42,6 +45,8 @@ class PageSmokeTests(ViewTestCase):
             reverse("group_create"),
             reverse("group_detail", args=[self.group.pk]),
             reverse("group_detail", args=[self.group.pk]) + f"#syllabus-{item.pk}",
+            reverse("group_journal", args=[self.group.pk]),
+            reverse("group_journal", args=[self.group.pk]) + "?all=1",
             reverse("group_update", args=[self.group.pk]),
             reverse("group_delete", args=[self.group.pk]),
             reverse("student_list") + f"?group={self.group.pk}&status=active",
@@ -229,3 +234,102 @@ class FormValidationTests(ViewTestCase):
             "joined_at": "2026-10-01", "add_another": "1",
         })
         self.assertRedirects(response, reverse("student_create") + f"?group={self.group.pk}")
+
+
+class JournalAndExportTests(ViewTestCase):
+    def test_journal_matrix_and_percent(self):
+        other = f.student(self.group, full_name="Karimova Madina")
+        done = f.lesson(self.group, days=-2, status=Lesson.Status.COMPLETED)
+        Attendance.objects.create(lesson=done, student=self.student, status="late")
+        Attendance.objects.create(lesson=done, student=other, status="absent")
+        f.lesson(self.group, days=-1, status=Lesson.Status.CANCELLED)
+
+        response = self.client.get(reverse("group_journal", args=[self.group.pk]))
+        self.assertEqual(response.status_code, 200)
+        # Rejadagi (yo'qlamasiz) va bekor qilingan darslar jurnalga kirmaydi.
+        self.assertEqual(response.context["lessons"], [done])
+        rows = {r.student.pk: r for r in response.context["rows"]}
+        self.assertEqual((rows[self.student.pk].cells, rows[self.student.pk].percent), (["late"], 100))
+        self.assertEqual(rows[other.pk].percent, 0)
+
+    def test_journal_query_count_does_not_grow(self):
+        url = reverse("group_journal", args=[self.group.pk])
+
+        def queries():
+            with CaptureQueriesContext(connection) as ctx:
+                self.client.get(url)
+            return len(ctx)
+
+        lesson = f.lesson(self.group, days=-1, status=Lesson.Status.COMPLETED)
+        Attendance.objects.create(lesson=lesson, student=self.student)
+        baseline = queries()
+        for days in range(2, 7):
+            lesson = f.lesson(self.group, days=-days, status=Lesson.Status.COMPLETED)
+            Attendance.objects.create(lesson=lesson, student=f.student(self.group))
+        self.assertEqual(queries(), baseline)
+
+    def test_journal_csv(self):
+        done = f.lesson(self.group, days=-1, status=Lesson.Status.COMPLETED)
+        Attendance.objects.create(lesson=done, student=self.student, status="present")
+        response = self.client.get(reverse("group_journal", args=[self.group.pk]) + "?format=csv")
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        body = response.content.decode("utf-8")
+        self.assertTrue(body.startswith("﻿F.I.Sh.;"))
+        self.assertIn("Aliyev Sardor;Keldi;1;1;100", body)
+
+    def test_student_export_respects_filters(self):
+        f.student(f.group(), full_name="Boshqa Guruh")
+        response = self.client.get(reverse("student_export") + f"?group={self.group.pk}")
+        body = response.content.decode("utf-8")
+        self.assertIn("Aliyev Sardor;PY-1;+998 90 111 22 33", body)
+        self.assertNotIn("Boshqa Guruh", body)
+
+    def test_search_finds_telegram_with_at_sign(self):
+        f.student(self.group, full_name="Madina Karimova", telegram="madina_k")
+        self.assertContains(self.client.get(reverse("search") + "?q=@madina_k"), "Madina Karimova")
+
+
+class LessonFormTests(ViewTestCase):
+    def post_lesson(self, **extra):
+        data = {"group": self.group.pk, "held_on": self.lesson.held_on.isoformat(), "status": "planned"}
+        return self.client.post(reverse("lesson_create"), {**data, **extra})
+
+    def test_duplicate_lesson_same_day_and_time_rejected(self):
+        response = self.post_lesson()
+        self.assertIn("held_on", response.context["form"].errors)
+
+    def test_other_time_or_cancelled_is_allowed(self):
+        self.assertEqual(self.post_lesson(starts_at="18:00").status_code, 302)
+        self.assertEqual(self.post_lesson(status="cancelled").status_code, 302)
+
+
+@override_settings(LOGIN_FAILURE_LIMIT=3, LOGIN_LOCKOUT_SECONDS=600)
+class LoginThrottleTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        f.user(username="ustoz", password="right-pass-123")
+        self.url = reverse("login")
+
+    def login(self, password):
+        return self.client.post(self.url, {"username": "ustoz", "password": password})
+
+    def test_locks_after_limit_even_with_right_password(self):
+        for _ in range(3):
+            self.assertEqual(self.login("wrong").status_code, 200)
+        response = self.login("right-pass-123")
+        self.assertContains(response, "Juda ko‘p noto‘g‘ri urinish", status_code=429)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_success_resets_counter(self):
+        self.login("wrong")
+        self.login("wrong")
+        self.assertRedirects(self.login("right-pass-123"), reverse("dashboard"))
+        self.client.logout()
+        self.login("wrong")
+        self.assertEqual(self.login("wrong").status_code, 200)
+
+
+class HealthzTests(TestCase):
+    def test_ok_without_login(self):
+        response = self.client.get(reverse("healthz"))
+        self.assertEqual((response.status_code, response.json()), (200, {"status": "ok"}))

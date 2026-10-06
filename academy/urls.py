@@ -2,19 +2,11 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from . import views
-from .forms import LoginForm
 
 urlpatterns = [
-    path(
-        "kirish/",
-        auth_views.LoginView.as_view(
-            template_name="academy/login.html",
-            authentication_form=LoginForm,
-            redirect_authenticated_user=True,
-        ),
-        name="login",
-    ),
+    path("kirish/", views.ThrottledLoginView.as_view(), name="login"),
     path("chiqish/", auth_views.LogoutView.as_view(), name="logout"),
+    path("healthz/", views.healthz, name="healthz"),
     path("", views.dashboard, name="dashboard"),
     path("qidiruv/", views.search, name="search"),
     # Guruhlar
@@ -23,6 +15,7 @@ urlpatterns = [
     path("guruhlar/<int:pk>/", views.GroupDetailView.as_view(), name="group_detail"),
     path("guruhlar/<int:pk>/tahrir/", views.GroupUpdateView.as_view(), name="group_update"),
     path("guruhlar/<int:pk>/ochirish/", views.GroupDeleteView.as_view(), name="group_delete"),
+    path("guruhlar/<int:pk>/jurnal/", views.group_journal_view, name="group_journal"),
     path("guruhlar/<int:pk>/mavzu/", views.add_syllabus_item, name="syllabus_add"),
     path(
         "guruhlar/<int:pk>/mavzu/<int:item_id>/",
@@ -32,6 +25,7 @@ urlpatterns = [
     # Shogirdlar
     path("shogirdlar/", views.StudentListView.as_view(), name="student_list"),
     path("shogirdlar/yangi/", views.StudentCreateView.as_view(), name="student_create"),
+    path("shogirdlar/eksport/", views.student_export, name="student_export"),
     path("shogirdlar/<int:pk>/", views.StudentDetailView.as_view(), name="student_detail"),
     path("shogirdlar/<int:pk>/tahrir/", views.StudentUpdateView.as_view(), name="student_update"),
     path("shogirdlar/<int:pk>/ochirish/", views.StudentDeleteView.as_view(), name="student_delete"),

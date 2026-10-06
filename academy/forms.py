@@ -148,6 +148,21 @@ class LessonForm(StyledFormMixin, forms.ModelForm):
             Q(status=Group.Status.ARCHIVED) & ~Q(pk=self.instance.group_id)
         )
 
+    def clean(self):
+        cleaned = super().clean()
+        group, held_on = cleaned.get("group"), cleaned.get("held_on")
+        if group and held_on and cleaned.get("status") != Lesson.Status.CANCELLED:
+            clash = Lesson.objects.filter(
+                group=group, held_on=held_on, starts_at=cleaned.get("starts_at")
+            ).exclude(status=Lesson.Status.CANCELLED)
+            if self.instance.pk:
+                clash = clash.exclude(pk=self.instance.pk)
+            if clash.exists():
+                self.add_error(
+                    "held_on", "Bu guruhda shu kun va vaqtda dars allaqachon yozilgan."
+                )
+        return cleaned
+
     def save(self, commit=True):
         lesson = super().save(commit=False)
         if not lesson.homework and lesson.topic and lesson.topic.homework:

@@ -512,6 +512,27 @@ fieldset.attendance-row legend { float: left; padding: 0; }
   border-top: 1px solid var(--line);
 }
 
+/* Journal */
+.journal-legend { align-items: center; margin-bottom: 12px; gap: 6px; }
+.journal { font-size: 14px; }
+.journal th, .journal td { padding: 8px 6px; }
+.journal .date-col { text-align: center; white-space: nowrap; letter-spacing: 0; }
+.journal .mark-td { text-align: center; }
+.journal .sticky-col {
+  position: sticky; left: 0; z-index: 1; background: var(--card);
+  text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--ink); min-width: 180px;
+}
+.journal tr:hover .sticky-col { background: #faf6ec; }
+.mark-cell {
+  display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px;
+  font-weight: 700; font-size: 13px;
+}
+.mark-cell.present { background: #dceadf; color: var(--ok); }
+.mark-cell.late { background: #f3ead0; color: #7a5b12; }
+.mark-cell.absent { background: #f3dcd9; color: var(--absent); }
+.mark-cell.excused { background: #e4ebe6; color: var(--moss); }
+.nowrap { white-space: nowrap; }
+
 /* Mobile nav */
 .nav-toggle { display: none; }
 @media (max-width: 1080px) {

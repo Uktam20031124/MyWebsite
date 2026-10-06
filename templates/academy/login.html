@@ -18,7 +18,11 @@
       <p class="meta" style="margin-bottom:22px">Guruhlar, mavzular, dars va yo‘qlama — bitta daftar.</p>
       <form method="post">
         {% csrf_token %}
-        {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
+        {% if locked_message %}
+          <ul class="errorlist nonfield" role="alert"><li>{{ locked_message }}</li></ul>
+        {% elif form.non_field_errors %}
+          <div role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
         <div class="field">
           <label for="{{ form.username.id_for_label }}">Login</label>
           {{ form.username }}
