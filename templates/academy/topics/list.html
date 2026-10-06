@@ -1,14 +1,23 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}Mavzular · Darsxona{% endblock %}
+{% block kicker %}{% icon "book" 15 %} O‘quv markazi{% endblock %}
 {% block heading %}Mavzular katalogi{% endblock %}
+{% block subheading %}<p class="page-sub">{{ topics|length }} mavzu, {{ modules|length }} bo‘lim. Har bir mavzuda dars rejasi, uy vazifasi shabloni va materiallar.</p>{% endblock %}
 {% block actions %}
-<a class="btn" href="{% url 'topic_create' %}{% if request.GET.module and request.GET.module != 'none' %}?module={{ request.GET.module }}{% endif %}">Yangi mavzu</a>
-<a class="btn secondary" href="{% url 'topic_import' %}">Ommaviy import</a>
+<a class="btn ghost" href="{% url 'topic_export' %}">{% icon "download" 16 %} Eksport</a>
+<a class="btn soft" href="{% url 'topic_import' %}">{% icon "upload" 16 %} Import</a>
+<a class="btn primary" href="{% url 'topic_create' %}{% if request.GET.module and request.GET.module != 'none' %}?module={{ request.GET.module }}{% endif %}">{% icon "plus" 16 %} Yangi mavzu</a>
 {% endblock %}
+
 {% block content %}
-<form class="filters" method="get">
-  <input class="input w-280" type="search" name="q" value="{{ request.GET.q }}" placeholder="Mavzu nomi yoki tavsifi">
-  <select class="input w-240" name="module" data-autosubmit aria-label="Bo‘lim">
+<form class="toolbar" method="get" role="search">
+  <label class="search-field">
+    <span class="sr-only">Mavzu qidirish</span>
+    {% icon "search" 16 %}
+    <input class="input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Mavzu nomi yoki tavsifi">
+  </label>
+  <select class="input" name="module" data-autosubmit aria-label="Bo‘lim">
     <option value="">Barcha bo‘limlar</option>
     {% for m in modules %}
       <option value="{{ m.pk }}" {% if request.GET.module == m.pk|stringformat:"s" %}selected{% endif %}>{{ m.title }} ({{ m.topic_n }})</option>
@@ -16,56 +25,59 @@
     <option value="none" {% if request.GET.module == 'none' %}selected{% endif %}>Bo‘limsiz</option>
   </select>
   {% if hidden_n %}
-    <label class="check-inline"><input type="checkbox" name="hidden" value="1" data-autosubmit {% if request.GET.hidden == '1' %}checked{% endif %}> Yashirinlarni ham ({{ hidden_n }})</label>
+    <label class="check-field" style="margin:0 6px"><input type="checkbox" name="hidden" value="1" data-autosubmit {% if request.GET.hidden == '1' %}checked{% endif %}> <span class="meta">Yashirinlar ({{ hidden_n }})</span></label>
   {% endif %}
-  <button class="btn quiet" type="submit">Qidirish</button>
+  <button class="btn soft" type="submit">Qidirish</button>
   <span class="spacer"></span>
-  <a class="btn quiet" href="{% url 'module_create' %}">+ Bo‘lim</a>
-  <a class="btn quiet" href="{% url 'topic_export' %}">Eksport (.txt)</a>
+  <a class="btn ghost" href="{% url 'module_create' %}">{% icon "folder" 16 %} Bo‘lim qo‘shish</a>
 </form>
 
 {% for module, items in sections %}
-  <section class="card section-card">
-    <header class="section-head">
-      <div>
-        <h2>{% if module %}{{ module.title }}{% else %}Bo‘limsiz mavzular{% endif %}</h2>
-        {% if module.description %}<p class="meta">{{ module.description }}</p>{% endif %}
+  <section class="card module-card">
+    <div class="card-head" style="padding-bottom:14px">
+      <div class="truncate">
+        <h2>{% icon "folder" 18 %} {% if module %}{{ module.title }}{% else %}Bo‘limsiz mavzular{% endif %} <span class="badge plain">{{ items|length }}</span></h2>
+        {% if module.description %}<p class="meta" style="margin:6px 0 0">{{ module.description }}</p>{% endif %}
       </div>
-      <div class="row-actions">
-        <span class="meta">{{ items|length }} mavzu</span>
-        {% if module %}
-          <a class="btn quiet sm" href="{% url 'topic_create' %}?module={{ module.pk }}">+ Mavzu</a>
-          <a class="btn quiet sm" href="{% url 'module_update' module.pk %}">Tahrir</a>
-        {% endif %}
-      </div>
-    </header>
-    <ol class="topic-list">
+      {% if module %}
+        <div class="actions">
+          <a class="btn xs soft" href="{% url 'topic_create' %}?module={{ module.pk }}">{% icon "plus" 14 %} Mavzu</a>
+          <a class="btn xs ghost square" href="{% url 'module_update' module.pk %}" title="Bo‘limni tahrirlash" aria-label="Bo‘limni tahrirlash">{% icon "edit" 14 %}</a>
+        </div>
+      {% endif %}
+    </div>
+    <ol class="syllabus" style="border-top:1px solid var(--border)">
       {% for t in items %}
-        <li class="item{% if not t.is_active %} muted{% endif %}">
-          <div>
-            <a href="{{ t.get_absolute_url }}"><strong>{{ t.title }}</strong></a>
-            <div class="meta">
-              {{ t.duration_minutes }} daq. · {{ t.group_n }} guruh dasturida · {{ t.lesson_n }} dars
-              {% if t.description %} · {{ t.description|truncatechars:90 }}{% endif %}
+        <li class="topic-row{% if not t.is_active %} muted{% endif %}" {% if forloop.first %}style="border-top:0"{% endif %}>
+          <span class="topic-n">{{ forloop.counter }}</span>
+          <div class="truncate">
+            <a class="strong" href="{{ t.get_absolute_url }}">{{ t.title }}</a>
+            {% if not t.is_active %}<span class="badge plain">Yashirin</span>{% endif %}
+            <div class="meta truncate">
+              {% icon "clock" 13 %} {{ t.duration_minutes }} daq. · {{ t.group_n }} guruh dasturida · {{ t.lesson_n }} dars{% if t.description %} · {{ t.description|truncatechars:110 }}{% endif %}
             </div>
           </div>
-          <div class="row-actions">
-            {% if not t.is_active %}<span class="badge">Yashirin</span>{% endif %}
-            <a class="btn quiet sm" href="{% url 'topic_update' t.pk %}">Tahrir</a>
-            <a class="btn quiet sm" href="{% url 'lesson_create' %}?topic={{ t.pk }}">Dars</a>
+          <div class="topic-actions">
+            <a class="btn xs ghost" href="{% url 'lesson_create' %}?topic={{ t.pk }}">{% icon "plus" 13 %} Dars</a>
+            <a class="btn xs ghost square" href="{% url 'topic_update' t.pk %}" title="Tahrirlash" aria-label="Tahrirlash">{% icon "edit" 13 %}</a>
           </div>
         </li>
       {% endfor %}
     </ol>
   </section>
 {% empty %}
-  <div class="card empty">
-    {% if request.GET.q or request.GET.module %}
-      Hech narsa topilmadi.
-    {% else %}
-      <p>Katalog bo‘sh.</p>
-      <p><a class="btn" href="{% url 'topic_import' %}">Mavzularni matndan import qilish</a></p>
-    {% endif %}
+  <div class="card">
+    <div class="empty">
+      <span class="empty-icon">{% icon "book" 24 %}</span>
+      {% if request.GET.q or request.GET.module %}
+        <strong>Hech narsa topilmadi</strong>
+        <a class="btn sm soft" href="{% url 'topic_list' %}">Filtrni tozalash</a>
+      {% else %}
+        <strong>Katalog bo‘sh</strong>
+        <p>Mavzularni Word yoki Telegram’dan nusxa olib, bir yo‘la import qiling.</p>
+        <a class="btn sm primary" href="{% url 'topic_import' %}">{% icon "upload" 15 %} Import qilish</a>
+      {% endif %}
+    </div>
   </div>
 {% endfor %}
 {% endblock %}

@@ -31,7 +31,7 @@ class AttendanceInline(admin.TabularInline):
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "schedule", "status")
+    list_display = ("name", "code", "schedule", "room", "status")
     list_filter = ("status",)
     search_fields = ("name", "code")
     inlines = [StudentInline, SyllabusInline]

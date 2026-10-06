@@ -1,15 +1,22 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}O‘chirish · Darsxona{% endblock %}
+{% block kicker %}{% icon "alert" 15 %} Qaytarib bo‘lmaydigan amal{% endblock %}
 {% block heading %}O‘chirishni tasdiqlaysizmi?{% endblock %}
 {% block content %}
-<section class="card form-card">
-  <p><strong>{{ object }}</strong> o‘chiriladi. Bu amalni qaytarib bo‘lmaydi.</p>
-  {% if object.students %}<p class="meta">Guruhdagi barcha shogirdlar, darslar va yo‘qlamalar ham o‘chadi.</p>{% endif %}
+<section class="card pad form-card">
+  <div class="callout warn" style="background:var(--bad-soft)">
+    <span class="callout-icon" style="color:var(--bad)">{% icon "trash" 18 %}</span>
+    <div class="grow">
+      <strong>{{ object }}</strong> o‘chiriladi. Bu amalni qaytarib bo‘lmaydi.
+      {% if object.students %}<div class="meta" style="margin-top:4px">Guruhdagi barcha shogirdlar, darslar va yo‘qlamalar ham o‘chadi.</div>{% endif %}
+    </div>
+  </div>
   <form method="post">
     {% csrf_token %}
-    <div class="row-actions">
-      <button class="btn danger" type="submit">Ha, o‘chirish</button>
-      <a class="btn quiet" href="{% if object.get_absolute_url %}{{ object.get_absolute_url }}{% else %}{% url 'dashboard' %}{% endif %}">Bekor</a>
+    <div class="form-actions">
+      <button class="btn danger" type="submit">{% icon "trash" 15 %} Ha, o‘chirish</button>
+      <a class="btn ghost" href="{% if object.get_absolute_url %}{{ object.get_absolute_url }}{% else %}{% url 'dashboard' %}{% endif %}">Bekor</a>
     </div>
   </form>
 </section>

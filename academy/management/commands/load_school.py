@@ -1,4 +1,5 @@
 import sys
+from datetime import time
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -39,6 +40,16 @@ def validate(modules: list[ModuleData], groups: list[GroupData]) -> list[str]:
         duplicates = sorted({k for k in syllabus if syllabus.count(k) > 1})
         if duplicates:
             errors.append(f"{group.code}: dasturda takrorlangan mavzular: {', '.join(duplicates)}")
+        if any(d not in range(7) for d in group.days):
+            errors.append(f"{group.code}: hafta kuni 0–6 oralig'ida bo'lishi kerak")
+        try:
+            starts = time.fromisoformat(group.starts) if group.starts else None
+            ends = time.fromisoformat(group.ends) if group.ends else None
+        except ValueError:
+            errors.append(f"{group.code}: vaqt HH:MM ko'rinishida bo'lishi kerak")
+        else:
+            if starts and ends and ends <= starts:
+                errors.append(f"{group.code}: dars tugash vaqti boshlanishidan keyin bo'lishi kerak")
         names = [" ".join(n.split()) for n in group.students]
         if len(set(names)) != len(names):
             errors.append(f"{group.code}: o'quvchi ismi takrorlangan")
@@ -125,7 +136,10 @@ class Command(BaseCommand):
     def load_group(self, data: GroupData, topics: dict[str, Topic]):
         group = Group.objects.filter(code__iexact=data.code).first() or Group(code=data.code)
         group.name = data.name
-        group.schedule = data.schedule or group.schedule
+        if data.days:
+            group.days = ",".join(str(d) for d in data.days)
+            group.starts_at = time.fromisoformat(data.starts) if data.starts else None
+            group.ends_at = time.fromisoformat(data.ends) if data.ends else None
         group.notes = data.notes or group.notes
         group.status = Group.Status.ACTIVE
         group.save()

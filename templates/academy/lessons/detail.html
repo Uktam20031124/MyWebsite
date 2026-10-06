@@ -1,48 +1,91 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}{{ lesson }} · Darsxona{% endblock %}
+{% block kicker %}<a href="{% url 'lesson_list' %}">Darslar</a><span class="sep">/</span><a href="{{ lesson.group.get_absolute_url }}">{{ lesson.group.name }}</a><span class="sep">·</span>{{ lesson.held_on|weekday_full }}, {{ lesson.held_on|date:"d.m.Y" }}{% if lesson.starts_at %} · {{ lesson.starts_at|time:"H:i" }}{% endif %}{% endblock %}
 {% block heading %}{{ lesson.topic.title|default:"Mavzusiz dars" }}{% endblock %}
-{% block kicker %}<a href="{{ lesson.group.get_absolute_url }}">{{ lesson.group.name }}</a> · {{ lesson.held_on|date:"d.m.Y" }}{% if lesson.starts_at %} · {{ lesson.starts_at|time:"H:i" }}{% endif %}{% endblock %}
 {% block actions %}
-<a class="btn" href="{% url 'attendance' lesson.pk %}">Yo‘qlama</a>
-<a class="btn quiet" href="{% url 'lesson_update' lesson.pk %}">Tahrir</a>
+{% if lesson.status != 'completed' %}
+  <form method="post" action="{% url 'lesson_complete' lesson.pk %}">
+    {% csrf_token %}
+    <button class="btn soft" type="submit">{% icon "check" 16 %} Dars o‘tildi</button>
+  </form>
+{% endif %}
+<a class="btn primary" href="{% url 'attendance' lesson.pk %}">{% icon "users" 16 %} Yo‘qlama</a>
+<a class="btn ghost square" href="{% url 'lesson_update' lesson.pk %}" title="Tahrirlash" aria-label="Tahrirlash">{% icon "edit" 17 %}</a>
 {% endblock %}
+
 {% block content %}
-<section class="grid-stats">
-  <article class="stat"><div class="stat-n">{{ summary.present }}</div><p>Keldi</p></article>
-  <article class="stat"><div class="stat-n">{{ summary.late }}</div><p>Kechikdi</p></article>
-  <article class="stat"><div class="stat-n">{{ summary.absent }}</div><p>Kelmadi</p></article>
-  <article class="stat"><div class="stat-n">{{ lesson.get_status_display }}</div><p>Dars holati</p></article>
+<section class="kpis">
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Keldi</span><span class="kpi-icon ok">{% icon "check" 17 %}</span></div>
+    <div class="kpi-value">{{ summary.present }}</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Kechikdi</span><span class="kpi-icon gold">{% icon "clock" 17 %}</span></div>
+    <div class="kpi-value">{{ summary.late }}</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Kelmadi</span><span class="kpi-icon accent">{% icon "x" 17 %}</span></div>
+    <div class="kpi-value">{{ summary.absent }}</div>
+    {% if summary.excused %}<div class="kpi-foot">+ {{ summary.excused }} sababli</div>{% endif %}
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Dars holati</span><span class="kpi-icon info">{% icon "lesson" 17 %}</span></div>
+    <div class="kpi-value" style="font-size:22px">{{ lesson.get_status_display }}</div>
+    <div class="kpi-foot">{% if summary.marked %}{{ summary.marked }} shogird belgilangan{% else %}yo‘qlama olinmagan{% endif %}</div>
+  </article>
 </section>
-<div class="layout-2">
-  <section class="card">
-    <h2>Yo‘qlama</h2>
-    {% for a in attendances %}
-      <div class="item">
-        <a class="person" href="{{ a.student.get_absolute_url }}"><span class="avatar" aria-hidden="true">{{ a.student.initials }}</span>{{ a.student.full_name }}</a>
-        <span class="row-actions">
-          {% if a.score is not None %}<span class="meta">{{ a.score }} ball</span>{% endif %}
-          <span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% else %}warn{% endif %}">{{ a.get_status_display }}</span>
-        </span>
+
+<div class="split">
+  <section class="card" aria-labelledby="att-h">
+    <div class="card-head">
+      <h2 id="att-h">{% icon "users" 18 %} Yo‘qlama</h2>
+      <a class="btn xs ghost" href="{% url 'attendance' lesson.pk %}">{% icon "edit" 14 %} O‘zgartirish</a>
+    </div>
+    <div class="card-body flush">
+      <div class="rows">
+        {% for a in attendances %}
+          <div class="row">
+            <a class="person grow" href="{{ a.student.get_absolute_url }}">
+              <span class="avatar sm" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
+              <span class="truncate">
+                <span class="person-name block truncate">{{ a.student.full_name }}</span>
+                {% if a.note %}<span class="person-meta">{{ a.note }}</span>{% endif %}
+              </span>
+            </a>
+            {% if a.score is not None %}<strong class="tabular" title="Ball">{{ a.score }}</strong>{% endif %}
+            <span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% elif a.status == 'late' %}warn{% else %}info{% endif %}">{{ a.get_status_display }}</span>
+          </div>
+        {% empty %}
+          <div class="empty">
+            <span class="empty-icon">{% icon "users" 22 %}</span>
+            <strong>Yo‘qlama olinmagan</strong>
+            <a class="btn sm primary" href="{% url 'attendance' lesson.pk %}">Belgilash</a>
+          </div>
+        {% endfor %}
       </div>
-    {% empty %}
-      <div class="empty">Hali yo‘qlama olinmagan. <a href="{% url 'attendance' lesson.pk %}">Belgilash</a></div>
-    {% endfor %}
+    </div>
   </section>
-  <aside class="card">
-    {% if lesson.topic %}
-      <h2>Mavzu</h2>
-      <p><a href="{{ lesson.topic.get_absolute_url }}">{{ lesson.topic.title }}</a>{% if lesson.topic.module %} <span class="meta">· {{ lesson.topic.module.title }}</span>{% endif %}</p>
-    {% endif %}
-    <h2>Izohlar</h2>
-    {% if lesson.homework %}<div class="prose"><strong>Uyga vazifa:</strong>{{ lesson.homework|linebreaks }}</div>{% endif %}
-    {% if lesson.notes %}<div class="prose">{{ lesson.notes|linebreaks }}</div>{% else %}<p class="meta">Izoh yo‘q.</p>{% endif %}
-    {% if lesson.status != 'completed' %}
-      <form method="post" action="{% url 'lesson_complete' lesson.pk %}">
-        {% csrf_token %}
-        <button class="btn" type="submit">Dars o‘tildi</button>
-      </form>
-    {% endif %}
-    <p class="meta mt"><a class="danger-text" href="{% url 'lesson_delete' lesson.pk %}">Darsni o‘chirish</a></p>
+
+  <aside class="stack">
+    <section class="card pad">
+      {% if lesson.topic %}
+        <div class="prose-block">
+          <h3>{% icon "book" 15 %} Mavzu</h3>
+          <a class="strong" href="{{ lesson.topic.get_absolute_url }}">{{ lesson.topic.title }}</a>
+          {% if lesson.topic.module %}<div class="meta">{{ lesson.topic.module.title }} · {{ lesson.topic.duration_minutes }} daq.</div>{% endif %}
+        </div>
+      {% endif %}
+      <div class="prose-block">
+        <h3>{% icon "file" 15 %} Uyga vazifa</h3>
+        {% if lesson.homework %}<div class="prose">{{ lesson.homework|linebreaks }}</div>{% else %}<p class="meta">Berilmagan.</p>{% endif %}
+      </div>
+      <div class="prose-block">
+        <h3>{% icon "edit" 15 %} Izoh</h3>
+        {% if lesson.notes %}<div class="prose">{{ lesson.notes|linebreaks }}</div>{% else %}<p class="meta">Izoh yo‘q.</p>{% endif %}
+      </div>
+    </section>
+    <a class="btn danger-ghost sm" href="{% url 'lesson_delete' lesson.pk %}" style="align-self:flex-start">{% icon "trash" 15 %} Darsni o‘chirish</a>
   </aside>
 </div>
 {% endblock %}

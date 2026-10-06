@@ -1,54 +1,78 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}Shogirdlar · Darsxona{% endblock %}
+{% block kicker %}{% icon "users" 15 %} O‘quv markazi{% endblock %}
 {% block heading %}Shogirdlar{% endblock %}
-{% block actions %}<a class="btn" href="{% url 'student_create' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">Yangi shogird</a>{% endblock %}
+{% block actions %}
+<a class="btn soft" href="{% url 'student_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">{% icon "download" 16 %} CSV</a>
+<a class="btn primary" href="{% url 'student_create' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "plus" 16 %} Yangi shogird</a>
+{% endblock %}
+
 {% block content %}
-<form class="filters" method="get">
-  <input class="input w-240" type="search" name="q" value="{{ request.GET.q }}" placeholder="Ism, telefon, telegram">
-  <select class="input w-200" name="group" data-autosubmit aria-label="Guruh">
-    <option value="">Barcha guruh</option>
+<form class="toolbar" method="get" role="search">
+  <label class="search-field">
+    <span class="sr-only">Qidirish</span>
+    {% icon "search" 16 %}
+    <input class="input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Ism, telefon yoki @telegram">
+  </label>
+  <select class="input" name="group" data-autosubmit aria-label="Guruh">
+    <option value="">Barcha guruhlar</option>
     {% for g in groups %}
       <option value="{{ g.pk }}" {% if request.GET.group == g.pk|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
     {% endfor %}
   </select>
-  <select class="input w-180" name="status" data-autosubmit aria-label="Holat">
-    <option value="">Holat</option>
+  <select class="input" name="status" data-autosubmit aria-label="Holat">
+    <option value="">Har qanday holat</option>
     {% for value, label in statuses %}
       <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
     {% endfor %}
   </select>
-  <button class="btn quiet" type="submit">Qidirish</button>
-  <span class="spacer"></span>
-  <a class="btn quiet" href="{% url 'student_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">Eksport (CSV)</a>
+  <button class="btn soft" type="submit">Qidirish</button>
+  {% if request.GET.q or request.GET.group or request.GET.status %}<a class="btn ghost" href="{% url 'student_list' %}">{% icon "x" 15 %} Tozalash</a>{% endif %}
 </form>
-<div class="card table-wrap">
-  <table>
-    <thead><tr><th>Shogird</th><th>Guruh</th><th>Aloqa</th><th>Davomat</th><th>Holat</th></tr></thead>
-    <tbody>
-      {% for s in students %}
-      <tr>
-        <td>
-          <a class="person" href="{{ s.get_absolute_url }}">
-            <span class="avatar" aria-hidden="true">{{ s.initials }}</span>
-            <strong>{{ s.full_name }}</strong>
-          </a>
-        </td>
-        <td><a href="{{ s.group.get_absolute_url }}">{{ s.group.code }}</a></td>
-        <td>
-          {% if s.phone %}<a href="tel:{{ s.phone|cut:' ' }}">{{ s.phone }}</a>{% else %}—{% endif %}
-          {% if s.telegram %}<div class="meta"><a href="https://t.me/{{ s.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">@{{ s.telegram }}</a></div>{% endif %}
-        </td>
-        <td>
-          {% if s.att_total %}{% widthratio s.att_present s.att_total 100 %}%{% else %}—{% endif %}
-          <div class="meta">{{ s.att_present }}/{{ s.att_total }}</div>
-        </td>
-        <td><span class="badge {% if s.status == 'active' %}ok{% elif s.status == 'dropped' %}bad{% endif %}">{{ s.get_status_display }}</span></td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5" class="empty">Shogird topilmadi.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% include "academy/includes/pager.html" %}
+
+<section class="card">
+  {% if students %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Shogird</th><th>Guruh</th><th>Aloqa</th><th style="width:200px">Davomat</th><th>Holat</th></tr></thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td>
+            <a class="person" href="{{ s.get_absolute_url }}">
+              <span class="avatar" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+              <span class="truncate">
+                <span class="person-name block truncate">{{ s.full_name }}</span>
+                <span class="person-meta">{{ s.joined_at|date:"d.m.Y" }} dan</span>
+              </span>
+            </a>
+          </td>
+          <td><a class="tag" href="{{ s.group.get_absolute_url }}" style="--h: {{ s.group|hue }}">{{ s.group.code }}</a></td>
+          <td>
+            {% if s.phone %}<a class="nowrap" href="tel:{{ s.phone|cut:' ' }}">{{ s.phone }}</a>{% else %}<span class="meta">—</span>{% endif %}
+            {% if s.telegram %}<div class="meta"><a href="https://t.me/{{ s.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">@{{ s.telegram }}</a></div>{% endif %}
+          </td>
+          <td>
+            {% if s.att_total %}
+              {% widthratio s.att_present s.att_total 100 as pct %}
+              <div class="nowrap" style="display:flex;justify-content:space-between;font-size:13px"><strong class="tabular">{{ pct }}%</strong><span class="meta">{{ s.att_present }}/{{ s.att_total }}</span></div>
+              <div class="bar thin {{ pct|tone }}" style="margin-top:5px"><span style="width:{{ pct }}%"></span></div>
+            {% else %}<span class="meta">hali yo‘q</span>{% endif %}
+          </td>
+          <td><span class="badge {% if s.status == 'active' %}ok{% elif s.status == 'dropped' %}bad{% elif s.status == 'paused' %}warn{% else %}info{% endif %}">{{ s.get_status_display }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "academy/includes/pager.html" %}
+  {% else %}
+    <div class="empty">
+      <span class="empty-icon">{% icon "users" 24 %}</span>
+      <strong>Shogird topilmadi</strong>
+      <p>{% if request.GET.q or request.GET.group or request.GET.status %}Filtrni o‘zgartirib ko‘ring.{% else %}Birinchi shogirdni qo‘shing.{% endif %}</p>
+    </div>
+  {% endif %}
+</section>
 {% endblock %}

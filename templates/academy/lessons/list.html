@@ -1,43 +1,68 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}Darslar · Darsxona{% endblock %}
+{% block kicker %}{% icon "lesson" 15 %} O‘quv markazi{% endblock %}
 {% block heading %}Darslar{% endblock %}
-{% block actions %}<a class="btn" href="{% url 'lesson_create' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">Yangi dars</a>{% endblock %}
+{% block actions %}
+<a class="btn soft" href="{% url 'timetable' %}">{% icon "calendar" 16 %} Jadval</a>
+<a class="btn primary" href="{% url 'lesson_create' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "plus" 16 %} Yangi dars</a>
+{% endblock %}
+
 {% block content %}
-<form class="filters" method="get">
-  <select class="input w-200" name="group" data-autosubmit aria-label="Guruh">
-    <option value="">Barcha guruh</option>
+<form class="toolbar" method="get">
+  <div class="seg-tabs" role="group" aria-label="Holat">
+    <a href="?{% if request.GET.group %}group={{ request.GET.group }}{% endif %}" {% if not request.GET.status %}aria-current="true"{% endif %}>Barchasi</a>
+    {% for value, label in statuses %}
+      <a href="?status={{ value }}{% if request.GET.group %}&amp;group={{ request.GET.group }}{% endif %}" {% if request.GET.status == value %}aria-current="true"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </div>
+  <span class="spacer"></span>
+  <input type="hidden" name="status" value="{{ request.GET.status }}">
+  <select class="input" name="group" data-autosubmit aria-label="Guruh">
+    <option value="">Barcha guruhlar</option>
     {% for g in groups %}
       <option value="{{ g.pk }}" {% if request.GET.group == g.pk|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
     {% endfor %}
   </select>
-  <select class="input w-180" name="status" data-autosubmit aria-label="Holat">
-    <option value="">Holat</option>
-    {% for value, label in statuses %}
-      <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
-    {% endfor %}
-  </select>
-  <button class="btn quiet" type="submit">Filtrlash</button>
+  <noscript><button class="btn soft" type="submit">Filtrlash</button></noscript>
 </form>
-<div class="card table-wrap">
-  <table>
-    <thead><tr><th>Sana</th><th>Guruh</th><th>Mavzu</th><th>Holat</th><th></th></tr></thead>
-    <tbody>
-      {% for lesson in lessons %}
-      <tr>
-        <td>{{ lesson.held_on|date:"d.m.Y" }} {% if lesson.starts_at %}<span class="meta">{{ lesson.starts_at|time:"H:i" }}</span>{% endif %}</td>
-        <td><a href="{{ lesson.group.get_absolute_url }}">{{ lesson.group.code }}</a></td>
-        <td><a href="{{ lesson.get_absolute_url }}">{{ lesson.topic.title|default:"Mavzusiz dars" }}</a></td>
-        <td>
-          <span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}plan{% endif %}">{{ lesson.get_status_display }}</span>
-          {% if lesson.status == 'planned' and lesson.held_on < today %}<span class="badge warn">Kechikkan</span>{% endif %}
-        </td>
-        <td><a class="btn quiet sm" href="{% url 'attendance' lesson.pk %}">Yo‘qlama{% if lesson.marked %} ✓{% endif %}</a></td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5" class="empty">Dars yo‘q.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% include "academy/includes/pager.html" %}
+
+<section class="card">
+  {% if lessons %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Sana</th><th>Guruh</th><th>Mavzu</th><th>Holat</th><th class="right">Yo‘qlama</th></tr></thead>
+      <tbody>
+        {% for lesson in lessons %}
+        <tr>
+          <td class="nowrap">
+            <strong class="tabular">{{ lesson.held_on|date:"d.m.Y" }}</strong>
+            <div class="meta">{{ lesson.held_on|weekday_short }}{% if lesson.starts_at %} · {{ lesson.starts_at|time:"H:i" }}{% endif %}</div>
+          </td>
+          <td><a class="tag" href="{{ lesson.group.get_absolute_url }}">{{ lesson.group.code }}</a></td>
+          <td><a class="strong" href="{{ lesson.get_absolute_url }}">{{ lesson.topic.title|default:"Mavzusiz dars" }}</a></td>
+          <td class="nowrap">
+            <span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}info{% endif %}">{{ lesson.get_status_display }}</span>
+            {% if lesson.status == 'planned' and lesson.held_on < today %}<span class="badge warn">Kechikkan</span>{% endif %}
+          </td>
+          <td class="right">
+            <a class="btn xs {% if lesson.marked %}ghost{% else %}soft{% endif %}" href="{% url 'attendance' lesson.pk %}">
+              {% if lesson.marked %}{% icon "check" 14 %} {{ lesson.marked }} belgilangan{% else %}Belgilash{% endif %}
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "academy/includes/pager.html" %}
+  {% else %}
+    <div class="empty">
+      <span class="empty-icon">{% icon "lesson" 24 %}</span>
+      <strong>Dars topilmadi</strong>
+      <p>Bosh sahifadagi “Boshlash” tugmasi jadval bo‘yicha darsni bir bosishda ochadi.</p>
+      <a class="btn sm primary" href="{% url 'lesson_create' %}">{% icon "plus" 15 %} Dars yozish</a>
+    </div>
+  {% endif %}
+</section>
 {% endblock %}

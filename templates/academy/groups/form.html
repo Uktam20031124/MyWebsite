@@ -1,15 +1,19 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}{% if form.instance.pk %}Tahrir{% else %}Yangi guruh{% endif %} · Darsxona{% endblock %}
+{% block kicker %}<a href="{% url 'group_list' %}">Guruhlar</a><span class="sep">/</span>{% if form.instance.pk %}{{ form.instance.code }}{% else %}Yangi{% endif %}{% endblock %}
 {% block heading %}{% if form.instance.pk %}{{ form.instance.name }}{% else %}Yangi guruh{% endif %}{% endblock %}
+{% block subheading %}<p class="page-sub">Dars kunlari va vaqtini kiriting — guruh jadvalda, bosh sahifada va “Boshlash” tugmasida paydo bo‘ladi.</p>{% endblock %}
 {% block content %}
-<section class="card form-card">
-  <form method="post" novalidate>
+<section class="card pad form-card">
+  <form method="post" novalidate data-dirty-guard>
     {% csrf_token %}
-    {% include "academy/includes/form_fields.html" with wide="notes" %}
-    <div class="row-actions">
-      <button class="btn" type="submit">Saqlash</button>
-      <a class="btn quiet" href="{% if form.instance.pk %}{{ form.instance.get_absolute_url }}{% else %}{% url 'group_list' %}{% endif %}">Bekor</a>
-      {% if form.instance.pk %}<a class="btn quiet danger-text" href="{% url 'group_delete' form.instance.pk %}">O‘chirish</a>{% endif %}
+    {% include "academy/includes/form_fields.html" with wide="name,notes" %}
+    <div class="form-actions">
+      <button class="btn primary" type="submit">{% icon "check" 16 %} Saqlash</button>
+      <a class="btn ghost" href="{% if form.instance.pk %}{{ form.instance.get_absolute_url }}{% else %}{% url 'group_list' %}{% endif %}">Bekor</a>
+      <span class="spacer"></span>
+      {% if form.instance.pk %}<a class="btn danger-ghost" href="{% url 'group_delete' form.instance.pk %}">{% icon "trash" 15 %} O‘chirish</a>{% endif %}
     </div>
   </form>
 </section>

@@ -1,31 +1,69 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}Qidiruv · Darsxona{% endblock %}
+{% block kicker %}{% icon "search" 15 %} Qidiruv{% endblock %}
 {% block heading %}{% if q %}“{{ q }}”{% else %}Qidiruv{% endif %}{% endblock %}
 {% block content %}
-{% if not q %}
-  <div class="card empty">Yuqoridagi maydonga ism, telefon, guruh yoki mavzu yozing. Tezkor tugma: <kbd>/</kbd></div>
-{% else %}
-  <div class="layout-2">
+<form class="toolbar" action="{% url 'search' %}" method="get" role="search">
+  <label class="search-field" style="flex:1;max-width:520px">
+    <span class="sr-only">Qidiruv</span>
+    {% icon "search" 16 %}
+    <input class="input" type="search" name="q" value="{{ q }}" placeholder="Ism, telefon, guruh yoki mavzu" autofocus>
+  </label>
+  <button class="btn primary" type="submit">Qidirish</button>
+  <span class="meta">Tezkor: <kbd data-mod-key>Ctrl</kbd> <kbd>K</kbd></span>
+</form>
+
+{% if q %}
+<div class="split even">
+  <div class="stack">
     <section class="card">
-      <h2>Shogirdlar</h2>
-      {% for s in students %}
-        <div class="item"><a class="person" href="{{ s.get_absolute_url }}"><span class="avatar" aria-hidden="true">{{ s.initials }}</span>{{ s.full_name }}</a><span class="meta">{{ s.group.code }}</span></div>
-      {% empty %}<div class="empty">Topilmadi.</div>{% endfor %}
-      <h2 class="mt">Darslar</h2>
-      {% for l in lessons %}
-        <div class="item"><a href="{{ l.get_absolute_url }}">{{ l }}</a></div>
-      {% empty %}<div class="empty">Topilmadi.</div>{% endfor %}
+      <div class="card-head"><h2>{% icon "users" 18 %} Shogirdlar</h2><span class="meta">{{ students|length }}</span></div>
+      <div class="card-body flush"><div class="rows">
+        {% for s in students %}
+          <a class="row" href="{{ s.get_absolute_url }}">
+            <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+            <div class="grow"><div class="row-title truncate">{{ s.full_name }}</div><div class="meta">{{ s.phone|default:"" }}</div></div>
+            <span class="tag">{{ s.group.code }}</span>
+          </a>
+        {% empty %}<div class="empty compact"><p>Topilmadi.</p></div>{% endfor %}
+      </div></div>
     </section>
-    <aside class="card">
-      <h2>Guruhlar</h2>
-      {% for g in groups %}
-        <div class="item"><a href="{{ g.get_absolute_url }}">{{ g.name }}</a><span class="meta">{{ g.code }}</span></div>
-      {% empty %}<div class="empty">Topilmadi.</div>{% endfor %}
-      <h2 class="mt">Mavzular</h2>
-      {% for t in topics %}
-        <div class="item"><a href="{{ t.get_absolute_url }}">{{ t.title }}</a><span class="meta">{{ t.module.title|default:"" }}</span></div>
-      {% empty %}<div class="empty">Topilmadi.</div>{% endfor %}
-    </aside>
+    <section class="card">
+      <div class="card-head"><h2>{% icon "lesson" 18 %} Darslar</h2><span class="meta">{{ lessons|length }}</span></div>
+      <div class="card-body flush"><div class="rows">
+        {% for l in lessons %}
+          <a class="row" href="{{ l.get_absolute_url }}"><div class="grow"><div class="row-title truncate">{{ l.topic.title|default:"Mavzusiz dars" }}</div><div class="meta">{{ l.group.code }} · {{ l.held_on|date:"d.m.Y" }}</div></div></a>
+        {% empty %}<div class="empty compact"><p>Topilmadi.</p></div>{% endfor %}
+      </div></div>
+    </section>
+  </div>
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>{% icon "layers" 18 %} Guruhlar</h2><span class="meta">{{ groups|length }}</span></div>
+      <div class="card-body flush"><div class="rows">
+        {% for g in groups %}
+          <a class="row" href="{{ g.get_absolute_url }}"><div class="grow"><div class="row-title truncate">{{ g.name }}</div><div class="meta">{{ g.schedule|default:"" }}</div></div><span class="tag">{{ g.code }}</span></a>
+        {% empty %}<div class="empty compact"><p>Topilmadi.</p></div>{% endfor %}
+      </div></div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>{% icon "book" 18 %} Mavzular</h2><span class="meta">{{ topics|length }}</span></div>
+      <div class="card-body flush"><div class="rows">
+        {% for t in topics %}
+          <a class="row" href="{{ t.get_absolute_url }}"><div class="grow"><div class="row-title truncate">{{ t.title }}</div><div class="meta">{{ t.module.title|default:"" }}</div></div></a>
+        {% empty %}<div class="empty compact"><p>Topilmadi.</p></div>{% endfor %}
+      </div></div>
+    </section>
+  </div>
+</div>
+{% else %}
+  <div class="card">
+    <div class="empty">
+      <span class="empty-icon">{% icon "search" 24 %}</span>
+      <strong>Nimani qidiramiz?</strong>
+      <p>Ism, telefon, @telegram, guruh kodi yoki mavzu nomini yozing.</p>
+    </div>
   </div>
 {% endif %}
 {% endblock %}

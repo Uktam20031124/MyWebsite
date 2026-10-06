@@ -1,107 +1,219 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}Bosh sahifa · Darsxona{% endblock %}
-{% block kicker %}{{ today|date:"l, d F Y" }}{% endblock %}
-{% block heading %}Bugungi darsxona{% endblock %}
-{% block actions %}
-<a class="btn" href="{% url 'lesson_create' %}">Yangi dars</a>
+{% block kicker %}{% icon "calendar" 15 %} {{ today|weekday_full }}, {{ today|date:"j E Y" }}{% endblock %}
+{% block heading %}Xush kelibsiz{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}{% endblock %}
+{% block subheading %}
+  <p class="page-sub">
+    {% if today_sessions %}Bugun jadvalda {{ today_sessions|length }} ta dars bor.{% else %}Bugun jadval bo‘yicha dars yo‘q.{% endif %}
+    {% if overdue %}<a href="#overdue">{{ overdue|length }} ta dars yakunlanmagan</a>.{% endif %}
+  </p>
 {% endblock %}
+{% block actions %}
+<a class="btn soft" href="{% url 'timetable' %}">{% icon "calendar" 16 %} Jadval</a>
+<a class="btn primary" href="{% url 'lesson_create' %}">{% icon "plus" 16 %} Yangi dars</a>
+{% endblock %}
+
 {% block content %}
-<section class="grid-stats">
-  <article class="stat"><div class="stat-n">{{ stats.groups }}</div><p>Faol guruh</p></article>
-  <article class="stat"><div class="stat-n">{{ stats.students }}</div><p>Faol shogird</p></article>
-  <article class="stat"><div class="stat-n">{{ stats.lessons_week }}</div><p>Haftalik dars</p></article>
-  <article class="stat"><div class="stat-n">{{ stats.attendance_pct }}%</div><p>Haftalik davomat</p></article>
+<section class="kpis" aria-label="Asosiy ko‘rsatkichlar">
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Faol shogirdlar</span><span class="kpi-icon info">{% icon "users" 17 %}</span></div>
+    <div class="kpi-value">{{ stats.students }}</div>
+    <div class="kpi-foot">{{ stats.groups }} ta faol guruhda</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Haftalik davomat</span><span class="kpi-icon ok">{% icon "check" 17 %}</span></div>
+    <div class="kpi-value">{{ stats.attendance_pct }}<small>%</small></div>
+    <div class="kpi-foot">
+      {% if stats.attendance_delta is not None %}
+        <span class="delta {% if stats.attendance_delta > 0 %}up{% elif stats.attendance_delta < 0 %}down{% else %}flat{% endif %}">{% if stats.attendance_delta > 0 %}+{% endif %}{{ stats.attendance_delta }}%</span> o‘tgan haftaga nisbatan
+      {% else %}oxirgi 7 kun{% endif %}
+    </div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Shu hafta darslar</span><span class="kpi-icon accent">{% icon "lesson" 17 %}</span></div>
+    <div class="kpi-value">{{ stats.sessions_week }}</div>
+    <div class="kpi-foot">jadval bo‘yicha, 7 kun ichida · {{ stats.lessons_week }} ta yozilgan</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Dastur bajarilishi</span><span class="kpi-icon gold">{% icon "target" 17 %}</span></div>
+    <div class="kpi-value">{{ stats.syllabus_pct }}<small>%</small></div>
+    <div class="bar thin" role="progressbar" aria-label="Dastur bajarilishi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ stats.syllabus_pct }}"><span style="width:{{ stats.syllabus_pct }}%"></span></div>
+  </article>
 </section>
 
-<div class="layout-2">
-  <section class="card">
-    <h2>Bugungi darslar</h2>
-    {% if today_lessons %}
-      <div class="list">
-        {% for lesson in today_lessons %}
-          <div class="item">
-            <div>
-              <strong>{{ lesson.group.name }}</strong>
-              <div class="meta">{{ lesson.starts_at|time:"H:i"|default:"—" }} · {{ lesson.topic.title|default:"Mavzu belgilanmagan" }}</div>
-            </div>
-            <div class="row-actions">
-              <span class="badge {{ lesson.status }}">{{ lesson.get_status_display }}</span>
-              <a class="btn quiet" href="{% url 'attendance' lesson.pk %}">Yo‘qlama</a>
-            </div>
+<div class="split">
+  <div class="stack">
+    <section class="card" aria-labelledby="today-h">
+      <div class="card-head">
+        <h2 id="today-h">{% icon "clock" 18 %} Bugungi jadval</h2>
+        <a class="btn xs ghost" href="{% url 'timetable' %}">Butun hafta {% icon "right" 14 %}</a>
+      </div>
+      <div class="card-body">
+        {% if today_sessions or today_lessons %}
+          <div class="sessions">
+            {% for s in today_sessions %}{% include "academy/includes/session.html" %}{% endfor %}
+            {% for lesson in today_lessons %}
+              <article class="session {% if lesson.status == 'completed' %}done{% else %}upcoming{% endif %}">
+                <div class="session-time"><strong>{{ lesson.starts_at|time:"H:i"|default:"—" }}</strong><span>qo‘shimcha</span></div>
+                <div class="truncate">
+                  <div class="session-title"><a href="{{ lesson.group.get_absolute_url }}">{{ lesson.group.name }}</a></div>
+                  <div class="session-topic truncate">{% icon "book" 15 %}{{ lesson.topic.title|default:"Mavzu belgilanmagan" }}</div>
+                </div>
+                <div class="actions"><a class="btn sm soft" href="{% url 'attendance' lesson.pk %}">{% icon "check" 15 %} Yo‘qlama</a></div>
+              </article>
+            {% endfor %}
           </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="empty">Bugun rejalashtirilgan dars yo‘q.</div>
-    {% endif %}
-    <h2 class="mt">Yaqinda o‘tilgan</h2>
-    {% for lesson in recent %}
-      <div class="item">
-        <div>
-          <a href="{{ lesson.get_absolute_url }}"><strong>{{ lesson.group.code }}</strong> · {{ lesson.topic.title|default:"Mavzusiz" }}</a>
-          <div class="meta">{{ lesson.held_on|date:"d.m.Y" }}</div>
-        </div>
-        <span class="badge ok">O‘tildi</span>
-      </div>
-    {% empty %}
-      <div class="empty">Hali yakunlangan dars yo‘q.</div>
-    {% endfor %}
-  </section>
+        {% elif has_timetable %}
+          <div class="empty compact">
+            <span class="empty-icon">{% icon "sparkle" 22 %}</span>
+            <strong>Bugun dam olish kuni</strong>
+            <p>Jadval bo‘yicha bugun dars yo‘q. Navbatdagi darslar quyida.</p>
+          </div>
+        {% else %}
+          <div class="empty compact">
+            <span class="empty-icon">{% icon "calendar" 22 %}</span>
+            <strong>Jadval hali tuzilmagan</strong>
+            <p>Guruhga dars kunlari va vaqtini qo‘shing — bugungi darslar shu yerda paydo bo‘ladi.</p>
+            <a class="btn sm soft" href="{% url 'group_list' %}">Guruhlarga o‘tish</a>
+          </div>
+        {% endif %}
 
-  <aside>
-    <section class="card">
-      <h2>Guruhlar progressi</h2>
-      {% for row in progress_rows %}
-        <div class="progress-row">
-          <div class="item flat">
-            <a href="{{ row.group.get_absolute_url }}"><strong>{{ row.group.name }}</strong></a>
-            <span class="meta">{{ row.student_count }} shogird</span>
+        {% if next_sessions %}
+          <div class="day-group" style="margin-top:22px">
+            <div class="day-label">Yaqin kunlarda</div>
+            <div class="sessions">
+              {% for s in next_sessions %}
+                {% ifchanged s.day %}<div class="meta strong" style="margin:6px 0 -2px">{{ s.day|weekday_full }}, {{ s.day|date:"j E" }}</div>{% endifchanged %}
+                {% include "academy/includes/session.html" %}
+              {% endfor %}
+            </div>
           </div>
-          <div class="meta">{{ row.taught }} / {{ row.total }} mavzu</div>
-          <div class="progress" role="progressbar" aria-label="{{ row.group.name }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ row.percent }}"><span style="width:{{ row.percent }}%"></span></div>
-        </div>
-      {% empty %}
-        <div class="empty">Guruh qo‘shing.</div>
-      {% endfor %}
+        {% endif %}
+      </div>
     </section>
-    <section class="card mt">
-      <h2>Navbatdagi darslar</h2>
-      {% for lesson in upcoming %}
-        <div class="item">
-          <div>
-            <strong>{{ lesson.group.code }}</strong>
-            <div class="meta">{{ lesson.held_on|date:"d.m" }} · {{ lesson.topic.title|default:"Mavzu yo‘q" }}</div>
-          </div>
-          <a class="btn quiet" href="{{ lesson.get_absolute_url }}">Ochish</a>
+
+    <section class="card" aria-labelledby="trend-h">
+      <div class="card-head">
+        <h2 id="trend-h">{% icon "trend" 18 %} Davomat dinamikasi</h2>
+        <span class="meta">oxirgi 8 hafta</span>
+      </div>
+      <div class="card-body">
+        {% sparkline trend_values 640 120 %}
+        <div class="trend-axis">
+          {% for t in trend %}<span>{{ t.week|date:"d.m" }}{% if t.percent is not None %}<b>{{ t.percent }}%</b>{% else %}<b>—</b>{% endif %}</span>{% endfor %}
         </div>
-      {% empty %}
-        <div class="empty">Reja bo‘sh.</div>
-      {% endfor %}
+      </div>
     </section>
-    {% if overdue %}
-    <section class="card mt">
-      <h2>Yakunlanmagan darslar</h2>
-      <p class="meta">Sanasi o‘tgan, lekin hali “Rejada” turibdi.</p>
-      {% for lesson in overdue %}
-        <div class="item">
-          <div>
-            <a href="{{ lesson.get_absolute_url }}"><strong>{{ lesson.group.code }}</strong> · {{ lesson.topic.title|default:"Mavzusiz" }}</a>
-            <div class="meta">{{ lesson.held_on|date:"d.m.Y" }}</div>
-          </div>
-          <a class="btn quiet sm" href="{% url 'attendance' lesson.pk %}">Yo‘qlama</a>
+  </div>
+
+  <aside class="stack">
+    <section class="card" aria-labelledby="groups-h">
+      <div class="card-head">
+        <h2 id="groups-h">{% icon "layers" 18 %} Guruhlar</h2>
+        <a class="btn xs ghost" href="{% url 'group_list' %}">Barchasi</a>
+      </div>
+      <div class="card-body flush">
+        <div class="rows">
+          {% for row in progress_rows %}
+            <a class="row" href="{{ row.group.get_absolute_url }}" style="--h: {{ row.group|hue }}">
+              {% ring row.percent 44 5 %}
+              <div class="grow">
+                <div class="row-title truncate">{{ row.group.name }}</div>
+                <div class="meta truncate">{{ row.student_count }} shogird · {{ row.taught }}/{{ row.total }} mavzu{% if row.group.schedule %} · {{ row.group.schedule }}{% endif %}</div>
+              </div>
+            </a>
+          {% empty %}
+            <div class="empty compact"><p>Faol guruh yo‘q.</p><a class="btn sm soft" href="{% url 'group_create' %}">Guruh yaratish</a></div>
+          {% endfor %}
         </div>
-      {% endfor %}
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="leaders-h">
+      <div class="card-head">
+        <h2 id="leaders-h">{% icon "trophy" 18 %} Reyting yetakchilari</h2>
+      </div>
+      <div class="card-body flush">
+        <div class="rows">
+          {% for s in insights.leaders %}
+            <a class="row" href="{{ s.get_absolute_url }}">
+              <span class="rank{% if forloop.counter <= 3 %} r{{ forloop.counter }}{% endif %}">{{ forloop.counter }}</span>
+              <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+              <div class="grow">
+                <div class="row-title truncate">{{ s.full_name }}</div>
+                <div class="meta">{{ s.group.code }} · ball {{ s.score_avg }} · davomat {{ s.att_pct }}%</div>
+              </div>
+              <strong class="tabular">{{ s.rating }}</strong>
+            </a>
+          {% empty %}
+            <div class="empty compact"><p>Reyting yo‘qlamada ball qo‘yilgach paydo bo‘ladi.</p></div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    {% if insights.at_risk %}
+    <section class="card" aria-labelledby="risk-h">
+      <div class="card-head">
+        <h2 id="risk-h">{% icon "alert" 18 %} E’tibor talab qiladi</h2>
+        <span class="meta">davomat &lt; 70% yoki ball &lt; 60</span>
+      </div>
+      <div class="card-body flush">
+        <div class="rows">
+          {% for s in insights.at_risk %}
+            <a class="row" href="{{ s.get_absolute_url }}">
+              <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+              <div class="grow">
+                <div class="row-title truncate">{{ s.full_name }}</div>
+                <div class="meta">{{ s.group.code }} · {{ s.att_present }}/{{ s.att_total }} dars{% if s.score_avg is not None %} · ball {{ s.score_avg }}{% endif %}</div>
+              </div>
+              <span class="badge {{ s.att_pct|tone }}">{{ s.att_pct }}%</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
     </section>
     {% endif %}
-    {% if missing %}
-    <section class="card mt">
-      <h2>Haftada 2+ qoldirgan</h2>
-      {% for s in missing %}
-        <div class="item">
-          <a href="{{ s.get_absolute_url }}">{{ s.full_name }}</a>
-          <span class="badge bad">{{ s.group.code }} · {{ s.absents }}</span>
+
+    {% if overdue %}
+    <section class="card" id="overdue" aria-labelledby="overdue-h">
+      <div class="card-head">
+        <h2 id="overdue-h">{% icon "clock" 18 %} Yakunlanmagan darslar</h2>
+        <span class="badge warn">{{ overdue|length }}</span>
+      </div>
+      <div class="card-body flush">
+        <div class="rows">
+          {% for lesson in overdue %}
+            <div class="row">
+              <div class="grow">
+                <a class="row-title truncate block" href="{{ lesson.get_absolute_url }}">{{ lesson.group.code }} · {{ lesson.topic.title|default:"Mavzusiz" }}</a>
+                <div class="meta">{{ lesson.held_on|date:"d.m.Y" }} — sanasi o‘tgan, hali “Rejada”</div>
+              </div>
+              <a class="btn xs soft" href="{% url 'attendance' lesson.pk %}">Yo‘qlama</a>
+            </div>
+          {% endfor %}
         </div>
-      {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if recent %}
+    <section class="card" aria-labelledby="recent-h">
+      <div class="card-head"><h2 id="recent-h">{% icon "check" 18 %} Yaqinda o‘tilgan</h2></div>
+      <div class="card-body flush">
+        <div class="rows">
+          {% for lesson in recent %}
+            <a class="row" href="{{ lesson.get_absolute_url }}">
+              <div class="grow">
+                <div class="row-title truncate">{{ lesson.topic.title|default:"Mavzusiz dars" }}</div>
+                <div class="meta">{{ lesson.group.code }} · {{ lesson.held_on|date:"d.m.Y" }}</div>
+              </div>
+              <span class="badge ok">O‘tildi</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
     </section>
     {% endif %}
   </aside>

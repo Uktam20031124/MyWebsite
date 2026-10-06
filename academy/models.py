@@ -1,3 +1,5 @@
+from datetime import date, time
+
 from django.core.validators import MaxValueValidator
 from django.db import models, transaction
 from django.db.models import Max
@@ -7,6 +9,27 @@ from django.urls import reverse
 from django.utils import timezone
 
 MAX_SCORE = 100
+
+# Hafta kunlari: date.weekday() bilan bir xil (0 — dushanba).
+WEEKDAYS = [
+    (0, "Dushanba", "Du"),
+    (1, "Seshanba", "Se"),
+    (2, "Chorshanba", "Chor"),
+    (3, "Payshanba", "Pay"),
+    (4, "Juma", "Ju"),
+    (5, "Shanba", "Sha"),
+    (6, "Yakshanba", "Ya"),
+]
+WEEKDAY_CHOICES = [(n, full) for n, full, _ in WEEKDAYS]
+WEEKDAY_SHORT = {n: short for n, _, short in WEEKDAYS}
+
+
+def format_schedule(days: list[int], starts: time | None, ends: time | None) -> str:
+    """[1, 4, 5], 14:00, 15:00 -> "Se / Ju / Sha 14:00–15:00"."""
+    text = " / ".join(WEEKDAY_SHORT[d] for d in sorted(days))
+    if starts:
+        text += f" {starts:%H:%M}" + (f"–{ends:%H:%M}" if ends else "")
+    return text.strip()
 
 
 class Group(models.Model):
@@ -21,8 +44,16 @@ class Group(models.Model):
         "Jadval",
         max_length=200,
         blank=True,
-        help_text="Masalan: Du / Chor 18:00–20:00",
+        help_text="Dars kunlari va vaqti tanlansa, avtomatik to'ldiriladi.",
     )
+    days = models.CharField(
+        "Dars kunlari",
+        max_length=20,
+        blank=True,
+        help_text="Hafta kunlari raqamlari (0 — dushanba), vergul bilan: 1,4,5",
+    )
+    starts_at = models.TimeField("Boshlanish vaqti", null=True, blank=True)
+    ends_at = models.TimeField("Tugash vaqti", null=True, blank=True)
     room = models.CharField("Xona", max_length=80, blank=True)
     start_date = models.DateField("Boshlanish", null=True, blank=True)
     status = models.CharField(
@@ -45,6 +76,23 @@ class Group(models.Model):
 
     def get_absolute_url(self):
         return reverse("group_detail", args=[self.pk])
+
+    def save(self, *args, **kwargs):
+        if self.day_list:
+            self.schedule = format_schedule(self.day_list, self.starts_at, self.ends_at)
+        super().save(*args, **kwargs)
+
+    @property
+    def day_list(self) -> list[int]:
+        return sorted({int(d) for d in self.days.split(",") if d.strip().isdigit()} & set(range(7)))
+
+    @property
+    def has_timetable(self) -> bool:
+        """Jadvali tuzilgan (kunlar + boshlanish vaqti) — kalendarda ko'rinadi."""
+        return bool(self.day_list and self.starts_at)
+
+    def meets_on(self, day: date) -> bool:
+        return self.has_timetable and day.weekday() in self.day_list
 
     @property
     def active_students(self):

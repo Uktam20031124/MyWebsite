@@ -1,67 +1,145 @@
-{% load static %}{% with url_name=request.resolver_match.url_name %}<!doctype html>
-<html lang="uz">
+{% load static ui %}{% with url_name=request.resolver_match.url_name %}<!doctype html>
+<html lang="uz" data-theme="light">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#17241e">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#15251e">
+  <meta name="color-scheme" content="light dark">
   <title>{% block title %}Darsxona{% endblock %}</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2317241e'/%3E%3Ctext x='16' y='22' font-size='15' text-anchor='middle' fill='%23e8c07a' font-family='Georgia'%3EDx%3C/text%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% include "academy/includes/head.html" %}
 </head>
 <body>
+{% include "academy/includes/icons.html" %}
 <a class="skip-link" href="#content">Asosiy qismga o‘tish</a>
 <div class="app">
-  <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <div class="mark" aria-hidden="true">Dx</div>
-      <div>
-        <div class="brand-name">Darsxona</div>
-        <small>Ustoz CRM</small>
+  <aside class="sidebar" id="sidebar" aria-label="Yon menyu">
+    <a class="brand" href="{% url 'dashboard' %}">
+      <span class="brand-mark" aria-hidden="true">Dx</span>
+      <span>
+        <span class="brand-name">Darsxona</span>
+        <span class="brand-sub block">Ustoz CRM</span>
+      </span>
+    </a>
+
+    <nav aria-label="Asosiy menyu">
+      <div class="nav-label">Bugun</div>
+      <div class="nav">
+        <a href="{% url 'dashboard' %}" {% if url_name == 'dashboard' %}aria-current="page"{% endif %}>
+          {% icon "home" %} Bosh sahifa
+          {% if nav_today %}<span class="count hot" title="Bugungi jadvaldagi darslar">{{ nav_today }}</span>{% endif %}
+        </a>
+        <a href="{% url 'timetable' %}" {% if url_name == 'timetable' %}aria-current="page"{% endif %}>
+          {% icon "calendar" %} Dars jadvali
+        </a>
       </div>
-      <button class="nav-toggle" type="button" aria-controls="nav" aria-expanded="false" data-nav-toggle>Menyu</button>
-    </div>
-    <nav class="nav" id="nav" aria-label="Asosiy menyu">
-      <a href="{% url 'dashboard' %}" {% if url_name == 'dashboard' %}class="active" aria-current="page"{% endif %}>Bosh sahifa</a>
-      <a href="{% url 'group_list' %}" {% if 'group' in url_name or 'syllabus' in url_name %}class="active" aria-current="page"{% endif %}>Guruhlar <span class="count">{{ nav_groups }}</span></a>
-      <a href="{% url 'student_list' %}" {% if 'student' in url_name %}class="active" aria-current="page"{% endif %}>Shogirdlar <span class="count">{{ nav_students }}</span></a>
-      <a href="{% url 'topic_list' %}" {% if 'topic' in url_name or 'module' in url_name %}class="active" aria-current="page"{% endif %}>Mavzular <span class="count">{{ nav_topics }}</span></a>
-      <a href="{% url 'lesson_list' %}" {% if 'lesson' in url_name or url_name == 'attendance' %}class="active" aria-current="page"{% endif %}>Darslar <span class="count">{{ nav_lessons }}</span></a>
+      <div class="nav-label">O‘quv markazi</div>
+      <div class="nav">
+        <a href="{% url 'group_list' %}" {% if 'group' in url_name or 'syllabus' in url_name or url_name == 'start_lesson' %}aria-current="page"{% endif %}>
+          {% icon "layers" %} Guruhlar <span class="count">{{ nav_groups }}</span>
+        </a>
+        <a href="{% url 'student_list' %}" {% if 'student' in url_name %}aria-current="page"{% endif %}>
+          {% icon "users" %} Shogirdlar <span class="count">{{ nav_students }}</span>
+        </a>
+        <a href="{% url 'lesson_list' %}" {% if 'lesson' in url_name or url_name == 'attendance' %}aria-current="page"{% endif %}>
+          {% icon "lesson" %} Darslar <span class="count">{{ nav_lessons }}</span>
+        </a>
+        <a href="{% url 'topic_list' %}" {% if 'topic' in url_name or 'module' in url_name %}aria-current="page"{% endif %}>
+          {% icon "book" %} Mavzular <span class="count">{{ nav_topics }}</span>
+        </a>
+      </div>
     </nav>
+
     <div class="sidebar-foot">
-      <div class="user-chip">{{ request.user.get_full_name|default:request.user.username }}</div>
-      {% if request.user.is_staff %}<a class="side-link" href="{% url 'admin:index' %}">Admin panel</a>{% endif %}
+      <div class="me">
+        {% with me=request.user.get_full_name|default:request.user.username %}
+          <span class="avatar sm" style="--h: {{ me|hue }}" aria-hidden="true">{{ me|slice:":1"|upper }}</span>
+          <span class="truncate">
+            <span class="me-name block truncate">{{ me }}</span>
+            <span class="me-role">Ustoz</span>
+          </span>
+        {% endwith %}
+      </div>
+      <button class="side-btn" type="button" data-theme-toggle>
+        <span data-theme-icon="light">{% icon "moon" %}</span><span data-theme-icon="dark" hidden>{% icon "sun" %}</span>
+        <span data-theme-label>Tungi rejim</span>
+      </button>
+      {% if request.user.is_staff %}<a class="side-btn" href="{% url 'admin:index' %}">{% icon "shield" %} Admin panel</a>{% endif %}
       <form method="post" action="{% url 'logout' %}">
         {% csrf_token %}
-        <button class="ghost" type="submit">Chiqish</button>
+        <button class="side-btn" type="submit">{% icon "logout" %} Chiqish</button>
       </form>
     </div>
   </aside>
+  <div class="scrim" data-nav-close></div>
+
   <main class="main" id="content" tabindex="-1">
-    <div class="topbar">
-      <div>
-        <p class="kicker">{% block kicker %}Shaxsiy o‘quv CRM{% endblock %}</p>
-        <h1>{% block heading %}{% endblock %}</h1>
+    <div class="page">
+      <div class="topbar">
+        <button class="btn soft square mobile-menu" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Menyu" data-nav-toggle>{% icon "menu" %}</button>
+        <button class="cmd-trigger" type="button" data-palette-open aria-haspopup="dialog">
+          {% icon "search" 17 %}
+          <span>Qidirish yoki buyruq…</span>
+          <kbd data-mod-key>Ctrl</kbd><kbd>K</kbd>
+        </button>
+        <span class="spacer"></span>
+        {% block topbar_extra %}{% endblock %}
       </div>
-      <div class="row-actions">
-        <form class="search" action="{% url 'search' %}" method="get" role="search">
-          <label class="sr-only" for="global-search">Qidiruv</label>
-          <input id="global-search" name="q" type="search" value="{% if url_name == 'search' %}{{ request.GET.q }}{% endif %}" placeholder="Qidiruv: shogird, guruh, mavzu" data-hotkey="/">
-          <kbd aria-hidden="true">/</kbd>
-        </form>
-        {% block actions %}{% endblock %}
-      </div>
+
+      <header class="page-head">
+        <div>
+          <p class="kicker">{% block kicker %}Shaxsiy o‘quv CRM{% endblock %}</p>
+          <h1>{% block heading %}{% endblock %}</h1>
+          {% block subheading %}{% endblock %}
+        </div>
+        <div class="actions">{% block actions %}{% endblock %}</div>
+      </header>
+
+      {% block content %}{% endblock %}
     </div>
-    {% if messages %}
-      <ul class="messages" role="status">
-        {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
-      </ul>
-    {% endif %}
-    {% block content %}{% endblock %}
   </main>
 </div>
+
+{% if messages %}
+<div class="toasts" role="status" aria-live="polite">
+  {% for m in messages %}
+    <div class="toast {{ m.tags }}" data-toast>
+      <span class="toast-icon">{% if m.level_tag == 'error' or m.level_tag == 'warning' %}{% icon "alert" 13 %}{% else %}{% icon "check" 13 %}{% endif %}</span>
+      <span class="grow">{{ m }}</span>
+      <button type="button" aria-label="Yopish" data-toast-close>{% icon "x" 14 %}</button>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<dialog class="palette" id="palette" aria-label="Buyruqlar paneli" data-search-url="{% url 'search' %}">
+  <div class="palette-input">
+    {% icon "search" 20 %}
+    <input type="text" placeholder="Shogird, guruh, mavzu yoki sahifa…" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list" data-palette-input>
+    <kbd>Esc</kbd>
+  </div>
+  <ul class="palette-list" id="palette-list" role="listbox" data-palette-list></ul>
+  <div class="palette-foot">
+    <span><kbd>↑</kbd><kbd>↓</kbd> tanlash</span>
+    <span><kbd>Enter</kbd> ochish</span>
+    <span><kbd>/</kbd> yoki <kbd data-mod-key>Ctrl</kbd><kbd>K</kbd> chaqirish</span>
+  </div>
+  <script type="application/json" id="palette-commands">
+    [
+      {"title": "Bosh sahifa", "meta": "Sahifa", "icon": "home", "url": "{% url 'dashboard' %}"},
+      {"title": "Dars jadvali", "meta": "Sahifa", "icon": "calendar", "url": "{% url 'timetable' %}"},
+      {"title": "Guruhlar", "meta": "Sahifa", "icon": "layers", "url": "{% url 'group_list' %}"},
+      {"title": "Shogirdlar", "meta": "Sahifa", "icon": "users", "url": "{% url 'student_list' %}"},
+      {"title": "Darslar", "meta": "Sahifa", "icon": "lesson", "url": "{% url 'lesson_list' %}"},
+      {"title": "Mavzular katalogi", "meta": "Sahifa", "icon": "book", "url": "{% url 'topic_list' %}"},
+      {"title": "Yangi dars yozish", "meta": "Amal", "icon": "plus", "url": "{% url 'lesson_create' %}"},
+      {"title": "Yangi shogird qo‘shish", "meta": "Amal", "icon": "plus", "url": "{% url 'student_create' %}"},
+      {"title": "Yangi guruh yaratish", "meta": "Amal", "icon": "plus", "url": "{% url 'group_create' %}"},
+      {"title": "Mavzularni import qilish", "meta": "Amal", "icon": "upload", "url": "{% url 'topic_import' %}"},
+      {"title": "Shogirdlar ro‘yxatini yuklab olish (CSV)", "meta": "Amal", "icon": "download", "url": "{% url 'student_export' %}"}
+    ]
+  </script>
+</dialog>
+
 <script src="{% static 'js/app.js' %}" defer></script>
 </body>
 </html>{% endwith %}

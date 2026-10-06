@@ -1,15 +1,19 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}{% if form.instance.pk %}Tahrir{% else %}Yangi shogird{% endif %} · Darsxona{% endblock %}
+{% block kicker %}<a href="{% url 'student_list' %}">Shogirdlar</a><span class="sep">/</span>{% if form.instance.pk %}Tahrir{% else %}Yangi{% endif %}{% endblock %}
 {% block heading %}{% if form.instance.pk %}{{ form.instance.full_name }}{% else %}Yangi shogird{% endif %}{% endblock %}
 {% block content %}
-<section class="card form-card">
-  <form method="post" novalidate>
+<section class="card pad form-card">
+  <form method="post" novalidate data-dirty-guard>
     {% csrf_token %}
     {% include "academy/includes/form_fields.html" with wide="notes" %}
-    <div class="row-actions">
-      <button class="btn" type="submit">Saqlash</button>
-      {% if not form.instance.pk %}<button class="btn quiet" type="submit" name="add_another" value="1">Saqlash va yana qo‘shish</button>{% endif %}
-      <a class="btn quiet" href="{% if form.instance.pk %}{{ form.instance.get_absolute_url }}{% else %}{% url 'student_list' %}{% endif %}">Bekor</a>
+    <div class="form-actions">
+      <button class="btn primary" type="submit">{% icon "check" 16 %} Saqlash</button>
+      {% if not form.instance.pk %}<button class="btn soft" type="submit" name="add_another" value="1">{% icon "plus" 15 %} Saqlash va yana qo‘shish</button>{% endif %}
+      <a class="btn ghost" href="{% if form.instance.pk %}{{ form.instance.get_absolute_url }}{% else %}{% url 'student_list' %}{% endif %}">Bekor</a>
+      <span class="spacer"></span>
+      {% if form.instance.pk %}<a class="btn danger-ghost" href="{% url 'student_delete' form.instance.pk %}">{% icon "trash" 15 %} O‘chirish</a>{% endif %}
     </div>
   </form>
 </section>

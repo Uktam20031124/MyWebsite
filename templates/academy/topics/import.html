@@ -1,57 +1,64 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}Mavzular importi · Darsxona{% endblock %}
-{% block kicker %}Mavzular katalogi{% endblock %}
+{% block kicker %}<a href="{% url 'topic_list' %}">Mavzular</a><span class="sep">/</span>Import{% endblock %}
 {% block heading %}Ommaviy import{% endblock %}
-{% block actions %}<a class="btn quiet" href="{% url 'topic_list' %}">Katalogga qaytish</a>{% endblock %}
+{% block subheading %}<p class="page-sub">Matnni qo‘ying → ko‘rib chiqing → tasdiqlang. Qayta import xavfsiz: mavjud mavzular takrorlanmaydi.</p>{% endblock %}
+{% block actions %}<a class="btn ghost" href="{% url 'topic_list' %}">{% icon "left" 16 %} Katalogga qaytish</a>{% endblock %}
+
 {% block content %}
-<div class="layout-2">
-  <section class="card">
+<div class="split">
+  <section class="card pad">
     <form method="post" novalidate>
       {% csrf_token %}
-      {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+      {% if form.non_field_errors %}<div class="form-errors" role="alert">{% icon "alert" 18 %}{{ form.non_field_errors }}</div>{% endif %}
       <div class="field{% if form.text.errors %} has-error{% endif %}">
-        {{ form.text.label_tag }}{{ form.text }}{{ form.text.errors }}
+        {{ form.text.label_tag }}
+        <textarea class="input mono" name="{{ form.text.html_name }}" id="{{ form.text.id_for_label }}" rows="16" spellcheck="false" placeholder="# Bo‘lim nomi&#10;1. Mavzu — tavsif">{{ form.text.value|default:"" }}</textarea>
+        {{ form.text.errors }}
       </div>
-      <div class="form-grid">
+      <div class="form-grid" style="margin-top:18px">
         <div class="field">{{ form.default_duration.label_tag }}{{ form.default_duration }}{{ form.default_duration.errors }}</div>
         <div class="field">
           <span class="label">{{ form.groups.label }}</span>
-          <div class="check-list">
-            {% for cb in form.groups %}<label class="check-inline">{{ cb.tag }} {{ cb.choice_label }}</label>{% empty %}<span class="meta">Faol guruh yo‘q.</span>{% endfor %}
+          <div class="chips">
+            {% for cb in form.groups %}<label>{{ cb.tag }} {{ cb.choice_label }}</label>{% empty %}<span class="meta">Faol guruh yo‘q.</span>{% endfor %}
           </div>
         </div>
       </div>
 
       {% if preview %}
-        <h2>Ko‘rib chiqish</h2>
-        <div class="preview">
-          {% for m in preview %}
-            <div class="preview-module">
-              <strong>{% if m.title %}{{ m.title }}{% else %}Bo‘limsiz{% endif %}</strong>
-              <span class="meta">· {{ m.topics|length }} mavzu</span>
-              <ol>
-                {% for t in m.topics %}
-                  <li>{{ t.title }}{% if t.duration %} <span class="meta">({{ t.duration }} daq.)</span>{% endif %}{% if t.description %}<div class="meta">{{ t.description|linebreaksbr }}</div>{% endif %}</li>
-                {% endfor %}
-              </ol>
-            </div>
-          {% endfor %}
+        <div class="card" style="margin-top:22px;box-shadow:none">
+          <div class="card-head" style="padding-bottom:12px"><h2>{% icon "check" 18 %} Ko‘rib chiqish</h2></div>
+          <div class="preview" style="border-top:1px solid var(--border)">
+            {% for m in preview %}
+              <div class="preview-module">
+                <strong>{% if m.title %}{{ m.title }}{% else %}Bo‘limsiz{% endif %}</strong>
+                <span class="meta">· {{ m.topics|length }} mavzu</span>
+                <ol>
+                  {% for t in m.topics %}
+                    <li>{{ t.title }}{% if t.duration %} <span class="meta">({{ t.duration }} daq.)</span>{% endif %}{% if t.description %}<div class="meta">{{ t.description|linebreaksbr }}</div>{% endif %}</li>
+                  {% endfor %}
+                </ol>
+              </div>
+            {% endfor %}
+          </div>
         </div>
-        <p class="hint">Mavjud mavzular (bir xil bo‘lim va nom) takrorlanmaydi — faqat tavsifi yangilanadi.</p>
-        <div class="row-actions">
-          <button class="btn" type="submit" name="confirm" value="1">Tasdiqlash va import qilish</button>
-          <button class="btn quiet" type="submit">Qayta ko‘rib chiqish</button>
+        <p class="meta" style="margin-top:10px">Mavjud mavzular (bir xil bo‘lim va nom) takrorlanmaydi — faqat tavsifi yangilanadi.</p>
+        <div class="form-actions">
+          <button class="btn primary" type="submit" name="confirm" value="1">{% icon "check" 16 %} Tasdiqlash va import qilish</button>
+          <button class="btn soft" type="submit">Qayta ko‘rib chiqish</button>
         </div>
       {% else %}
-        <div class="row-actions">
-          <button class="btn" type="submit">Ko‘rib chiqish</button>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Ko‘rib chiqish {% icon "right" 16 %}</button>
         </div>
       {% endif %}
     </form>
   </section>
 
-  <aside class="card">
-    <h2>Format</h2>
+  <aside class="card pad">
+    <h2 style="font-size:16px;margin-bottom:10px">{% icon "file" 17 %} Format</h2>
     <p class="meta">Matnni Word, Telegram yoki Excel’dan to‘g‘ridan-to‘g‘ri nusxalab qo‘yish mumkin.</p>
     <pre class="code">{% verbatim %}# Python asoslari
 1. Kirish va muhit — VS Code, terminal
@@ -63,11 +70,11 @@
 # Django
 - Modellar va ORM
 - Formalar — ModelForm, validatsiya{% endverbatim %}</pre>
-    <ul class="meta rules">
+    <ul class="rules" style="margin-top:16px">
       <li><code>#</code> bilan boshlangan qator — <strong>bo‘lim</strong>.</li>
       <li>Qolgan qatorlar — <strong>mavzu</strong>. <code>1.</code>, <code>-</code>, <code>•</code> belgilari olib tashlanadi.</li>
       <li>Tavsif: <code>Mavzu — tavsif</code> yoki <code>Mavzu | tavsif | daqiqa</code>.</li>
-      <li>Surilgan (bo‘sh joy bilan boshlangan) qator oldingi mavzu tavsifiga qo‘shiladi.</li>
+      <li>Surilgan qator oldingi mavzu tavsifiga qo‘shiladi.</li>
     </ul>
   </aside>
 </div>

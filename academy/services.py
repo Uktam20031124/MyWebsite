@@ -1,7 +1,7 @@
 import re
-from collections import defaultdict
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.db import transaction
 from django.db.models import Avg, Count, Max, Q
@@ -194,6 +194,244 @@ def group_journal(group: Group, limit: int | None = None):
     return lessons, rows
 
 
+# --- Jadval -----------------------------------------------------------------
+
+
+@dataclass
+class Session:
+    """Jadval bo'yicha bitta dars vaqti. Bazada dars yozuvi bo'lmasligi ham mumkin."""
+
+    group: Group
+    day: date
+    starts_at: time
+    ends_at: time | None
+    lesson: Lesson | None = None
+    topic: Topic | None = None  # dars mavzusi yoki dastur bo'yicha navbatdagisi
+
+    @property
+    def is_today(self) -> bool:
+        return self.day == timezone.localdate()
+
+    @property
+    def state(self) -> str:
+        """done | cancelled | live | missed | upcoming."""
+        if self.lesson and self.lesson.status == Lesson.Status.COMPLETED:
+            return "done"
+        if self.lesson and self.lesson.status == Lesson.Status.CANCELLED:
+            return "cancelled"
+        now = timezone.localtime()
+        start = datetime.combine(self.day, self.starts_at, now.tzinfo)
+        end = datetime.combine(self.day, self.ends_at or self.starts_at, now.tzinfo)
+        if start <= now <= end:
+            return "live"
+        return "missed" if end < now else "upcoming"
+
+    @property
+    def duration_minutes(self) -> int:
+        if not self.ends_at:
+            return 60
+        delta = datetime.combine(self.day, self.ends_at) - datetime.combine(
+            self.day, self.starts_at
+        )
+        return max(15, int(delta.total_seconds() // 60))
+
+
+def timetable_groups(qs=None) -> list[Group]:
+    """Jadvali tuzilgan faol guruhlar (kunlar + boshlanish vaqti)."""
+    qs = Group.objects.filter(status=Group.Status.ACTIVE) if qs is None else qs
+    return [g for g in qs.exclude(days="").exclude(starts_at=None) if g.has_timetable]
+
+
+def sessions_between(start: date, end: date, groups: list[Group] | None = None) -> list[Session]:
+    """[start, end] oralig'idagi jadval darslari, sana va vaqt tartibida.
+
+    Yozilgan dars bo'lsa — o'sha dars va uning mavzusi. Bugundan keyingi
+    yozilmagan darslarga guruh dasturidagi navbatdagi mavzular ketma-ket
+    taqsimlanadi (rejadagi darslarga biriktirilgan mavzular o'tkazib yuboriladi).
+    Guruhlar sonidan qat'i nazar 2 ta so'rov.
+    """
+    groups = timetable_groups() if groups is None else groups
+    if not groups or end < start:
+        return []
+    today = timezone.localdate()
+    # Kelajakdagi oraliq uchun ham mavzular bugundan boshlab taqsimlanadi.
+    walk_from = min(start, today) if start > today else start
+
+    lessons: dict[tuple[int, date], Lesson] = {}
+    for lesson in (
+        Lesson.objects.filter(group__in=groups, held_on__range=(walk_from, end))
+        .select_related("topic")
+        .order_by("held_on", "starts_at", "pk")
+    ):
+        key = (lesson.group_id, lesson.held_on)
+        # Bekor qilinmagan dars bekor qilinganidan ustun.
+        if key not in lessons or lessons[key].status == Lesson.Status.CANCELLED:
+            lessons[key] = lesson
+
+    reserved = {
+        (lesson.group_id, lesson.topic_id)
+        for lesson in lessons.values()
+        if lesson.held_on >= today and lesson.topic_id
+    }
+    queues: dict[int, deque[Topic]] = defaultdict(deque)
+    for item in (
+        SyllabusItem.objects.filter(group__in=groups, status=SyllabusItem.Status.PLANNED)
+        .select_related("topic")
+        .order_by("group_id", "order", "id")
+    ):
+        if (item.group_id, item.topic_id) not in reserved:
+            queues[item.group_id].append(item.topic)
+
+    ordered = sorted(groups, key=lambda g: (g.starts_at, g.name))
+    sessions = []
+    day = walk_from
+    while day <= end:
+        for group in ordered:
+            if not group.meets_on(day):
+                continue
+            lesson = lessons.get((group.pk, day))
+            topic = lesson.topic if lesson else None
+            if lesson is None and day >= today and queues[group.pk]:
+                topic = queues[group.pk].popleft()
+            if day >= start:
+                sessions.append(
+                    Session(group, day, group.starts_at, group.ends_at, lesson, topic)
+                )
+        day += timedelta(days=1)
+    return sessions
+
+
+def week_start(day: date) -> date:
+    return day - timedelta(days=day.weekday())
+
+
+def week_timetable(monday: date) -> dict:
+    """Haftalik kalendar: 7 ustun, soatlar shkalasi va har bir dars blokining o'rni (%)."""
+    sessions = sessions_between(monday, monday + timedelta(days=6))
+    if sessions:
+        first = min(s.starts_at.hour for s in sessions) - 1
+        ends = [s.ends_at or s.starts_at for s in sessions]
+        last = max(t.hour + (1 if t.minute else 0) for t in ends) + 1
+        first, last = max(0, first), min(24, max(last, first + 5))
+    else:
+        first, last = 9, 18
+    span = (last - first) * 60
+
+    def offset(t: time) -> float:
+        return round((t.hour * 60 + t.minute - first * 60) / span * 100, 3)
+
+    today = timezone.localdate()
+    days = []
+    for n in range(7):
+        day = monday + timedelta(days=n)
+        days.append(
+            {
+                "date": day,
+                "is_today": day == today,
+                "items": [
+                    {
+                        "session": s,
+                        "top": offset(s.starts_at),
+                        "height": round(s.duration_minutes / span * 100, 3),
+                    }
+                    for s in sessions
+                    if s.day == day
+                ],
+            }
+        )
+    now = timezone.localtime()
+    in_week = monday <= today <= monday + timedelta(days=6)
+    return {
+        "days": days,
+        "hours": [time(h) for h in range(first, last)],
+        "now_top": offset(now.time()) if in_week and first <= now.hour < last else None,
+        "monday": monday,
+        "prev": monday - timedelta(days=7),
+        "next": monday + timedelta(days=7),
+        "sessions": sessions,
+    }
+
+
+@transaction.atomic
+def start_session(group: Group, day: date | None = None) -> tuple[Lesson, bool]:
+    """Jadvaldagi darsni boshlash: shu kungi darsni topadi yoki dastur bo'yicha
+    navbatdagi mavzu bilan yaratadi. Natija: (dars, yangi yaratildimi)."""
+    day = day or timezone.localdate()
+    lesson = (
+        group.lessons.filter(held_on=day)
+        .exclude(status=Lesson.Status.CANCELLED)
+        .order_by("starts_at", "pk")
+        .first()
+    )
+    if lesson:
+        return lesson, False
+    item = group.next_syllabus_item()
+    topic = item.topic if item else None
+    lesson = Lesson.objects.create(
+        group=group,
+        topic=topic,
+        held_on=day,
+        starts_at=group.starts_at,
+        homework=topic.homework if topic else "",
+    )
+    return lesson, True
+
+
+# --- Tahlil -----------------------------------------------------------------
+
+
+def attendance_trend(weeks: int = 8) -> list[dict]:
+    """Oxirgi N hafta davomati, eskisidan: [{"week", "total", "percent"}].
+
+    Dars bo'lmagan haftada ``percent`` — None (grafikda uzilish, 0% emas).
+    """
+    today = timezone.localdate()
+    first = week_start(today) - timedelta(weeks=weeks - 1)
+    buckets = {first + timedelta(weeks=i): [0, 0] for i in range(weeks)}
+    for held_on, status in Attendance.objects.filter(
+        lesson__held_on__gte=first, lesson__held_on__lte=today
+    ).values_list("lesson__held_on", "status"):
+        bucket = buckets[week_start(held_on)]
+        bucket[0] += 1
+        bucket[1] += status in Attendance.ATTENDED
+    return [
+        {"week": week, "total": total, "percent": percent(present, total) if total else None}
+        for week, (total, present) in buckets.items()
+    ]
+
+
+def rating(avg_score: float | None, attendance_pct: int) -> int | None:
+    """Jurnaldagi reyting bilan bir xil formula."""
+    if avg_score is None:
+        return None
+    w = RATING_SCORE_WEIGHT
+    return round(avg_score * w + attendance_pct * (1 - w))
+
+
+def student_insights(top: int = 5, risk: int = 6) -> dict:
+    """Faol shogirdlar: reyting yetakchilari va e'tibor talab qiladiganlar (bitta so'rov)."""
+    students = list(
+        students_with_stats(Student.objects.filter(status=Student.Status.ACTIVE))
+        .select_related("group")
+        .annotate(score_avg=Avg("attendances__score"))
+    )
+    for s in students:
+        s.att_pct = percent(s.att_present, s.att_total)
+        s.rating = rating(s.score_avg, s.att_pct) if s.att_total else None
+        s.score_avg = round(s.score_avg) if s.score_avg is not None else None
+    leaders = sorted((s for s in students if s.rating is not None), key=lambda s: -s.rating)
+    at_risk = sorted(
+        (
+            s
+            for s in students
+            if s.att_total >= 2
+            and (s.att_pct < 70 or (s.score_avg is not None and s.score_avg < 60))
+        ),
+        key=lambda s: (s.att_pct, s.score_avg or 0),
+    )
+    return {"leaders": leaders[:top], "at_risk": at_risk[:risk]}
+
+
 def dashboard_payload():
     today = timezone.localdate()
     week_ago = today - timedelta(days=7)
@@ -234,11 +472,22 @@ def dashboard_payload():
         .order_by("-absents")[:8]
     )
 
+    trend = attendance_trend()
+    this_week, last_week = trend[-1]["percent"], trend[-2]["percent"]
+    scheduled = timetable_groups()
+    week = sessions_between(today, today + timedelta(days=6), scheduled)
+    today_sessions = [s for s in week if s.day == today]
+
     lessons = Lesson.objects.select_related("group", "topic")
     return {
         "today": today,
         "progress_rows": progress_rows,
-        "today_lessons": lessons.filter(held_on=today).order_by("starts_at"),
+        "today_sessions": today_sessions,
+        "next_sessions": [s for s in week if s.day > today][:6],
+        # Jadvaldan tashqari (qo'shimcha) bugungi darslar.
+        "today_lessons": lessons.filter(held_on=today)
+        .exclude(group__in=[s.group for s in today_sessions])
+        .order_by("starts_at"),
         "upcoming": lessons.filter(
             held_on__gt=today, status=Lesson.Status.PLANNED
         ).order_by("held_on", "starts_at")[:6],
@@ -251,8 +500,22 @@ def dashboard_payload():
             "students": Student.objects.filter(status=Student.Status.ACTIVE).count(),
             "lessons_week": Lesson.objects.filter(past_week).count(),
             "attendance_pct": percent(week_att["present"], week_att["total"]),
+            "attendance_delta": (
+                this_week - last_week
+                if this_week is not None and last_week is not None
+                else None
+            ),
+            "sessions_week": len(week),
+            "syllabus_pct": percent(
+                sum(r["taught"] for r in progress_rows),
+                sum(r["total"] for r in progress_rows),
+            ),
         },
+        "trend": trend,
+        "trend_values": [t["percent"] for t in trend],
+        "insights": student_insights(),
         "missing": missing,
+        "has_timetable": bool(scheduled),
     }
 
 
