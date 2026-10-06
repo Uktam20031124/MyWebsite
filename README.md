@@ -16,7 +16,7 @@ py -m venv .venv
 .venv\Scripts\Activate.ps1      # xato bersa: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py bootstrap      # ustoz hisobi + namuna ma'lumotlar (faqat bo'sh bazaga)
+python manage.py bootstrap      # ustoz hisobi + guruhlar va o'quvchilar (faqat bo'sh bazaga)
 python manage.py runserver
 ```
 
