@@ -19,7 +19,10 @@
     {% for a in attendances %}
       <div class="item">
         <a class="person" href="{{ a.student.get_absolute_url }}"><span class="avatar" aria-hidden="true">{{ a.student.initials }}</span>{{ a.student.full_name }}</a>
-        <span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% else %}warn{% endif %}">{{ a.get_status_display }}</span>
+        <span class="row-actions">
+          {% if a.score is not None %}<span class="meta">{{ a.score }} ball</span>{% endif %}
+          <span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% else %}warn{% endif %}">{{ a.get_status_display }}</span>
+        </span>
       </div>
     {% empty %}
       <div class="empty">Hali yo‘qlama olinmagan. <a href="{% url 'attendance' lesson.pk %}">Belgilash</a></div>

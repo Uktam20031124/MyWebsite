@@ -206,6 +206,22 @@ class LessonViewTests(ViewTestCase):
         self.lesson.refresh_from_db()
         self.assertEqual(self.lesson.status, Lesson.Status.COMPLETED)
 
+    def test_attendance_saves_scores_and_rejects_bad_ones(self):
+        other = f.student(self.group)
+        Attendance.objects.create(lesson=self.lesson, student=other, score=55)
+        url = reverse("attendance", args=[self.lesson.pk])
+        response = self.client.post(url, {
+            f"status_{self.student.pk}": "present", f"score_{self.student.pk}": " 85 ",
+            f"status_{other.pk}": "present", f"score_{other.pk}": "150",
+        }, follow=True)
+        scores = dict(Attendance.objects.values_list("student_id", "score"))
+        self.assertEqual(scores[self.student.pk], 85)
+        self.assertEqual(scores[other.pk], 55)  # noto'g'ri qiymat eskisini o'chirmaydi
+        self.assertContains(response, "Ball 0 dan 100 gacha")
+
+        self.client.post(url, {f"status_{self.student.pk}": "present", f"score_{self.student.pk}": ""})
+        self.assertIsNone(Attendance.objects.get(student=self.student).score)
+
     def test_attendance_keeps_students_who_left_later(self):
         Attendance.objects.create(lesson=self.lesson, student=self.student)
         self.student.status = Student.Status.DROPPED
@@ -249,8 +265,40 @@ class JournalAndExportTests(ViewTestCase):
         # Rejadagi (yo'qlamasiz) va bekor qilingan darslar jurnalga kirmaydi.
         self.assertEqual(response.context["lessons"], [done])
         rows = {r.student.pk: r for r in response.context["rows"]}
-        self.assertEqual((rows[self.student.pk].cells, rows[self.student.pk].percent), (["late"], 100))
+        self.assertEqual([c.status for c in rows[self.student.pk].cells], ["late"])
+        self.assertEqual(rows[self.student.pk].percent, 100)
         self.assertEqual(rows[other.pk].percent, 0)
+
+    def test_scores_rating_and_rank(self):
+        other = f.student(self.group, full_name="Karimova Madina")
+        third = f.student(self.group, full_name="Baholanmagan Bola")
+        for days, (mine, theirs) in ((-2, (90, 70)), (-1, (70, 70))):
+            lesson = f.lesson(self.group, days=days, status=Lesson.Status.COMPLETED)
+            Attendance.objects.create(lesson=lesson, student=self.student, score=mine)
+            Attendance.objects.create(lesson=lesson, student=other, score=theirs, status="absent")
+            Attendance.objects.create(lesson=lesson, student=third)
+
+        rows = {r.student.pk: r for r in self.client.get(
+            reverse("group_journal", args=[self.group.pk])).context["rows"]}
+        me, them, unrated = rows[self.student.pk], rows[other.pk], rows[third.pk]
+        # 80 × 0.7 + 100 × 0.3 = 86;  70 × 0.7 + 0 × 0.3 = 49
+        self.assertEqual((me.avg_score, me.rating, me.rank), (80, 86, 1))
+        self.assertEqual((them.avg_score, them.rating, them.rank), (70, 49, 2))
+        self.assertEqual((unrated.avg_score, unrated.rating, unrated.rank), (None, None, None))
+
+        body = self.client.get(
+            reverse("group_journal", args=[self.group.pk]) + "?format=csv").content.decode()
+        self.assertIn("Aliyev Sardor;Keldi (90);Keldi (70);2;2;100;80;86;1", body)
+
+    def test_rank_ties_share_place(self):
+        from academy.services import JournalCell, JournalRow, rank_rows
+
+        def row(score):
+            return JournalRow(student=None, cells=[JournalCell("present", score)])
+
+        rows = [row(90), row(80), row(90), row(None), row(70)]
+        rank_rows(rows)
+        self.assertEqual([r.rank for r in rows], [1, 3, 1, None, 4])
 
     def test_journal_query_count_does_not_grow(self):
         url = reverse("group_journal", args=[self.group.pk])

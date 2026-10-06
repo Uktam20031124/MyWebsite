@@ -13,6 +13,7 @@
     <span class="mark-cell late">K</span><span class="meta">kechikdi</span>
     <span class="mark-cell absent">–</span><span class="meta">kelmadi</span>
     <span class="mark-cell excused">S</span><span class="meta">sababli</span>
+    <span class="meta">· raqam — darsdagi ball · reyting = ball × 0.7 + davomat × 0.3</span>
     <span class="spacer"></span>
     {% if show_all %}
       <a class="btn quiet sm" href="{% url 'group_journal' group.pk %}">Oxirgi {{ limit }} dars</a>
@@ -32,6 +33,8 @@
             </th>
           {% endfor %}
           <th scope="col">Davomat</th>
+          <th scope="col" title="O‘rtacha ball (0–100)">Ball</th>
+          <th scope="col" title="Reyting = ball × 0.7 + davomat × 0.3">Reyting</th>
         </tr>
       </thead>
       <tbody>
@@ -43,15 +46,20 @@
           </th>
           {% for cell in row.cells %}
             <td class="mark-td">
-              {% if cell == 'present' %}<span class="mark-cell present" title="Keldi">+</span>
-              {% elif cell == 'late' %}<span class="mark-cell late" title="Kechikdi">K</span>
-              {% elif cell == 'absent' %}<span class="mark-cell absent" title="Kelmadi">–</span>
-              {% elif cell == 'excused' %}<span class="mark-cell excused" title="Sababli">S</span>
+              {% if cell.status == 'present' %}<span class="mark-cell present" title="Keldi">+</span>
+              {% elif cell.status == 'late' %}<span class="mark-cell late" title="Kechikdi">K</span>
+              {% elif cell.status == 'absent' %}<span class="mark-cell absent" title="Kelmadi">–</span>
+              {% elif cell.status == 'excused' %}<span class="mark-cell excused" title="Sababli">S</span>
               {% else %}<span class="meta" title="Belgilanmagan">·</span>{% endif %}
+              {% if cell.score is not None %}<span class="cell-score">{{ cell.score }}</span>{% endif %}
             </td>
           {% endfor %}
           <td class="nowrap">
             {% if row.marked %}<strong>{{ row.percent }}%</strong> <span class="meta">{{ row.attended }}/{{ row.marked }}</span>{% else %}—{% endif %}
+          </td>
+          <td>{{ row.avg_score|default_if_none:"—" }}</td>
+          <td class="nowrap">
+            {% if row.rating is not None %}<strong>{{ row.rating }}</strong> <span class="badge{% if row.rank == 1 %} ok{% endif %}">{{ row.rank }}-o‘rin</span>{% else %}—{% endif %}
           </td>
         </tr>
         {% endfor %}

@@ -35,7 +35,10 @@
             </label>
           {% endfor %}
         </div>
-        <input class="input" name="note_{{ row.student.pk }}" value="{{ row.note }}" placeholder="Izoh" maxlength="200" aria-label="{{ row.student.full_name }} uchun izoh">
+        <div class="attendance-extra">
+          <input class="input score-input" name="score_{{ row.student.pk }}" value="{{ row.score|default_if_none:'' }}" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="Ball" aria-label="{{ row.student.full_name }} uchun ball (0–100)">
+          <input class="input" name="note_{{ row.student.pk }}" value="{{ row.note }}" placeholder="Izoh" maxlength="200" aria-label="{{ row.student.full_name }} uchun izoh">
+        </div>
       </fieldset>
     {% empty %}
       <div class="empty">Bu guruhda faol shogird yo‘q. <a href="{% url 'student_create' %}?group={{ lesson.group_id }}">Shogird qo‘shish</a></div>

@@ -44,6 +44,34 @@ Keyingi yangilanishlarni olish: `git pull`, so'ng `pip install -r requirements.t
 python manage.py bootstrap --reset-password --password 'yangi-parol' --no-demo
 ```
 
+## O‘quv markazi ma’lumotlari (guruhlar, o‘quvchilar, mavzular)
+
+Haqiqiy guruhlar va dars rejalari kod ichida, `academy/school_data/` papkasida saqlanadi:
+
+| Fayl | Nima bor |
+|---|---|
+| `starter.py` | Starter kursi: 19 dars (Google, Canva, Figma, Terminal, Scratch, xavfsizlik, yakuniy loyiha) |
+| `python.py` | Python kursi: 34 dars (asoslar → tuzilmalar → sikl/funksiya → modul/fayl/xato → OOP → bot) |
+| `groups.py` | Guruhlar (S-009, S005, P-006), o‘quvchilar, o‘tilgan va qolgan mavzular tartibi |
+
+Har bir dars: maqsad, dars rejasi (daqiqalari bilan), darsdagi masalalar, baholash mezoni (100 ball),
+uy vazifasi va materiallar.
+
+```bash
+python manage.py load_school --reset   # bazani tozalab, shu ma'lumotlarni yuklash (tasdiq so'raydi)
+python manage.py load_school           # fayllarni tahrirlagandan keyin yangilash (hech narsa o'chmaydi)
+```
+
+`--reset` guruh, o‘quvchi, mavzu, dars va yo‘qlamalarni o‘chiradi; foydalanuvchi (login) qoladi.
+Yangi guruh yoki mavzu qo‘shish: `groups.py`/`python.py` ga yozing va `load_school` ni qayta ishga tushiring.
+
+## Baholash va reyting
+
+Yo‘qlama sahifasida har bir o‘quvchiga darsdagi **ball (0–100)** qo‘yiladi (bo‘sh — baholanmagan).
+Guruh jurnalida avtomatik: o‘rtacha ball, davomat foizi va
+**reyting = o‘rtacha ball × 0.7 + davomat × 0.3**, o‘rinlar (teng reytingga bir xil o‘rin).
+Jurnalni “Excel (CSV)” tugmasi bilan yuklab olish mumkin.
+
 ## Imkoniyatlar
 
 - **Bosh sahifa** — bugungi va navbatdagi darslar, haftalik davomat, yakunlanmagan (sanasi o‘tgan) darslar,
@@ -124,8 +152,9 @@ academy/
   services.py    statistika (N+1 so'rovsiz), mavzular parser/import/eksport
   views.py       sahifalar
   forms.py       validatsiya
-  management/commands/   bootstrap, import_topics
-  tests/         62 ta test
+  management/commands/   bootstrap, import_topics, load_school
+  school_data/   guruhlar, o‘quvchilar va dars rejalari
+  tests/         72 ta test
 config/settings.py       .env asosidagi sozlamalar
 templates/, static/      UI
 ```
