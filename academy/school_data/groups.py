@@ -6,6 +6,9 @@ starter.py / python.py dagi mavzularga mos keladi.
 
 from . import GroupData as G
 
+# Barcha guruhlar seshanba, juma va shanba kunlari, ketma-ket soatlarda.
+DAYS = "Se / Ju / Sha"
+
 # Starter bitiruvchilari uchun Python kursi (10 mavzulik modul rejasi bo'yicha):
 # kirish → turlar → operatorlar → shartlar → tuzilmalar → sikllar → funksiyalar →
 # modullar → fayllar/xatolar → loyihalar. OOP va os — Python Pro bosqichida.
@@ -21,6 +24,7 @@ GROUPS = [
     G(
         code="S-009",
         name="S-009 · Starter",
+        schedule=f"{DAYS} 14:00–15:00",
         students=[
             "Karimov Laziz",
             "Karimova Nigina",
@@ -49,6 +53,7 @@ GROUPS = [
     G(
         code="S005",
         name="S005 · Starter",
+        schedule=f"{DAYS} 15:00–16:00",
         students=[
             "Ibrahimov Muxammad ali",
             "Meymonov Murodbek",
@@ -75,6 +80,7 @@ GROUPS = [
     G(
         code="P-006",
         name="P-006 · Python Pro",
+        schedule=f"{DAYS} 16:00–17:00",
         students=[
             "Odilov Saidamir",
             "Xudoynazarov Javoxir",
