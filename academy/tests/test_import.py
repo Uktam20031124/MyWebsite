@@ -96,6 +96,17 @@ class ImportTopicsTests(TestCase):
         self.assertEqual(Module.objects.count(), 2)
         self.assertEqual(Topic.objects.get(title="O'zgaruvchilar").duration_minutes, 120)
 
+    def test_export_escapes_pipe_so_reimport_keeps_columns(self):
+        f.topic(title="Shell | pipe", description="ls | grep py", duration_minutes=45)
+        text = export_topics()
+        Topic.objects.all().delete()
+        import_topics(parse_topics(text))
+        topic = Topic.objects.get()
+        self.assertEqual(
+            (topic.title, topic.description, topic.duration_minutes),
+            ("Shell / pipe", "ls / grep py", 45),
+        )
+
 
 class ImportCommandTests(TestCase):
     def test_command_imports_file_into_group(self):

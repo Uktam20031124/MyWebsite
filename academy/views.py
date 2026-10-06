@@ -1,14 +1,20 @@
+import csv
+
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db import transaction
+from django.core.cache import cache
+from django.db import connection, transaction
 from django.db.models import Count, Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -21,6 +27,7 @@ from django.views.generic import (
 from .forms import (
     GroupForm,
     LessonForm,
+    LoginForm,
     ModuleForm,
     StudentForm,
     TopicForm,
@@ -30,10 +37,13 @@ from .models import Attendance, Group, Lesson, Module, Student, SyllabusItem, To
 from .services import (
     dashboard_payload,
     export_topics,
+    filter_students,
+    group_journal,
     group_progress,
     groups_with_stats,
     import_topics,
     lesson_attendance_summary,
+    percent,
     student_attendance_rate,
     students_with_stats,
 )
@@ -62,6 +72,80 @@ class DeleteMessageMixin:
     def form_valid(self, form):
         messages.success(self.request, self.success_message)
         return super().form_valid(form)
+
+
+def client_ip(request) -> str:
+    if settings.TRUST_X_FORWARDED_FOR:
+        # nginx `proxy_add_x_forwarded_for` mijoz manzilini oxiriga qo'shadi;
+        # chapdagi qiymatlarni mijozning o'zi soxtalashtirishi mumkin.
+        forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
+        if forwarded:
+            return forwarded.split(",")[-1].strip()
+    return request.META.get("REMOTE_ADDR", "")
+
+
+class ThrottledLoginView(auth_views.LoginView):
+    """Login: IP bo'yicha ketma-ket xato urinishlarni cheklaydi (brute-force himoyasi)."""
+
+    template_name = "academy/login.html"
+    authentication_form = LoginForm
+    redirect_authenticated_user = True
+
+    def cache_key(self) -> str:
+        return f"login-fail:{client_ip(self.request)}"
+
+    def post(self, request, *args, **kwargs):
+        if cache.get(self.cache_key(), 0) >= settings.LOGIN_FAILURE_LIMIT:
+            # Bog'lanmagan forma: bloklangan paytda parol umuman tekshirilmaydi.
+            form = self.get_form_class()(
+                request, initial={"username": request.POST.get("username", "")}
+            )
+            context = self.get_context_data(form=form, locked_message=self.locked_message())
+            return self.render_to_response(context, status=429)
+        return super().post(request, *args, **kwargs)
+
+    def form_invalid(self, form):
+        key = self.cache_key()
+        cache.add(key, 0, settings.LOGIN_LOCKOUT_SECONDS)
+        try:
+            failures = cache.incr(key)
+        except ValueError:  # kalit shu orada muddati tugab o'chgan
+            failures = 1
+            cache.set(key, failures, settings.LOGIN_LOCKOUT_SECONDS)
+        if failures >= settings.LOGIN_FAILURE_LIMIT:
+            form.errors.pop("__all__", None)
+            form.add_error(None, self.locked_message())
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        cache.delete(self.cache_key())
+        return super().form_valid(form)
+
+    def locked_message(self) -> str:
+        minutes = max(1, settings.LOGIN_LOCKOUT_SECONDS // 60)
+        return f"Juda ko‘p noto‘g‘ri urinish. {minutes} daqiqadan keyin qayta urinib ko‘ring."
+
+
+@never_cache
+@require_GET
+def healthz(request):
+    """Monitoring uchun: ilova va baza ishlayaptimi (login talab qilinmaydi)."""
+    try:
+        connection.ensure_connection()
+    except Exception:  # har qanday baza xatosi — "ishlamayapti"
+        return JsonResponse({"status": "error"}, status=503)
+    return JsonResponse({"status": "ok"})
+
+
+def csv_response(filename: str, header: list[str], rows) -> HttpResponse:
+    """Excel'da to'g'ri ochiladigan CSV: UTF-8 BOM + ";" ajratuvchi."""
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response.write("﻿")
+    writer = csv.writer(response, delimiter=";")
+    writer.writerow(header)
+    writer.writerows(rows)
+    return response
 
 
 @login_required
@@ -136,6 +220,51 @@ class GroupDetailView(AuthMixin, DetailView):
         return ctx
 
 
+JOURNAL_LIMIT = 30
+
+
+@login_required
+def group_journal_view(request, pk):
+    group = get_object_or_404(Group, pk=pk)
+    export = request.GET.get("format") == "csv"
+    show_all = export or request.GET.get("all") == "1"
+    lessons, rows = group_journal(group, limit=None if show_all else JOURNAL_LIMIT)
+
+    if export:
+        labels = dict(Attendance.Status.choices)
+        header = [
+            "F.I.Sh.",
+            *(f"{lesson.held_on:%d.%m.%Y}" for lesson in lessons),
+            "Keldi",
+            "Belgilangan",
+            "Davomat %",
+        ]
+        data = (
+            [
+                row.student.full_name,
+                *(labels.get(cell, "") for cell in row.cells),
+                row.attended,
+                row.marked,
+                row.percent,
+            ]
+            for row in rows
+        )
+        stamp = timezone.localdate().isoformat()
+        return csv_response(f"jurnal-{group.code}-{stamp}.csv", header, data)
+
+    return render(
+        request,
+        "academy/groups/journal.html",
+        {
+            "group": group,
+            "lessons": lessons,
+            "rows": rows,
+            "show_all": show_all,
+            "limit": JOURNAL_LIMIT,
+        },
+    )
+
+
 @login_required
 @require_POST
 def add_syllabus_item(request, pk):
@@ -199,27 +328,34 @@ class StudentListView(AuthMixin, ListView):
     paginate_by = 40
 
     def get_queryset(self):
-        qs = students_with_stats(Student.objects.select_related("group"))
-        group = int_param(self.request, "group")
-        status = choice_param(self.request, "status", Student.Status)
-        q = self.request.GET.get("q", "").strip()
-        if group:
-            qs = qs.filter(group_id=group)
-        if status:
-            qs = qs.filter(status=status)
-        if q:
-            qs = qs.filter(
-                Q(full_name__icontains=q)
-                | Q(phone__icontains=q)
-                | Q(telegram__icontains=q.lstrip("@"))
-            )
-        return qs
+        return students_with_stats(filter_students(self.request.GET))
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["groups"] = Group.objects.filter(status=Group.Status.ACTIVE)
         ctx["statuses"] = Student.Status.choices
         return ctx
+
+
+@login_required
+def student_export(request):
+    """Shogirdlar CSV — ro'yxat sahifasidagi filtrlar bilan bir xil."""
+    labels = dict(Student.Status.choices)
+    rows = (
+        [
+            s.full_name,
+            s.group.code,
+            s.phone,
+            f"@{s.telegram}" if s.telegram else "",
+            labels.get(s.status, s.status),
+            f"{s.joined_at:%d.%m.%Y}",
+            percent(s.att_present, s.att_total) if s.att_total else "",
+        ]
+        for s in students_with_stats(filter_students(request.GET))
+    )
+    header = ["F.I.Sh.", "Guruh", "Telefon", "Telegram", "Holat", "Qo‘shilgan", "Davomat %"]
+    stamp = timezone.localdate().isoformat()
+    return csv_response(f"shogirdlar-{stamp}.csv", header, rows)
 
 
 class StudentCreateView(AuthMixin, SuccessMessageMixin, CreateView):
@@ -577,7 +713,9 @@ def search(request):
     students = groups = lessons = topics = []
     if q:
         students = Student.objects.filter(
-            Q(full_name__icontains=q) | Q(phone__icontains=q) | Q(telegram__icontains=q)
+            Q(full_name__icontains=q)
+            | Q(phone__icontains=q)
+            | Q(telegram__icontains=q.lstrip("@"))
         ).select_related("group")[:8]
         groups = Group.objects.filter(Q(name__icontains=q) | Q(code__icontains=q))[:6]
         topics = Topic.objects.filter(

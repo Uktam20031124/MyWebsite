@@ -5,6 +5,7 @@
 {% block actions %}
 <a class="btn" href="{% url 'student_create' %}?group={{ group.pk }}">Shogird</a>
 <a class="btn secondary" href="{% url 'lesson_create' %}?group={{ group.pk }}">Dars</a>
+<a class="btn quiet" href="{% url 'group_journal' group.pk %}">Jurnal</a>
 <a class="btn quiet" href="{% url 'group_update' group.pk %}">Tahrir</a>
 {% endblock %}
 {% block content %}

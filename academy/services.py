@@ -79,6 +79,79 @@ def lesson_attendance_summary(lesson: Lesson) -> dict:
     }
 
 
+def filter_students(params, qs=None):
+    """Shogirdlar ro'yxati va CSV eksport uchun umumiy filtr (?group, ?status, ?q)."""
+    qs = Student.objects.select_related("group") if qs is None else qs
+    try:
+        group = int(params.get("group", ""))
+    except ValueError:
+        group = None
+    status = params.get("status", "")
+    q = params.get("q", "").strip()
+    if group:
+        qs = qs.filter(group_id=group)
+    if status in Student.Status.values:
+        qs = qs.filter(status=status)
+    if q:
+        qs = qs.filter(
+            Q(full_name__icontains=q)
+            | Q(phone__icontains=q)
+            | Q(telegram__icontains=q.lstrip("@"))
+        )
+    return qs
+
+
+@dataclass
+class JournalRow:
+    student: Student
+    cells: list  # har bir dars uchun Attendance.Status qiymati yoki ""
+    attended: int
+    marked: int
+
+    @property
+    def percent(self) -> int:
+        return percent(self.attended, self.marked)
+
+
+def group_journal(group: Group, limit: int | None = None):
+    """Guruh jurnali: shogirdlar × darslar (bekor qilinmagan, sana bo'yicha).
+
+    Faqat o'tilgan yoki yo'qlama olingan darslar kiradi. ``limit`` — oxirgi N dars.
+    Jami 3 ta so'rov, shogird/dars soniga bog'liq emas.
+    """
+    lessons = list(
+        group.lessons.exclude(status=Lesson.Status.CANCELLED)
+        .filter(Q(status=Lesson.Status.COMPLETED) | Q(attendances__isnull=False))
+        .distinct()
+        .select_related("topic")
+        .order_by("held_on", "starts_at", "pk")
+    )
+    if limit:
+        lessons = lessons[-limit:]
+    marks = {
+        (a.student_id, a.lesson_id): a.status
+        for a in Attendance.objects.filter(lesson__in=lessons).only(
+            "student_id", "lesson_id", "status"
+        )
+    }
+    marked_ids = {student_id for student_id, _ in marks}
+    students = group.students.filter(
+        Q(status=Student.Status.ACTIVE) | Q(pk__in=marked_ids)
+    )
+    rows = []
+    for student in students:
+        cells = [marks.get((student.pk, lesson.pk), "") for lesson in lessons]
+        rows.append(
+            JournalRow(
+                student=student,
+                cells=cells,
+                attended=sum(c in Attendance.ATTENDED for c in cells),
+                marked=sum(bool(c) for c in cells),
+            )
+        )
+    return lessons, rows
+
+
 def dashboard_payload():
     today = timezone.localdate()
     week_ago = today - timedelta(days=7)
@@ -283,11 +356,17 @@ def export_topics() -> str:
         by_module, key=lambda m: (m is not None, m.order if m else 0, str(m or ""))
     )
 
+    def field_text(value: str) -> str:
+        # "|" import formatida ustun ajratuvchisi — matn ichida qolsa, qayta
+        # importda tavsif/davomiylik siljib ketadi.
+        return " ".join(value.replace("|", "/").split())
+
     blocks = []
     for module in ordered:
         lines = [f"# {module.title}"] if module else []
         for n, t in enumerate(by_module[module], start=1):
-            desc = " ".join(t.description.split())
-            lines.append(f"{n}. {t.title} | {desc} | {t.duration_minutes}")
+            lines.append(
+                f"{n}. {field_text(t.title)} | {field_text(t.description)} | {t.duration_minutes}"
+            )
         blocks.append("\n".join(lines))
     return "\n\n".join(blocks) + "\n" if blocks else ""

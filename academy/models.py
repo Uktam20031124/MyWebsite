@@ -1,5 +1,7 @@
 from django.db import models, transaction
 from django.db.models import Max
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
 
@@ -302,13 +304,22 @@ class Lesson(models.Model):
         return reverse("lesson_detail", args=[self.pk])
 
     def save(self, *args, **kwargs):
+        previous = None
+        if self.pk:
+            previous = (
+                Lesson.objects.filter(pk=self.pk)
+                .values_list("group_id", "topic_id", "status")
+                .first()
+            )
         super().save(*args, **kwargs)
         # Dars qaysi yo'l bilan "o'tildi" bo'lmasin (forma, yo'qlama, tugma),
-        # guruh dasturi bir xil tarzda yangilanadi.
-        if self.status == self.Status.COMPLETED and self.topic_id:
-            SyllabusItem.objects.filter(
-                group_id=self.group_id, topic_id=self.topic_id
-            ).update(status=SyllabusItem.Status.TAUGHT, taught_on=self.held_on)
+        # guruh dasturi bir xil tarzda yangilanadi. Dars "o'tildi"dan qaytarilsa
+        # yoki mavzusi/guruhi almashsa, eski mavzu ham qayta hisoblanadi.
+        if previous and previous[2] == self.Status.COMPLETED:
+            if previous != (self.group_id, self.topic_id, self.status):
+                resync_syllabus_item(previous[0], previous[1])
+        if self.status == self.Status.COMPLETED:
+            resync_syllabus_item(self.group_id, self.topic_id)
 
     def mark_completed(self):
         self.status = self.Status.COMPLETED
@@ -356,3 +367,30 @@ class Attendance(models.Model):
 
     def __str__(self) -> str:
         return f"{self.student} — {self.get_status_display()}"
+
+
+def resync_syllabus_item(group_id, topic_id) -> None:
+    """Guruh dasturidagi mavzu holatini "o'tildi" darslarga moslaydi.
+
+    O'tilgan dars bo'lsa — "o'tildi" (sana: eng so'nggi dars). Bo'lmasa, faqat
+    darsdan kelib chiqqan "o'tildi" holati "rejada"ga qaytadi; "o'tkazib
+    yuborildi" kabi qo'lda qo'yilgan holatlarga tegilmaydi.
+    """
+    if not topic_id:
+        return
+    items = SyllabusItem.objects.filter(group_id=group_id, topic_id=topic_id)
+    last = Lesson.objects.filter(
+        group_id=group_id, topic_id=topic_id, status=Lesson.Status.COMPLETED
+    ).aggregate(d=Max("held_on"))["d"]
+    if last:
+        items.update(status=SyllabusItem.Status.TAUGHT, taught_on=last)
+    else:
+        items.filter(status=SyllabusItem.Status.TAUGHT).update(
+            status=SyllabusItem.Status.PLANNED, taught_on=None
+        )
+
+
+@receiver(post_delete, sender=Lesson)
+def _lesson_deleted(sender, instance, **kwargs):
+    if instance.status == Lesson.Status.COMPLETED:
+        resync_syllabus_item(instance.group_id, instance.topic_id)

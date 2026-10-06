@@ -5,17 +5,38 @@ guruh dasturi, darslar va yo‘qlama.
 
 ## Ishga tushirish
 
+Talab: **Python 3.10+** va **Git**.
+
+**Windows (PowerShell):**
+
+```powershell
+git clone https://github.com/Uktam20031124/MyWebsite.git
+cd MyWebsite
+py -m venv .venv
+.venv\Scripts\Activate.ps1      # xato bersa: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py bootstrap      # ustoz hisobi + namuna ma'lumotlar (faqat bo'sh bazaga)
+python manage.py runserver
+```
+
+**macOS / Linux:**
+
 ```bash
+git clone https://github.com/Uktam20031124/MyWebsite.git
+cd MyWebsite
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env          # ixtiyoriy, dev uchun shart emas
+cp .env.example .env            # ixtiyoriy, dev uchun shart emas
 python manage.py migrate
-python manage.py bootstrap    # ustoz hisobi + namuna ma'lumotlar (faqat bo'sh bazaga)
+python manage.py bootstrap
 python manage.py runserver
 ```
 
 Brauzerda: http://127.0.0.1:8000/ — login `ustoz`, parol `darsxona2026`.
+
+Keyingi yangilanishlarni olish: `git pull`, so'ng `pip install -r requirements.txt` va `python manage.py migrate`.
 
 `bootstrap` qayta ishga tushirilsa mavjud parolni **o‘zgartirmaydi**. Kerak bo‘lsa:
 
@@ -38,6 +59,12 @@ python manage.py bootstrap --reset-password --password 'yangi-parol' --no-demo
 - **Darslar** — dars “o‘tildi” bo‘lsa (forma, yo‘qlama yoki tugma orqali) dastur avtomatik yangilanadi;
   uyga vazifa bo‘sh bo‘lsa, mavzudagi shablon qo‘yiladi.
 - **Yo‘qlama** — klaviatura bilan ishlaydi, “hammasi keldi”, jonli hisoblagich, saqlanmagan o‘zgarish haqida ogohlantirish.
+- **Davomat jurnali** (`Guruh → Jurnal`) — shogirdlar × darslar jadvali, har bir shogird uchun davomat foizi;
+  Excel’da ochiladigan CSV eksport.
+- **Shogirdlar eksporti** — ro‘yxatdagi filtrlar bilan CSV.
+- **Dastur va darslar doim mos** — dars “o‘tildi”dan qaytarilsa, mavzusi almashsa yoki o‘chirilsa,
+  guruh dasturidagi mavzu holati avtomatik qayta hisoblanadi. Bir guruhga bir vaqtda ikki dars yozib bo‘lmaydi.
+- **Login himoyasi** — 5 ta xato urinishdan keyin IP 15 daqiqaga bloklanadi (sozlanadi).
 - Global qidiruv (`/` tugmasi), mobil menyu, chop etish uchun uslub, o‘z 404/403/500 sahifalari.
 
 ## Mavzular formatini qanday yozish kerak
@@ -71,10 +98,11 @@ python manage.py import_topics mavzular.txt --group PY-01 --group DJ-01
 
 ```bash
 python manage.py test
+pip install ruff && ruff check .     # kod sifati (sozlamalar: pyproject.toml)
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) har push’da tekshiruv, migratsiyalar, testlar va
-production sozlamalarini ishga tushiradi.
+GitHub Actions (`.github/workflows/ci.yml`) har push’da Python 3.10/3.12/3.13 da lint, tekshiruv,
+migratsiyalar, testlar va production sozlamalarini ishga tushiradi.
 
 ## Production
 
@@ -84,6 +112,9 @@ production sozlamalarini ishga tushiradi.
 3. `gunicorn config.wsgi -b 127.0.0.1:8000 -w 3` — statikani WhiteNoise beradi, nginx faqat proxy.
 4. HTTPS ortida: HSTS, secure cookie va SSL redirect avtomatik yoqiladi.
 5. SQLite WAL rejimida ishlaydi; zaxira: `sqlite3 db.sqlite3 ".backup backup.sqlite3"`.
+6. nginx ortida: `DJANGO_TRUST_X_FORWARDED_FOR=1` (login himoyasi mijoz IP’sini ko‘rishi uchun) va
+   bir nechta worker uchun `DJANGO_CACHE_DIR=/var/tmp/darsxona-cache` (urinishlar hisobi umumiy bo‘ladi).
+7. Monitoring: `GET /healthz/` → `{"status": "ok"}` (login talab qilmaydi, baza ulanishini tekshiradi).
 
 ## Tuzilma
 
@@ -94,7 +125,7 @@ academy/
   views.py       sahifalar
   forms.py       validatsiya
   management/commands/   bootstrap, import_topics
-  tests/         46 ta test
+  tests/         62 ta test
 config/settings.py       .env asosidagi sozlamalar
 templates/, static/      UI
 ```

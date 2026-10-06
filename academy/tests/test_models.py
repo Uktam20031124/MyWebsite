@@ -36,6 +36,42 @@ class LessonSyllabusSyncTests(TestCase):
         f.lesson(self.group, topic=self.topic)
         self.assertEqual(self.item().status, SyllabusItem.Status.PLANNED)
 
+    def test_uncompleting_lesson_reverts_syllabus(self):
+        lesson = f.lesson(self.group, topic=self.topic, status=Lesson.Status.COMPLETED)
+        lesson.status = Lesson.Status.PLANNED
+        lesson.save()
+        self.assertEqual((self.item().status, self.item().taught_on), (SyllabusItem.Status.PLANNED, None))
+
+    def test_changing_topic_moves_taught_mark(self):
+        other = f.topic()
+        self.group.add_topics([other])
+        lesson = f.lesson(self.group, topic=self.topic, status=Lesson.Status.COMPLETED)
+        lesson.topic = other
+        lesson.save()
+        self.assertEqual(self.item().status, SyllabusItem.Status.PLANNED)
+        self.assertEqual(
+            SyllabusItem.objects.get(group=self.group, topic=other).status,
+            SyllabusItem.Status.TAUGHT,
+        )
+
+    def test_deleting_completed_lesson_reverts_syllabus(self):
+        f.lesson(self.group, topic=self.topic, status=Lesson.Status.COMPLETED).delete()
+        self.assertEqual(self.item().status, SyllabusItem.Status.PLANNED)
+
+    def test_other_completed_lesson_keeps_topic_taught(self):
+        older = f.lesson(self.group, days=-7, topic=self.topic, status=Lesson.Status.COMPLETED)
+        newer = f.lesson(self.group, days=-1, topic=self.topic, status=Lesson.Status.COMPLETED)
+        newer.delete()
+        self.assertEqual(self.item().status, SyllabusItem.Status.TAUGHT)
+        self.assertEqual(self.item().taught_on, older.held_on)
+
+    def test_manual_skip_is_not_overwritten_by_unrelated_revert(self):
+        self.group.syllabus.update(status=SyllabusItem.Status.SKIPPED)
+        lesson = f.lesson(self.group, topic=self.topic)
+        lesson.status = Lesson.Status.CANCELLED
+        lesson.save()
+        self.assertEqual(self.item().status, SyllabusItem.Status.SKIPPED)
+
 
 class SyllabusTests(TestCase):
     def test_add_topics_skips_duplicates_and_appends(self):

@@ -1,0 +1,68 @@
+{% extends "academy/base.html" %}
+{% block title %}Jurnal · {{ group.name }} · Darsxona{% endblock %}
+{% block kicker %}<a href="{{ group.get_absolute_url }}">{{ group.name }}</a> · {{ group.code }}{% endblock %}
+{% block heading %}Davomat jurnali{% endblock %}
+{% block actions %}
+<a class="btn" href="{% url 'group_journal' group.pk %}?format=csv">Excel (CSV)</a>
+<a class="btn quiet" href="{{ group.get_absolute_url }}">Guruhga qaytish</a>
+{% endblock %}
+{% block content %}
+<section class="card">
+  <div class="row-actions journal-legend">
+    <span class="mark-cell present">+</span><span class="meta">keldi</span>
+    <span class="mark-cell late">K</span><span class="meta">kechikdi</span>
+    <span class="mark-cell absent">–</span><span class="meta">kelmadi</span>
+    <span class="mark-cell excused">S</span><span class="meta">sababli</span>
+    <span class="spacer"></span>
+    {% if show_all %}
+      <a class="btn quiet sm" href="{% url 'group_journal' group.pk %}">Oxirgi {{ limit }} dars</a>
+    {% elif lessons|length >= limit %}
+      <a class="btn quiet sm" href="{% url 'group_journal' group.pk %}?all=1">Barcha darslar</a>
+    {% endif %}
+  </div>
+  {% if lessons and rows %}
+  <div class="table-wrap journal-wrap">
+    <table class="journal">
+      <thead>
+        <tr>
+          <th scope="col" class="sticky-col">Shogird</th>
+          {% for lesson in lessons %}
+            <th scope="col" class="date-col">
+              <a href="{{ lesson.get_absolute_url }}" title="{{ lesson.topic.title|default:'Mavzusiz' }}">{{ lesson.held_on|date:"d.m" }}</a>
+            </th>
+          {% endfor %}
+          <th scope="col">Davomat</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <th scope="row" class="sticky-col">
+            <a href="{{ row.student.get_absolute_url }}">{{ row.student.full_name }}</a>
+            {% if row.student.status != 'active' %}<span class="meta block">{{ row.student.get_status_display }}</span>{% endif %}
+          </th>
+          {% for cell in row.cells %}
+            <td class="mark-td">
+              {% if cell == 'present' %}<span class="mark-cell present" title="Keldi">+</span>
+              {% elif cell == 'late' %}<span class="mark-cell late" title="Kechikdi">K</span>
+              {% elif cell == 'absent' %}<span class="mark-cell absent" title="Kelmadi">–</span>
+              {% elif cell == 'excused' %}<span class="mark-cell excused" title="Sababli">S</span>
+              {% else %}<span class="meta" title="Belgilanmagan">·</span>{% endif %}
+            </td>
+          {% endfor %}
+          <td class="nowrap">
+            {% if row.marked %}<strong>{{ row.percent }}%</strong> <span class="meta">{{ row.attended }}/{{ row.marked }}</span>{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty">
+      Jurnal bo‘sh: hali o‘tilgan yoki yo‘qlama olingan dars yo‘q.
+      <a href="{% url 'lesson_create' %}?group={{ group.pk }}">Dars yozish</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
