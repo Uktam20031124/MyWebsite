@@ -7,7 +7,7 @@ from django.core.management.base import CommandError
 from django.test import TestCase
 
 from academy.management.commands.load_school import validate
-from academy.models import Group, Lesson, Module, Student, SyllabusItem, Topic
+from academy.models import Group, Lesson, Student, SyllabusItem, Topic
 from academy.school_data import GroupData, ModuleData, TopicData, all_groups, all_modules
 
 from . import factories as f
@@ -75,11 +75,14 @@ class LoadSchoolCommandTests(TestCase):
         self.assertEqual(item.status, SyllabusItem.Status.TAUGHT)
 
     def test_reset_removes_old_data_but_keeps_users(self):
-        call_command("bootstrap", stdout=StringIO())  # demo ma'lumotlar
+        call_command("bootstrap", no_demo=True, stdout=StringIO())
+        old = f.group(code="OLD-1")
+        f.student(old, full_name="Begona O'quvchi")
+        f.lesson(old, days=-1)
         users = get_user_model().objects.count()
         load(reset=True, yes=True)
         self.assertEqual(set(Group.objects.values_list("code", flat=True)), {"S-009", "S005", "P-006"})
-        self.assertFalse(Module.objects.filter(title="Django").exists())
+        self.assertFalse(Student.objects.filter(full_name="Begona O'quvchi").exists())
         self.assertFalse(Lesson.objects.exists())
         self.assertEqual(get_user_model().objects.count(), users)
 

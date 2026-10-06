@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
 
-from academy.models import Attendance, Group, Lesson, SyllabusItem, Topic
+from academy.models import Attendance, Group, Lesson, Student, SyllabusItem, Topic
 from academy.services import dashboard_payload, groups_with_stats, students_with_stats
 
 from . import factories as f
@@ -169,8 +169,10 @@ class BootstrapCommandTests(TestCase):
         user.refresh_from_db()
         self.assertTrue(user.check_password("my-own-secret-pass"))
         self.assertEqual(Topic.objects.count(), topics)
-        self.assertEqual(Group.objects.count(), 3)
-        self.assertTrue(Topic.objects.filter(module__title="Django").exists())
+        self.assertEqual(
+            set(Group.objects.values_list("code", flat=True)), {"S-009", "S005", "P-006"}
+        )
+        self.assertEqual(Student.objects.count(), 24)
 
     def test_no_demo(self):
         call_command("bootstrap", no_demo=True, password="x-Strong-pass-1", stdout=StringIO())
