@@ -1,62 +1,67 @@
-{% load static %}
-<!doctype html>
+{% load static %}{% with url_name=request.resolver_match.url_name %}<!doctype html>
 <html lang="uz">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17241e">
   <title>{% block title %}Darsxona{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2317241e'/%3E%3Ctext x='16' y='22' font-size='15' text-anchor='middle' fill='%23e8c07a' font-family='Georgia'%3EDx%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
+<a class="skip-link" href="#content">Asosiy qismga o‘tish</a>
 <div class="app">
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <div class="mark">Dx</div>
+      <div class="mark" aria-hidden="true">Dx</div>
       <div>
         <div class="brand-name">Darsxona</div>
         <small>Ustoz CRM</small>
       </div>
+      <button class="nav-toggle" type="button" aria-controls="nav" aria-expanded="false" data-nav-toggle>Menyu</button>
     </div>
-    <nav class="nav">
-      <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Bosh sahifa</a>
-      <a href="{% url 'group_list' %}" class="{% if 'group' in request.resolver_match.url_name %}active{% endif %}">Guruhlar <span class="count">{{ nav_groups }}</span></a>
-      <a href="{% url 'student_list' %}" class="{% if 'student' in request.resolver_match.url_name %}active{% endif %}">Shogirdlar <span class="count">{{ nav_students }}</span></a>
-      <a href="{% url 'topic_list' %}" class="{% if 'topic' in request.resolver_match.url_name %}active{% endif %}">Mavzular</a>
-      <a href="{% url 'lesson_list' %}" class="{% if 'lesson' in request.resolver_match.url_name or request.resolver_match.url_name == 'attendance' %}active{% endif %}">Darslar <span class="count">{{ nav_lessons }}</span></a>
+    <nav class="nav" id="nav" aria-label="Asosiy menyu">
+      <a href="{% url 'dashboard' %}" {% if url_name == 'dashboard' %}class="active" aria-current="page"{% endif %}>Bosh sahifa</a>
+      <a href="{% url 'group_list' %}" {% if 'group' in url_name or 'syllabus' in url_name %}class="active" aria-current="page"{% endif %}>Guruhlar <span class="count">{{ nav_groups }}</span></a>
+      <a href="{% url 'student_list' %}" {% if 'student' in url_name %}class="active" aria-current="page"{% endif %}>Shogirdlar <span class="count">{{ nav_students }}</span></a>
+      <a href="{% url 'topic_list' %}" {% if 'topic' in url_name or 'module' in url_name %}class="active" aria-current="page"{% endif %}>Mavzular <span class="count">{{ nav_topics }}</span></a>
+      <a href="{% url 'lesson_list' %}" {% if 'lesson' in url_name or url_name == 'attendance' %}class="active" aria-current="page"{% endif %}>Darslar <span class="count">{{ nav_lessons }}</span></a>
     </nav>
     <div class="sidebar-foot">
       <div class="user-chip">{{ request.user.get_full_name|default:request.user.username }}</div>
+      {% if request.user.is_staff %}<a class="side-link" href="{% url 'admin:index' %}">Admin panel</a>{% endif %}
       <form method="post" action="{% url 'logout' %}">
         {% csrf_token %}
         <button class="ghost" type="submit">Chiqish</button>
       </form>
     </div>
   </aside>
-  <main class="main">
+  <main class="main" id="content" tabindex="-1">
     <div class="topbar">
       <div>
         <p class="kicker">{% block kicker %}Shaxsiy o‘quv CRM{% endblock %}</p>
         <h1>{% block heading %}{% endblock %}</h1>
       </div>
       <div class="row-actions">
-        <form class="search" action="{% url 'search' %}" method="get">
-          <input name="q" value="{{ request.GET.q }}" placeholder="Qidiruv: shogird, guruh, mavzu">
-          <button class="btn" type="submit">Top</button>
+        <form class="search" action="{% url 'search' %}" method="get" role="search">
+          <label class="sr-only" for="global-search">Qidiruv</label>
+          <input id="global-search" name="q" type="search" value="{% if url_name == 'search' %}{{ request.GET.q }}{% endif %}" placeholder="Qidiruv: shogird, guruh, mavzu" data-hotkey="/">
+          <kbd aria-hidden="true">/</kbd>
         </form>
         {% block actions %}{% endblock %}
       </div>
     </div>
     {% if messages %}
-      <ul class="messages">
-        {% for m in messages %}<li>{{ m }}</li>{% endfor %}
+      <ul class="messages" role="status">
+        {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
       </ul>
     {% endif %}
     {% block content %}{% endblock %}
   </main>
 </div>
-<script src="{% static 'js/app.js' %}"></script>
+<script src="{% static 'js/app.js' %}" defer></script>
 </body>
-</html>
+</html>{% endwith %}

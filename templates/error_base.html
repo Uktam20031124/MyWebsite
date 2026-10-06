@@ -1,0 +1,19 @@
+{% load static %}<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Xatolik · Darsxona</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-card">
+      <p class="kicker">Darsxona</p>
+      <h1 class="display">{% block code %}{% endblock %}</h1>
+      <p class="meta">{% block message %}{% endblock %}</p>
+      <p><a class="btn" href="/">Bosh sahifaga</a></p>
+    </div>
+  </div>
+</body>
+</html>

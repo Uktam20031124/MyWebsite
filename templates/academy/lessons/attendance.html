@@ -7,21 +7,26 @@
 {% endblock %}
 {% block content %}
 <section class="card">
-  <div class="row-actions" style="margin-bottom:16px">
-    <button type="button" class="btn quiet" data-mark-all="present">Hammasi keldi</button>
-    <button type="button" class="btn quiet" data-mark-all="absent">Hammasi kelmadi</button>
+  {% if rows %}
+  <div class="row-actions attendance-tools">
+    <button type="button" class="btn quiet sm" data-mark-all="present">Hammasi keldi</button>
+    <button type="button" class="btn quiet sm" data-mark-all="absent">Hammasi kelmadi</button>
+    <span class="meta" data-attendance-count aria-live="polite"></span>
+    {% if not is_saved %}<span class="badge warn">Hali saqlanmagan</span>{% endif %}
   </div>
-  <form method="post">
+  {% endif %}
+  <form method="post" data-attendance-form data-dirty-guard>
     {% csrf_token %}
     {% for row in rows %}
-      <div class="attendance-row">
-        <div class="person">
-          <span class="avatar">{{ row.student.initials }}</span>
-          <div>
+      <fieldset class="attendance-row">
+        <legend class="person">
+          <span class="avatar" aria-hidden="true">{{ row.student.initials }}</span>
+          <span>
             <strong>{{ row.student.full_name }}</strong>
-            <div class="meta">{{ row.student.phone }}</div>
-          </div>
-        </div>
+            {% if row.student.status != 'active' %}<span class="badge">{{ row.student.get_status_display }}</span>{% endif %}
+            <span class="meta block">{{ row.student.phone }}</span>
+          </span>
+        </legend>
         <div class="pills">
           {% for value, label in statuses %}
             <label>
@@ -30,13 +35,13 @@
             </label>
           {% endfor %}
         </div>
-        <input class="input" name="note_{{ row.student.pk }}" value="{{ row.note }}" placeholder="Izoh">
-      </div>
+        <input class="input" name="note_{{ row.student.pk }}" value="{{ row.note }}" placeholder="Izoh" maxlength="200" aria-label="{{ row.student.full_name }} uchun izoh">
+      </fieldset>
     {% empty %}
-      <div class="empty">Bu guruhda faol shogird yo‘q.</div>
+      <div class="empty">Bu guruhda faol shogird yo‘q. <a href="{% url 'student_create' %}?group={{ lesson.group_id }}">Shogird qo‘shish</a></div>
     {% endfor %}
     {% if rows %}
-      <div class="row-actions" style="margin-top:18px">
+      <div class="row-actions sticky-actions">
         <button class="btn quiet" type="submit">Faqat saqlash</button>
         <button class="btn" type="submit" name="complete" value="1">Saqlash va darsni yakunlash</button>
       </div>

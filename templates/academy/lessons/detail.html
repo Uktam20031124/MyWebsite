@@ -1,7 +1,7 @@
 {% extends "academy/base.html" %}
 {% block title %}{{ lesson }} · Darsxona{% endblock %}
 {% block heading %}{{ lesson.topic.title|default:"Mavzusiz dars" }}{% endblock %}
-{% block kicker %}{{ lesson.group.name }} · {{ lesson.held_on|date:"d.m.Y" }}{% endblock %}
+{% block kicker %}<a href="{{ lesson.group.get_absolute_url }}">{{ lesson.group.name }}</a> · {{ lesson.held_on|date:"d.m.Y" }}{% if lesson.starts_at %} · {{ lesson.starts_at|time:"H:i" }}{% endif %}{% endblock %}
 {% block actions %}
 <a class="btn" href="{% url 'attendance' lesson.pk %}">Yo‘qlama</a>
 <a class="btn quiet" href="{% url 'lesson_update' lesson.pk %}">Tahrir</a>
@@ -18,24 +18,28 @@
     <h2>Yo‘qlama</h2>
     {% for a in attendances %}
       <div class="item">
-        <span class="person"><span class="avatar">{{ a.student.initials }}</span>{{ a.student.full_name }}</span>
+        <a class="person" href="{{ a.student.get_absolute_url }}"><span class="avatar" aria-hidden="true">{{ a.student.initials }}</span>{{ a.student.full_name }}</a>
         <span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% else %}warn{% endif %}">{{ a.get_status_display }}</span>
       </div>
     {% empty %}
-      <div class="empty">Hali yo‘qlama olinmagan. Tugma orqali belgilang.</div>
+      <div class="empty">Hali yo‘qlama olinmagan. <a href="{% url 'attendance' lesson.pk %}">Belgilash</a></div>
     {% endfor %}
   </section>
   <aside class="card">
+    {% if lesson.topic %}
+      <h2>Mavzu</h2>
+      <p><a href="{{ lesson.topic.get_absolute_url }}">{{ lesson.topic.title }}</a>{% if lesson.topic.module %} <span class="meta">· {{ lesson.topic.module.title }}</span>{% endif %}</p>
+    {% endif %}
     <h2>Izohlar</h2>
-    {% if lesson.homework %}<p><strong>Uyga vazifa:</strong> {{ lesson.homework }}</p>{% endif %}
-    {% if lesson.notes %}<p>{{ lesson.notes }}</p>{% else %}<p class="meta">Izoh yo‘q.</p>{% endif %}
+    {% if lesson.homework %}<div class="prose"><strong>Uyga vazifa:</strong>{{ lesson.homework|linebreaks }}</div>{% endif %}
+    {% if lesson.notes %}<div class="prose">{{ lesson.notes|linebreaks }}</div>{% else %}<p class="meta">Izoh yo‘q.</p>{% endif %}
     {% if lesson.status != 'completed' %}
       <form method="post" action="{% url 'lesson_complete' lesson.pk %}">
         {% csrf_token %}
         <button class="btn" type="submit">Dars o‘tildi</button>
       </form>
     {% endif %}
-    <p class="meta" style="margin-top:16px"><a href="{% url 'lesson_delete' lesson.pk %}">Darsni o‘chirish</a></p>
+    <p class="meta mt"><a class="danger-text" href="{% url 'lesson_delete' lesson.pk %}">Darsni o‘chirish</a></p>
   </aside>
 </div>
 {% endblock %}

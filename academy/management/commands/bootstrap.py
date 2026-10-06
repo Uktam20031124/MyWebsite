@@ -1,7 +1,9 @@
+import os
 from datetime import datetime, timedelta
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.utils import timezone
 
 from academy.models import (
@@ -10,26 +12,34 @@ from academy.models import (
     Lesson,
     Student,
     SyllabusItem,
-    Topic,
 )
+from academy.services import import_topics, parse_topics
 
-TOPICS = [
-    ("Kirish va muhit", "Kompyuter, terminal, VS Code, dasturlash nima."),
-    ("O'zgaruvchilar va turlar", "int, str, bool, input/print."),
-    ("Shart operatorlari", "if / elif / else, mantiqiy ifodalar."),
-    ("Sikllar", "for, while, range, break/continue."),
-    ("Funksiyalar", "def, argumentlar, return, scope."),
-    ("Ro'yxat va lug'at", "list, dict, tuple, set."),
-    ("Xatolar va fayllar", "try/except, ochish/yozish."),
-    ("OOP asoslari", "class, obyekt, metodlar."),
-    ("Git va GitHub", "commit, branch, push, PR."),
-    ("HTML asoslari", "semantik markup, formalar."),
-    ("CSS asoslari", "layout, flex, responsive."),
-    ("JavaScript asoslari", "DOM, hodisalar, fetch."),
-    ("Django kirish", "loyiha, app, url, view, template."),
-    ("Django modellar", "ORM, migratsiya, admin."),
-    ("Mini loyiha", "Yakuniy amaliy ish."),
-]
+DEFAULT_PASSWORD = "darsxona2026"
+
+# Import formatidagi demo katalog (ommaviy import bilan bir xil yo'ldan o'tadi).
+DEMO_TOPICS = """
+# Python asoslari
+1. Kirish va muhit — Kompyuter, terminal, VS Code, dasturlash nima.
+2. O'zgaruvchilar va turlar — int, str, bool, input/print.
+3. Shart operatorlari — if / elif / else, mantiqiy ifodalar.
+4. Sikllar — for, while, range, break/continue.
+5. Funksiyalar — def, argumentlar, return, scope.
+6. Ro'yxat va lug'at — list, dict, tuple, set.
+7. Xatolar va fayllar — try/except, ochish/yozish.
+8. OOP asoslari — class, obyekt, metodlar.
+
+# Veb asoslari
+1. Git va GitHub — commit, branch, push, PR.
+2. HTML asoslari — semantik markup, formalar.
+3. CSS asoslari — layout, flex, responsive.
+4. JavaScript asoslari — DOM, hodisalar, fetch.
+
+# Django
+1. Django kirish — loyiha, app, url, view, template.
+2. Django modellar — ORM, migratsiya, admin.
+3. Mini loyiha — Yakuniy amaliy ish.
+"""
 
 
 STUDENTS = {
@@ -62,12 +72,32 @@ STUDENTS = {
 
 
 class Command(BaseCommand):
-    help = "Ustoz hisobi va namuna ma'lumotlarini yaratadi."
+    help = (
+        "Ustoz hisobini yaratadi va bo'sh bazaga namuna ma'lumot yozadi. "
+        "Parol: --password yoki DARSXONA_PASSWORD (aks holda dev paroli)."
+    )
 
+    def add_arguments(self, parser):
+        parser.add_argument("--username", default="ustoz")
+        parser.add_argument("--password", default=None)
+        parser.add_argument(
+            "--reset-password",
+            action="store_true",
+            help="Mavjud foydalanuvchi parolini ham qayta o'rnatish",
+        )
+        parser.add_argument(
+            "--no-demo", action="store_true", help="Namuna guruh/shogird/darslarsiz"
+        )
+
+    @transaction.atomic
     def handle(self, *args, **options):
+        username = options["username"]
+        password = (
+            options["password"] or os.environ.get("DARSXONA_PASSWORD") or DEFAULT_PASSWORD
+        )
         User = get_user_model()
         user, created = User.objects.get_or_create(
-            username="ustoz",
+            username=username,
             defaults={
                 "first_name": "Oktam",
                 "last_name": "Mustafoyev",
@@ -75,27 +105,25 @@ class Command(BaseCommand):
                 "is_superuser": True,
             },
         )
-        user.set_password("darsxona2026")
-        user.save()
-        self.stdout.write(
-            self.style.SUCCESS(
-                "Kirish: ustoz / darsxona2026"
-                if created
-                else "Ustoz paroli yangilandi: ustoz / darsxona2026"
+        if created or options["reset_password"]:
+            user.set_password(password)
+            user.save()
+            shown = password if password == DEFAULT_PASSWORD else "********"
+            self.stdout.write(self.style.SUCCESS(f"Kirish: {username} / {shown}"))
+        else:
+            self.stdout.write(f"“{username}” allaqachon bor — parol o'zgartirilmadi.")
+        if password == DEFAULT_PASSWORD and (created or options["reset_password"]):
+            self.stdout.write(
+                self.style.WARNING("Diqqat: dev paroli ishlatildi. Production'da almashtiring!")
             )
-        )
 
-        topics = []
-        for i, (title, desc) in enumerate(TOPICS, start=1):
-            t, _ = Topic.objects.get_or_create(
-                title=title,
-                defaults={
-                    "description": desc,
-                    "order": i * 10,
-                    "duration_minutes": 90,
-                },
-            )
-            topics.append(t)
+        if options["no_demo"]:
+            return
+        if Group.objects.exists():
+            self.stdout.write("Bazada guruhlar bor — namuna ma'lumotlar yozilmadi.")
+            return
+
+        topics = import_topics(parse_topics(DEMO_TOPICS)).topics
 
         groups_spec = [
             ("Python asoslari N1", "PY-01", "Du / Chor 18:00–20:00", "Xona 3"),

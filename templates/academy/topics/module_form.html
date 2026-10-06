@@ -1,0 +1,17 @@
+{% extends "academy/base.html" %}
+{% block title %}Bo‘lim · Darsxona{% endblock %}
+{% block heading %}{% if form.instance.pk %}{{ form.instance.title }}{% else %}Yangi bo‘lim{% endif %}{% endblock %}
+{% block kicker %}Mavzular bo‘limi{% endblock %}
+{% block content %}
+<section class="card form-card">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "academy/includes/form_fields.html" with wide="description" %}
+    <div class="row-actions">
+      <button class="btn" type="submit">Saqlash</button>
+      <a class="btn quiet" href="{% url 'topic_list' %}">Bekor</a>
+      {% if form.instance.pk %}<a class="btn quiet danger-text" href="{% url 'module_delete' form.instance.pk %}">O‘chirish</a>{% endif %}
+    </div>
+  </form>
+</section>
+{% endblock %}

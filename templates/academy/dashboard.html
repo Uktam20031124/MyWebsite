@@ -34,7 +34,7 @@
     {% else %}
       <div class="empty">Bugun rejalashtirilgan dars yo‘q.</div>
     {% endif %}
-    <h2 style="margin-top:24px">Yaqinda o‘tilgan</h2>
+    <h2 class="mt">Yaqinda o‘tilgan</h2>
     {% for lesson in recent %}
       <div class="item">
         <div>
@@ -52,19 +52,19 @@
     <section class="card">
       <h2>Guruhlar progressi</h2>
       {% for row in progress_rows %}
-        <div style="margin-bottom:16px">
-          <div class="item" style="border:0;padding:0">
+        <div class="progress-row">
+          <div class="item flat">
             <a href="{{ row.group.get_absolute_url }}"><strong>{{ row.group.name }}</strong></a>
             <span class="meta">{{ row.student_count }} shogird</span>
           </div>
           <div class="meta">{{ row.taught }} / {{ row.total }} mavzu</div>
-          <div class="progress"><span style="width:{{ row.percent }}%"></span></div>
+          <div class="progress" role="progressbar" aria-label="{{ row.group.name }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ row.percent }}"><span style="width:{{ row.percent }}%"></span></div>
         </div>
       {% empty %}
         <div class="empty">Guruh qo‘shing.</div>
       {% endfor %}
     </section>
-    <section class="card" style="margin-top:16px">
+    <section class="card mt">
       <h2>Navbatdagi darslar</h2>
       {% for lesson in upcoming %}
         <div class="item">
@@ -78,13 +78,28 @@
         <div class="empty">Reja bo‘sh.</div>
       {% endfor %}
     </section>
+    {% if overdue %}
+    <section class="card mt">
+      <h2>Yakunlanmagan darslar</h2>
+      <p class="meta">Sanasi o‘tgan, lekin hali “Rejada” turibdi.</p>
+      {% for lesson in overdue %}
+        <div class="item">
+          <div>
+            <a href="{{ lesson.get_absolute_url }}"><strong>{{ lesson.group.code }}</strong> · {{ lesson.topic.title|default:"Mavzusiz" }}</a>
+            <div class="meta">{{ lesson.held_on|date:"d.m.Y" }}</div>
+          </div>
+          <a class="btn quiet sm" href="{% url 'attendance' lesson.pk %}">Yo‘qlama</a>
+        </div>
+      {% endfor %}
+    </section>
+    {% endif %}
     {% if missing %}
-    <section class="card" style="margin-top:16px">
+    <section class="card mt">
       <h2>Haftada 2+ qoldirgan</h2>
       {% for s in missing %}
         <div class="item">
           <a href="{{ s.get_absolute_url }}">{{ s.full_name }}</a>
-          <span class="badge bad">{{ s.group.code }}</span>
+          <span class="badge bad">{{ s.group.code }} · {{ s.absents }}</span>
         </div>
       {% endfor %}
     </section>

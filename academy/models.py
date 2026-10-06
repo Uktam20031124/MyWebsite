@@ -1,4 +1,5 @@
-from django.db import models
+from django.db import models, transaction
+from django.db.models import Max
 from django.urls import reverse
 from django.utils import timezone
 
@@ -44,11 +45,28 @@ class Group(models.Model):
     def active_students(self):
         return self.students.filter(status=Student.Status.ACTIVE)
 
-    def syllabus_stats(self):
-        total = self.syllabus.count()
-        taught = self.syllabus.filter(status=SyllabusItem.Status.TAUGHT).count()
-        pct = int(round((taught / total) * 100)) if total else 0
-        return {"total": total, "taught": taught, "percent": pct}
+    def next_syllabus_item(self):
+        """Dasturdagi navbatdagi (hali o'tilmagan) mavzu."""
+        return (
+            self.syllabus.filter(status=SyllabusItem.Status.PLANNED)
+            .select_related("topic")
+            .first()
+        )
+
+    def add_topics(self, topics) -> int:
+        """Mavzularni dastur oxiriga qo'shadi; mavjudlarini o'tkazib yuboradi."""
+        with transaction.atomic():
+            existing = set(self.syllabus.values_list("topic_id", flat=True))
+            order = self.syllabus.aggregate(m=Max("order"))["m"] or 0
+            new_items = []
+            for topic in topics:
+                if topic.pk in existing:
+                    continue
+                order += 1
+                existing.add(topic.pk)
+                new_items.append(SyllabusItem(group=self, topic=topic, order=order))
+            SyllabusItem.objects.bulk_create(new_items)
+        return len(new_items)
 
 
 class Student(models.Model):
@@ -100,38 +118,82 @@ class Student(models.Model):
             return parts[0][:2].upper()
         return (parts[0][0] + parts[-1][0]).upper()
 
-    def attendance_stats(self):
-        total = self.attendances.count()
-        if not total:
-            return {"total": 0, "present": 0, "percent": 0}
-        present = self.attendances.filter(
-            status__in=[Attendance.Status.PRESENT, Attendance.Status.LATE]
-        ).count()
-        return {
-            "total": total,
-            "present": present,
-            "percent": int(round((present / total) * 100)),
-        }
+    def save(self, *args, **kwargs):
+        self.telegram = self.telegram.strip().lstrip("@")
+        super().save(*args, **kwargs)
+
+
+class Module(models.Model):
+    """Mavzular bo'limi (kurs qismi): masalan, "Python asoslari"."""
+
+    title = models.CharField("Bo'lim", max_length=160, unique=True)
+    description = models.TextField("Tavsif", blank=True)
+    order = models.PositiveIntegerField("Tartib", default=0, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "title"]
+        verbose_name = "Bo'lim"
+        verbose_name_plural = "Bo'limlar"
+
+    def __str__(self) -> str:
+        return self.title
+
+    def get_absolute_url(self):
+        return f"{reverse('topic_list')}?module={self.pk}"
 
 
 class Topic(models.Model):
+    module = models.ForeignKey(
+        Module,
+        on_delete=models.SET_NULL,
+        related_name="topics",
+        verbose_name="Bo'lim",
+        null=True,
+        blank=True,
+    )
     title = models.CharField("Mavzu", max_length=200)
     description = models.TextField("Tavsif", blank=True)
+    homework = models.TextField(
+        "Uyga vazifa (shablon)",
+        blank=True,
+        help_text="Shu mavzuda dars yaratilganda avtomatik qo'yiladi.",
+    )
+    resources = models.TextField(
+        "Materiallar",
+        blank=True,
+        help_text="Har qatorda bitta havola yoki manba.",
+    )
     duration_minutes = models.PositiveIntegerField("Davomiyligi (daq.)", default=90)
     order = models.PositiveIntegerField("Tartib", default=0, db_index=True)
     is_active = models.BooleanField("Faol", default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["order", "title"]
+        ordering = ["module__order", "module__title", "order", "title"]
         verbose_name = "Mavzu"
         verbose_name_plural = "Mavzular"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["module", "title"], name="uniq_topic_title_per_module"
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.title
 
     def get_absolute_url(self):
-        return reverse("topic_list")
+        return reverse("topic_detail", args=[self.pk])
+
+    def resource_list(self) -> list[dict]:
+        items = []
+        for line in self.resources.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            is_link = line.startswith(("http://", "https://"))
+            items.append({"text": line, "url": line if is_link else ""})
+        return items
 
 
 class SyllabusItem(models.Model):
@@ -164,12 +226,31 @@ class SyllabusItem(models.Model):
 
     class Meta:
         ordering = ["order", "id"]
-        unique_together = [("group", "topic")]
         verbose_name = "Guruh mavzusi"
         verbose_name_plural = "Guruh mavzulari"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["group", "topic"], name="uniq_syllabus_group_topic"
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.group.code}: {self.topic.title}"
+
+    def move(self, direction: str) -> bool:
+        """Elementni yuqoriga ("up") yoki pastga ("down") siljitadi."""
+        siblings = self.group.syllabus.all()
+        if direction == "up":
+            other = siblings.filter(order__lt=self.order).order_by("-order", "-id").first()
+        else:
+            other = siblings.filter(order__gt=self.order).order_by("order", "id").first()
+        if other is None:
+            return False
+        with transaction.atomic():
+            self.order, other.order = other.order, self.order
+            self.save(update_fields=["order"])
+            other.save(update_fields=["order"])
+        return True
 
 
 class Lesson(models.Model):
@@ -220,13 +301,18 @@ class Lesson(models.Model):
     def get_absolute_url(self):
         return reverse("lesson_detail", args=[self.pk])
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Dars qaysi yo'l bilan "o'tildi" bo'lmasin (forma, yo'qlama, tugma),
+        # guruh dasturi bir xil tarzda yangilanadi.
+        if self.status == self.Status.COMPLETED and self.topic_id:
+            SyllabusItem.objects.filter(
+                group_id=self.group_id, topic_id=self.topic_id
+            ).update(status=SyllabusItem.Status.TAUGHT, taught_on=self.held_on)
+
     def mark_completed(self):
         self.status = self.Status.COMPLETED
         self.save(update_fields=["status"])
-        if self.topic_id:
-            SyllabusItem.objects.filter(
-                group=self.group, topic=self.topic
-            ).update(status=SyllabusItem.Status.TAUGHT, taught_on=self.held_on)
 
 
 class Attendance(models.Model):
@@ -235,6 +321,9 @@ class Attendance(models.Model):
         ABSENT = "absent", "Kelmadi"
         LATE = "late", "Kechikdi"
         EXCUSED = "excused", "Sababli"
+
+    # Davomat foizida "keldi" deb hisoblanadigan holatlar.
+    ATTENDED = (Status.PRESENT, Status.LATE)
 
     lesson = models.ForeignKey(
         Lesson,
@@ -257,9 +346,13 @@ class Attendance(models.Model):
     note = models.CharField("Izoh", max_length=200, blank=True)
 
     class Meta:
-        unique_together = [("lesson", "student")]
         verbose_name = "Yo'qlama"
         verbose_name_plural = "Yo'qlamalar"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lesson", "student"], name="uniq_attendance_lesson_student"
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.student} — {self.get_status_display()}"

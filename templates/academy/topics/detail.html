@@ -1,0 +1,59 @@
+{% extends "academy/base.html" %}
+{% block title %}{{ topic.title }} · Darsxona{% endblock %}
+{% block kicker %}{% if topic.module %}<a href="{{ topic.module.get_absolute_url }}">{{ topic.module.title }}</a>{% else %}Bo‘limsiz{% endif %} · {{ topic.duration_minutes }} daq.{% endblock %}
+{% block heading %}{{ topic.title }}{% endblock %}
+{% block actions %}
+<a class="btn" href="{% url 'lesson_create' %}?topic={{ topic.pk }}">Dars yozish</a>
+<a class="btn quiet" href="{% url 'topic_update' topic.pk %}">Tahrir</a>
+{% endblock %}
+{% block content %}
+{% if not topic.is_active %}<div class="notice">Bu mavzu yashirilgan: yangi dars va dasturlarda ko‘rinmaydi.</div>{% endif %}
+<div class="layout-2">
+  <section class="card">
+    <h2>Tavsif</h2>
+    {% if topic.description %}<div class="prose">{{ topic.description|linebreaks }}</div>{% else %}<p class="meta">Tavsif yozilmagan.</p>{% endif %}
+    {% if topic.homework %}
+      <h3>Uyga vazifa shabloni</h3>
+      <div class="prose">{{ topic.homework|linebreaks }}</div>
+    {% endif %}
+    {% with resources=topic.resource_list %}
+      {% if resources %}
+        <h3>Materiallar</h3>
+        <ul class="resources">
+          {% for r in resources %}
+            <li>{% if r.url %}<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.text }}</a>{% else %}{{ r.text }}{% endif %}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    <nav class="row-actions prev-next" aria-label="Bo‘lim ichida">
+      {% if prev_id %}<a class="btn quiet" href="{% url 'topic_detail' prev_id %}">← Oldingi mavzu</a>{% endif %}
+      {% if next_id %}<a class="btn quiet" href="{% url 'topic_detail' next_id %}">Keyingi mavzu →</a>{% endif %}
+    </nav>
+  </section>
+  <aside>
+    <section class="card">
+      <h2>Guruhlar dasturida</h2>
+      {% for item in syllabus_items %}
+        <div class="item">
+          <a href="{{ item.group.get_absolute_url }}#syllabus-{{ item.pk }}">{{ item.group.name }}</a>
+          <span class="badge {% if item.status == 'taught' %}ok{% elif item.status == 'skipped' %}warn{% else %}plan{% endif %}">{{ item.get_status_display }}{% if item.taught_on %} · {{ item.taught_on|date:"d.m" }}{% endif %}</span>
+        </div>
+      {% empty %}
+        <div class="empty">Hech bir guruh dasturida yo‘q.</div>
+      {% endfor %}
+    </section>
+    <section class="card mt">
+      <h2>Darslar</h2>
+      {% for lesson in lessons %}
+        <div class="item">
+          <a href="{{ lesson.get_absolute_url }}">{{ lesson.group.code }} · {{ lesson.held_on|date:"d.m.Y" }}</a>
+          <span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}plan{% endif %}">{{ lesson.get_status_display }}</span>
+        </div>
+      {% empty %}
+        <div class="empty">Bu mavzuda dars yozilmagan.</div>
+      {% endfor %}
+    </section>
+  </aside>
+</div>
+{% endblock %}
