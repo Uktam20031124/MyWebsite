@@ -1,0 +1,41 @@
+{% extends "academy/base.html" %}
+{% block title %}{{ lesson }} · Darsxona{% endblock %}
+{% block heading %}{{ lesson.topic.title|default:"Mavzusiz dars" }}{% endblock %}
+{% block kicker %}{{ lesson.group.name }} · {{ lesson.held_on|date:"d.m.Y" }}{% endblock %}
+{% block actions %}
+<a class="btn" href="{% url 'attendance' lesson.pk %}">Yo‘qlama</a>
+<a class="btn quiet" href="{% url 'lesson_update' lesson.pk %}">Tahrir</a>
+{% endblock %}
+{% block content %}
+<section class="grid-stats">
+  <article class="stat"><div class="stat-n">{{ summary.present }}</div><p>Keldi</p></article>
+  <article class="stat"><div class="stat-n">{{ summary.late }}</div><p>Kechikdi</p></article>
+  <article class="stat"><div class="stat-n">{{ summary.absent }}</div><p>Kelmadi</p></article>
+  <article class="stat"><div class="stat-n">{{ lesson.get_status_display }}</div><p>Dars holati</p></article>
+</section>
+<div class="layout-2">
+  <section class="card">
+    <h2>Yo‘qlama</h2>
+    {% for a in attendances %}
+      <div class="item">
+        <span class="person"><span class="avatar">{{ a.student.initials }}</span>{{ a.student.full_name }}</span>
+        <span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% else %}warn{% endif %}">{{ a.get_status_display }}</span>
+      </div>
+    {% empty %}
+      <div class="empty">Hali yo‘qlama olinmagan. Tugma orqali belgilang.</div>
+    {% endfor %}
+  </section>
+  <aside class="card">
+    <h2>Izohlar</h2>
+    {% if lesson.homework %}<p><strong>Uyga vazifa:</strong> {{ lesson.homework }}</p>{% endif %}
+    {% if lesson.notes %}<p>{{ lesson.notes }}</p>{% else %}<p class="meta">Izoh yo‘q.</p>{% endif %}
+    {% if lesson.status != 'completed' %}
+      <form method="post" action="{% url 'lesson_complete' lesson.pk %}">
+        {% csrf_token %}
+        <button class="btn" type="submit">Dars o‘tildi</button>
+      </form>
+    {% endif %}
+    <p class="meta" style="margin-top:16px"><a href="{% url 'lesson_delete' lesson.pk %}">Darsni o‘chirish</a></p>
+  </aside>
+</div>
+{% endblock %}

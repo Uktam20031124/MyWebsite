@@ -1,0 +1,23 @@
+{% extends "academy/base.html" %}
+{% block title %}Dars · Darsxona{% endblock %}
+{% block heading %}{% if form.instance.pk %}Darsni tahrirlash{% else %}Yangi dars{% endif %}{% endblock %}
+{% block content %}
+<section class="card form-card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="field">{{ form.group.label_tag }}{{ form.group }}</div>
+      <div class="field">{{ form.topic.label_tag }}{{ form.topic }}</div>
+      <div class="field">{{ form.held_on.label_tag }}{{ form.held_on }}</div>
+      <div class="field">{{ form.starts_at.label_tag }}{{ form.starts_at }}</div>
+      <div class="field">{{ form.status.label_tag }}{{ form.status }}</div>
+      <div class="field full">{{ form.homework.label_tag }}{{ form.homework }}</div>
+      <div class="field full">{{ form.notes.label_tag }}{{ form.notes }}</div>
+    </div>
+    <div class="row-actions">
+      <button class="btn" type="submit">Saqlash</button>
+      <a class="btn quiet" href="{% url 'lesson_list' %}">Bekor</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

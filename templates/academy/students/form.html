@@ -1,0 +1,23 @@
+{% extends "academy/base.html" %}
+{% block title %}{% if form.instance.pk %}Tahrir{% else %}Yangi shogird{% endif %} · Darsxona{% endblock %}
+{% block heading %}{% if form.instance.pk %}{{ form.instance.full_name }}{% else %}Yangi shogird{% endif %}{% endblock %}
+{% block content %}
+<section class="card form-card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="field">{{ form.full_name.label_tag }}{{ form.full_name }}</div>
+      <div class="field">{{ form.group.label_tag }}{{ form.group }}</div>
+      <div class="field">{{ form.phone.label_tag }}{{ form.phone }}</div>
+      <div class="field">{{ form.telegram.label_tag }}{{ form.telegram }}</div>
+      <div class="field">{{ form.status.label_tag }}{{ form.status }}</div>
+      <div class="field">{{ form.joined_at.label_tag }}{{ form.joined_at }}</div>
+      <div class="field full">{{ form.notes.label_tag }}{{ form.notes }}</div>
+    </div>
+    <div class="row-actions">
+      <button class="btn" type="submit">Saqlash</button>
+      <a class="btn quiet" href="{% url 'student_list' %}">Bekor</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

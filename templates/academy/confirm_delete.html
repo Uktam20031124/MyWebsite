@@ -1,0 +1,15 @@
+{% extends "academy/base.html" %}
+{% block title %}O‘chirish · Darsxona{% endblock %}
+{% block heading %}O‘chirishni tasdiqlaysizmi?{% endblock %}
+{% block content %}
+<section class="card form-card">
+  <p><strong>{{ object }}</strong> o‘chiriladi. Bu amalni qaytarib bo‘lmaydi.</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="row-actions">
+      <button class="btn danger" type="submit">Ha, o‘chirish</button>
+      <a class="btn quiet" href="javascript:history.back()">Bekor</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "academy/base.html" %}
+{% block title %}{{ group.name }} · Darsxona{% endblock %}
+{% block heading %}{{ group.name }}{% endblock %}
+{% block kicker %}{{ group.code }} · {{ group.schedule }}{% endblock %}
+{% block actions %}
+<a class="btn" href="{% url 'student_create' %}?group={{ group.pk }}">Shogird</a>
+<a class="btn secondary" href="{% url 'lesson_create' %}?group={{ group.pk }}">Dars</a>
+<a class="btn quiet" href="{% url 'group_update' group.pk %}">Tahrir</a>
+{% endblock %}
+{% block content %}
+<section class="grid-stats">
+  <article class="stat"><div class="stat-n">{{ students|length }}</div><p>Shogirdlar</p></article>
+  <article class="stat"><div class="stat-n">{{ progress.percent }}%</div><p>Dastur bajarilishi</p></article>
+  <article class="stat"><div class="stat-n">{{ progress.taught }}</div><p>O‘tilgan mavzu</p></article>
+  <article class="stat"><div class="stat-n">{{ group.room|default:"—" }}</div><p>Xona</p></article>
+</section>
+
+<div class="layout-2">
+  <section class="card">
+    <h2>Dastur (mavzular)</h2>
+    <form method="post" action="{% url 'syllabus_add' group.pk %}" class="filters">
+      {% csrf_token %}
+      <select class="input" name="topic" required>
+        <option value="">Katalogdan mavzu qo‘shish</option>
+        {% for t in all_topics %}
+          <option value="{{ t.pk }}">{{ t.title }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn" type="submit">Qo‘shish</button>
+    </form>
+    <div class="syllabus">
+      {% for item in syllabus %}
+        <div class="syllabus-item">
+          <span class="num">{{ item.order }}</span>
+          <div>
+            <strong>{{ item.topic.title }}</strong>
+            <div class="meta">
+              {{ item.get_status_display }}
+              {% if item.taught_on %} · {{ item.taught_on|date:"d.m.Y" }}{% endif %}
+            </div>
+          </div>
+          <form method="post" action="{% url 'syllabus_toggle' group.pk item.pk %}" class="row-actions">
+            {% csrf_token %}
+            {% if item.status != 'taught' %}
+              <button class="btn quiet" name="action" value="taught">O‘tildi</button>
+            {% else %}
+              <button class="btn quiet" name="action" value="planned">Rejaga</button>
+            {% endif %}
+            <button class="btn quiet" name="action" value="skip">O‘tkazish</button>
+            <button class="btn quiet" name="action" value="delete">O‘chirish</button>
+          </form>
+        </div>
+      {% empty %}
+        <div class="empty">Dastur bo‘sh. Avval katalogga mavzu qo‘shing, so‘ng guruhga biriktiring.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <aside>
+    <section class="card">
+      <h2>Shogirdlar</h2>
+      {% for s in students %}
+        <div class="item">
+          <a class="person" href="{{ s.get_absolute_url }}">
+            <span class="avatar">{{ s.initials }}</span>
+            <span>{{ s.full_name }}<div class="meta">{{ s.get_status_display }}</div></span>
+          </a>
+        </div>
+      {% empty %}
+        <div class="empty">Hali shogird yo‘q.</div>
+      {% endfor %}
+    </section>
+    <section class="card" style="margin-top:16px">
+      <h2>So‘nggi darslar</h2>
+      {% for lesson in lessons %}
+        <div class="item">
+          <div>
+            <a href="{{ lesson.get_absolute_url }}">{{ lesson.topic.title|default:"Mavzusiz" }}</a>
+            <div class="meta">{{ lesson.held_on|date:"d.m.Y" }}</div>
+          </div>
+          <span class="badge">{{ lesson.get_status_display }}</span>
+        </div>
+      {% empty %}
+        <div class="empty">Dars yozilmagan.</div>
+      {% endfor %}
+    </section>
+    <p class="meta" style="margin-top:12px">
+      <a href="{% url 'group_delete' group.pk %}">Guruhni o‘chirish</a>
+    </p>
+  </aside>
+</div>
+{% endblock %}

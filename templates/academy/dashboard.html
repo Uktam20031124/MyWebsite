@@ -1,0 +1,94 @@
+{% extends "academy/base.html" %}
+{% block title %}Bosh sahifa · Darsxona{% endblock %}
+{% block kicker %}{{ today|date:"l, d F Y" }}{% endblock %}
+{% block heading %}Bugungi darsxona{% endblock %}
+{% block actions %}
+<a class="btn" href="{% url 'lesson_create' %}">Yangi dars</a>
+{% endblock %}
+{% block content %}
+<section class="grid-stats">
+  <article class="stat"><div class="stat-n">{{ stats.groups }}</div><p>Faol guruh</p></article>
+  <article class="stat"><div class="stat-n">{{ stats.students }}</div><p>Faol shogird</p></article>
+  <article class="stat"><div class="stat-n">{{ stats.lessons_week }}</div><p>Haftalik dars</p></article>
+  <article class="stat"><div class="stat-n">{{ stats.attendance_pct }}%</div><p>Haftalik davomat</p></article>
+</section>
+
+<div class="layout-2">
+  <section class="card">
+    <h2>Bugungi darslar</h2>
+    {% if today_lessons %}
+      <div class="list">
+        {% for lesson in today_lessons %}
+          <div class="item">
+            <div>
+              <strong>{{ lesson.group.name }}</strong>
+              <div class="meta">{{ lesson.starts_at|time:"H:i"|default:"—" }} · {{ lesson.topic.title|default:"Mavzu belgilanmagan" }}</div>
+            </div>
+            <div class="row-actions">
+              <span class="badge {{ lesson.status }}">{{ lesson.get_status_display }}</span>
+              <a class="btn quiet" href="{% url 'attendance' lesson.pk %}">Yo‘qlama</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">Bugun rejalashtirilgan dars yo‘q.</div>
+    {% endif %}
+    <h2 style="margin-top:24px">Yaqinda o‘tilgan</h2>
+    {% for lesson in recent %}
+      <div class="item">
+        <div>
+          <a href="{{ lesson.get_absolute_url }}"><strong>{{ lesson.group.code }}</strong> · {{ lesson.topic.title|default:"Mavzusiz" }}</a>
+          <div class="meta">{{ lesson.held_on|date:"d.m.Y" }}</div>
+        </div>
+        <span class="badge ok">O‘tildi</span>
+      </div>
+    {% empty %}
+      <div class="empty">Hali yakunlangan dars yo‘q.</div>
+    {% endfor %}
+  </section>
+
+  <aside>
+    <section class="card">
+      <h2>Guruhlar progressi</h2>
+      {% for row in progress_rows %}
+        <div style="margin-bottom:16px">
+          <div class="item" style="border:0;padding:0">
+            <a href="{{ row.group.get_absolute_url }}"><strong>{{ row.group.name }}</strong></a>
+            <span class="meta">{{ row.student_count }} shogird</span>
+          </div>
+          <div class="meta">{{ row.taught }} / {{ row.total }} mavzu</div>
+          <div class="progress"><span style="width:{{ row.percent }}%"></span></div>
+        </div>
+      {% empty %}
+        <div class="empty">Guruh qo‘shing.</div>
+      {% endfor %}
+    </section>
+    <section class="card" style="margin-top:16px">
+      <h2>Navbatdagi darslar</h2>
+      {% for lesson in upcoming %}
+        <div class="item">
+          <div>
+            <strong>{{ lesson.group.code }}</strong>
+            <div class="meta">{{ lesson.held_on|date:"d.m" }} · {{ lesson.topic.title|default:"Mavzu yo‘q" }}</div>
+          </div>
+          <a class="btn quiet" href="{{ lesson.get_absolute_url }}">Ochish</a>
+        </div>
+      {% empty %}
+        <div class="empty">Reja bo‘sh.</div>
+      {% endfor %}
+    </section>
+    {% if missing %}
+    <section class="card" style="margin-top:16px">
+      <h2>Haftada 2+ qoldirgan</h2>
+      {% for s in missing %}
+        <div class="item">
+          <a href="{{ s.get_absolute_url }}">{{ s.full_name }}</a>
+          <span class="badge bad">{{ s.group.code }}</span>
+        </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

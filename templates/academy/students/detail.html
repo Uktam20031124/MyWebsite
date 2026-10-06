@@ -1,0 +1,46 @@
+{% extends "academy/base.html" %}
+{% block title %}{{ student.full_name }} · Darsxona{% endblock %}
+{% block heading %}{{ student.full_name }}{% endblock %}
+{% block kicker %}{{ student.group.name }}{% endblock %}
+{% block actions %}
+<a class="btn" href="{% url 'student_update' student.pk %}">Tahrir</a>
+{% endblock %}
+{% block content %}
+<section class="grid-stats">
+  <article class="stat"><div class="stat-n">{{ rate.percent }}%</div><p>Davomat</p></article>
+  <article class="stat"><div class="stat-n">{{ rate.present }}</div><p>Kelgan darslar</p></article>
+  <article class="stat"><div class="stat-n">{{ student.get_status_display }}</div><p>Holat</p></article>
+  <article class="stat"><div class="stat-n">{{ student.joined_at|date:"d.m.Y" }}</div><p>Qo‘shilgan</p></article>
+</section>
+<div class="layout-2">
+  <section class="card">
+    <h2>Yo‘qlama tarixi</h2>
+    <table>
+      <thead><tr><th>Sana</th><th>Mavzu</th><th>Holat</th></tr></thead>
+      <tbody>
+        {% for a in history %}
+        <tr>
+          <td>{{ a.lesson.held_on|date:"d.m.Y" }}</td>
+          <td><a href="{{ a.lesson.get_absolute_url }}">{{ a.lesson.topic.title|default:"Mavzusiz" }}</a></td>
+          <td>
+            <span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% else %}warn{% endif %}">
+              {{ a.get_status_display }}
+            </span>
+            {% if a.note %}<div class="meta">{{ a.note }}</div>{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="empty">Hali yo‘qlama yo‘q.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  <aside class="card">
+    <h2>Aloqa</h2>
+    <p>Telefon: {{ student.phone|default:"—" }}</p>
+    <p>Telegram: {% if student.telegram %}@{{ student.telegram }}{% else %}—{% endif %}</p>
+    {% if student.notes %}<p class="meta">{{ student.notes }}</p>{% endif %}
+    <p class="meta"><a href="{% url 'student_delete' student.pk %}">Shogirdni o‘chirish</a></p>
+  </aside>
+</div>
+{% endblock %}

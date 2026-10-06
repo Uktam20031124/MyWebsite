@@ -1,0 +1,62 @@
+{% load static %}
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Darsxona{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">Dx</div>
+      <div>
+        <div class="brand-name">Darsxona</div>
+        <small>Ustoz CRM</small>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Bosh sahifa</a>
+      <a href="{% url 'group_list' %}" class="{% if 'group' in request.resolver_match.url_name %}active{% endif %}">Guruhlar <span class="count">{{ nav_groups }}</span></a>
+      <a href="{% url 'student_list' %}" class="{% if 'student' in request.resolver_match.url_name %}active{% endif %}">Shogirdlar <span class="count">{{ nav_students }}</span></a>
+      <a href="{% url 'topic_list' %}" class="{% if 'topic' in request.resolver_match.url_name %}active{% endif %}">Mavzular</a>
+      <a href="{% url 'lesson_list' %}" class="{% if 'lesson' in request.resolver_match.url_name or request.resolver_match.url_name == 'attendance' %}active{% endif %}">Darslar <span class="count">{{ nav_lessons }}</span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="user-chip">{{ request.user.get_full_name|default:request.user.username }}</div>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="ghost" type="submit">Chiqish</button>
+      </form>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <p class="kicker">{% block kicker %}Shaxsiy o‘quv CRM{% endblock %}</p>
+        <h1>{% block heading %}{% endblock %}</h1>
+      </div>
+      <div class="row-actions">
+        <form class="search" action="{% url 'search' %}" method="get">
+          <input name="q" value="{{ request.GET.q }}" placeholder="Qidiruv: shogird, guruh, mavzu">
+          <button class="btn" type="submit">Top</button>
+        </form>
+        {% block actions %}{% endblock %}
+      </div>
+    </div>
+    {% if messages %}
+      <ul class="messages">
+        {% for m in messages %}<li>{{ m }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

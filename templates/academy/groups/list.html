@@ -1,0 +1,44 @@
+{% extends "academy/base.html" %}
+{% block title %}Guruhlar · Darsxona{% endblock %}
+{% block heading %}Guruhlar{% endblock %}
+{% block actions %}<a class="btn" href="{% url 'group_create' %}">Yangi guruh</a>{% endblock %}
+{% block content %}
+<form class="filters" method="get">
+  <input class="input" style="max-width:240px" name="q" value="{{ request.GET.q }}" placeholder="Nomi yoki kod">
+  <select class="input" style="max-width:180px" name="status" onchange="this.form.submit()">
+    <option value="">Barcha holat</option>
+    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Faol</option>
+    <option value="paused" {% if request.GET.status == 'paused' %}selected{% endif %}>To‘xtatilgan</option>
+    <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Arxiv</option>
+  </select>
+  <button class="btn quiet" type="submit">Filtrlash</button>
+</form>
+<div class="card table-wrap">
+  <table>
+    <thead>
+      <tr><th>Guruh</th><th>Jadval</th><th>Shogird</th><th>Dastur</th><th>Holat</th></tr>
+    </thead>
+    <tbody>
+      {% for g in groups %}
+      <tr>
+        <td>
+          <a href="{{ g.get_absolute_url }}"><strong>{{ g.name }}</strong></a>
+          <div class="meta">{{ g.code }} · {{ g.room|default:"xona yo‘q" }}</div>
+        </td>
+        <td>{{ g.schedule|default:"—" }}</td>
+        <td>{{ g.student_n }}</td>
+        <td>
+          {% with p=g.syllabus_stats %}
+            {{ p.taught }}/{{ p.total }}
+            <div class="progress"><span style="width:{{ p.percent }}%"></span></div>
+          {% endwith %}
+        </td>
+        <td><span class="badge">{{ g.get_status_display }}</span></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="empty">Guruh yo‘q. Birinchi guruhni yarating.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "academy/base.html" %}
+{% block title %}Mavzular · Darsxona{% endblock %}
+{% block heading %}Mavzular katalogi{% endblock %}
+{% block actions %}<a class="btn" href="{% url 'topic_create' %}">Yangi mavzu</a>{% endblock %}
+{% block content %}
+<form class="filters" method="get">
+  <input class="input" style="max-width:280px" name="q" value="{{ request.GET.q }}" placeholder="Mavzu nomi">
+  <button class="btn quiet">Qidirish</button>
+</form>
+<div class="card">
+  {% for t in topics %}
+    <div class="item">
+      <div>
+        <strong>{{ t.order }}. {{ t.title }}</strong>
+        <div class="meta">{{ t.duration_minutes }} daq. · {{ t.lesson_n }} dars · {{ t.description|truncatechars:90 }}</div>
+      </div>
+      <div class="row-actions">
+        {% if t.is_active %}<span class="badge ok">Faol</span>{% else %}<span class="badge">Yashirin</span>{% endif %}
+        <a class="btn quiet" href="{% url 'topic_update' t.pk %}">Tahrir</a>
+        <a class="btn quiet" href="{% url 'lesson_create' %}?topic={{ t.pk }}">Dars</a>
+      </div>
+    </div>
+  {% empty %}
+    <div class="empty">Katalog bo‘sh. Dars beradigan mavzularingizni shu yerga yozing.</div>
+  {% endfor %}
+</div>
+{% endblock %}

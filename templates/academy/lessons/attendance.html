@@ -1,0 +1,46 @@
+{% extends "academy/base.html" %}
+{% block title %}Yo‘qlama · Darsxona{% endblock %}
+{% block heading %}Yo‘qlama{% endblock %}
+{% block kicker %}{{ lesson.group.name }} · {{ lesson.held_on|date:"d.m.Y" }} · {{ lesson.topic.title|default:"Mavzusiz" }}{% endblock %}
+{% block actions %}
+<a class="btn quiet" href="{{ lesson.get_absolute_url }}">Darsga qaytish</a>
+{% endblock %}
+{% block content %}
+<section class="card">
+  <div class="row-actions" style="margin-bottom:16px">
+    <button type="button" class="btn quiet" data-mark-all="present">Hammasi keldi</button>
+    <button type="button" class="btn quiet" data-mark-all="absent">Hammasi kelmadi</button>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    {% for row in rows %}
+      <div class="attendance-row">
+        <div class="person">
+          <span class="avatar">{{ row.student.initials }}</span>
+          <div>
+            <strong>{{ row.student.full_name }}</strong>
+            <div class="meta">{{ row.student.phone }}</div>
+          </div>
+        </div>
+        <div class="pills">
+          {% for value, label in statuses %}
+            <label>
+              <input type="radio" name="status_{{ row.student.pk }}" value="{{ value }}" {% if row.status == value %}checked{% endif %}>
+              <span class="{{ value }}">{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        <input class="input" name="note_{{ row.student.pk }}" value="{{ row.note }}" placeholder="Izoh">
+      </div>
+    {% empty %}
+      <div class="empty">Bu guruhda faol shogird yo‘q.</div>
+    {% endfor %}
+    {% if rows %}
+      <div class="row-actions" style="margin-top:18px">
+        <button class="btn quiet" type="submit">Faqat saqlash</button>
+        <button class="btn" type="submit" name="complete" value="1">Saqlash va darsni yakunlash</button>
+      </div>
+    {% endif %}
+  </form>
+</section>
+{% endblock %}

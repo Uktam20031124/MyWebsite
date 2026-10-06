@@ -1,0 +1,45 @@
+{% extends "academy/base.html" %}
+{% block title %}Darslar · Darsxona{% endblock %}
+{% block heading %}Darslar{% endblock %}
+{% block actions %}<a class="btn" href="{% url 'lesson_create' %}">Yangi dars</a>{% endblock %}
+{% block content %}
+<form class="filters" method="get">
+  <select class="input" style="max-width:220px" name="group" onchange="this.form.submit()">
+    <option value="">Barcha guruh</option>
+    {% for g in groups %}
+      <option value="{{ g.pk }}" {% if request.GET.group == g.pk|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
+    {% endfor %}
+  </select>
+  <select class="input" style="max-width:180px" name="status" onchange="this.form.submit()">
+    <option value="">Holat</option>
+    <option value="planned" {% if request.GET.status == 'planned' %}selected{% endif %}>Rejada</option>
+    <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>O‘tildi</option>
+    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Bekor</option>
+  </select>
+</form>
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>Sana</th><th>Guruh</th><th>Mavzu</th><th>Holat</th><th></th></tr></thead>
+    <tbody>
+      {% for lesson in lessons %}
+      <tr>
+        <td>{{ lesson.held_on|date:"d.m.Y" }} {% if lesson.starts_at %}<span class="meta">{{ lesson.starts_at|time:"H:i" }}</span>{% endif %}</td>
+        <td>{{ lesson.group.code }}</td>
+        <td><a href="{{ lesson.get_absolute_url }}">{{ lesson.topic.title|default:"Mavzusiz dars" }}</a></td>
+        <td><span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}plan{% endif %}">{{ lesson.get_status_display }}</span></td>
+        <td><a class="btn quiet" href="{% url 'attendance' lesson.pk %}">Yo‘qlama</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="empty">Dars yo‘q.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if is_paginated %}
+  <div class="pager">
+    {% if page_obj.has_previous %}<a class="btn quiet" href="?page={{ page_obj.previous_page_number }}">Oldingi</a>{% endif %}
+    <span class="meta">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a class="btn quiet" href="?page={{ page_obj.next_page_number }}">Keyingi</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

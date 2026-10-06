@@ -1,0 +1,31 @@
+{% extends "academy/base.html" %}
+{% block title %}Qidiruv · Darsxona{% endblock %}
+{% block heading %}Qidiruv{% endblock %}
+{% block content %}
+{% if not q %}
+  <div class="card empty">Yuqoridagi maydonga ism, guruh yoki mavzu yozing.</div>
+{% else %}
+  <div class="layout-2">
+    <section class="card">
+      <h2>Shogirdlar</h2>
+      {% for s in students %}
+        <div class="item"><a href="{{ s.get_absolute_url }}">{{ s.full_name }}</a><span class="meta">{{ s.group.code }}</span></div>
+      {% empty %}<div class="empty">Topilmadi.</div>{% endfor %}
+      <h2>Darslar</h2>
+      {% for l in lessons %}
+        <div class="item"><a href="{{ l.get_absolute_url }}">{{ l }}</a></div>
+      {% empty %}<div class="empty">Topilmadi.</div>{% endfor %}
+    </section>
+    <aside class="card">
+      <h2>Guruhlar</h2>
+      {% for g in groups %}
+        <div class="item"><a href="{{ g.get_absolute_url }}">{{ g.name }}</a><span class="meta">{{ g.code }}</span></div>
+      {% empty %}<div class="empty">Topilmadi.</div>{% endfor %}
+      <h2>Mavzular</h2>
+      {% for t in topics %}
+        <div class="item"><a href="{% url 'topic_update' t.pk %}">{{ t.title }}</a></div>
+      {% empty %}<div class="empty">Topilmadi.</div>{% endfor %}
+    </aside>
+  </div>
+{% endif %}
+{% endblock %}
