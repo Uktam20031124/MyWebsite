@@ -33,7 +33,7 @@ from .forms import (
     TopicForm,
     TopicImportForm,
 )
-from .models import Attendance, Group, Lesson, Module, Student, SyllabusItem, Topic
+from .models import MAX_SCORE, Attendance, Group, Lesson, Module, Student, SyllabusItem, Topic
 from .services import (
     dashboard_payload,
     export_topics,
@@ -232,20 +232,34 @@ def group_journal_view(request, pk):
 
     if export:
         labels = dict(Attendance.Status.choices)
+
+        def cell_text(cell):
+            text = labels.get(cell.status, "")
+            return f"{text} ({cell.score})" if cell.score is not None else text
+
+        def blank_if_none(value):
+            return "" if value is None else value
+
         header = [
             "F.I.Sh.",
             *(f"{lesson.held_on:%d.%m.%Y}" for lesson in lessons),
             "Keldi",
             "Belgilangan",
             "Davomat %",
+            "O‘rtacha ball",
+            "Reyting",
+            "O‘rin",
         ]
         data = (
             [
                 row.student.full_name,
-                *(labels.get(cell, "") for cell in row.cells),
+                *(cell_text(cell) for cell in row.cells),
                 row.attended,
                 row.marked,
                 row.percent,
+                blank_if_none(row.avg_score),
+                blank_if_none(row.rating),
+                blank_if_none(row.rank),
             ]
             for row in rows
         )
@@ -653,6 +667,16 @@ def complete_lesson(request, pk):
     return redirect(lesson.get_absolute_url())
 
 
+def parse_score(raw: str) -> tuple[int | None, bool]:
+    """Formadagi ballni o'qiydi: (qiymat, to'g'rimi). Bo'sh — baholanmagan."""
+    raw = raw.strip()
+    if not raw:
+        return None, True
+    if raw.isdigit() and int(raw) <= MAX_SCORE:
+        return int(raw), True
+    return None, False
+
+
 @login_required
 def attendance_sheet(request, pk):
     lesson = get_object_or_404(
@@ -665,19 +689,31 @@ def attendance_sheet(request, pk):
     )
 
     if request.method == "POST":
+        bad_scores = []
         with transaction.atomic():
             for student in students:
                 status = request.POST.get(f"status_{student.pk}")
                 if status not in Attendance.Status.values:
                     continue
                 note = request.POST.get(f"note_{student.pk}", "").strip()[:200]
+                score, ok = parse_score(request.POST.get(f"score_{student.pk}", ""))
+                if not ok:
+                    bad_scores.append(student.full_name)
+                    # Noto'g'ri kiritilgan ball avvalgi qiymatni o'chirib yubormasin.
+                    score = existing[student.pk].score if student.pk in existing else None
                 Attendance.objects.update_or_create(
                     lesson=lesson,
                     student=student,
-                    defaults={"status": status, "note": note},
+                    defaults={"status": status, "note": note, "score": score},
                 )
             if request.POST.get("complete") == "1":
                 lesson.mark_completed()
+        if bad_scores:
+            messages.warning(
+                request,
+                f"Ball 0 dan {MAX_SCORE} gacha butun son bo‘lishi kerak — saqlanmadi: "
+                + ", ".join(bad_scores),
+            )
         if request.POST.get("complete") == "1":
             messages.success(request, "Yo‘qlama saqlandi va dars o‘tildi deb belgilandi.")
             return redirect(lesson.get_absolute_url())
@@ -692,6 +728,7 @@ def attendance_sheet(request, pk):
                 "student": student,
                 "status": rec.status if rec else Attendance.Status.PRESENT,
                 "note": rec.note if rec else "",
+                "score": rec.score if rec else None,
             }
         )
     return render(

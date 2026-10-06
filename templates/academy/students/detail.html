@@ -7,8 +7,8 @@
 {% endblock %}
 {% block content %}
 <section class="grid-stats">
-  <article class="stat"><div class="stat-n">{% if rate.total %}{{ rate.percent }}%{% else %}—{% endif %}</div><p>Davomat</p></article>
-  <article class="stat"><div class="stat-n">{{ rate.present }}/{{ rate.total }}</div><p>Kelgan darslar</p></article>
+  <article class="stat"><div class="stat-n">{% if rate.total %}{{ rate.percent }}%{% else %}—{% endif %}</div><p>Davomat · {{ rate.present }}/{{ rate.total }} dars</p></article>
+  <article class="stat"><div class="stat-n">{{ rate.avg_score|default_if_none:"—" }}</div><p>O‘rtacha ball</p></article>
   <article class="stat"><div class="stat-n">{{ student.get_status_display }}</div><p>Holat</p></article>
   <article class="stat"><div class="stat-n">{{ student.joined_at|date:"d.m.Y" }}</div><p>Qo‘shilgan</p></article>
 </section>
@@ -16,7 +16,7 @@
   <section class="card table-wrap">
     <h2>Yo‘qlama tarixi</h2>
     <table>
-      <thead><tr><th>Sana</th><th>Mavzu</th><th>Holat</th></tr></thead>
+      <thead><tr><th>Sana</th><th>Mavzu</th><th>Holat</th><th>Ball</th></tr></thead>
       <tbody>
         {% for a in history %}
         <tr>
@@ -28,9 +28,10 @@
             </span>
             {% if a.note %}<div class="meta">{{ a.note }}</div>{% endif %}
           </td>
+          <td>{{ a.score|default_if_none:"—" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="3" class="empty">Hali yo‘qlama yo‘q.</td></tr>
+        <tr><td colspan="4" class="empty">Hali yo‘qlama yo‘q.</td></tr>
         {% endfor %}
       </tbody>
     </table>

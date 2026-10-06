@@ -1,9 +1,12 @@
+from django.core.validators import MaxValueValidator
 from django.db import models, transaction
 from django.db.models import Max
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
+
+MAX_SCORE = 100
 
 
 class Group(models.Model):
@@ -355,6 +358,13 @@ class Attendance(models.Model):
         default=Status.PRESENT,
     )
     note = models.CharField("Izoh", max_length=200, blank=True)
+    score = models.PositiveSmallIntegerField(
+        "Ball (0–100)",
+        null=True,
+        blank=True,
+        validators=[MaxValueValidator(MAX_SCORE)],
+        help_text="Darsdagi faollik va uy vazifasi uchun baho. Bo'sh — baholanmagan.",
+    )
 
     class Meta:
         verbose_name = "Yo'qlama"

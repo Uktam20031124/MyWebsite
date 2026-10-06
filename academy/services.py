@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 
 from django.db import transaction
-from django.db.models import Count, Max, Q
+from django.db.models import Avg, Count, Max, Q
 from django.utils import timezone
 
 from .models import Attendance, Group, Lesson, Module, Student, SyllabusItem, Topic
@@ -62,8 +62,14 @@ def student_attendance_rate(student: Student) -> dict:
     counts = student.attendances.aggregate(
         total=Count("id"),
         present=Count("id", filter=Q(status__in=Attendance.ATTENDED)),
+        avg_score=Avg("score"),
     )
-    return {**counts, "percent": percent(counts["present"], counts["total"])}
+    avg = counts["avg_score"]
+    return {
+        **counts,
+        "percent": percent(counts["present"], counts["total"]),
+        "avg_score": round(avg) if avg is not None else None,
+    }
 
 
 def lesson_attendance_summary(lesson: Lesson) -> dict:
@@ -101,23 +107,61 @@ def filter_students(params, qs=None):
     return qs
 
 
+# Reyting = o'rtacha ball × 0.7 + davomat foizi × 0.3 (ikkalasi ham 0–100).
+RATING_SCORE_WEIGHT = 0.7
+
+
+@dataclass
+class JournalCell:
+    status: str = ""  # Attendance.Status qiymati; "" — belgilanmagan
+    score: int | None = None
+
+
 @dataclass
 class JournalRow:
     student: Student
-    cells: list  # har bir dars uchun Attendance.Status qiymati yoki ""
-    attended: int
-    marked: int
+    cells: list[JournalCell]
+    rank: int | None = None
+
+    @property
+    def marked(self) -> int:
+        return sum(bool(c.status) for c in self.cells)
+
+    @property
+    def attended(self) -> int:
+        return sum(c.status in Attendance.ATTENDED for c in self.cells)
 
     @property
     def percent(self) -> int:
         return percent(self.attended, self.marked)
+
+    @property
+    def avg_score(self) -> int | None:
+        scores = [c.score for c in self.cells if c.score is not None]
+        return round(sum(scores) / len(scores)) if scores else None
+
+    @property
+    def rating(self) -> int | None:
+        if self.avg_score is None:
+            return None
+        w = RATING_SCORE_WEIGHT
+        return round(self.avg_score * w + self.percent * (1 - w))
+
+
+def rank_rows(rows: list[JournalRow]) -> None:
+    """Reyting bo'yicha o'rin (teng reytingga bir xil o'rin: 1, 2, 2, 4)."""
+    rated = sorted((r for r in rows if r.rating is not None), key=lambda r: -r.rating)
+    for i, row in enumerate(rated):
+        same_as_prev = i and row.rating == rated[i - 1].rating
+        row.rank = rated[i - 1].rank if same_as_prev else i + 1
 
 
 def group_journal(group: Group, limit: int | None = None):
     """Guruh jurnali: shogirdlar × darslar (bekor qilinmagan, sana bo'yicha).
 
     Faqat o'tilgan yoki yo'qlama olingan darslar kiradi. ``limit`` — oxirgi N dars.
-    Jami 3 ta so'rov, shogird/dars soniga bog'liq emas.
+    Jami 3 ta so'rov, shogird/dars soniga bog'liq emas. Reyting har doim
+    ko'rsatilgan darslar bo'yicha hisoblanadi.
     """
     lessons = list(
         group.lessons.exclude(status=Lesson.Status.CANCELLED)
@@ -129,26 +173,24 @@ def group_journal(group: Group, limit: int | None = None):
     if limit:
         lessons = lessons[-limit:]
     marks = {
-        (a.student_id, a.lesson_id): a.status
+        (a.student_id, a.lesson_id): JournalCell(a.status, a.score)
         for a in Attendance.objects.filter(lesson__in=lessons).only(
-            "student_id", "lesson_id", "status"
+            "student_id", "lesson_id", "status", "score"
         )
     }
     marked_ids = {student_id for student_id, _ in marks}
     students = group.students.filter(
         Q(status=Student.Status.ACTIVE) | Q(pk__in=marked_ids)
     )
-    rows = []
-    for student in students:
-        cells = [marks.get((student.pk, lesson.pk), "") for lesson in lessons]
-        rows.append(
-            JournalRow(
-                student=student,
-                cells=cells,
-                attended=sum(c in Attendance.ATTENDED for c in cells),
-                marked=sum(bool(c) for c in cells),
-            )
+    empty = JournalCell()
+    rows = [
+        JournalRow(
+            student=student,
+            cells=[marks.get((student.pk, lesson.pk), empty) for lesson in lessons],
         )
+        for student in students
+    ]
+    rank_rows(rows)
     return lessons, rows
 
 
