@@ -3,21 +3,13 @@
 {% block heading %}{% if form.instance.pk %}Mavzuni tahrirlash{% else %}Yangi mavzu{% endif %}{% endblock %}
 {% block content %}
 <section class="card form-card">
-  <form method="post">
+  <form method="post" novalidate>
     {% csrf_token %}
-    <div class="form-grid">
-      <div class="field full">{{ form.title.label_tag }}{{ form.title }}</div>
-      <div class="field">{{ form.duration_minutes.label_tag }}{{ form.duration_minutes }}</div>
-      <div class="field">{{ form.order.label_tag }}{{ form.order }}</div>
-      <div class="field full">{{ form.description.label_tag }}{{ form.description }}</div>
-      <div class="field">{{ form.is_active }} {{ form.is_active.label }}</div>
-    </div>
+    {% include "academy/includes/form_fields.html" with wide="title,description,homework,resources" %}
     <div class="row-actions">
       <button class="btn" type="submit">Saqlash</button>
-      <a class="btn quiet" href="{% url 'topic_list' %}">Bekor</a>
-      {% if form.instance.pk %}
-        <a class="btn quiet" href="{% url 'topic_delete' form.instance.pk %}">O‘chirish</a>
-      {% endif %}
+      <a class="btn quiet" href="{% if form.instance.pk %}{{ form.instance.get_absolute_url }}{% else %}{% url 'topic_list' %}{% endif %}">Bekor</a>
+      {% if form.instance.pk %}<a class="btn quiet danger-text" href="{% url 'topic_delete' form.instance.pk %}">O‘chirish</a>{% endif %}
     </div>
   </form>
 </section>

@@ -4,11 +4,12 @@
 {% block content %}
 <section class="card form-card">
   <p><strong>{{ object }}</strong> o‘chiriladi. Bu amalni qaytarib bo‘lmaydi.</p>
+  {% if object.students %}<p class="meta">Guruhdagi barcha shogirdlar, darslar va yo‘qlamalar ham o‘chadi.</p>{% endif %}
   <form method="post">
     {% csrf_token %}
     <div class="row-actions">
       <button class="btn danger" type="submit">Ha, o‘chirish</button>
-      <a class="btn quiet" href="javascript:history.back()">Bekor</a>
+      <a class="btn quiet" href="{% if object.get_absolute_url %}{{ object.get_absolute_url }}{% else %}{% url 'dashboard' %}{% endif %}">Bekor</a>
     </div>
   </form>
 </section>

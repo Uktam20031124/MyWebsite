@@ -1,24 +1,23 @@
 {% extends "academy/base.html" %}
 {% block title %}Shogirdlar · Darsxona{% endblock %}
 {% block heading %}Shogirdlar{% endblock %}
-{% block actions %}<a class="btn" href="{% url 'student_create' %}">Yangi shogird</a>{% endblock %}
+{% block actions %}<a class="btn" href="{% url 'student_create' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">Yangi shogird</a>{% endblock %}
 {% block content %}
 <form class="filters" method="get">
-  <input class="input" style="max-width:240px" name="q" value="{{ request.GET.q }}" placeholder="Ism, telefon, telegram">
-  <select class="input" style="max-width:200px" name="group" onchange="this.form.submit()">
+  <input class="input w-240" type="search" name="q" value="{{ request.GET.q }}" placeholder="Ism, telefon, telegram">
+  <select class="input w-200" name="group" data-autosubmit aria-label="Guruh">
     <option value="">Barcha guruh</option>
     {% for g in groups %}
       <option value="{{ g.pk }}" {% if request.GET.group == g.pk|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
     {% endfor %}
   </select>
-  <select class="input" style="max-width:160px" name="status" onchange="this.form.submit()">
+  <select class="input w-180" name="status" data-autosubmit aria-label="Holat">
     <option value="">Holat</option>
-    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Faol</option>
-    <option value="paused" {% if request.GET.status == 'paused' %}selected{% endif %}>Tanaffus</option>
-    <option value="graduated" {% if request.GET.status == 'graduated' %}selected{% endif %}>Bitirgan</option>
-    <option value="dropped" {% if request.GET.status == 'dropped' %}selected{% endif %}>Ketgan</option>
+    {% for value, label in statuses %}
+      <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
   </select>
-  <button class="btn quiet">Qidirish</button>
+  <button class="btn quiet" type="submit">Qidirish</button>
 </form>
 <div class="card table-wrap">
   <table>
@@ -28,22 +27,20 @@
       <tr>
         <td>
           <a class="person" href="{{ s.get_absolute_url }}">
-            <span class="avatar">{{ s.initials }}</span>
+            <span class="avatar" aria-hidden="true">{{ s.initials }}</span>
             <strong>{{ s.full_name }}</strong>
           </a>
         </td>
-        <td>{{ s.group.code }}</td>
+        <td><a href="{{ s.group.get_absolute_url }}">{{ s.group.code }}</a></td>
         <td>
-          {{ s.phone|default:"—" }}
-          <div class="meta">{% if s.telegram %}@{{ s.telegram }}{% endif %}</div>
+          {% if s.phone %}<a href="tel:{{ s.phone|cut:' ' }}">{{ s.phone }}</a>{% else %}—{% endif %}
+          {% if s.telegram %}<div class="meta"><a href="https://t.me/{{ s.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">@{{ s.telegram }}</a></div>{% endif %}
         </td>
         <td>
-          {% with r=s.attendance_stats %}
-            {{ r.percent }}%
-            <div class="meta">{{ r.present }}/{{ r.total }}</div>
-          {% endwith %}
+          {% if s.att_total %}{% widthratio s.att_present s.att_total 100 %}%{% else %}—{% endif %}
+          <div class="meta">{{ s.att_present }}/{{ s.att_total }}</div>
         </td>
-        <td><span class="badge">{{ s.get_status_display }}</span></td>
+        <td><span class="badge {% if s.status == 'active' %}ok{% elif s.status == 'dropped' %}bad{% endif %}">{{ s.get_status_display }}</span></td>
       </tr>
       {% empty %}
       <tr><td colspan="5" class="empty">Shogird topilmadi.</td></tr>
@@ -51,11 +48,5 @@
     </tbody>
   </table>
 </div>
-{% if is_paginated %}
-  <div class="pager">
-    {% if page_obj.has_previous %}<a class="btn quiet" href="?page={{ page_obj.previous_page_number }}">Oldingi</a>{% endif %}
-    <span class="meta">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}<a class="btn quiet" href="?page={{ page_obj.next_page_number }}">Keyingi</a>{% endif %}
-  </div>
-{% endif %}
+{% include "academy/includes/pager.html" %}
 {% endblock %}

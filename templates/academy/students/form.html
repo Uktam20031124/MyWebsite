@@ -3,20 +3,13 @@
 {% block heading %}{% if form.instance.pk %}{{ form.instance.full_name }}{% else %}Yangi shogird{% endif %}{% endblock %}
 {% block content %}
 <section class="card form-card">
-  <form method="post">
+  <form method="post" novalidate>
     {% csrf_token %}
-    <div class="form-grid">
-      <div class="field">{{ form.full_name.label_tag }}{{ form.full_name }}</div>
-      <div class="field">{{ form.group.label_tag }}{{ form.group }}</div>
-      <div class="field">{{ form.phone.label_tag }}{{ form.phone }}</div>
-      <div class="field">{{ form.telegram.label_tag }}{{ form.telegram }}</div>
-      <div class="field">{{ form.status.label_tag }}{{ form.status }}</div>
-      <div class="field">{{ form.joined_at.label_tag }}{{ form.joined_at }}</div>
-      <div class="field full">{{ form.notes.label_tag }}{{ form.notes }}</div>
-    </div>
+    {% include "academy/includes/form_fields.html" with wide="notes" %}
     <div class="row-actions">
       <button class="btn" type="submit">Saqlash</button>
-      <a class="btn quiet" href="{% url 'student_list' %}">Bekor</a>
+      {% if not form.instance.pk %}<button class="btn quiet" type="submit" name="add_another" value="1">Saqlash va yana qo‘shish</button>{% endif %}
+      <a class="btn quiet" href="{% if form.instance.pk %}{{ form.instance.get_absolute_url }}{% else %}{% url 'student_list' %}{% endif %}">Bekor</a>
     </div>
   </form>
 </section>
