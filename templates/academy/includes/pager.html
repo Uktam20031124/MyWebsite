@@ -1,7 +1,10 @@
-{% if is_paginated %}
+{% load ui %}{% if is_paginated %}
   <nav class="pager" aria-label="Sahifalar">
-    {% if page_obj.has_previous %}<a class="btn quiet" href="{% querystring page=page_obj.previous_page_number %}">← Oldingi</a>{% endif %}
-    <span class="meta">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }} · jami {{ page_obj.paginator.count }}</span>
-    {% if page_obj.has_next %}<a class="btn quiet" href="{% querystring page=page_obj.next_page_number %}">Keyingi →</a>{% endif %}
+    <span class="meta">{{ page_obj.start_index }}–{{ page_obj.end_index }} · jami {{ page_obj.paginator.count }}</span>
+    <span class="actions">
+      {% if page_obj.has_previous %}<a class="btn sm soft" href="{% querystring page=page_obj.previous_page_number %}">{% icon "left" 15 %} Oldingi</a>{% endif %}
+      <span class="meta tabular">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a class="btn sm soft" href="{% querystring page=page_obj.next_page_number %}">Keyingi {% icon "right" 15 %}</a>{% endif %}
+    </span>
   </nav>
 {% endif %}

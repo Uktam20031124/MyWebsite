@@ -1,47 +1,100 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}{{ student.full_name }} · Darsxona{% endblock %}
-{% block heading %}{{ student.full_name }}{% endblock %}
-{% block kicker %}<a href="{{ student.group.get_absolute_url }}">{{ student.group.name }}</a>{% endblock %}
-{% block actions %}
-<a class="btn" href="{% url 'student_update' student.pk %}">Tahrir</a>
+{% block kicker %}<a href="{% url 'student_list' %}">Shogirdlar</a><span class="sep">/</span><a href="{{ student.group.get_absolute_url }}">{{ student.group.name }}</a>{% endblock %}
+{% block heading %}
+<span class="profile">
+  <span class="avatar xl" style="--h: {{ student.full_name|hue }}" aria-hidden="true">{{ student.initials }}</span>
+  <span class="profile-info">
+    <span>{{ student.full_name }}</span>
+    <span class="meta" style="font-family:var(--font);font-size:14px;letter-spacing:0">
+      <span class="badge {% if student.status == 'active' %}ok{% elif student.status == 'dropped' %}bad{% elif student.status == 'paused' %}warn{% else %}info{% endif %}">{{ student.get_status_display }}</span>
+      &nbsp;{{ student.joined_at|date:"d.m.Y" }} dan beri
+    </span>
+  </span>
+</span>
 {% endblock %}
+{% block actions %}
+<a class="btn soft" href="{% url 'student_update' student.pk %}">{% icon "edit" 16 %} Tahrirlash</a>
+{% endblock %}
+
 {% block content %}
-<section class="grid-stats">
-  <article class="stat"><div class="stat-n">{% if rate.total %}{{ rate.percent }}%{% else %}—{% endif %}</div><p>Davomat · {{ rate.present }}/{{ rate.total }} dars</p></article>
-  <article class="stat"><div class="stat-n">{{ rate.avg_score|default_if_none:"—" }}</div><p>O‘rtacha ball</p></article>
-  <article class="stat"><div class="stat-n">{{ student.get_status_display }}</div><p>Holat</p></article>
-  <article class="stat"><div class="stat-n">{{ student.joined_at|date:"d.m.Y" }}</div><p>Qo‘shilgan</p></article>
+<section class="kpis">
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Davomat</span><span class="kpi-icon ok">{% icon "check" 17 %}</span></div>
+    <div class="kpi-value">{% if rate.total %}{{ rate.percent }}<small>%</small>{% else %}—{% endif %}</div>
+    <div class="kpi-foot">{{ rate.present }} / {{ rate.total }} dars</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">O‘rtacha ball</span><span class="kpi-icon accent">{% icon "target" 17 %}</span></div>
+    <div class="kpi-value">{{ rate.avg_score|default_if_none:"—" }}{% if rate.avg_score is not None %}<small>/100</small>{% endif %}</div>
+    <div class="kpi-foot">darsdagi faollik va uy vazifasi</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Reyting</span><span class="kpi-icon gold">{% icon "trophy" 17 %}</span></div>
+    <div class="kpi-value">{{ rating|default_if_none:"—" }}</div>
+    <div class="kpi-foot">ball × 0.7 + davomat × 0.3</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Guruh</span><span class="kpi-icon info">{% icon "layers" 17 %}</span></div>
+    <div class="kpi-value" style="font-size:24px"><a href="{{ student.group.get_absolute_url }}">{{ student.group.code }}</a></div>
+    <div class="kpi-foot truncate">{{ student.group.schedule|default:student.group.name }}</div>
+  </article>
 </section>
-<div class="layout-2">
-  <section class="card table-wrap">
-    <h2>Yo‘qlama tarixi</h2>
-    <table>
-      <thead><tr><th>Sana</th><th>Mavzu</th><th>Holat</th><th>Ball</th></tr></thead>
-      <tbody>
-        {% for a in history %}
-        <tr>
-          <td>{{ a.lesson.held_on|date:"d.m.Y" }}</td>
-          <td><a href="{{ a.lesson.get_absolute_url }}">{{ a.lesson.topic.title|default:"Mavzusiz" }}</a></td>
-          <td>
-            <span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% else %}warn{% endif %}">
-              {{ a.get_status_display }}
-            </span>
-            {% if a.note %}<div class="meta">{{ a.note }}</div>{% endif %}
-          </td>
-          <td>{{ a.score|default_if_none:"—" }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4" class="empty">Hali yo‘qlama yo‘q.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+<div class="split">
+  <section class="card" aria-labelledby="hist-h">
+    <div class="card-head">
+      <h2 id="hist-h">{% icon "lesson" 18 %} Yo‘qlama tarixi</h2>
+      <span class="meta">oxirgi {{ history|length }} dars</span>
+    </div>
+    {% if timeline %}
+      <div class="card-body" style="padding-bottom:6px">
+        <div class="score-bars" aria-label="Darslar bo‘yicha ballar">
+          {% for a in timeline %}
+            {% if a.status == 'absent' %}<span class="absent" style="height:100%" title="{{ a.lesson.held_on|date:'d.m' }} · kelmadi"></span>
+            {% elif a.score is None %}<span class="none" style="height:18%" title="{{ a.lesson.held_on|date:'d.m' }} · baholanmagan"></span>
+            {% else %}<span style="height:{{ a.score|add:4 }}%" title="{{ a.lesson.held_on|date:'d.m' }} · {{ a.score }} ball"></span>{% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Sana</th><th>Mavzu</th><th>Holat</th><th class="right">Ball</th></tr></thead>
+        <tbody>
+          {% for a in history %}
+          <tr>
+            <td class="nowrap">{{ a.lesson.held_on|date:"d.m.Y" }} <span class="meta">{{ a.lesson.held_on|weekday_short }}</span></td>
+            <td>
+              <a href="{{ a.lesson.get_absolute_url }}">{{ a.lesson.topic.title|default:"Mavzusiz" }}</a>
+              {% if a.note %}<div class="meta">{{ a.note }}</div>{% endif %}
+            </td>
+            <td><span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% elif a.status == 'late' %}warn{% else %}info{% endif %}">{{ a.get_status_display }}</span></td>
+            <td class="right tabular">{% if a.score is not None %}<strong>{{ a.score }}</strong>{% else %}<span class="meta">—</span>{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4"><div class="empty compact"><p>Hali yo‘qlama yo‘q.</p></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </section>
-  <aside class="card">
-    <h2>Aloqa</h2>
-    <p>Telefon: {% if student.phone %}<a href="tel:{{ student.phone|cut:' ' }}">{{ student.phone }}</a>{% else %}—{% endif %}</p>
-    <p>Telegram: {% if student.telegram %}<a href="https://t.me/{{ student.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">@{{ student.telegram }}</a>{% else %}—{% endif %}</p>
-    {% if student.notes %}<div class="prose meta">{{ student.notes|linebreaks }}</div>{% endif %}
-    <p class="meta"><a class="danger-text" href="{% url 'student_delete' student.pk %}">Shogirdni o‘chirish</a></p>
+
+  <aside class="stack">
+    <section class="card" aria-labelledby="contact-h">
+      <div class="card-head"><h2 id="contact-h">{% icon "phone" 18 %} Aloqa</h2></div>
+      <div class="card-body" style="padding-top:8px">
+        <div class="contact-list">
+          {% if student.phone %}<a href="tel:{{ student.phone|cut:' ' }}">{% icon "phone" 17 %} {{ student.phone }}</a>{% else %}<span class="meta">{% icon "phone" 17 %} Telefon kiritilmagan</span>{% endif %}
+          {% if student.telegram %}<a href="https://t.me/{{ student.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">{% icon "send" 17 %} @{{ student.telegram }} {% icon "external" 14 %}</a>{% else %}<span class="meta">{% icon "send" 17 %} Telegram kiritilmagan</span>{% endif %}
+        </div>
+      </div>
+    </section>
+    {% if student.notes %}
+      <section class="card pad"><h2 style="font-size:16px;margin-bottom:10px">Izoh</h2><div class="prose muted">{{ student.notes|linebreaks }}</div></section>
+    {% endif %}
+    <a class="btn danger-ghost sm" href="{% url 'student_delete' student.pk %}" style="align-self:flex-start">{% icon "trash" 15 %} Shogirdni o‘chirish</a>
   </aside>
 </div>
 {% endblock %}

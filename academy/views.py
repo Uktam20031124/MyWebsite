@@ -1,4 +1,5 @@
 import csv
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib import messages
@@ -8,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.db import connection, transaction
-from django.db.models import Count, Q
+from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -44,8 +45,13 @@ from .services import (
     import_topics,
     lesson_attendance_summary,
     percent,
+    rating,
+    sessions_between,
+    start_session,
     student_attendance_rate,
     students_with_stats,
+    week_start,
+    week_timetable,
 )
 
 
@@ -153,6 +159,33 @@ def dashboard(request):
     return render(request, "academy/dashboard.html", dashboard_payload())
 
 
+@login_required
+def timetable(request):
+    """Haftalik dars jadvali. ?hafta=YYYY-MM-DD — shu sana tushgan hafta."""
+    try:
+        day = date.fromisoformat(request.GET.get("hafta", ""))
+    except ValueError:
+        day = timezone.localdate()
+    ctx = week_timetable(week_start(day))
+    ctx["unscheduled"] = Group.objects.filter(status=Group.Status.ACTIVE).filter(
+        Q(days="") | Q(starts_at=None)
+    )
+    ctx["this_week"] = week_start(timezone.localdate())
+    return render(request, "academy/timetable.html", ctx)
+
+
+@login_required
+@require_POST
+def start_lesson(request, pk):
+    """Jadvaldagi bugungi darsni bir bosishda boshlash va yo'qlamaga o'tish."""
+    group = get_object_or_404(Group, pk=pk)
+    lesson, created = start_session(group)
+    if created:
+        topic = lesson.topic.title if lesson.topic else "mavzusiz"
+        messages.success(request, f"Dars boshlandi: {topic}. Yo‘qlamani belgilang.")
+    return redirect("attendance", pk=lesson.pk)
+
+
 # --- Guruhlar ---------------------------------------------------------------
 
 
@@ -170,6 +203,22 @@ class GroupListView(AuthMixin, ListView):
         if q:
             qs = qs.filter(Q(name__icontains=q) | Q(code__icontains=q))
         return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        scheduled = [
+            g for g in ctx["groups"] if g.has_timetable and g.status == Group.Status.ACTIVE
+        ]
+        next_by_group = {}
+        for session in sessions_between(today, today + timedelta(days=7), scheduled):
+            if session.state in ("upcoming", "live"):
+                next_by_group.setdefault(session.group.pk, session)
+        for g in ctx["groups"]:
+            g.next_session = next_by_group.get(g.pk)
+            g.progress_pct = percent(g.syllabus_taught, g.syllabus_total)
+        ctx["status_tabs"] = [("", "Barchasi"), *Group.Status.choices]
+        return ctx
 
 
 class GroupCreateView(AuthMixin, SuccessMessageMixin, CreateView):
@@ -201,9 +250,21 @@ class GroupDetailView(AuthMixin, DetailView):
         ctx = super().get_context_data(**kwargs)
         group = self.object
         in_syllabus = group.syllabus.values_list("topic_id", flat=True)
+        today = timezone.localdate()
+        students = list(
+            students_with_stats(group.students.all()).annotate(score_avg=Avg("attendances__score"))
+        )
+        for s in students:
+            s.att_pct = percent(s.att_present, s.att_total)
+            s.score_avg = round(s.score_avg) if s.score_avg is not None else None
         ctx.update(
             progress=group_progress(group),
-            students=group.students.all(),
+            students=students,
+            sessions=(
+                sessions_between(today, today + timedelta(days=21), [group])[:6]
+                if group.has_timetable and group.status == Group.Status.ACTIVE
+                else []
+            ),
             syllabus=group.syllabus.select_related("topic", "topic__module"),
             lessons=group.lessons.select_related("topic")[:20],
             all_topics=Topic.objects.filter(is_active=True)
@@ -415,10 +476,16 @@ class StudentDetailView(AuthMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["rate"] = student_attendance_rate(self.object)
-        ctx["history"] = self.object.attendances.select_related(
-            "lesson", "lesson__topic", "lesson__group"
-        ).order_by("-lesson__held_on")[:40]
+        rate = student_attendance_rate(self.object)
+        history = list(
+            self.object.attendances.select_related(
+                "lesson", "lesson__topic", "lesson__group"
+            ).order_by("-lesson__held_on")[:40]
+        )
+        ctx["rate"] = rate
+        ctx["rating"] = rating(rate["avg_score"], rate["percent"]) if rate["total"] else None
+        ctx["history"] = history
+        ctx["timeline"] = history[:24][::-1]  # baho diagrammasi: eskisidan yangisiga
         return ctx
 
 
@@ -615,12 +682,17 @@ class LessonCreateView(AuthMixin, SuccessMessageMixin, CreateView):
 
     def get_initial(self):
         initial = super().get_initial()
-        initial["held_on"] = timezone.localdate()
+        try:
+            initial["held_on"] = date.fromisoformat(self.request.GET.get("sana", ""))
+        except ValueError:
+            initial["held_on"] = timezone.localdate()
         group_id = int_param(self.request, "group")
         topic_id = int_param(self.request, "topic")
         if group_id:
             initial["group"] = group_id
             group = Group.objects.filter(pk=group_id).first()
+            if group and group.starts_at:
+                initial["starts_at"] = group.starts_at
             next_item = group.next_syllabus_item() if group else None
             if next_item and not topic_id:
                 # Guruh dasturidagi navbatdagi mavzuni taklif qilamiz.
@@ -761,6 +833,29 @@ def search(request):
         lessons = Lesson.objects.filter(
             Q(topic__title__icontains=q) | Q(notes__icontains=q) | Q(homework__icontains=q)
         ).select_related("group", "topic")[:6]
+    if request.GET.get("format") == "json":
+        # Buyruqlar paneli (Ctrl+K) uchun ixcham natija.
+        def hit(kind, title, meta, url):
+            return {"kind": kind, "title": title, "meta": meta, "url": url}
+
+        results = [
+            *(hit("student", s.full_name, s.group.code, s.get_absolute_url()) for s in students),
+            *(hit("group", g.name, g.schedule or g.code, g.get_absolute_url()) for g in groups),
+            *(
+                hit("topic", t.title, t.module.title if t.module else "", t.get_absolute_url())
+                for t in topics
+            ),
+            *(
+                hit(
+                    "lesson",
+                    lesson.topic.title if lesson.topic else "Mavzusiz dars",
+                    f"{lesson.group.code} · {lesson.held_on:%d.%m.%Y}",
+                    lesson.get_absolute_url(),
+                )
+                for lesson in lessons
+            ),
+        ]
+        return JsonResponse({"q": q, "results": results})
     return render(
         request,
         "academy/search.html",

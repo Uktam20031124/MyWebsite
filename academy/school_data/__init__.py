@@ -32,7 +32,9 @@ class GroupData:
     students: list[str]
     taught: list[str]  # o'tilgan mavzular kalitlari (dastur tartibida)
     planned: list[str]  # qolgan mavzular kalitlari (dastur tartibida)
-    schedule: str = ""
+    days: tuple[int, ...] = ()  # hafta kunlari, 0 — dushanba
+    starts: str = ""  # "14:00"
+    ends: str = ""  # "15:00"
     notes: str = ""
 
 

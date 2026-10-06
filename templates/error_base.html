@@ -1,19 +1,19 @@
-{% load static %}<!doctype html>
-<html lang="uz">
+<!doctype html>
+<html lang="uz" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Xatolik · Darsxona</title>
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% include "academy/includes/head.html" %}
 </head>
 <body>
-  <div class="login-shell">
-    <div class="login-card">
-      <p class="kicker">Darsxona</p>
-      <h1 class="display">{% block code %}{% endblock %}</h1>
-      <p class="meta">{% block message %}{% endblock %}</p>
-      <p><a class="btn" href="/">Bosh sahifaga</a></p>
+  <main class="error-page">
+    <div>
+      <div class="error-code">{% block code %}{% endblock %}</div>
+      <h1 style="font-size:28px;margin:12px 0 10px">{% block title %}Nimadir noto‘g‘ri ketdi{% endblock %}</h1>
+      <p class="muted" style="max-width:44ch;margin:0 auto 24px">{% block message %}{% endblock %}</p>
+      <a class="btn primary" href="/">Bosh sahifaga qaytish</a>
     </div>
-  </div>
+  </main>
 </body>
 </html>

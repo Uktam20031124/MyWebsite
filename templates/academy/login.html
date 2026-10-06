@@ -1,27 +1,42 @@
-<!doctype html>
-<html lang="uz">
+{% load ui %}<!doctype html>
+<html lang="uz" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>Kirish · Darsxona</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
-  {% load static %}
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% include "academy/includes/head.html" %}
 </head>
 <body>
-  <div class="login-shell">
-    <div class="login-card">
+{% include "academy/includes/icons.html" %}
+<div class="auth">
+  <section class="auth-art" aria-hidden="true">
+    <div class="brand" style="padding:0">
+      <span class="brand-mark">Dx</span>
+      <span><span class="brand-name">Darsxona</span><span class="brand-sub block">Ustoz CRM</span></span>
+    </div>
+    <div class="auth-quote">
+      <h2>Har bir dars — rejada, har bir shogird — nazoratda.</h2>
+      <p>Guruhlar, haftalik jadval, o‘quv dasturi, yo‘qlama va reyting — bitta tartibli daftarda.</p>
+    </div>
+    <div class="auth-points">
+      <span>{% icon "calendar" 15 %} Haftalik jadval</span>
+      <span>{% icon "check" 15 %} Bir bosishda yo‘qlama</span>
+      <span>{% icon "trophy" 15 %} Reyting va tahlil</span>
+    </div>
+  </section>
+
+  <main class="auth-form">
+    <div class="auth-card">
       <p class="kicker">Faqat ustoz uchun</p>
-      <h1 class="display">Darsxona</h1>
-      <p class="meta" style="margin-bottom:22px">Guruhlar, mavzular, dars va yo‘qlama — bitta daftar.</p>
-      <form method="post">
+      <h1>Xush kelibsiz</h1>
+      <p class="muted" style="margin-bottom:26px">Davom etish uchun hisobingizga kiring.</p>
+      <form method="post" novalidate>
         {% csrf_token %}
         {% if locked_message %}
-          <ul class="errorlist nonfield" role="alert"><li>{{ locked_message }}</li></ul>
+          <div class="form-errors" role="alert">{% icon "alert" 18 %}<ul class="errorlist nonfield"><li>{{ locked_message }}</li></ul></div>
         {% elif form.non_field_errors %}
-          <div role="alert">{{ form.non_field_errors }}</div>
+          <div class="form-errors" role="alert">{% icon "alert" 18 %}{{ form.non_field_errors }}</div>
         {% endif %}
         <div class="field">
           <label for="{{ form.username.id_for_label }}">Login</label>
@@ -31,9 +46,18 @@
           <label for="{{ form.password.id_for_label }}">Parol</label>
           {{ form.password }}
         </div>
-        <button class="btn" type="submit" style="width:100%">Kirish</button>
+        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+        <button class="btn primary block" type="submit">Kirish {% icon "right" 16 %}</button>
       </form>
+      <p class="auth-foot">
+        <button class="btn ghost sm" type="button" data-theme-toggle>
+          <span data-theme-icon="light">{% icon "moon" 15 %}</span><span data-theme-icon="dark" hidden>{% icon "sun" 15 %}</span>
+          <span data-theme-label>Tungi rejim</span>
+        </button>
+      </p>
     </div>
-  </div>
+  </main>
+</div>
+{% load static %}<script src="{% static 'js/app.js' %}" defer></script>
 </body>
 </html>

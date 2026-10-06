@@ -1,65 +1,78 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}Jurnal · {{ group.name }} · Darsxona{% endblock %}
-{% block kicker %}<a href="{{ group.get_absolute_url }}">{{ group.name }}</a> · {{ group.code }}{% endblock %}
+{% block kicker %}<a href="{% url 'group_list' %}">Guruhlar</a><span class="sep">/</span><a href="{{ group.get_absolute_url }}">{{ group.name }}</a>{% endblock %}
 {% block heading %}Davomat jurnali{% endblock %}
+{% block subheading %}<p class="page-sub">Reyting = o‘rtacha ball × 0.7 + davomat × 0.3. Sanani bosing — dars sahifasi ochiladi.</p>{% endblock %}
 {% block actions %}
-<a class="btn" href="{% url 'group_journal' group.pk %}?format=csv">Excel (CSV)</a>
-<a class="btn quiet" href="{{ group.get_absolute_url }}">Guruhga qaytish</a>
+{% if show_all %}
+  <a class="btn ghost" href="{% url 'group_journal' group.pk %}">Oxirgi {{ limit }} dars</a>
+{% elif lessons|length >= limit %}
+  <a class="btn ghost" href="{% url 'group_journal' group.pk %}?all=1">Barcha darslar</a>
+{% endif %}
+<button class="btn soft" type="button" onclick="window.print()">{% icon "print" 16 %} Chop etish</button>
+<a class="btn primary" href="{% url 'group_journal' group.pk %}?format=csv">{% icon "download" 16 %} Excel (CSV)</a>
 {% endblock %}
+
 {% block content %}
 <section class="card">
-  <div class="row-actions journal-legend">
-    <span class="mark-cell present">+</span><span class="meta">keldi</span>
-    <span class="mark-cell late">K</span><span class="meta">kechikdi</span>
-    <span class="mark-cell absent">–</span><span class="meta">kelmadi</span>
-    <span class="mark-cell excused">S</span><span class="meta">sababli</span>
-    <span class="meta">· raqam — darsdagi ball · reyting = ball × 0.7 + davomat × 0.3</span>
-    <span class="spacer"></span>
-    {% if show_all %}
-      <a class="btn quiet sm" href="{% url 'group_journal' group.pk %}">Oxirgi {{ limit }} dars</a>
-    {% elif lessons|length >= limit %}
-      <a class="btn quiet sm" href="{% url 'group_journal' group.pk %}?all=1">Barcha darslar</a>
-    {% endif %}
+  <div class="card-head" style="padding-bottom:14px">
+    <div class="legend">
+      <span><span class="mark present">+</span> keldi</span>
+      <span><span class="mark late">K</span> kechikdi</span>
+      <span><span class="mark absent">–</span> kelmadi</span>
+      <span><span class="mark excused">S</span> sababli</span>
+      <span class="meta">raqam — darsdagi ball</span>
+    </div>
+    <span class="meta">{{ lessons|length }} dars · {{ rows|length }} shogird</span>
   </div>
   {% if lessons and rows %}
-  <div class="table-wrap journal-wrap">
-    <table class="journal">
+  <div class="table-wrap">
+    <table class="table journal">
       <thead>
         <tr>
           <th scope="col" class="sticky-col">Shogird</th>
           {% for lesson in lessons %}
             <th scope="col" class="date-col">
-              <a href="{{ lesson.get_absolute_url }}" title="{{ lesson.topic.title|default:'Mavzusiz' }}">{{ lesson.held_on|date:"d.m" }}</a>
+              <a href="{{ lesson.get_absolute_url }}" title="{{ lesson.topic.title|default:'Mavzusiz' }}">{{ lesson.held_on|date:"d.m" }}<span class="block meta" style="font-size:10.5px">{{ lesson.held_on|weekday_short }}</span></a>
             </th>
           {% endfor %}
-          <th scope="col">Davomat</th>
-          <th scope="col" title="O‘rtacha ball (0–100)">Ball</th>
-          <th scope="col" title="Reyting = ball × 0.7 + davomat × 0.3">Reyting</th>
+          <th scope="col" class="right">Davomat</th>
+          <th scope="col" class="right" title="O‘rtacha ball (0–100)">Ball</th>
+          <th scope="col" class="right" title="Reyting = ball × 0.7 + davomat × 0.3">Reyting</th>
         </tr>
       </thead>
       <tbody>
         {% for row in rows %}
         <tr>
           <th scope="row" class="sticky-col">
-            <a href="{{ row.student.get_absolute_url }}">{{ row.student.full_name }}</a>
-            {% if row.student.status != 'active' %}<span class="meta block">{{ row.student.get_status_display }}</span>{% endif %}
+            <a class="person" href="{{ row.student.get_absolute_url }}">
+              <span class="avatar sm" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
+              <span class="truncate">
+                <span class="person-name block truncate">{{ row.student.full_name }}</span>
+                {% if row.student.status != 'active' %}<span class="person-meta">{{ row.student.get_status_display }}</span>{% endif %}
+              </span>
+            </a>
           </th>
           {% for cell in row.cells %}
             <td class="mark-td">
-              {% if cell.status == 'present' %}<span class="mark-cell present" title="Keldi">+</span>
-              {% elif cell.status == 'late' %}<span class="mark-cell late" title="Kechikdi">K</span>
-              {% elif cell.status == 'absent' %}<span class="mark-cell absent" title="Kelmadi">–</span>
-              {% elif cell.status == 'excused' %}<span class="mark-cell excused" title="Sababli">S</span>
-              {% else %}<span class="meta" title="Belgilanmagan">·</span>{% endif %}
+              {% if cell.status == 'present' %}<span class="mark present" title="Keldi">+</span>
+              {% elif cell.status == 'late' %}<span class="mark late" title="Kechikdi">K</span>
+              {% elif cell.status == 'absent' %}<span class="mark absent" title="Kelmadi">–</span>
+              {% elif cell.status == 'excused' %}<span class="mark excused" title="Sababli">S</span>
+              {% else %}<span class="mark none" title="Belgilanmagan">·</span>{% endif %}
               {% if cell.score is not None %}<span class="cell-score">{{ cell.score }}</span>{% endif %}
             </td>
           {% endfor %}
-          <td class="nowrap">
-            {% if row.marked %}<strong>{{ row.percent }}%</strong> <span class="meta">{{ row.attended }}/{{ row.marked }}</span>{% else %}—{% endif %}
+          <td class="right nowrap">
+            {% if row.marked %}<span class="badge {{ row.percent|tone }}">{{ row.percent }}%</span><div class="meta">{{ row.attended }}/{{ row.marked }}</div>{% else %}—{% endif %}
           </td>
-          <td>{{ row.avg_score|default_if_none:"—" }}</td>
-          <td class="nowrap">
-            {% if row.rating is not None %}<strong>{{ row.rating }}</strong> <span class="badge{% if row.rank == 1 %} ok{% endif %}">{{ row.rank }}-o‘rin</span>{% else %}—{% endif %}
+          <td class="right tabular">{{ row.avg_score|default_if_none:"—" }}</td>
+          <td class="right nowrap">
+            {% if row.rating is not None %}
+              <strong class="tabular">{{ row.rating }}</strong>
+              <span class="badge plain{% if row.rank == 1 %} accent{% endif %}" style="margin-left:4px">{{ row.rank }}-o‘rin</span>
+            {% else %}—{% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -68,8 +81,13 @@
   </div>
   {% else %}
     <div class="empty">
-      Jurnal bo‘sh: hali o‘tilgan yoki yo‘qlama olingan dars yo‘q.
-      <a href="{% url 'lesson_create' %}?group={{ group.pk }}">Dars yozish</a>
+      <span class="empty-icon">{% icon "journal" 24 %}</span>
+      <strong>Jurnal bo‘sh</strong>
+      <p>Hali o‘tilgan yoki yo‘qlama olingan dars yo‘q.</p>
+      <form method="post" action="{% url 'start_lesson' group.pk %}">
+        {% csrf_token %}
+        <button class="btn sm primary" type="submit">{% icon "play" 13 %} Birinchi darsni boshlash</button>
+      </form>
     </div>
   {% endif %}
 </section>

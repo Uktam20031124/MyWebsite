@@ -1,52 +1,65 @@
 {% extends "academy/base.html" %}
-{% block title %}Yo‘qlama · Darsxona{% endblock %}
+{% load ui %}
+{% block title %}Yo‘qlama · {{ lesson.group.code }} · Darsxona{% endblock %}
+{% block kicker %}<a href="{{ lesson.group.get_absolute_url }}">{{ lesson.group.name }}</a><span class="sep">·</span>{{ lesson.held_on|weekday_full }}, {{ lesson.held_on|date:"d.m.Y" }}{% endblock %}
 {% block heading %}Yo‘qlama{% endblock %}
-{% block kicker %}{{ lesson.group.name }} · {{ lesson.held_on|date:"d.m.Y" }} · {{ lesson.topic.title|default:"Mavzusiz" }}{% endblock %}
+{% block subheading %}<p class="page-sub">{% icon "book" 15 %} {{ lesson.topic.title|default:"Mavzusiz dars" }}</p>{% endblock %}
 {% block actions %}
-<a class="btn quiet" href="{{ lesson.get_absolute_url }}">Darsga qaytish</a>
+<a class="btn ghost" href="{{ lesson.get_absolute_url }}">{% icon "left" 16 %} Darsga qaytish</a>
 {% endblock %}
+
 {% block content %}
 <section class="card">
-  {% if rows %}
-  <div class="row-actions attendance-tools">
-    <button type="button" class="btn quiet sm" data-mark-all="present">Hammasi keldi</button>
-    <button type="button" class="btn quiet sm" data-mark-all="absent">Hammasi kelmadi</button>
-    <span class="meta" data-attendance-count aria-live="polite"></span>
-    {% if not is_saved %}<span class="badge warn">Hali saqlanmagan</span>{% endif %}
-  </div>
-  {% endif %}
   <form method="post" data-attendance-form data-dirty-guard>
     {% csrf_token %}
+    {% if rows %}
+    <div class="att-toolbar">
+      <button type="button" class="btn sm soft" data-mark-all="present">{% icon "check" 15 %} Hammasi keldi</button>
+      <button type="button" class="btn sm ghost" data-mark-all="absent">Hammasi kelmadi</button>
+      <span class="spacer"></span>
+      <span class="att-counts" data-attendance-count aria-live="polite"></span>
+      {% if not is_saved %}<span class="badge warn">Hali saqlanmagan</span>{% endif %}
+    </div>
+    {% endif %}
+
     {% for row in rows %}
-      <fieldset class="attendance-row">
+      <fieldset class="att-row">
         <legend class="person">
-          <span class="avatar" aria-hidden="true">{{ row.student.initials }}</span>
-          <span>
-            <strong>{{ row.student.full_name }}</strong>
-            {% if row.student.status != 'active' %}<span class="badge">{{ row.student.get_status_display }}</span>{% endif %}
-            <span class="meta block">{{ row.student.phone }}</span>
+          <span class="avatar" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
+          <span class="truncate">
+            <span class="person-name block truncate">{{ row.student.full_name }}</span>
+            <span class="person-meta">
+              {% if row.student.status != 'active' %}{{ row.student.get_status_display }} · {% endif %}{{ row.student.phone|default:"" }}
+            </span>
           </span>
         </legend>
-        <div class="pills">
+        <div class="seg" role="radiogroup" aria-label="{{ row.student.full_name }} holati">
           {% for value, label in statuses %}
             <label>
               <input type="radio" name="status_{{ row.student.pk }}" value="{{ value }}" {% if row.status == value %}checked{% endif %}>
-              <span class="{{ value }}">{{ label }}</span>
+              <span>{{ label }}</span><span class="key" aria-hidden="true">{{ forloop.counter }}</span>
             </label>
           {% endfor %}
         </div>
-        <div class="attendance-extra">
+        <div class="att-extra">
           <input class="input score-input" name="score_{{ row.student.pk }}" value="{{ row.score|default_if_none:'' }}" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="Ball" aria-label="{{ row.student.full_name }} uchun ball (0–100)">
           <input class="input" name="note_{{ row.student.pk }}" value="{{ row.note }}" placeholder="Izoh" maxlength="200" aria-label="{{ row.student.full_name }} uchun izoh">
         </div>
       </fieldset>
     {% empty %}
-      <div class="empty">Bu guruhda faol shogird yo‘q. <a href="{% url 'student_create' %}?group={{ lesson.group_id }}">Shogird qo‘shish</a></div>
+      <div class="empty">
+        <span class="empty-icon">{% icon "users" 22 %}</span>
+        <strong>Bu guruhda faol shogird yo‘q</strong>
+        <a class="btn sm primary" href="{% url 'student_create' %}?group={{ lesson.group_id }}">{% icon "plus" 14 %} Shogird qo‘shish</a>
+      </div>
     {% endfor %}
+
     {% if rows %}
-      <div class="row-actions sticky-actions">
-        <button class="btn quiet" type="submit">Faqat saqlash</button>
-        <button class="btn" type="submit" name="complete" value="1">Saqlash va darsni yakunlash</button>
+      <div class="att-foot">
+        <span class="meta">Klaviatura: holatni tanlang va <kbd>1</kbd>–<kbd>4</kbd> bosing — keyingi shogirdga o‘tadi.</span>
+        <span class="spacer"></span>
+        <button class="btn soft" type="submit">Saqlash</button>
+        <button class="btn primary" type="submit" name="complete" value="1">{% icon "check" 16 %} Saqlash va darsni yakunlash</button>
       </div>
     {% endif %}
   </form>

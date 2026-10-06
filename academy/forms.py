@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Q
 
-from .models import Group, Lesson, Module, Student, Topic
+from .models import WEEKDAY_CHOICES, Group, Lesson, Module, Student, Topic
 from .services import parse_topics
 
 
@@ -21,6 +21,7 @@ class LoginForm(AuthenticationForm):
 
 class StyledFormMixin:
     def __init__(self, *args, **kwargs):
+        kwargs.setdefault("label_suffix", "")  # "Nomi:" emas, "Nomi"
         super().__init__(*args, **kwargs)
         for name, field in self.fields.items():
             widget = field.widget
@@ -35,16 +36,61 @@ class StyledFormMixin:
 
 
 class GroupForm(StyledFormMixin, forms.ModelForm):
+    days = forms.TypedMultipleChoiceField(
+        label="Dars kunlari",
+        choices=WEEKDAY_CHOICES,
+        coerce=int,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "check"}),
+        required=False,
+    )
+
     class Meta:
         model = Group
-        fields = ["name", "code", "schedule", "room", "start_date", "status", "notes"]
+        fields = [
+            "name",
+            "code",
+            "days",
+            "starts_at",
+            "ends_at",
+            "room",
+            "start_date",
+            "status",
+            "notes",
+        ]
         widgets = {
             "start_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "starts_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "ends_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
             "notes": forms.Textarea(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.initial["days"] = self.instance.day_list
+
     def clean_code(self):
         return self.cleaned_data["code"].strip().upper()
+
+    def clean_days(self):
+        return ",".join(str(d) for d in sorted(set(self.cleaned_data["days"])))
+
+    def clean(self):
+        cleaned = super().clean()
+        days, starts, ends = cleaned.get("days"), cleaned.get("starts_at"), cleaned.get("ends_at")
+        if days and not starts:
+            self.add_error("starts_at", "Dars kunlari tanlangan — boshlanish vaqtini kiriting.")
+        if starts and ends and ends <= starts:
+            self.add_error("ends_at", "Tugash vaqti boshlanishidan keyin bo‘lishi kerak.")
+        return cleaned
+
+    def save(self, commit=True):
+        group = super().save(commit=False)
+        if not group.day_list and "days" in self.changed_data:
+            group.schedule = ""  # jadval olib tashlandi — eski matn qolmasin
+        if commit:
+            group.save()
+        return group
 
 
 class StudentForm(StyledFormMixin, forms.ModelForm):

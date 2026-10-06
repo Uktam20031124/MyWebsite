@@ -1,118 +1,197 @@
 {% extends "academy/base.html" %}
+{% load ui %}
 {% block title %}{{ group.name }} · Darsxona{% endblock %}
+{% block kicker %}<a href="{% url 'group_list' %}">Guruhlar</a><span class="sep">/</span>{{ group.code }}{% endblock %}
 {% block heading %}{{ group.name }}{% endblock %}
-{% block kicker %}{{ group.code }}{% if group.schedule %} · {{ group.schedule }}{% endif %}{% endblock %}
 {% block actions %}
-<a class="btn" href="{% url 'student_create' %}?group={{ group.pk }}">Shogird</a>
-<a class="btn secondary" href="{% url 'lesson_create' %}?group={{ group.pk }}">Dars</a>
-<a class="btn quiet" href="{% url 'group_journal' group.pk %}">Jurnal</a>
-<a class="btn quiet" href="{% url 'group_update' group.pk %}">Tahrir</a>
+<a class="btn soft" href="{% url 'group_journal' group.pk %}">{% icon "journal" 16 %} Jurnal</a>
+<a class="btn soft" href="{% url 'student_create' %}?group={{ group.pk }}">{% icon "plus" 16 %} Shogird</a>
+<a class="btn ghost square" href="{% url 'group_update' group.pk %}" title="Tahrirlash" aria-label="Tahrirlash">{% icon "edit" 17 %}</a>
 {% endblock %}
+
 {% block content %}
-<section class="grid-stats">
-  <article class="stat"><div class="stat-n">{{ students|length }}</div><p>Shogirdlar</p></article>
-  <article class="stat"><div class="stat-n">{{ progress.percent }}%</div><p>Dastur bajarilishi</p></article>
-  <article class="stat"><div class="stat-n">{{ progress.taught }}/{{ progress.total }}</div><p>O‘tilgan mavzu</p></article>
-  <article class="stat"><div class="stat-n">{{ group.room|default:"—" }}</div><p>Xona</p></article>
+<section class="hero" style="--h: {{ group|hue }}">
+  {% ring progress.percent 76 7 %}
+  <div>
+    <div class="strong" style="font-size:17px">Dastur {{ progress.percent }}% bajarildi</div>
+    <div class="meta" style="margin-top:4px">
+      {{ progress.taught }} / {{ progress.total }} mavzu
+      {% if group.schedule %} · {% icon "clock" 14 %} {{ group.schedule }}{% endif %}
+      {% if group.room %} · {% icon "pin" 14 %} {{ group.room }}{% endif %}
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="v">{{ students|length }}</div><div class="l">shogird</div></div>
+    <div class="hero-stat"><div class="v">{{ lessons|length }}</div><div class="l">so‘nggi darslar</div></div>
+    <div class="hero-stat"><div class="v">{{ group.get_status_display }}</div><div class="l">holat</div></div>
+  </div>
 </section>
 
 {% if next_item %}
-<div class="notice next-topic">
-  <span>Navbatdagi mavzu: <a href="{{ next_item.topic.get_absolute_url }}"><strong>{{ next_item.topic.title }}</strong></a></span>
-  <a class="btn sm" href="{% url 'lesson_create' %}?group={{ group.pk }}&amp;topic={{ next_item.topic_id }}">Shu mavzuda dars</a>
+<div class="callout next" style="margin-bottom:18px">
+  <span class="callout-icon">{% icon "target" 18 %}</span>
+  <div class="grow">
+    <div class="meta">Navbatdagi mavzu</div>
+    <a class="strong" href="{{ next_item.topic.get_absolute_url }}">{{ next_item.topic.title }}</a>
+  </div>
+  <form method="post" action="{% url 'start_lesson' group.pk %}">
+    {% csrf_token %}
+    <button class="btn primary sm" type="submit" title="Bugungi sana bilan dars ochiladi va yo‘qlamaga o‘tasiz">{% icon "play" 13 %} Darsni boshlash</button>
+  </form>
+  <a class="btn soft sm" href="{% url 'lesson_create' %}?group={{ group.pk }}&amp;topic={{ next_item.topic_id }}">Rejalash</a>
 </div>
 {% endif %}
 
-<div class="layout-2">
-  <section class="card">
-    <h2>Dastur (mavzular)</h2>
-    <div class="syllabus-add">
-      <form method="post" action="{% url 'syllabus_add' group.pk %}" class="filters">
-        {% csrf_token %}
-        <select class="input" name="topic" required aria-label="Mavzu">
-          <option value="">Katalogdan mavzu qo‘shish</option>
-          {% regroup all_topics by module as by_module %}
-          {% for m in by_module %}
-            <optgroup label="{{ m.grouper|default:'Bo‘limsiz' }}">
-              {% for t in m.list %}<option value="{{ t.pk }}">{{ t.title }}</option>{% endfor %}
-            </optgroup>
-          {% endfor %}
-        </select>
-        <button class="btn" type="submit">Qo‘shish</button>
-      </form>
-      {% if modules %}
-      <form method="post" action="{% url 'syllabus_add' group.pk %}" class="filters">
-        {% csrf_token %}
-        <select class="input" name="module" required aria-label="Bo‘lim">
-          <option value="">Butun bo‘limni qo‘shish</option>
-          {% for m in modules %}<option value="{{ m.pk }}">{{ m.title }} (+{{ m.free }})</option>{% endfor %}
-        </select>
-        <button class="btn quiet" type="submit">Bo‘limni qo‘shish</button>
-      </form>
-      {% endif %}
+<div class="split">
+  <section class="card" aria-labelledby="syl-h">
+    <div class="card-head">
+      <h2 id="syl-h">{% icon "book" 18 %} O‘quv dasturi</h2>
+      <span class="meta">{{ progress.taught }} o‘tildi · {{ progress.total }} jami</span>
     </div>
-    <div class="syllabus">
-      {% for item in syllabus %}
-        <div class="syllabus-item status-{{ item.status }}" id="syllabus-{{ item.pk }}">
-          <span class="num">{{ forloop.counter }}</span>
-          <div>
-            <a href="{{ item.topic.get_absolute_url }}"><strong>{{ item.topic.title }}</strong></a>
-            <div class="meta">
-              {% if item.topic.module %}{{ item.topic.module.title }} · {% endif %}{{ item.get_status_display }}
-              {% if item.taught_on %} · {{ item.taught_on|date:"d.m.Y" }}{% endif %}
+    <div class="card-body flush">
+      <div class="add-panel">
+        <form method="post" action="{% url 'syllabus_add' group.pk %}">
+          {% csrf_token %}
+          <select class="input" name="topic" required aria-label="Katalogdan mavzu">
+            <option value="">Katalogdan mavzu qo‘shish…</option>
+            {% regroup all_topics by module as by_module %}
+            {% for m in by_module %}
+              <optgroup label="{{ m.grouper|default:'Bo‘limsiz' }}">
+                {% for t in m.list %}<option value="{{ t.pk }}">{{ t.title }}</option>{% endfor %}
+              </optgroup>
+            {% endfor %}
+          </select>
+          <button class="btn sm dark" type="submit">{% icon "plus" 15 %} Qo‘shish</button>
+        </form>
+        {% if modules %}
+        <form method="post" action="{% url 'syllabus_add' group.pk %}">
+          {% csrf_token %}
+          <select class="input" name="module" required aria-label="Butun bo‘lim">
+            <option value="">Butun bo‘limni qo‘shish…</option>
+            {% for m in modules %}<option value="{{ m.pk }}">{{ m.title }} (+{{ m.free }})</option>{% endfor %}
+          </select>
+          <button class="btn sm soft" type="submit">Bo‘lim</button>
+        </form>
+        {% endif %}
+      </div>
+
+      <ol class="syllabus">
+        {% for item in syllabus %}
+          {% ifchanged item.topic.module_id %}<li class="syl-section" aria-hidden="true">{{ item.topic.module.title|default:"Bo‘limsiz" }}</li>{% endifchanged %}
+          <li class="syl {{ item.status }}{% if next_item and item.pk == next_item.pk %} next{% endif %}" id="syllabus-{{ item.pk }}">
+            <span class="syl-n">{% if item.status == 'taught' %}{% icon "check" 14 %}{% else %}{{ forloop.counter }}{% endif %}</span>
+            <div class="truncate">
+              <a class="syl-title" href="{{ item.topic.get_absolute_url }}">{{ item.topic.title }}</a>
+              <div class="syl-meta">
+                {% if item.status == 'taught' %}O‘tildi{% if item.taught_on %} · {{ item.taught_on|date:"d.m.Y" }}{% endif %}
+                {% elif item.status == 'skipped' %}O‘tkazib yuborildi
+                {% elif next_item and item.pk == next_item.pk %}<span style="color:var(--accent);font-weight:600">Navbatdagi</span>
+                {% else %}Rejada{% endif %} · {{ item.topic.duration_minutes }} daq.
+              </div>
             </div>
-          </div>
-          <form method="post" action="{% url 'syllabus_toggle' group.pk item.pk %}" class="row-actions">
-            {% csrf_token %}
-            <button class="btn quiet sm icon" name="action" value="up" title="Yuqoriga" aria-label="Yuqoriga" {% if forloop.first %}disabled{% endif %}>↑</button>
-            <button class="btn quiet sm icon" name="action" value="down" title="Pastga" aria-label="Pastga" {% if forloop.last %}disabled{% endif %}>↓</button>
-            {% if item.status != 'taught' %}
-              <button class="btn quiet sm" name="action" value="taught">O‘tildi</button>
-            {% else %}
-              <button class="btn quiet sm" name="action" value="planned">Rejaga</button>
-            {% endif %}
-            {% if item.status != 'skipped' %}<button class="btn quiet sm" name="action" value="skip">O‘tkazish</button>{% endif %}
-            <button class="btn quiet sm danger-text" name="action" value="delete" data-confirm="“{{ item.topic.title }}” dasturdan olib tashlansinmi?">✕</button>
-          </form>
-        </div>
-      {% empty %}
-        <div class="empty">Dastur bo‘sh. Yuqoridan mavzu yoki butun bo‘limni qo‘shing.</div>
-      {% endfor %}
+            <form method="post" action="{% url 'syllabus_toggle' group.pk item.pk %}" class="syl-actions">
+              {% csrf_token %}
+              <button class="btn xs ghost square" name="action" value="up" title="Yuqoriga" aria-label="Yuqoriga" {% if forloop.first %}disabled{% endif %}>{% icon "up" 14 %}</button>
+              <button class="btn xs ghost square" name="action" value="down" title="Pastga" aria-label="Pastga" {% if forloop.last %}disabled{% endif %}>{% icon "down" 14 %}</button>
+              {% if item.status != 'taught' %}
+                <button class="btn xs ghost" name="action" value="taught" title="O‘tildi deb belgilash">{% icon "check" 14 %} O‘tildi</button>
+              {% else %}
+                <button class="btn xs ghost" name="action" value="planned" title="Rejaga qaytarish">{% icon "undo" 14 %} Rejaga</button>
+              {% endif %}
+              {% if item.status != 'skipped' %}<button class="btn xs ghost square" name="action" value="skip" title="O‘tkazib yuborish" aria-label="O‘tkazib yuborish">{% icon "skip" 14 %}</button>{% endif %}
+              <button class="btn xs danger-ghost square" name="action" value="delete" title="Dasturdan olib tashlash" aria-label="Dasturdan olib tashlash" data-confirm="“{{ item.topic.title }}” dasturdan olib tashlansinmi?">{% icon "trash" 14 %}</button>
+            </form>
+          </li>
+        {% empty %}
+          <li class="empty">
+            <span class="empty-icon">{% icon "book" 22 %}</span>
+            <strong>Dastur bo‘sh</strong>
+            <p>Yuqoridan mavzu yoki butun bo‘limni qo‘shing.</p>
+          </li>
+        {% endfor %}
+      </ol>
     </div>
   </section>
 
-  <aside>
-    <section class="card">
-      <h2>Shogirdlar</h2>
-      {% for s in students %}
-        <div class="item">
-          <a class="person" href="{{ s.get_absolute_url }}">
-            <span class="avatar" aria-hidden="true">{{ s.initials }}</span>
-            <span>{{ s.full_name }}<span class="meta block">{{ s.get_status_display }}</span></span>
-          </a>
+  <aside class="stack">
+    {% if sessions %}
+    <section class="card" aria-labelledby="ses-h">
+      <div class="card-head"><h2 id="ses-h">{% icon "calendar" 18 %} Yaqin darslar</h2></div>
+      <div class="card-body flush">
+        <div class="rows">
+          {% for s in sessions %}
+            <div class="row">
+              <div style="width:46px" class="center">
+                <div class="meta" style="font-size:11.5px;text-transform:uppercase;font-weight:700">{{ s.day|weekday_short }}</div>
+                <div class="strong" style="font:600 19px/1.1 var(--font-display)">{{ s.day|date:"j" }}</div>
+              </div>
+              <div class="grow">
+                <div class="row-title truncate">{% if s.topic %}{{ s.topic.title }}{% else %}Mavzu yo‘q{% endif %}</div>
+                <div class="meta">{{ s.starts_at|time:"H:i" }}{% if s.ends_at %}–{{ s.ends_at|time:"H:i" }}{% endif %}{% if s.is_today %} · bugun{% endif %}</div>
+              </div>
+              {% if s.state == 'live' %}<span class="badge live">Hozir</span>{% elif s.state == 'done' %}<span class="badge ok">O‘tildi</span>{% elif s.lesson %}<a class="btn xs soft" href="{{ s.lesson.get_absolute_url }}">Dars</a>{% endif %}
+            </div>
+          {% endfor %}
         </div>
-      {% empty %}
-        <div class="empty">Hali shogird yo‘q.</div>
-      {% endfor %}
+      </div>
     </section>
-    <section class="card mt">
-      <h2>So‘nggi darslar</h2>
-      {% for lesson in lessons %}
-        <div class="item">
-          <div>
-            <a href="{{ lesson.get_absolute_url }}">{{ lesson.topic.title|default:"Mavzusiz" }}</a>
-            <div class="meta">{{ lesson.held_on|date:"d.m.Y" }}</div>
-          </div>
-          <span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}plan{% endif %}">{{ lesson.get_status_display }}</span>
+    {% endif %}
+
+    <section class="card" aria-labelledby="st-h">
+      <div class="card-head">
+        <h2 id="st-h">{% icon "users" 18 %} Shogirdlar</h2>
+        <a class="btn xs ghost" href="{% url 'student_list' %}?group={{ group.pk }}">Ro‘yxat</a>
+      </div>
+      <div class="card-body flush">
+        <div class="rows">
+          {% for s in students %}
+            <a class="row" href="{{ s.get_absolute_url }}">
+              <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+              <div class="grow">
+                <div class="row-title truncate">{{ s.full_name }}</div>
+                <div class="meta">
+                  {% if s.status != 'active' %}{{ s.get_status_display }} · {% endif %}
+                  {% if s.att_total %}{{ s.att_present }}/{{ s.att_total }} dars{% if s.score_avg is not None %} · ball {{ s.score_avg }}{% endif %}{% else %}hali yo‘qlama yo‘q{% endif %}
+                </div>
+              </div>
+              {% if s.att_total %}<span class="badge {{ s.att_pct|tone }}">{{ s.att_pct }}%</span>{% endif %}
+            </a>
+          {% empty %}
+            <div class="empty compact">
+              <p>Hali shogird yo‘q.</p>
+              <a class="btn sm soft" href="{% url 'student_create' %}?group={{ group.pk }}">{% icon "plus" 14 %} Qo‘shish</a>
+            </div>
+          {% endfor %}
         </div>
-      {% empty %}
-        <div class="empty">Dars yozilmagan.</div>
-      {% endfor %}
+      </div>
     </section>
-    {% if group.notes %}<section class="card mt"><h2>Izoh</h2><div class="prose">{{ group.notes|linebreaks }}</div></section>{% endif %}
-    <p class="meta mt">
-      <a class="danger-text" href="{% url 'group_delete' group.pk %}">Guruhni o‘chirish</a>
-    </p>
+
+    <section class="card" aria-labelledby="ls-h">
+      <div class="card-head">
+        <h2 id="ls-h">{% icon "lesson" 18 %} So‘nggi darslar</h2>
+        <a class="btn xs ghost" href="{% url 'lesson_list' %}?group={{ group.pk }}">Barchasi</a>
+      </div>
+      <div class="card-body flush">
+        <div class="rows">
+          {% for lesson in lessons|slice:":8" %}
+            <a class="row" href="{{ lesson.get_absolute_url }}">
+              <div class="grow">
+                <div class="row-title truncate">{{ lesson.topic.title|default:"Mavzusiz" }}</div>
+                <div class="meta">{{ lesson.held_on|date:"d.m.Y" }}</div>
+              </div>
+              <span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}info{% endif %}">{{ lesson.get_status_display }}</span>
+            </a>
+          {% empty %}
+            <div class="empty compact"><p>Dars yozilmagan.</p></div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    {% if group.notes %}
+      <section class="card pad"><h2 style="font-size:16px;margin-bottom:10px">Izoh</h2><div class="prose meta">{{ group.notes|linebreaks }}</div></section>
+    {% endif %}
+    <a class="btn danger-ghost sm" href="{% url 'group_delete' group.pk %}" style="align-self:flex-start">{% icon "trash" 15 %} Guruhni o‘chirish</a>
   </aside>
 </div>
 {% endblock %}

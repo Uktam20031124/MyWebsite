@@ -7,7 +7,7 @@ starter.py / python.py dagi mavzularga mos keladi.
 from . import GroupData as G
 
 # Barcha guruhlar seshanba, juma va shanba kunlari, ketma-ket soatlarda.
-DAYS = "Se / Ju / Sha"
+TUE_FRI_SAT = (1, 4, 5)
 
 # Starter bitiruvchilari uchun Python kursi (10 mavzulik modul rejasi bo'yicha):
 # kirish → turlar → operatorlar → shartlar → tuzilmalar → sikllar → funksiyalar →
@@ -24,7 +24,9 @@ GROUPS = [
     G(
         code="S-009",
         name="S-009 · Starter",
-        schedule=f"{DAYS} 14:00–15:00",
+        days=TUE_FRI_SAT,
+        starts="14:00",
+        ends="15:00",
         students=[
             "Karimov Laziz",
             "Karimova Nigina",
@@ -53,7 +55,9 @@ GROUPS = [
     G(
         code="S005",
         name="S005 · Starter",
-        schedule=f"{DAYS} 15:00–16:00",
+        days=TUE_FRI_SAT,
+        starts="15:00",
+        ends="16:00",
         students=[
             "Ibrahimov Muxammad ali",
             "Meymonov Murodbek",
@@ -80,7 +84,9 @@ GROUPS = [
     G(
         code="P-006",
         name="P-006 · Python Pro",
-        schedule=f"{DAYS} 16:00–17:00",
+        days=TUE_FRI_SAT,
+        starts="16:00",
+        ends="17:00",
         students=[
             "Odilov Saidamir",
             "Xudoynazarov Javoxir",

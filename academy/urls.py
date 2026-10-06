@@ -9,6 +9,7 @@ urlpatterns = [
     path("healthz/", views.healthz, name="healthz"),
     path("", views.dashboard, name="dashboard"),
     path("qidiruv/", views.search, name="search"),
+    path("jadval/", views.timetable, name="timetable"),
     # Guruhlar
     path("guruhlar/", views.GroupListView.as_view(), name="group_list"),
     path("guruhlar/yangi/", views.GroupCreateView.as_view(), name="group_create"),
@@ -16,6 +17,7 @@ urlpatterns = [
     path("guruhlar/<int:pk>/tahrir/", views.GroupUpdateView.as_view(), name="group_update"),
     path("guruhlar/<int:pk>/ochirish/", views.GroupDeleteView.as_view(), name="group_delete"),
     path("guruhlar/<int:pk>/jurnal/", views.group_journal_view, name="group_journal"),
+    path("guruhlar/<int:pk>/boshlash/", views.start_lesson, name="start_lesson"),
     path("guruhlar/<int:pk>/mavzu/", views.add_syllabus_item, name="syllabus_add"),
     path(
         "guruhlar/<int:pk>/mavzu/<int:item_id>/",

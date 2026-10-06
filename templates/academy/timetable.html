@@ -1,0 +1,76 @@
+{% extends "academy/base.html" %}
+{% load ui l10n %}
+{% block title %}Dars jadvali · Darsxona{% endblock %}
+{% block kicker %}{% icon "calendar" 15 %} {{ monday|date:"j E" }} — {% with sunday=days.6.date %}{{ sunday|date:"j E Y" }}{% endwith %}{% endblock %}
+{% block heading %}Dars jadvali{% endblock %}
+{% block subheading %}<p class="page-sub">{{ sessions|length }} ta dars shu haftada. Blokni bosing — dars yoki guruh sahifasi ochiladi.</p>{% endblock %}
+{% block actions %}
+<div class="seg-tabs" role="group" aria-label="Hafta">
+  <a href="?hafta={{ prev|date:'Y-m-d' }}" aria-label="Oldingi hafta">{% icon "left" 16 %}</a>
+  <a href="?hafta={{ this_week|date:'Y-m-d' }}" {% if monday == this_week %}aria-current="true"{% endif %}>Shu hafta</a>
+  <a href="?hafta={{ next|date:'Y-m-d' }}" aria-label="Keyingi hafta">{% icon "right" 16 %}</a>
+</div>
+<button class="btn soft no-print" type="button" onclick="window.print()">{% icon "print" 16 %} Chop etish</button>
+{% endblock %}
+
+{% block content %}
+{% if unscheduled %}
+  <div class="callout warn" style="margin-bottom:16px">
+    <span class="callout-icon">{% icon "alert" 18 %}</span>
+    <div class="grow">
+      <strong>Jadvalsiz guruhlar:</strong>
+      {% for g in unscheduled %}<a href="{% url 'group_update' g.pk %}">{{ g.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+      <div class="meta">Dars kunlari va vaqtini kiriting — kalendarda paydo bo‘ladi.</div>
+    </div>
+  </div>
+{% endif %}
+
+<section class="card">
+  <div class="table-wrap">
+    <div class="tt" style="--rows: {{ hours|length }}">
+      <div class="tt-corner"></div>
+      {% for d in days %}
+        <div class="tt-day{% if d.is_today %} today{% endif %}">
+          <div class="dname">{{ d.date|weekday_short }}</div>
+          <div class="dnum">{{ d.date|date:"j" }}</div>
+        </div>
+      {% endfor %}
+
+      <div class="tt-hours">
+        {% for h in hours %}<div class="tt-hour"><span>{{ h|time:"H:i" }}</span></div>{% endfor %}
+      </div>
+      {% for d in days %}
+        <div class="tt-col{% if d.is_today %} today{% endif %}" style="height: calc(var(--hour) * {{ hours|length }})">
+          {% for item in d.items %}
+            {% with s=item.session %}
+              <a class="tt-event {{ s.state }}" style="--h: {{ s.group|hue }}; top: {{ item.top|unlocalize }}%; height: {{ item.height|unlocalize }}%"
+                 href="{% if s.lesson %}{{ s.lesson.get_absolute_url }}{% else %}{{ s.group.get_absolute_url }}{% endif %}"
+                 title="{{ s.group.name }} · {{ s.starts_at|time:'H:i' }}{% if s.ends_at %}–{{ s.ends_at|time:'H:i' }}{% endif %}{% if s.topic %} · {{ s.topic.title }}{% endif %}">
+                <strong class="truncate">{{ s.group.code }}{% if s.state == 'done' %} ✓{% endif %}</strong>
+                <span class="t">{{ s.starts_at|time:"H:i" }}{% if s.ends_at %}–{{ s.ends_at|time:"H:i" }}{% endif %}</span>
+                {% if s.topic %}<span class="topic">{{ s.topic.title }}</span>{% endif %}
+              </a>
+            {% endwith %}
+          {% endfor %}
+          {% if d.is_today and now_top is not None %}<div class="tt-now" style="top: {{ now_top|unlocalize }}%" aria-hidden="true"></div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% if sessions %}
+<section class="card" style="margin-top:18px">
+  <div class="card-head"><h2>{% icon "lesson" 18 %} Hafta bo‘yicha ro‘yxat</h2></div>
+  <div class="card-body">
+    {% regroup sessions by day as by_day %}
+    {% for d in by_day %}
+      <div class="day-group">
+        <div class="day-label">{{ d.grouper|weekday_full }}, {{ d.grouper|date:"j E" }}</div>
+        <div class="sessions">{% for s in d.list %}{% include "academy/includes/session.html" %}{% endfor %}</div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% load ui %}<article class="session {{ s.state }}">
+  <div class="session-time">
+    <strong>{{ s.starts_at|time:"H:i" }}</strong>
+    <span>{% if s.ends_at %}{{ s.ends_at|time:"H:i" }} gacha{% else %}{{ s.day|weekday_short }}{% endif %}</span>
+  </div>
+  <div class="truncate">
+    <div class="session-title">
+      <a href="{{ s.group.get_absolute_url }}">{{ s.group.name }}</a>
+      {% if s.state == 'live' %}<span class="badge live">Hozir</span>
+      {% elif s.state == 'done' %}<span class="badge ok">O‘tildi</span>
+      {% elif s.state == 'missed' and s.lesson %}<span class="badge warn">Yakunlanmagan</span>
+      {% elif s.state == 'missed' %}<span class="badge warn">Yozilmagan</span>
+      {% elif s.state == 'cancelled' %}<span class="badge bad">Bekor</span>{% endif %}
+    </div>
+    <div class="session-topic truncate">
+      {% icon "book" 15 %}{% if s.topic %}{{ s.topic.title }}{% else %}<span class="meta">Dasturda mavzu qolmagan</span>{% endif %}
+      {% if not s.lesson and s.topic %}<span class="meta"> · navbatdagi</span>{% endif %}
+    </div>
+  </div>
+  <div class="actions">
+    {% if s.lesson %}
+      {% if s.state != 'done' and s.state != 'cancelled' %}
+        <a class="btn sm{% if s.state == 'live' %} primary{% else %} soft{% endif %}" href="{% url 'attendance' s.lesson.pk %}">{% icon "check" 15 %} Yo‘qlama</a>
+      {% endif %}
+      <a class="btn sm ghost" href="{{ s.lesson.get_absolute_url }}">Dars</a>
+    {% elif s.is_today %}
+      <form method="post" action="{% url 'start_lesson' s.group.pk %}">
+        {% csrf_token %}
+        <button class="btn sm{% if s.state == 'live' %} primary{% else %} dark{% endif %}" type="submit">{% icon "play" 13 %} Boshlash</button>
+      </form>
+    {% else %}
+      <a class="btn sm ghost" href="{% url 'lesson_create' %}?group={{ s.group.pk }}&amp;sana={{ s.day|date:'Y-m-d' }}{% if s.topic %}&amp;topic={{ s.topic.pk }}{% endif %}">Rejalash</a>
+    {% endif %}
+  </div>
+</article>
