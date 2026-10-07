@@ -72,6 +72,31 @@ Guruh jurnalida avtomatik: o‘rtacha ball, davomat foizi va
 **reyting = o‘rtacha ball × 0.7 + davomat × 0.3**, o‘rinlar (teng reytingga bir xil o‘rin).
 Jurnalni “Excel (CSV)” tugmasi bilan yuklab olish mumkin.
 
+## Mavzu testlari (Telegram orqali, bir martalik havola)
+
+O‘quvchi mavzuni to‘liq o‘zlashtirganini tekshirish uchun:
+
+1. **Mavzu sahifasi → “Test yaratish”**: vaqt (daqiqa) va savollar matni:
+   ```text
+   ? 2 + 2 nechiga teng?
+   + 4
+   - 5
+   ```
+   `?` — savol, `+` — to‘g‘ri javob (bittasi), `-` — noto‘g‘ri javob.
+2. **Dars sahifasi → “Test jo‘natish” → “Havolalarni yaratish”**: guruhning har bir faol o‘quvchisi
+   uchun shaxsiy havola (`/t/<token>/`). “Telegramda yuborish” tugmasi Telegram’ni ochadi —
+   kontaktni tanlab yuborasiz. “Nusxa” / “Hammasini nusxalash” ham bor.
+3. O‘quvchi havolani bosadi → “Testni boshlash” → yuqorida **teskari sanoq taymer**. Vaqt tugasa
+   test avtomatik yakunlanadi va natija (to‘g‘ri javoblar soni, foiz) ekranda ko‘rsatiladi.
+4. **Havola faqat bir marta ishlaydi**: boshlangandan keyin boshqa brauzer/qurilmada ochilmaydi,
+   yakunlangandan keyin test qayta ochilmaydi. (Telegram havola “preview”ini o‘zi ochganda test
+   boshlanib ketmaydi — test faqat tugma bosilganda boshlanadi.) Sahifa tasodifan yangilansa,
+   o‘sha brauzerda davom etadi, taymer qayta boshlanmaydi.
+5. Natijalar dars sahifasida, mavzu sahifasida (o‘rtacha foiz) va o‘quvchi kartasida ko‘rinadi.
+   Ochilmagan havolani “↻” bilan yangisiga almashtirish mumkin (eskisi ishlamay qoladi).
+
+Production’da havolalar to‘g‘ri domen bilan chiqishi uchun `DJANGO_ALLOWED_HOSTS` va HTTPS sozlangan bo‘lsin.
+
 ## Imkoniyatlar
 
 - **Bosh sahifa** — bugungi va navbatdagi darslar, haftalik davomat, yakunlanmagan (sanasi o‘tgan) darslar,
@@ -148,7 +173,8 @@ migratsiyalar, testlar va production sozlamalarini ishga tushiradi.
 
 ```
 academy/
-  models.py      Group, Student, Module, Topic, SyllabusItem, Lesson, Attendance
+  models.py      Group, Student, Module, Topic, SyllabusItem, Lesson, Attendance,
+                 Quiz, Question, Choice, QuizAttempt (mavzu testlari)
   services.py    statistika (N+1 so'rovsiz), mavzular parser/import/eksport
   views.py       sahifalar
   forms.py       validatsiya

@@ -1,0 +1,13 @@
+{% extends "academy/quiz/public_base.html" %}
+{% block title %}Natija · {{ topic.title }}{% endblock %}
+{% block panel %}
+<h1>Natija</h1>
+<p class="meta">{{ attempt.student.full_name }} · {{ topic.title }}</p>
+{% if attempt.timed_out %}<div class="callout warn" style="margin-top:12px"><div class="grow">Vaqt tugadi — test avtomatik yakunlandi.</div></div>{% endif %}
+<div class="quiz-score {% if attempt.percent >= 80 %}ok{% elif attempt.percent >= 50 %}warn{% else %}bad{% endif %}">
+  <div class="quiz-score-n">{{ attempt.percent }}%</div>
+  <p>{{ attempt.correct }} / {{ attempt.total }} to‘g‘ri javob</p>
+</div>
+<p class="muted">{% if attempt.percent >= 80 %}Ajoyib! Mavzu yaxshi o‘zlashtirilgan.{% elif attempt.percent >= 50 %}Yomon emas, lekin mavzuni yana bir bor takrorlang.{% else %}Mavzuni qayta o‘rganib chiqing va ustozingizdan yordam so‘rang.{% endif %}</p>
+<p class="meta">Natija ustozingizga yuborildi. Test qayta ochilmaydi.</p>
+{% endblock %}

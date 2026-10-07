@@ -91,6 +91,25 @@
         </div>
       </div>
     </section>
+    <section class="card" aria-labelledby="quiz-h">
+      <div class="card-head"><h2 id="quiz-h">{% icon "target" 18 %} Testlar</h2></div>
+      <div class="card-body flush">
+        <div class="rows">
+          {% for t in quiz_attempts %}
+            <a class="row" href="{{ t.lesson.get_absolute_url }}#quiz">
+              <div class="grow"><div class="row-title truncate">{{ t.quiz.topic.title }}</div><div class="meta">{{ t.lesson.held_on|date:"d.m.Y" }}</div></div>
+              {% if t.status == 'finished' %}
+                <span class="badge {% if t.percent >= 80 %}ok{% elif t.percent >= 50 %}warn{% else %}bad{% endif %}">{{ t.percent }}%</span>
+              {% else %}
+                <span class="badge">{{ t.get_status_display }}</span>
+              {% endif %}
+            </a>
+          {% empty %}
+            <div class="empty compact"><p>Hali test yuborilmagan.</p></div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
     {% if student.notes %}
       <section class="card pad"><h2 style="font-size:16px;margin-bottom:10px">Izoh</h2><div class="prose muted">{{ student.notes|linebreaks }}</div></section>
     {% endif %}

@@ -48,6 +48,27 @@
   </article>
 
   <aside class="stack">
+    <section class="card quiz-card" id="quiz" aria-labelledby="quiz-h">
+      <div class="card-head">
+        <h2 id="quiz-h">{% icon "target" 18 %} Test</h2>
+        {% if quiz %}<a class="btn xs ghost" href="{% url 'quiz_edit' topic.pk %}">{% icon "edit" 14 %} Tahrirlash</a>{% endif %}
+      </div>
+      <div class="card-body">
+        {% if quiz %}
+          <div class="strong">{{ question_n }} ta savol · {{ quiz.time_limit_minutes }} daqiqa</div>
+          {% if quiz_stats.n %}
+            <p class="meta">{{ quiz_stats.n }} ta o‘quvchi yechgan · o‘rtacha {{ quiz_stats.avg }}%</p>
+          {% else %}
+            <p class="meta">Hali hech kim yechmagan.</p>
+          {% endif %}
+          <p class="meta">Test havolalari dars sahifasidan yuboriladi: dars → “Test jo‘natish”.</p>
+        {% else %}
+          <p class="meta">Mavzu o‘zlashtirilganini tekshirish uchun test qo‘shing — dars o‘tgach har bir o‘quvchiga Telegram orqali bir martalik havola yuboriladi.</p>
+          <a class="btn sm primary" href="{% url 'quiz_edit' topic.pk %}">{% icon "plus" 14 %} Test yaratish</a>
+        {% endif %}
+      </div>
+    </section>
+
     <section class="card">
       <div class="card-head"><h2>{% icon "layers" 18 %} Guruhlar dasturida</h2></div>
       <div class="card-body flush">
@@ -70,6 +91,7 @@
           {% for lesson in lessons %}
             <a class="row" href="{{ lesson.get_absolute_url }}">
               <div class="grow"><div class="row-title">{{ lesson.group.code }}</div><div class="meta">{{ lesson.held_on|date:"d.m.Y" }}</div></div>
+              {% if quiz and lesson.status == 'completed' %}<span class="badge accent plain" title="Test jo‘natish">Test</span>{% endif %}
               <span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}info{% endif %}">{{ lesson.get_status_display }}</span>
             </a>
           {% empty %}

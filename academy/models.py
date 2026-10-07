@@ -1,6 +1,7 @@
-from datetime import date, time
+import secrets
+from datetime import date, time, timedelta
 
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import Max
 from django.db.models.signals import post_delete
@@ -452,3 +453,198 @@ def resync_syllabus_item(group_id, topic_id) -> None:
 def _lesson_deleted(sender, instance, **kwargs):
     if instance.status == Lesson.Status.COMPLETED:
         resync_syllabus_item(instance.group_id, instance.topic_id)
+
+
+# --- Testlar ----------------------------------------------------------------
+
+
+class Quiz(models.Model):
+    """Mavzu bo'yicha test: o'quvchi mavzuni o'zlashtirganini tekshirish uchun."""
+
+    topic = models.OneToOneField(
+        Topic,
+        on_delete=models.CASCADE,
+        related_name="quiz",
+        verbose_name="Mavzu",
+    )
+    time_limit_minutes = models.PositiveSmallIntegerField(
+        "Vaqt (daq.)",
+        default=10,
+        validators=[MinValueValidator(1), MaxValueValidator(180)],
+        help_text="Shu vaqt tugaganda test avtomatik yakunlanadi.",
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Test"
+        verbose_name_plural = "Testlar"
+
+    def __str__(self) -> str:
+        return f"Test: {self.topic.title}"
+
+    def as_text(self) -> str:
+        """Savollarni tahrirlash formatiga qaytaradi (`parse_quiz` teskarisi)."""
+        blocks = []
+        for q in self.questions.prefetch_related("choices"):
+            lines = [f"? {q.text}"]
+            lines += [f"{'+' if c.is_correct else '-'} {c.text}" for c in q.choices.all()]
+            blocks.append("\n".join(lines))
+        return "\n\n".join(blocks)
+
+    def replace_questions(self, parsed) -> None:
+        """Savollarni `parse_quiz` natijasi bilan almashtiradi."""
+        with transaction.atomic():
+            self.questions.all().delete()
+            for order, (text, choices) in enumerate(parsed, start=1):
+                question = Question.objects.create(quiz=self, text=text, order=order)
+                Choice.objects.bulk_create(
+                    Choice(question=question, text=c, is_correct=ok, order=i)
+                    for i, (c, ok) in enumerate(choices, start=1)
+                )
+
+
+class Question(models.Model):
+    quiz = models.ForeignKey(
+        Quiz, on_delete=models.CASCADE, related_name="questions", verbose_name="Test"
+    )
+    text = models.TextField("Savol")
+    order = models.PositiveIntegerField("Tartib", default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "Savol"
+        verbose_name_plural = "Savollar"
+
+    def __str__(self) -> str:
+        return self.text[:80]
+
+
+class Choice(models.Model):
+    question = models.ForeignKey(
+        Question, on_delete=models.CASCADE, related_name="choices", verbose_name="Savol"
+    )
+    text = models.CharField("Javob", max_length=500)
+    is_correct = models.BooleanField("To'g'ri", default=False)
+    order = models.PositiveIntegerField("Tartib", default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "Javob varianti"
+        verbose_name_plural = "Javob variantlari"
+
+    def __str__(self) -> str:
+        return self.text
+
+
+def new_attempt_token() -> str:
+    return secrets.token_urlsafe(16)
+
+
+class QuizAttempt(models.Model):
+    """Bitta o'quvchi uchun bir martalik test havolasi (dars bo'yicha)."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Ochilmagan"
+        ACTIVE = "active", "Yechilmoqda"
+        FINISHED = "finished", "Tugatgan"
+
+    # Vaqt tugash paytida yuborilgan javoblar tarmoq kechikishi bilan kelsa ham qabul qilinadi.
+    GRACE_SECONDS = 15
+
+    quiz = models.ForeignKey(
+        Quiz, on_delete=models.CASCADE, related_name="attempts", verbose_name="Test"
+    )
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.CASCADE, related_name="quiz_attempts", verbose_name="Dars"
+    )
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="quiz_attempts", verbose_name="Shogird"
+    )
+    token = models.CharField(max_length=32, unique=True, default=new_attempt_token, editable=False)
+    status = models.CharField(
+        "Holat", max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
+    )
+    # Testni boshlagan brauzer kaliti (cookie): havola boshqa joyda qayta ochilmaydi.
+    owner_key = models.CharField(max_length=64, blank=True, editable=False)
+    answers = models.JSONField("Javoblar", default=dict, blank=True)
+    started_at = models.DateTimeField("Boshlangan", null=True, blank=True)
+    deadline = models.DateTimeField("Tugash vaqti", null=True, blank=True)
+    finished_at = models.DateTimeField("Tugagan", null=True, blank=True)
+    timed_out = models.BooleanField("Vaqt tugadi", default=False)
+    correct = models.PositiveSmallIntegerField("To'g'ri javoblar", null=True, blank=True)
+    total = models.PositiveSmallIntegerField("Savollar soni", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["student__full_name"]
+        verbose_name = "Test havolasi"
+        verbose_name_plural = "Test havolalari"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lesson", "student"], name="uniq_quiz_attempt_lesson_student"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.student} — {self.quiz}"
+
+    def get_absolute_url(self):
+        return reverse("quiz_take", args=[self.token])
+
+    @property
+    def percent(self):
+        if not self.total:
+            return None
+        return round(100 * (self.correct or 0) / self.total)
+
+    def seconds_left(self, now=None) -> int:
+        if not self.deadline:
+            return 0
+        now = now or timezone.now()
+        return max(0, int((self.deadline - now).total_seconds()))
+
+    def is_expired(self, now=None, grace: int = 0) -> bool:
+        now = now or timezone.now()
+        return bool(self.deadline) and now > self.deadline + timedelta(seconds=grace)
+
+    def start(self, owner_key: str) -> bool:
+        """Testni boshlaydi. Faqat birinchi chaqiruv muvaffaqiyatli (atomik)."""
+        now = timezone.now()
+        deadline = now + timedelta(minutes=self.quiz.time_limit_minutes)
+        started = QuizAttempt.objects.filter(pk=self.pk, status=self.Status.PENDING).update(
+            status=self.Status.ACTIVE, owner_key=owner_key, started_at=now, deadline=deadline
+        )
+        self.refresh_from_db()
+        return bool(started)
+
+    def finish(self, answers: dict | None = None, timed_out: bool = False) -> None:
+        """Javoblarni baholab, testni yakunlaydi. `answers`: {savol_id: variant_id}."""
+        with transaction.atomic():
+            attempt = QuizAttempt.objects.select_for_update().get(pk=self.pk)
+            if attempt.status == self.Status.FINISHED:
+                self.refresh_from_db()
+                return
+            if answers is not None:
+                attempt.answers = answers
+            questions = list(attempt.quiz.questions.all())
+            correct_ids = set(
+                Choice.objects.filter(question__in=questions, is_correct=True).values_list(
+                    "question_id", "pk"
+                )
+            )
+            attempt.correct = sum(
+                (q.pk, _as_int(attempt.answers.get(str(q.pk)))) in correct_ids for q in questions
+            )
+            attempt.total = len(questions)
+            attempt.status = self.Status.FINISHED
+            attempt.finished_at = timezone.now()
+            attempt.timed_out = timed_out
+            attempt.save()
+        self.refresh_from_db()
+
+
+def _as_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
