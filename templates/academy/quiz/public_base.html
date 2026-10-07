@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="uz" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#15251e">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block title %}Test · {{ topic.title }}{% endblock %}</title>
+  <meta property="og:title" content="Test: {{ topic.title }}">
+  <meta property="og:description" content="Darsxona · mavzu bo‘yicha test">
+  {% include "academy/includes/head.html" %}
+</head>
+<body class="quiz-body">
+  {% block body %}
+  <main class="quiz-shell">
+    <div class="card pad quiz-panel">
+      <p class="kicker">Darsxona · test</p>
+      {% block panel %}{% endblock %}
+    </div>
+  </main>
+  {% endblock %}
+</body>
+</html>

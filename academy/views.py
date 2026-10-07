@@ -1,5 +1,8 @@
 import csv
+import random
+import secrets
 from datetime import date, timedelta
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
@@ -9,7 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.db import connection, transaction
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -30,13 +33,27 @@ from .forms import (
     LessonForm,
     LoginForm,
     ModuleForm,
+    QuizForm,
     StudentForm,
     TopicForm,
     TopicImportForm,
 )
-from .models import MAX_SCORE, Attendance, Group, Lesson, Module, Student, SyllabusItem, Topic
+from .models import (
+    MAX_SCORE,
+    Attendance,
+    Group,
+    Lesson,
+    Module,
+    Quiz,
+    QuizAttempt,
+    Student,
+    SyllabusItem,
+    Topic,
+    new_attempt_token,
+)
 from .services import (
     dashboard_payload,
+    ensure_quiz_attempts,
     export_topics,
     filter_students,
     group_journal,
@@ -486,6 +503,9 @@ class StudentDetailView(AuthMixin, DetailView):
         ctx["rating"] = rating(rate["avg_score"], rate["percent"]) if rate["total"] else None
         ctx["history"] = history
         ctx["timeline"] = history[:24][::-1]  # baho diagrammasi: eskisidan yangisiga
+        ctx["quiz_attempts"] = self.object.quiz_attempts.select_related(
+            "lesson", "quiz__topic"
+        ).order_by("-lesson__held_on")[:20]
         return ctx
 
 
@@ -520,7 +540,7 @@ class TopicListView(AuthMixin, ListView):
 
     def get_queryset(self):
         qs = (
-            Topic.objects.select_related("module")
+            Topic.objects.select_related("module", "quiz")
             .annotate(
                 lesson_n=Count("lessons", distinct=True),
                 group_n=Count("syllabus_items", distinct=True),
@@ -566,6 +586,15 @@ class TopicDetailView(AuthMixin, DetailView):
         topic = self.object
         ctx["syllabus_items"] = topic.syllabus_items.select_related("group")
         ctx["lessons"] = topic.lessons.select_related("group")[:20]
+        quiz = getattr(topic, "quiz", None)
+        if quiz:
+            ctx["quiz"] = quiz
+            ctx["question_n"] = quiz.questions.count()
+            ctx["quiz_stats"] = quiz.attempts.filter(
+                status=QuizAttempt.Status.FINISHED
+            ).aggregate(n=Count("pk"), correct=Sum("correct"), total=Sum("total"))
+            stats = ctx["quiz_stats"]
+            stats["avg"] = percent(stats["correct"] or 0, stats["total"] or 0)
         siblings = list(
             Topic.objects.filter(module_id=topic.module_id, is_active=True)
             .order_by("order", "title")
@@ -725,17 +754,37 @@ class LessonDetailView(AuthMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["summary"] = lesson_attendance_summary(self.object)
-        ctx["attendances"] = self.object.attendances.select_related("student")
+        lesson = self.object
+        ctx["summary"] = lesson_attendance_summary(lesson)
+        ctx["attendances"] = lesson.attendances.select_related("student")
+        ctx["quiz"] = getattr(lesson.topic, "quiz", None)
+        if ctx["quiz"]:
+            finalize_expired_attempts(lesson.quiz_attempts.all())
+            attempts = list(lesson.quiz_attempts.select_related("student", "quiz__topic"))
+            for a in attempts:
+                a.link = self.request.build_absolute_uri(a.get_absolute_url())
+                a.share_url = telegram_share_url(a.link, a)
+            ctx["attempts"] = attempts
+            finished = [a for a in attempts if a.status == QuizAttempt.Status.FINISHED]
+            ctx["quiz_finished"] = len(finished)
+            ctx["quiz_avg"] = (
+                round(sum(a.percent for a in finished) / len(finished)) if finished else None
+            )
+            ctx["links_text"] = "\n".join(f"{a.student.full_name}: {a.link}" for a in attempts)
         return ctx
 
 
 @login_required
 @require_POST
 def complete_lesson(request, pk):
-    lesson = get_object_or_404(Lesson, pk=pk)
+    lesson = get_object_or_404(Lesson.objects.select_related("topic"), pk=pk)
     lesson.mark_completed()
-    messages.success(request, "Dars o‘tildi deb belgilandi. Mavzu dasturda yangilandi.")
+    message = "Dars o‘tildi deb belgilandi. Mavzu dasturda yangilandi."
+    if hasattr(lesson.topic, "quiz"):
+        message += " Endi shogirdlarga test havolalarini yuboring."
+        messages.success(request, message)
+        return redirect(f"{lesson.get_absolute_url()}#quiz")
+    messages.success(request, message)
     return redirect(lesson.get_absolute_url())
 
 
@@ -867,3 +916,201 @@ def search(request):
             "lessons": lessons,
         },
     )
+
+
+# --- Testlar (o'qituvchi) ---------------------------------------------------
+
+
+@login_required
+def quiz_edit(request, pk):
+    topic = get_object_or_404(Topic, pk=pk)
+    quiz = getattr(topic, "quiz", None) or Quiz(topic=topic)
+    form = QuizForm(request.POST or None, instance=quiz)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, f"Test saqlandi: {len(form.parsed)} ta savol.")
+        return redirect(f"{topic.get_absolute_url()}#quiz")
+    return render(request, "academy/quiz/form.html", {"form": form, "topic": topic})
+
+
+class QuizDeleteView(AuthMixin, DeleteMessageMixin, DeleteView):
+    model = Quiz
+    template_name = "academy/confirm_delete.html"
+    success_message = "Test o‘chirildi."
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Quiz.objects.select_related("topic"), topic_id=self.kwargs["pk"])
+
+    def get_success_url(self):
+        return self.object.topic.get_absolute_url()
+
+
+def finalize_expired_attempts(qs) -> None:
+    """Vaqti tugagan, lekin yakunlanmagan (sahifa yopilgan) testlarni baholaydi."""
+    cutoff = timezone.now() - timedelta(seconds=QuizAttempt.GRACE_SECONDS)
+    for attempt in qs.filter(status=QuizAttempt.Status.ACTIVE, deadline__lt=cutoff):
+        attempt.finish(timed_out=True)
+
+
+def telegram_share_url(link: str, attempt: QuizAttempt) -> str:
+    text = (
+        f"{attempt.student.full_name}, “{attempt.quiz.topic.title}” mavzusi bo‘yicha test. "
+        f"Vaqt: {attempt.quiz.time_limit_minutes} daqiqa. Havola faqat bir marta ishlaydi."
+    )
+    return "https://t.me/share/url?" + urlencode({"url": link, "text": text})
+
+
+@login_required
+@require_POST
+def lesson_quiz_links(request, pk):
+    lesson = get_object_or_404(Lesson.objects.select_related("group", "topic"), pk=pk)
+    if not hasattr(lesson.topic, "quiz"):
+        messages.error(request, "Bu dars mavzusida test yo‘q. Avval mavzuga test yarating.")
+        return redirect(lesson.get_absolute_url())
+    created = ensure_quiz_attempts(lesson)
+    if created:
+        messages.success(request, f"{created} ta shogird uchun test havolasi yaratildi.")
+    else:
+        messages.info(request, "Barcha faol shogirdlarda havola allaqachon bor.")
+    return redirect(f"{lesson.get_absolute_url()}#quiz")
+
+
+@login_required
+@require_POST
+def quiz_attempt_renew(request, pk):
+    """Yakunlanmagan havolani yangisiga almashtiradi (eski havola ishlamay qoladi)."""
+    attempt = get_object_or_404(QuizAttempt.objects.select_related("lesson"), pk=pk)
+    if attempt.status == QuizAttempt.Status.FINISHED:
+        messages.error(request, "Test yakunlangan — natijani o‘chirib bo‘lmaydi.")
+    else:
+        attempt.token = new_attempt_token()
+        attempt.status = QuizAttempt.Status.PENDING
+        attempt.owner_key = ""
+        attempt.answers = {}
+        attempt.started_at = attempt.deadline = None
+        attempt.save()
+        messages.success(request, f"{attempt.student} uchun yangi havola yaratildi.")
+    return redirect(f"{attempt.lesson.get_absolute_url()}#quiz")
+
+
+# --- Testlar (o'quvchi, login talab qilinmaydi) -----------------------------
+
+
+def _owner_cookie(attempt: QuizAttempt) -> str:
+    return f"quiz_{attempt.pk}"
+
+
+def _is_owner(request, attempt: QuizAttempt) -> bool:
+    key = request.COOKIES.get(_owner_cookie(attempt), "")
+    return bool(key and attempt.owner_key) and secrets.compare_digest(key, attempt.owner_key)
+
+
+def _shuffled_questions(attempt: QuizAttempt) -> list:
+    """Savollar va variantlar har bir o'quvchida o'z tartibida (urug' — token)."""
+    rng = random.Random(attempt.token)
+    questions = list(attempt.quiz.questions.prefetch_related("choices"))
+    rng.shuffle(questions)
+    for q in questions:
+        q.shuffled = list(q.choices.all())
+        rng.shuffle(q.shuffled)
+        q.picked = attempt.answers.get(str(q.pk))
+    return questions
+
+
+def _posted_answers(request, attempt: QuizAttempt) -> dict:
+    answers = {}
+    for qid in attempt.quiz.questions.values_list("pk", flat=True):
+        value = request.POST.get(f"q{qid}", "")
+        if value.isdigit():
+            answers[str(qid)] = int(value)
+    return answers
+
+
+def _quiz_page(request, attempt, template, status=200, **extra):
+    response = render(
+        request,
+        f"academy/quiz/{template}.html",
+        {"attempt": attempt, "quiz": attempt.quiz, "topic": attempt.quiz.topic, **extra},
+        status=status,
+    )
+    response["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
+@never_cache
+def quiz_take(request, token):
+    attempt = get_object_or_404(
+        QuizAttempt.objects.select_related("quiz__topic", "student"), token=token
+    )
+    owner = _is_owner(request, attempt)
+    Status = QuizAttempt.Status
+
+    if attempt.status == Status.ACTIVE and attempt.is_expired(grace=QuizAttempt.GRACE_SECONDS):
+        attempt.finish(timed_out=True)
+
+    if attempt.status == Status.FINISHED:
+        if owner:
+            return _quiz_page(request, attempt, "result")
+        return _quiz_page(request, attempt, "used", status=410)
+
+    if attempt.status == Status.ACTIVE:
+        if not owner:
+            return _quiz_page(request, attempt, "used", status=410)
+        return _quiz_page(
+            request,
+            attempt,
+            "take",
+            questions=_shuffled_questions(attempt),
+            seconds_left=attempt.seconds_left(),
+        )
+
+    # Ochilmagan havola: GET faqat kirish sahifasini ko'rsatadi. Telegram havolaning
+    # oldindan ko'rinishi (preview) uchun uni o'zi ochadi — bu testni "yoqib" yubormasin.
+    if request.method != "POST":
+        return _quiz_page(request, attempt, "start", question_n=attempt.quiz.questions.count())
+    owner_key = secrets.token_urlsafe(24)
+    if not attempt.start(owner_key):
+        return _quiz_page(request, attempt, "used", status=410)
+    response = redirect(attempt.get_absolute_url())
+    response.set_cookie(
+        _owner_cookie(attempt),
+        owner_key,
+        max_age=attempt.quiz.time_limit_minutes * 60 + 7 * 24 * 3600,
+        path=attempt.get_absolute_url(),
+        secure=request.is_secure(),
+        httponly=True,
+        samesite="Lax",
+    )
+    return response
+
+
+@never_cache
+@require_POST
+def quiz_save(request, token):
+    """Javoblarni oraliq saqlash (JS): sahifa yopilsa ham vaqt tugaganda baholanadi."""
+    attempt = get_object_or_404(QuizAttempt.objects.select_related("quiz"), token=token)
+    if (
+        attempt.status != QuizAttempt.Status.ACTIVE
+        or not _is_owner(request, attempt)
+        or attempt.is_expired(grace=QuizAttempt.GRACE_SECONDS)
+    ):
+        return JsonResponse({"ok": False}, status=409)
+    attempt.answers = _posted_answers(request, attempt)
+    attempt.save(update_fields=["answers"])
+    return JsonResponse({"ok": True, "seconds_left": attempt.seconds_left()})
+
+
+@never_cache
+@require_POST
+def quiz_submit(request, token):
+    attempt = get_object_or_404(QuizAttempt.objects.select_related("quiz"), token=token)
+    if attempt.status == QuizAttempt.Status.ACTIVE and _is_owner(request, attempt):
+        if attempt.is_expired(grace=QuizAttempt.GRACE_SECONDS):
+            # Juda kech yuborilgan javoblar qabul qilinmaydi — oxirgi saqlangani baholanadi.
+            attempt.finish(timed_out=True)
+        else:
+            attempt.finish(
+                _posted_answers(request, attempt),
+                timed_out=request.POST.get("timeout") == "1" or attempt.is_expired(),
+            )
+    return redirect(attempt.get_absolute_url())

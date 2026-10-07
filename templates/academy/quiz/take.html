@@ -1,0 +1,38 @@
+{% extends "academy/quiz/public_base.html" %}
+{% load static %}
+{% block body %}
+<header class="quiz-bar">
+  <div>
+    <div class="quiz-bar-title">{{ topic.title }}</div>
+    <small>{{ attempt.student.full_name }}</small>
+  </div>
+  <div class="quiz-timer" role="timer" aria-live="off" aria-label="Qolgan vaqt" data-quiz-timer data-seconds="{{ seconds_left }}">
+    {{ seconds_left }} s
+  </div>
+</header>
+<main class="quiz-main">
+  <form method="post" action="{% url 'quiz_submit' attempt.token %}" data-quiz-form data-save-url="{% url 'quiz_save' attempt.token %}">
+    {% csrf_token %}
+    <input type="hidden" name="timeout" value="0" data-quiz-timeout>
+    {% for q in questions %}
+      <fieldset class="card quiz-question">
+        <legend><span class="q-n">{{ forloop.counter }}</span>{{ q.text|linebreaksbr }}</legend>
+        {% for c in q.shuffled %}
+          <label class="quiz-choice">
+            <input type="radio" name="q{{ q.pk }}" value="{{ c.pk }}"{% if q.picked == c.pk %} checked{% endif %}>
+            <span>{{ c.text }}</span>
+          </label>
+        {% endfor %}
+      </fieldset>
+    {% endfor %}
+    <div class="quiz-submit">
+      <span class="meta" data-quiz-progress></span>
+      <button class="btn primary" type="submit">Testni yakunlash</button>
+    </div>
+  </form>
+</main>
+<div class="quiz-overlay" hidden data-quiz-overlay>
+  <div class="card pad quiz-panel"><h2>Vaqt tugadi</h2><p class="muted">Javoblaringiz yuborilmoqda…</p></div>
+</div>
+<script src="{% static 'js/quiz.js' %}" defer></script>
+{% endblock %}

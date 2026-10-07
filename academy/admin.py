@@ -2,7 +2,19 @@ from django.contrib import admin
 
 from config import admin_setup  # noqa: F401  (sayt sarlavhalari)
 
-from .models import Attendance, Group, Lesson, Module, Student, SyllabusItem, Topic
+from .models import (
+    Attendance,
+    Choice,
+    Group,
+    Lesson,
+    Module,
+    Question,
+    Quiz,
+    QuizAttempt,
+    Student,
+    SyllabusItem,
+    Topic,
+)
 
 
 class StudentInline(admin.TabularInline):
@@ -78,6 +90,40 @@ class AttendanceAdmin(admin.ModelAdmin):
     list_display = ("lesson", "student", "status")
     list_filter = ("status",)
     list_select_related = ("lesson__group", "lesson__topic", "student")
+
+
+class ChoiceInline(admin.TabularInline):
+    model = Choice
+    extra = 0
+
+
+class QuestionInline(admin.StackedInline):
+    model = Question
+    extra = 0
+
+
+@admin.register(Quiz)
+class QuizAdmin(admin.ModelAdmin):
+    list_display = ("topic", "time_limit_minutes", "updated_at")
+    search_fields = ("topic__title",)
+    list_select_related = ("topic",)
+    inlines = [QuestionInline]
+
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ("text", "quiz", "order")
+    list_select_related = ("quiz__topic",)
+    inlines = [ChoiceInline]
+
+
+@admin.register(QuizAttempt)
+class QuizAttemptAdmin(admin.ModelAdmin):
+    list_display = ("student", "quiz", "lesson", "status", "correct", "total", "finished_at")
+    list_filter = ("status",)
+    search_fields = ("student__full_name", "quiz__topic__title")
+    list_select_related = ("student", "quiz__topic", "lesson__group", "lesson__topic")
+    readonly_fields = ("token", "owner_key", "started_at", "deadline", "finished_at")
 
 
 @admin.register(SyllabusItem)

@@ -58,6 +58,7 @@
             </div>
           </div>
           <div class="topic-actions">
+            {% if t.quiz %}<a class="btn xs ghost" href="{{ t.get_absolute_url }}#quiz" title="Mavzuda test bor">{% icon "target" 13 %} Test</a>{% else %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}">{% icon "plus" 13 %} Test</a>{% endif %}
             <a class="btn xs ghost" href="{% url 'lesson_create' %}?topic={{ t.pk }}">{% icon "plus" 13 %} Dars</a>
             <a class="btn xs ghost square" href="{% url 'topic_update' t.pk %}" title="Tahrirlash" aria-label="Tahrirlash">{% icon "edit" 13 %}</a>
           </div>

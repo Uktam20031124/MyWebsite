@@ -7,7 +7,16 @@ from django.db import transaction
 from django.db.models import Avg, Count, Max, Q
 from django.utils import timezone
 
-from .models import Attendance, Group, Lesson, Module, Student, SyllabusItem, Topic
+from .models import (
+    Attendance,
+    Group,
+    Lesson,
+    Module,
+    QuizAttempt,
+    Student,
+    SyllabusItem,
+    Topic,
+)
 
 
 def percent(part: int, total: int) -> int:
@@ -675,3 +684,63 @@ def export_topics() -> str:
             )
         blocks.append("\n".join(lines))
     return "\n\n".join(blocks) + "\n" if blocks else ""
+
+
+# --- Testlar ----------------------------------------------------------------
+
+QUIZ_FORMAT_HELP = """? Savol matni
++ To'g'ri javob
+- Noto'g'ri javob
+- Noto'g'ri javob"""
+
+
+def parse_quiz(text: str) -> tuple[list[tuple[str, list[tuple[str, bool]]]], list[str]]:
+    """Test matnini o'qiydi: (savollar, xatolar).
+
+    "?" bilan boshlangan qator — yangi savol, "+" — to'g'ri javob, "-" — noto'g'ri
+    javob. Boshqa qatorlar savol matnining davomi hisoblanadi.
+    """
+    questions: list[tuple[str, list[tuple[str, bool]]]] = []
+    errors: list[str] = []
+    for n, raw in enumerate(text.splitlines(), start=1):
+        line = raw.strip()
+        if not line:
+            continue
+        mark, rest = line[0], line[1:].strip()
+        if mark == "?":
+            questions.append((rest, []))
+        elif mark in "+-":
+            if not questions:
+                errors.append(f"{n}-qator: javobdan oldin savol yozing (“? …”).")
+            elif rest:
+                questions[-1][1].append((rest[:500], mark == "+"))
+        elif questions and not questions[-1][1]:
+            text_, choices = questions[-1]
+            questions[-1] = (f"{text_}\n{line}".strip(), choices)
+        else:
+            errors.append(f"{n}-qator: “?”, “+” yoki “-” bilan boshlanishi kerak.")
+    for i, (q_text, choices) in enumerate(questions, start=1):
+        if not q_text:
+            errors.append(f"{i}-savol: matni bo‘sh.")
+        if len(choices) < 2:
+            errors.append(f"{i}-savol: kamida 2 ta javob varianti kerak.")
+        if sum(ok for _, ok in choices) != 1:
+            errors.append(f"{i}-savol: aynan bitta to‘g‘ri javob (“+”) bo‘lishi kerak.")
+    return questions, errors
+
+
+def ensure_quiz_attempts(lesson: Lesson) -> int:
+    """Dars guruhining faol shogirdlari uchun test havolalarini yaratadi.
+
+    Mavjud havolalarga tegilmaydi. Yaratilganlar sonini qaytaradi.
+    """
+    quiz = getattr(lesson.topic, "quiz", None) if lesson.topic_id else None
+    if quiz is None:
+        return 0
+    have = set(lesson.quiz_attempts.values_list("student_id", flat=True))
+    new = [
+        QuizAttempt(quiz=quiz, lesson=lesson, student=s)
+        for s in lesson.group.active_students.exclude(pk__in=have)
+    ]
+    QuizAttempt.objects.bulk_create(new)
+    return len(new)

@@ -50,4 +50,13 @@ urlpatterns = [
     path("darslar/<int:pk>/ochirish/", views.LessonDeleteView.as_view(), name="lesson_delete"),
     path("darslar/<int:pk>/yakun/", views.complete_lesson, name="lesson_complete"),
     path("darslar/<int:pk>/yoqlama/", views.attendance_sheet, name="attendance"),
+    # Testlar
+    path("mavzular/<int:pk>/test/", views.quiz_edit, name="quiz_edit"),
+    path("mavzular/<int:pk>/test/ochirish/", views.QuizDeleteView.as_view(), name="quiz_delete"),
+    path("darslar/<int:pk>/test/", views.lesson_quiz_links, name="lesson_quiz_links"),
+    path("test-havola/<int:pk>/yangilash/", views.quiz_attempt_renew, name="quiz_attempt_renew"),
+    # O'quvchi uchun ochiq test sahifasi (login talab qilinmaydi)
+    path("t/<str:token>/", views.quiz_take, name="quiz_take"),
+    path("t/<str:token>/saqlash/", views.quiz_save, name="quiz_save"),
+    path("t/<str:token>/yakunlash/", views.quiz_submit, name="quiz_submit"),
 ]

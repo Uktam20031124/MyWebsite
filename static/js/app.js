@@ -70,6 +70,23 @@
     if (el && !window.confirm(el.getAttribute("data-confirm"))) e.preventDefault();
   });
 
+  // Nusxa olish: <button data-copy="matn">
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-copy]");
+    if (!btn) return;
+    const text = btn.getAttribute("data-copy");
+    const done = () => {
+      const label = btn.textContent;
+      btn.textContent = "Nusxalandi ✓";
+      setTimeout(() => (btn.textContent = label), 1500);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, () => window.prompt("Nusxa oling:", text));
+    } else {
+      window.prompt("Nusxa oling:", text);
+    }
+  });
+
   // --- Filtr o'zgarganda formani yuborish ----------------------------------
   document.addEventListener("change", (e) => {
     if (e.target.matches("[data-autosubmit]")) e.target.form?.requestSubmit();

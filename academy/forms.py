@@ -2,8 +2,8 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Q
 
-from .models import WEEKDAY_CHOICES, Group, Lesson, Module, Student, Topic
-from .services import parse_topics
+from .models import WEEKDAY_CHOICES, Group, Lesson, Module, Quiz, Student, Topic
+from .services import QUIZ_FORMAT_HELP, parse_quiz, parse_topics
 
 
 class LoginForm(AuthenticationForm):
@@ -239,3 +239,37 @@ class TopicImportForm(StyledFormMixin, forms.Form):
             raise forms.ValidationError("Matndan birorta ham mavzu topilmadi.")
         self.parsed = parsed
         return self.cleaned_data["text"]
+
+
+class QuizForm(StyledFormMixin, forms.ModelForm):
+    text = forms.CharField(
+        label="Savollar",
+        widget=forms.Textarea(attrs={"rows": 18, "spellcheck": "false"}),
+        help_text="“?” — savol, “+” — to‘g‘ri javob, “-” — noto‘g‘ri javob. "
+        "Savollar orasida bo‘sh qator qoldirish mumkin.",
+    )
+
+    class Meta:
+        model = Quiz
+        fields = ["time_limit_minutes", "text"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["text"].widget.attrs["placeholder"] = QUIZ_FORMAT_HELP
+        if self.instance.pk:
+            self.fields["text"].initial = self.instance.as_text()
+
+    def clean_text(self):
+        parsed, errors = parse_quiz(self.cleaned_data["text"])
+        if errors:
+            raise forms.ValidationError(errors)
+        if not parsed:
+            raise forms.ValidationError("Kamida bitta savol yozing.")
+        self.parsed = parsed
+        return self.cleaned_data["text"]
+
+    def save(self, commit=True):
+        quiz = super().save(commit=commit)
+        if commit:
+            quiz.replace_questions(self.parsed)
+        return quiz

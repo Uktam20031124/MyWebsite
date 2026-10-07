@@ -1,0 +1,46 @@
+{% extends "academy/base.html" %}
+{% load ui %}
+{% block title %}Test · {{ topic.title }} · Darsxona{% endblock %}
+{% block kicker %}<a href="{% url 'topic_list' %}">Mavzular</a><span class="sep">/</span><a href="{{ topic.get_absolute_url }}">{{ topic.title }}</a><span class="sep">/</span>Test{% endblock %}
+{% block heading %}{% if form.instance.pk %}Testni tahrirlash{% else %}Yangi test{% endif %}{% endblock %}
+{% block content %}
+<div class="split">
+  <section class="card pad">
+    <form method="post" novalidate data-dirty-guard>
+      {% csrf_token %}
+      {% include "academy/includes/form_fields.html" with wide="text" %}
+      <div class="form-actions">
+        <button class="btn primary" type="submit">{% icon "check" 16 %} Saqlash</button>
+        <a class="btn ghost" href="{{ topic.get_absolute_url }}">Bekor</a>
+        <span class="spacer"></span>
+        {% if form.instance.pk %}<a class="btn danger-ghost" href="{% url 'quiz_delete' topic.pk %}">{% icon "trash" 15 %} Testni o‘chirish</a>{% endif %}
+      </div>
+    </form>
+  </section>
+  <aside class="card pad">
+    <div class="prose-block">
+      <h3>{% icon "file" 15 %} Yozish qoidasi</h3>
+      <ul class="rules">
+        <li><code>?</code> bilan boshlangan qator — savol.</li>
+        <li><code>+</code> — to‘g‘ri javob (har savolda aynan bitta).</li>
+        <li><code>-</code> — noto‘g‘ri javob (kamida bitta).</li>
+        <li>Savollar va variantlar har bir o‘quvchida aralash tartibda chiqadi.</li>
+        <li>Vaqt tugashi bilan test avtomatik yakunlanadi.</li>
+      </ul>
+    </div>
+    <div class="prose-block">
+      <h3>{% icon "edit" 15 %} Namuna</h3>
+      <pre class="code">? Python'da ro'yxat qaysi qavs bilan yoziladi?
++ [ ]
+- ( )
+- { }
+
+? len("salom") nimaga teng?
+- 4
++ 5
+- 6</pre>
+      {% if form.instance.pk %}<p class="meta" style="margin-top:10px">Savollarni o‘zgartirish avval yakunlangan natijalarga ta’sir qilmaydi.</p>{% endif %}
+    </div>
+  </aside>
+</div>
+{% endblock %}
