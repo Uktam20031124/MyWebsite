@@ -1,0 +1,11 @@
+{% load ui %}<div class="row pick-row" data-filter-item="topics" data-filter-text="{{ t.title|lower }} {{ t.module.title|lower }}">
+  <div class="grow">
+    <div class="row-title">{% if t.question_n %}<a href="{{ t.send_url }}">{{ t.title }}</a>{% else %}{{ t.title }}{% endif %}{% if label %} <span class="badge accent plain">{{ label }}</span>{% endif %}</div>
+    <div class="meta">{% if t.question_n %}{% icon "target" 13 %} {{ t.question_n }} ta savol{% else %}Test savollari yo‘q{% endif %}{% if t.module and label %} · {{ t.module.title }}{% endif %}</div>
+  </div>
+  {% if t.question_n %}
+    <a class="btn sm primary" href="{{ t.send_url }}">Tanlash {% icon "right" 14 %}</a>
+  {% else %}
+    <a class="btn sm ghost" href="{% url 'quiz_edit' t.pk %}">{% icon "plus" 14 %} Test yaratish</a>
+  {% endif %}
+</div>

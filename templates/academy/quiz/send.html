@@ -1,0 +1,104 @@
+{% extends "academy/base.html" %}
+{% load ui %}
+{% block title %}Test jo‘natish · {{ topic.title }} · Darsxona{% endblock %}
+{% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>{% if lesson %}<a href="{{ lesson.get_absolute_url }}">{{ lesson.group.name }} · {{ lesson.held_on|date:"d.m.Y" }}</a><span class="sep">/</span>{% endif %}2-qadam: kimga va qanday{% endblock %}
+{% block heading %}Test jo‘natish{% endblock %}
+{% block subheading %}<p class="page-sub">{% icon "book" 15 %} {{ topic.title }}</p>{% endblock %}
+{% block actions %}
+<a class="btn ghost" href="{{ change_topic_url }}">{% icon "left" 16 %} Mavzuni almashtirish</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" novalidate data-quiz-send>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="form-errors" role="alert">{% icon "alert" 18 %}{{ form.non_field_errors }}</div>{% endif %}
+  <div class="split">
+    <section class="card" aria-labelledby="students-h">
+      <div class="card-head">
+        <div>
+          <h2 id="students-h">{% icon "users" 18 %} Kimga jo‘natamiz?</h2>
+          <div class="meta">{% if lesson %}{{ group.name }} · {{ lesson.held_on|date:"d.m.Y" }} darsi{% if has_attendance %} · yo‘qlama bo‘yicha darsga kelganlar belgilangan{% endif %}{% else %}Guruhni tanlang va shogirdlarni belgilang{% endif %}</div>
+        </div>
+      </div>
+      {% if not lesson and groups|length > 1 %}
+        <div class="send-groups">
+          <nav class="seg-tabs" aria-label="Guruh">
+            {% for g, url in groups %}<a href="{{ url }}" {% if g.pk == group.pk %}aria-current="true"{% endif %}>{{ g.name }}</a>{% endfor %}
+          </nav>
+        </div>
+      {% endif %}
+      {% if rows %}
+        <div class="att-toolbar">
+          <button type="button" class="btn sm soft" data-check-all="students" data-check-value="all">{% icon "check" 15 %} Hammasi</button>
+          {% if has_attendance %}<button type="button" class="btn sm ghost" data-check-all="students" data-check-value="came">Darsga kelganlar</button>{% endif %}
+          <button type="button" class="btn sm ghost" data-check-all="students" data-check-value="none">Hech kim</button>
+          <span class="spacer"></span>
+          <span class="att-counts" data-check-count="students" aria-live="polite"></span>
+        </div>
+      {% endif %}
+      <div class="rows send-students{% if form.students.errors %} has-error{% endif %}" role="group" aria-labelledby="students-h">
+        {% for row in rows %}
+          <label class="row send-student">
+            <input type="checkbox" name="students" value="{{ row.student.pk }}" {% if row.checked %}checked{% endif %} {% if row.attendance == 'present' or row.attendance == 'late' %}data-came{% endif %}>
+            <span class="avatar sm" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
+            <span class="grow truncate">
+              <span class="person-name block truncate">{{ row.student.full_name }}</span>
+              {% if row.student.telegram %}<span class="person-meta">@{{ row.student.telegram }}</span>{% endif %}
+            </span>
+            {% if row.attendance %}<span class="badge {% if row.attendance == 'present' %}ok{% elif row.attendance == 'absent' %}bad{% elif row.attendance == 'late' %}warn{% else %}info{% endif %}">{{ row.attendance_label }}</span>{% endif %}
+            {% if row.student.status != 'active' %}<span class="badge plain">{{ row.student.get_status_display }}</span>{% endif %}
+          </label>
+        {% empty %}
+          <div class="empty compact">
+            <span class="empty-icon">{% icon "users" 22 %}</span>
+            <p>Bu guruhda faol shogird yo‘q.</p>
+            <a class="btn sm primary" href="{% url 'student_create' %}?group={{ group.pk }}">{% icon "plus" 14 %} Shogird qo‘shish</a>
+          </div>
+        {% endfor %}
+      </div>
+      {% if form.students.errors %}<div class="card-body">{{ form.students.errors }}</div>{% endif %}
+    </section>
+
+    <aside class="stack">
+      <section class="card pad send-settings" aria-labelledby="settings-h">
+        <div class="prose-block">
+          <h3 id="settings-h">{% icon "target" 15 %} Test</h3>
+          <a class="strong" href="{{ topic.get_absolute_url }}#quiz">{{ topic.title }}</a>
+          <div class="meta">{% if topic.module %}{{ topic.module.title }} · {% endif %}bankda {{ form.bank_size }} ta savol</div>
+        </div>
+
+        <div class="prose-block">
+          <div class="field{% if form.question_count.errors %} has-error{% endif %}">
+            <label for="{{ form.question_count.id_for_label }}">Har bir shogirdga nechta savol?</label>
+            {{ form.question_count }}
+            <div class="preset-chips" role="group" aria-label="Tez tanlash">
+              {% for n in count_presets %}<button type="button" class="btn xs soft" data-preset="{{ form.question_count.id_for_label }}" data-value="{{ n }}">{{ n }}</button>{% endfor %}
+              <button type="button" class="btn xs soft" data-preset="{{ form.question_count.id_for_label }}" data-value="{{ form.bank_size }}">Hammasi ({{ form.bank_size }})</button>
+            </div>
+            {{ form.question_count.errors }}
+          </div>
+          <div class="field{% if form.time_limit_minutes.errors %} has-error{% endif %}" style="margin-top:16px">
+            <label for="{{ form.time_limit_minutes.id_for_label }}">Qancha vaqtga? (daqiqa)</label>
+            {{ form.time_limit_minutes }}
+            <div class="preset-chips" role="group" aria-label="Tez tanlash">
+              {% for n in time_presets %}<button type="button" class="btn xs soft" data-preset="{{ form.time_limit_minutes.id_for_label }}" data-value="{{ n }}">{{ n }} daq.</button>{% endfor %}
+            </div>
+            {{ form.time_limit_minutes.errors }}
+          </div>
+          <p class="meta send-pace" data-quiz-pace data-count="{{ form.question_count.id_for_label }}" data-time="{{ form.time_limit_minutes.id_for_label }}" aria-live="polite"></p>
+        </div>
+
+        <div class="prose-block">
+          <ul class="rules">
+            <li>Har bir shogird bankdan <strong>tasodifiy</strong> savollar oladi — savollar va javoblar tartibi ham har xil.</li>
+            <li>Havola <strong>bir martalik</strong>: boshqa qurilmada ochilmaydi, vaqt tugasa test o‘zi yakunlanadi.</li>
+            <li>Keyingi sahifada har bir havolani Telegram orqali yuborasiz.</li>
+          </ul>
+        </div>
+
+        <button class="btn primary block" type="submit">{% icon "send" 16 %} Havolalarni yaratish</button>
+      </section>
+    </aside>
+  </div>
+</form>
+{% endblock %}

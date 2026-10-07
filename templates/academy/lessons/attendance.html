@@ -6,11 +6,16 @@
 {% block subheading %}<p class="page-sub">{% icon "book" 15 %} {{ lesson.topic.title|default:"Mavzusiz dars" }}</p>{% endblock %}
 {% block actions %}
 <a class="btn ghost" href="{{ lesson.get_absolute_url }}">{% icon "left" 16 %} Darsga qaytish</a>
+{% if rows %}
+  <button class="btn soft" type="submit" form="attendance-form" name="then" value="quiz" title="Yo‘qlamani saqlab, test mavzusini tanlash">{% icon "send" 16 %} Test jo‘natish</button>
+{% else %}
+  <a class="btn soft" href="{% url 'quiz_send' %}?lesson={{ lesson.pk }}">{% icon "send" 16 %} Test jo‘natish</a>
+{% endif %}
 {% endblock %}
 
 {% block content %}
 <section class="card">
-  <form method="post" data-attendance-form data-dirty-guard>
+  <form method="post" id="attendance-form" data-attendance-form data-dirty-guard>
     {% csrf_token %}
     {% if rows %}
     <div class="att-toolbar">
@@ -59,6 +64,7 @@
         <span class="meta">Klaviatura: holatni tanlang va <kbd>1</kbd>–<kbd>4</kbd> bosing — keyingi shogirdga o‘tadi.</span>
         <span class="spacer"></span>
         <button class="btn soft" type="submit">Saqlash</button>
+        <button class="btn soft" type="submit" name="then" value="quiz">{% icon "send" 16 %} Saqlash va test jo‘natish</button>
         <button class="btn primary" type="submit" name="complete" value="1">{% icon "check" 16 %} Saqlash va darsni yakunlash</button>
       </div>
     {% endif %}

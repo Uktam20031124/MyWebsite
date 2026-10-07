@@ -1,0 +1,70 @@
+{% extends "academy/base.html" %}
+{% load ui %}
+{% block title %}{{ topic.title }} · Test · Darsxona{% endblock %}
+{% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>{% if batch.lesson %}<a href="{{ batch.lesson.get_absolute_url }}">{{ batch.lesson.group.name }} · {{ batch.lesson.held_on|date:"d.m.Y" }}</a>{% elif batch.group %}<a href="{{ batch.group.get_absolute_url }}">{{ batch.group.name }}</a>{% else %}Bir nechta guruh{% endif %}<span class="sep">·</span>{{ batch.created_at|date:"d.m.Y H:i" }}{% endblock %}
+{% block heading %}{{ topic.title }}{% endblock %}
+{% block subheading %}<p class="page-sub">{% icon "target" 15 %} {{ batch.question_count }} ta savol · {% icon "clock" 15 %} {{ batch.time_limit_minutes }} daqiqa · har bir havola faqat bir marta ishlaydi</p>{% endblock %}
+{% block actions %}
+{% if attempts %}<button class="btn soft" type="button" data-copy="{{ links_text }}">{% icon "link" 16 %} Hammasini nusxalash</button>{% endif %}
+<a class="btn primary" href="{{ again_url }}">{% icon "send" 16 %} Yana jo‘natish</a>
+{% endblock %}
+
+{% block content %}
+<section class="kpis">
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Jo‘natildi</span><span class="kpi-icon info">{% icon "send" 17 %}</span></div>
+    <div class="kpi-value">{{ attempts|length }}</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Yechdi</span><span class="kpi-icon ok">{% icon "check" 17 %}</span></div>
+    <div class="kpi-value">{{ finished_n }}</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">Ochilmagan</span><span class="kpi-icon gold">{% icon "clock" 17 %}</span></div>
+    <div class="kpi-value">{{ pending_n }}</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">O‘rtacha natija</span><span class="kpi-icon accent">{% icon "trophy" 17 %}</span></div>
+    <div class="kpi-value">{% if avg is not None %}{{ avg }}%{% else %}—{% endif %}</div>
+  </article>
+</section>
+
+<section class="card quiz-card" id="quiz" aria-labelledby="links-h">
+  <div class="card-head">
+    <h2 id="links-h">{% icon "users" 18 %} Havolalar va natijalar</h2>
+    <span class="meta">Ochilmagan havolani “Telegramda yuborish” bilan shogirdga jo‘nating</span>
+  </div>
+  <div class="card-body flush">
+    <div class="rows">
+      {% for a in attempts %}
+        <div class="row quiz-row">
+          <a class="person grow" href="{{ a.student.get_absolute_url }}">
+            <span class="avatar sm" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
+            <span class="person-name truncate">{{ a.student.full_name }}</span>
+          </a>
+          <div class="quiz-actions">
+            {% if a.status == 'finished' %}
+              {% if a.timed_out %}<span class="meta">vaqt tugadi</span>{% endif %}
+              <span class="meta">{{ a.finished_at|date:"d.m H:i" }}</span>
+              <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
+            {% else %}
+              <span class="badge {% if a.status == 'active' %}warn{% endif %}">{{ a.get_status_display }}</span>
+              <a class="btn xs primary" href="{{ a.share_url }}" target="_blank" rel="noopener noreferrer">{% icon "send" 13 %} Telegramda yuborish</a>
+              {% if a.student.telegram %}<a class="btn xs ghost" href="https://t.me/{{ a.student.telegram|urlencode }}" target="_blank" rel="noopener noreferrer" title="Shogird bilan chatni ochish">@{{ a.student.telegram }}</a>{% endif %}
+              <button class="btn xs ghost" type="button" data-copy="{{ a.link }}">{% icon "link" 13 %} Nusxa</button>
+              <form method="post" action="{% url 'quiz_attempt_renew' a.pk %}">
+                {% csrf_token %}
+                <button class="btn xs ghost square" type="submit" data-confirm="Eski havola ishlamay qoladi. Yangi havola yaratilsinmi?" title="Yangi havola" aria-label="Yangi havola">{% icon "undo" 13 %}</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty compact"><p>Bu jo‘natmada havola yo‘q.</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<a class="btn danger-ghost sm" href="{% url 'quiz_batch_delete' batch.pk %}" style="margin-top:18px">{% icon "trash" 15 %} Jo‘natmani o‘chirish</a>
+{% endblock %}

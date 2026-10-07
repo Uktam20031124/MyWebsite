@@ -76,23 +76,37 @@ Jurnalni “Excel (CSV)” tugmasi bilan yuklab olish mumkin.
 
 O‘quvchi mavzuni to‘liq o‘zlashtirganini tekshirish uchun:
 
-1. **Mavzu sahifasi → “Test yaratish”**: vaqt (daqiqa) va savollar matni:
+1. **Savollar banki tayyor**: Starter va Python kurslarining barcha 53 mavzusi uchun 12 tadan
+   mavzuga oid savol (`academy/school_data/quizzes_starter.py`, `quizzes_python.py`). Ular
+   `migrate` (mavjud mavzular uchun) va `load_school` bilan bazaga yoziladi. Ustoz o‘zi to‘ldirgan
+   testlarga (10+ savol) tegilmaydi; qayta ishga tushirish savollarni takrorlamaydi.
+   Mavzu sahifasi → “Test” orqali savollarni tahrirlash yoki o‘z testingizni yozish mumkin:
    ```text
-   ? 2 + 2 nechiga teng?
-   + 4
-   - 5
+   ? Quyidagi kod nima chiqaradi?
+   for i in range(2):
+       print(i)
+   + 0 va 1
+   - 1 va 2
    ```
-   `?` — savol, `+` — to‘g‘ri javob (bittasi), `-` — noto‘g‘ri javob.
-2. **Dars sahifasi → “Test jo‘natish” → “Havolalarni yaratish”**: guruhning har bir faol o‘quvchisi
-   uchun shaxsiy havola (`/t/<token>/`). “Telegramda yuborish” tugmasi Telegram’ni ochadi —
-   kontaktni tanlab yuborasiz. “Nusxa” / “Hammasini nusxalash” ham bor.
-3. O‘quvchi havolani bosadi → “Testni boshlash” → yuqorida **teskari sanoq taymer**. Vaqt tugasa
+   `?` — savol, `+` — to‘g‘ri javob (bittasi), `-` — noto‘g‘ri javob; savoldan keyingi qatorlar —
+   kod (o‘quvchiga chekinishlari bilan ko‘rsatiladi).
+2. **Test jo‘natish** — 2 qadam:
+   - *Mavzu*: ro‘yxatdan tanlanadi (qidiruv bor; dars mavzusi va guruhda o‘tilgan mavzular tepada).
+   - *Kimga va qanday*: shogirdlar (belgilash), **har biriga nechta savol** va **necha daqiqa**.
+   Kirish nuqtalari: **yo‘qlama** (“Test jo‘natish” / “Saqlash va test jo‘natish” — yo‘qlama avval
+   saqlanadi, darsga kelganlar avtomatik belgilanadi), **dars sahifasi**, **mavzular ro‘yxati**
+   (har bir mavzu yonida), **mavzu sahifasi** va yon menyudagi **Testlar** bo‘limi.
+   Har bir shogird bankdan tasodifiy N ta savol oladi; savollar va variantlar tartibi ham har xil.
+3. **Jo‘natma sahifasi**: har bir shogird uchun shaxsiy havola (`/t/<token>/`). “Telegramda yuborish”
+   tugmasi Telegram’ni ochadi — kontaktni tanlab yuborasiz. “Nusxa” / “Hammasini nusxalash” ham bor.
+4. O‘quvchi havolani bosadi → “Testni boshlash” → yuqorida **teskari sanoq taymer**. Vaqt tugasa
    test avtomatik yakunlanadi va natija (to‘g‘ri javoblar soni, foiz) ekranda ko‘rsatiladi.
-4. **Havola faqat bir marta ishlaydi**: boshlangandan keyin boshqa brauzer/qurilmada ochilmaydi,
+5. **Havola faqat bir marta ishlaydi**: boshlangandan keyin boshqa brauzer/qurilmada ochilmaydi,
    yakunlangandan keyin test qayta ochilmaydi. (Telegram havola “preview”ini o‘zi ochganda test
    boshlanib ketmaydi — test faqat tugma bosilganda boshlanadi.) Sahifa tasodifan yangilansa,
    o‘sha brauzerda davom etadi, taymer qayta boshlanmaydi.
-5. Natijalar dars sahifasida, mavzu sahifasida (o‘rtacha foiz) va o‘quvchi kartasida ko‘rinadi.
+6. Natijalar jo‘natma sahifasida, “Testlar” bo‘limida (guruh bo‘yicha), dars va mavzu sahifalarida
+   (o‘rtacha foiz) va o‘quvchi kartasida ko‘rinadi.
    Ochilmagan havolani “↻” bilan yangisiga almashtirish mumkin (eskisi ishlamay qoladi).
 
 Production’da havolalar to‘g‘ri domen bilan chiqishi uchun `DJANGO_ALLOWED_HOSTS` va HTTPS sozlangan bo‘lsin.

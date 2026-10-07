@@ -1336,6 +1336,32 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 .quiz-score.bad { background: var(--bad-soft); color: var(--bad); }
 .quiz-score-n { font: 600 52px/1 var(--font-display); }
 .quiz-score p { margin: 8px 0 0; }
+.quiz-code {
+  margin: 0 0 12px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface-2); color: var(--text);
+  font: 14px/1.55 var(--font-mono); white-space: pre; overflow-x: auto; tab-size: 4;
+}
+
+/* Test jo'natish */
+.topic-tail { display: flex; align-items: center; gap: 6px; }
+.pick-row .row-title a { color: inherit; }
+.pick-row:hover { background: var(--surface-2); }
+.send-groups { padding: 0 20px 14px; overflow-x: auto; }
+.send-groups .seg-tabs { flex-wrap: nowrap; white-space: nowrap; }
+.send-student { cursor: pointer; }
+.send-student:hover { background: var(--surface-2); }
+.send-student:has(input:checked) { background: var(--accent-soft); }
+.send-student:has(input:focus-visible) { box-shadow: inset var(--ring); }
+.send-students.has-error { box-shadow: inset 3px 0 0 var(--bad); }
+.send-settings .field label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: var(--text); }
+.preset-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.preset-chips .btn[aria-pressed="true"] { --btn-bg: var(--brand); --btn-fg: var(--brand-ink); --btn-bd: var(--brand); }
+.send-pace { margin: 12px 0 0; }
+.send-pace.warn { color: var(--warn); }
+@media (max-width: 640px) {
+  .topic-tail { grid-column: 2; flex-wrap: wrap; }
+}
 
 /* --- Moslashuv ----------------------------------------------------------- */
 @media (max-width: 1200px) {

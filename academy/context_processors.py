@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from .models import Group, Lesson, Student, Topic
+from .models import Group, Lesson, QuizAttempt, Student, Topic
 
 
 def nav_counts(request):
@@ -17,4 +17,7 @@ def nav_counts(request):
         "nav_lessons": Lesson.objects.filter(status=Lesson.Status.PLANNED).count(),
         # "days" — bir xonali raqamlar ro'yxati, shuning uchun __contains aniq ishlaydi.
         "nav_today": today_groups.count(),
+        "nav_quiz_open": QuizAttempt.objects.exclude(
+            status=QuizAttempt.Status.FINISHED
+        ).count(),
     }

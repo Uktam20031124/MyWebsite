@@ -1,3 +1,4 @@
+import random
 import secrets
 from datetime import date, time, timedelta
 
@@ -459,7 +460,7 @@ def _lesson_deleted(sender, instance, **kwargs):
 
 
 class Quiz(models.Model):
-    """Mavzu bo'yicha test: o'quvchi mavzuni o'zlashtirganini tekshirish uchun."""
+    """Mavzu bo'yicha savollar banki: jo'natishda undan tasodifiy savollar tanlanadi."""
 
     topic = models.OneToOneField(
         Topic,
@@ -471,7 +472,7 @@ class Quiz(models.Model):
         "Vaqt (daq.)",
         default=10,
         validators=[MinValueValidator(1), MaxValueValidator(180)],
-        help_text="Shu vaqt tugaganda test avtomatik yakunlanadi.",
+        help_text="Jo'natishda taklif qilinadigan vaqt. Har bir jo'natmada o'zgartirish mumkin.",
     )
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -492,15 +493,30 @@ class Quiz(models.Model):
         return "\n\n".join(blocks)
 
     def replace_questions(self, parsed) -> None:
-        """Savollarni `parse_quiz` natijasi bilan almashtiradi."""
+        """Savollarni `parse_quiz` natijasi bilan almashtiradi.
+
+        O'zgarmagan savollar (matni va variantlari bir xil) saqlanib qoladi — ularning
+        id'lari yechilayotgan testlarda ishlatiladi, shuning uchun tahrir ularni buzmaydi.
+        """
         with transaction.atomic():
-            self.questions.all().delete()
+            existing: dict[tuple, Question] = {}
+            for q in self.questions.prefetch_related("choices"):
+                existing.setdefault(q.signature(), q)
+            keep = []
             for order, (text, choices) in enumerate(parsed, start=1):
-                question = Question.objects.create(quiz=self, text=text, order=order)
-                Choice.objects.bulk_create(
-                    Choice(question=question, text=c, is_correct=ok, order=i)
-                    for i, (c, ok) in enumerate(choices, start=1)
-                )
+                question = existing.pop((text, tuple(choices)), None)
+                if question is not None:
+                    if question.order != order:
+                        question.order = order
+                        question.save(update_fields=["order"])
+                else:
+                    question = Question.objects.create(quiz=self, text=text, order=order)
+                    Choice.objects.bulk_create(
+                        Choice(question=question, text=c, is_correct=ok, order=i)
+                        for i, (c, ok) in enumerate(choices, start=1)
+                    )
+                keep.append(question.pk)
+            self.questions.exclude(pk__in=keep).delete()
 
 
 class Question(models.Model):
@@ -517,6 +533,20 @@ class Question(models.Model):
 
     def __str__(self) -> str:
         return self.text[:80]
+
+    @property
+    def title(self) -> str:
+        """Savolning birinchi qatori."""
+        return self.text.split("\n", 1)[0]
+
+    @property
+    def code(self) -> str:
+        """Birinchi qatordan keyingi qismi (odatda kod) — chekinishlari bilan."""
+        parts = self.text.split("\n", 1)
+        return parts[1] if len(parts) > 1 else ""
+
+    def signature(self) -> tuple:
+        return (self.text, tuple((c.text, c.is_correct) for c in self.choices.all()))
 
 
 class Choice(models.Model):
@@ -536,12 +566,68 @@ class Choice(models.Model):
         return self.text
 
 
+class QuizBatch(models.Model):
+    """Test jo'natmasi: bitta mavzu testi, tanlangan shogirdlar, savollar soni va vaqt."""
+
+    MAX_TIME_LIMIT = 180
+
+    quiz = models.ForeignKey(
+        Quiz, on_delete=models.CASCADE, related_name="batches", verbose_name="Test"
+    )
+    # Dars o'chirilsa ham natijalar saqlanib qoladi.
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="quiz_batches",
+        verbose_name="Dars",
+    )
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="quiz_batches",
+        verbose_name="Guruh",
+    )
+    question_count = models.PositiveSmallIntegerField(
+        "Savollar soni", validators=[MinValueValidator(1)]
+    )
+    time_limit_minutes = models.PositiveSmallIntegerField(
+        "Vaqt (daq.)", validators=[MinValueValidator(1), MaxValueValidator(MAX_TIME_LIMIT)]
+    )
+    created_at = models.DateTimeField("Jo'natilgan", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name = "Test jo'natmasi"
+        verbose_name_plural = "Test jo'natmalari"
+
+    def __str__(self) -> str:
+        return f"{self.quiz.topic.title} · {self.created_at:%d.%m.%Y %H:%M}"
+
+    def get_absolute_url(self):
+        return reverse("quiz_batch", args=[self.pk])
+
+    # Quyidagilar `services.annotate_batches` qo'shgan maydonlardan hisoblanadi.
+    @property
+    def avg_percent(self):
+        total = getattr(self, "total_sum", None)
+        return round(100 * (self.correct_sum or 0) / total) if total else None
+
+    @property
+    def progress(self) -> int:
+        sent = getattr(self, "sent_n", 0)
+        return round(100 * self.done_n / sent) if sent else 0
+
+
 def new_attempt_token() -> str:
     return secrets.token_urlsafe(16)
 
 
 class QuizAttempt(models.Model):
-    """Bitta o'quvchi uchun bir martalik test havolasi (dars bo'yicha)."""
+    """Bitta o'quvchi uchun bir martalik test havolasi."""
 
     class Status(models.TextChoices):
         PENDING = "pending", "Ochilmagan"
@@ -551,11 +637,11 @@ class QuizAttempt(models.Model):
     # Vaqt tugash paytida yuborilgan javoblar tarmoq kechikishi bilan kelsa ham qabul qilinadi.
     GRACE_SECONDS = 15
 
+    batch = models.ForeignKey(
+        QuizBatch, on_delete=models.CASCADE, related_name="attempts", verbose_name="Jo'natma"
+    )
     quiz = models.ForeignKey(
         Quiz, on_delete=models.CASCADE, related_name="attempts", verbose_name="Test"
-    )
-    lesson = models.ForeignKey(
-        Lesson, on_delete=models.CASCADE, related_name="quiz_attempts", verbose_name="Dars"
     )
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name="quiz_attempts", verbose_name="Shogird"
@@ -566,6 +652,8 @@ class QuizAttempt(models.Model):
     )
     # Testni boshlagan brauzer kaliti (cookie): havola boshqa joyda qayta ochilmaydi.
     owner_key = models.CharField(max_length=64, blank=True, editable=False)
+    # Boshlanganda bankdan tasodifiy tanlangan savollar (har bir o'quvchida o'zicha).
+    question_ids = models.JSONField("Savollar", default=list, blank=True, editable=False)
     answers = models.JSONField("Javoblar", default=dict, blank=True)
     started_at = models.DateTimeField("Boshlangan", null=True, blank=True)
     deadline = models.DateTimeField("Tugash vaqti", null=True, blank=True)
@@ -581,7 +669,7 @@ class QuizAttempt(models.Model):
         verbose_name_plural = "Test havolalari"
         constraints = [
             models.UniqueConstraint(
-                fields=["lesson", "student"], name="uniq_quiz_attempt_lesson_student"
+                fields=["batch", "student"], name="uniq_quiz_attempt_batch_student"
             ),
         ]
 
@@ -597,6 +685,17 @@ class QuizAttempt(models.Model):
             return None
         return round(100 * (self.correct or 0) / self.total)
 
+    @property
+    def time_limit_minutes(self) -> int:
+        return self.batch.time_limit_minutes
+
+    @property
+    def question_count(self) -> int:
+        """O'quvchi oladigan savollar soni (bankdagidan ko'p bo'lmaydi)."""
+        if self.question_ids:
+            return len(self.question_ids)
+        return min(self.batch.question_count, self.quiz.questions.count())
+
     def seconds_left(self, now=None) -> int:
         if not self.deadline:
             return 0
@@ -608,14 +707,24 @@ class QuizAttempt(models.Model):
         return bool(self.deadline) and now > self.deadline + timedelta(seconds=grace)
 
     def start(self, owner_key: str) -> bool:
-        """Testni boshlaydi. Faqat birinchi chaqiruv muvaffaqiyatli (atomik)."""
+        """Testni boshlaydi va savollarni tanlaydi. Faqat birinchi chaqiruv muvaffaqiyatli."""
         now = timezone.now()
-        deadline = now + timedelta(minutes=self.quiz.time_limit_minutes)
+        pool = list(self.quiz.questions.values_list("pk", flat=True))
+        picked = random.SystemRandom().sample(pool, min(self.batch.question_count, len(pool)))
         started = QuizAttempt.objects.filter(pk=self.pk, status=self.Status.PENDING).update(
-            status=self.Status.ACTIVE, owner_key=owner_key, started_at=now, deadline=deadline
+            status=self.Status.ACTIVE,
+            owner_key=owner_key,
+            question_ids=picked,
+            started_at=now,
+            deadline=now + timedelta(minutes=self.batch.time_limit_minutes),
         )
         self.refresh_from_db()
         return bool(started)
+
+    def questions(self):
+        """O'quvchiga tushgan savollar (eski havolalarda — bankning hammasi)."""
+        qs = self.quiz.questions.all()
+        return qs.filter(pk__in=self.question_ids) if self.question_ids else qs
 
     def finish(self, answers: dict | None = None, timed_out: bool = False) -> None:
         """Javoblarni baholab, testni yakunlaydi. `answers`: {savol_id: variant_id}."""
@@ -626,16 +735,20 @@ class QuizAttempt(models.Model):
                 return
             if answers is not None:
                 attempt.answers = answers
-            questions = list(attempt.quiz.questions.all())
+            question_ids = attempt.question_ids or list(
+                attempt.quiz.questions.values_list("pk", flat=True)
+            )
             correct_ids = set(
-                Choice.objects.filter(question__in=questions, is_correct=True).values_list(
+                Choice.objects.filter(question_id__in=question_ids, is_correct=True).values_list(
                     "question_id", "pk"
                 )
             )
+            # Test yechilayotganda o'chirilgan savol ham umumiy songa kiradi (javobsiz).
             attempt.correct = sum(
-                (q.pk, _as_int(attempt.answers.get(str(q.pk)))) in correct_ids for q in questions
+                (qid, _as_int(attempt.answers.get(str(qid)))) in correct_ids
+                for qid in question_ids
             )
-            attempt.total = len(questions)
+            attempt.total = len(question_ids)
             attempt.status = self.Status.FINISHED
             attempt.finished_at = timezone.now()
             attempt.timed_out = timed_out

@@ -11,6 +11,7 @@ from .models import (
     Question,
     Quiz,
     QuizAttempt,
+    QuizBatch,
     Student,
     SyllabusItem,
     Topic,
@@ -117,13 +118,32 @@ class QuestionAdmin(admin.ModelAdmin):
     inlines = [ChoiceInline]
 
 
+class QuizAttemptInline(admin.TabularInline):
+    model = QuizAttempt
+    extra = 0
+    fields = ("student", "status", "correct", "total", "finished_at")
+    readonly_fields = fields
+    can_delete = False
+
+
+@admin.register(QuizBatch)
+class QuizBatchAdmin(admin.ModelAdmin):
+    list_display = ("quiz", "group", "lesson", "question_count", "time_limit_minutes", "created_at")
+    list_filter = ("group",)
+    search_fields = ("quiz__topic__title",)
+    list_select_related = ("quiz__topic", "group", "lesson__group", "lesson__topic")
+    inlines = [QuizAttemptInline]
+
+
 @admin.register(QuizAttempt)
 class QuizAttemptAdmin(admin.ModelAdmin):
-    list_display = ("student", "quiz", "lesson", "status", "correct", "total", "finished_at")
+    list_display = ("student", "quiz", "batch", "status", "correct", "total", "finished_at")
     list_filter = ("status",)
     search_fields = ("student__full_name", "quiz__topic__title")
-    list_select_related = ("student", "quiz__topic", "lesson__group", "lesson__topic")
-    readonly_fields = ("token", "owner_key", "started_at", "deadline", "finished_at")
+    list_select_related = ("student", "quiz__topic", "batch__quiz__topic")
+    readonly_fields = (
+        "token", "owner_key", "question_ids", "started_at", "deadline", "finished_at"
+    )
 
 
 @admin.register(SyllabusItem)

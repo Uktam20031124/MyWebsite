@@ -7,6 +7,7 @@
 {% block actions %}
 <a class="btn ghost" href="{% url 'topic_export' %}">{% icon "download" 16 %} Eksport</a>
 <a class="btn soft" href="{% url 'topic_import' %}">{% icon "upload" 16 %} Import</a>
+<a class="btn soft" href="{% url 'quiz_send' %}">{% icon "send" 16 %} Test jo‘natish</a>
 <a class="btn primary" href="{% url 'topic_create' %}{% if request.GET.module and request.GET.module != 'none' %}?module={{ request.GET.module }}{% endif %}">{% icon "plus" 16 %} Yangi mavzu</a>
 {% endblock %}
 
@@ -54,13 +55,16 @@
             <a class="strong" href="{{ t.get_absolute_url }}">{{ t.title }}</a>
             {% if not t.is_active %}<span class="badge plain">Yashirin</span>{% endif %}
             <div class="meta truncate">
-              {% icon "clock" 13 %} {{ t.duration_minutes }} daq. · {{ t.group_n }} guruh dasturida · {{ t.lesson_n }} dars{% if t.description %} · {{ t.description|truncatechars:110 }}{% endif %}
+              {% icon "clock" 13 %} {{ t.duration_minutes }} daq. · {{ t.group_n }} guruh dasturida · {{ t.lesson_n }} dars{% if t.question_n %} · {% icon "target" 13 %} {{ t.question_n }} savol{% endif %}{% if t.description %} · {{ t.description|truncatechars:110 }}{% endif %}
             </div>
           </div>
-          <div class="topic-actions">
-            {% if t.quiz %}<a class="btn xs ghost" href="{{ t.get_absolute_url }}#quiz" title="Mavzuda test bor">{% icon "target" 13 %} Test</a>{% else %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}">{% icon "plus" 13 %} Test</a>{% endif %}
-            <a class="btn xs ghost" href="{% url 'lesson_create' %}?topic={{ t.pk }}">{% icon "plus" 13 %} Dars</a>
-            <a class="btn xs ghost square" href="{% url 'topic_update' t.pk %}" title="Tahrirlash" aria-label="Tahrirlash">{% icon "edit" 13 %}</a>
+          <div class="topic-tail">
+            <div class="topic-actions">
+              {% if t.question_n %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}" title="Test savollarini tahrirlash">{% icon "edit" 13 %} Test</a>{% else %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}">{% icon "plus" 13 %} Test</a>{% endif %}
+              <a class="btn xs ghost" href="{% url 'lesson_create' %}?topic={{ t.pk }}">{% icon "plus" 13 %} Dars</a>
+              <a class="btn xs ghost square" href="{% url 'topic_update' t.pk %}" title="Tahrirlash" aria-label="Tahrirlash">{% icon "edit" 13 %}</a>
+            </div>
+            {% if t.question_n %}<a class="btn xs soft" href="{% url 'quiz_send' %}?topic={{ t.pk }}" title="Shu mavzu bo‘yicha test jo‘natish">{% icon "send" 13 %} Test jo‘natish</a>{% endif %}
           </div>
         </li>
       {% endfor %}

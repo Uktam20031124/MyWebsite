@@ -88,69 +88,18 @@
     <a class="btn danger-ghost sm" href="{% url 'lesson_delete' lesson.pk %}" style="align-self:flex-start">{% icon "trash" 15 %} Darsni o‘chirish</a>
   </aside>
 </div>
-{% if lesson.topic %}
 <section class="card quiz-card" id="quiz" aria-labelledby="quiz-h" style="margin-top:18px">
   <div class="card-head">
     <div>
-      <h2 id="quiz-h">{% icon "target" 18 %} Test jo‘natish</h2>
-      {% if quiz %}
-        <div class="meta">“{{ lesson.topic.title }}” · {{ quiz.time_limit_minutes }} daqiqa · har bir havola faqat bir marta ishlaydi{% if attempts %} · {{ quiz_finished }}/{{ attempts|length }} yechgan{% if quiz_avg is not None %}, o‘rtacha {{ quiz_avg }}%{% endif %}{% endif %}</div>
-      {% endif %}
+      <h2 id="quiz-h">{% icon "target" 18 %} Testlar</h2>
+      <div class="meta">Dars mavzusi yoki o‘tilgan istalgan mavzu bo‘yicha — tanlangan shogirdlarga, kerakli savollar soni va vaqt bilan</div>
     </div>
-    {% if quiz %}
-      <div class="quiz-actions">
-        {% if attempts %}<button class="btn sm soft" type="button" data-copy="{{ links_text }}">{% icon "link" 14 %} Hammasini nusxalash</button>{% endif %}
-        <form method="post" action="{% url 'lesson_quiz_links' lesson.pk %}">
-          {% csrf_token %}
-          <button class="btn sm {% if attempts %}soft{% else %}primary{% endif %}" type="submit">{% icon "plus" 14 %} {% if attempts %}Yangi shogirdlarga havola{% else %}Havolalarni yaratish{% endif %}</button>
-        </form>
-      </div>
-    {% endif %}
+    <a class="btn sm primary" href="{{ send_url }}">{% icon "send" 14 %} Test jo‘natish</a>
   </div>
-  {% if not quiz %}
-    <div class="empty compact">
-      <span class="empty-icon">{% icon "target" 22 %}</span>
-      <p>Bu mavzuda test yo‘q.</p>
-      <a class="btn sm primary" href="{% url 'quiz_edit' lesson.topic.pk %}">{% icon "plus" 14 %} Test yaratish</a>
+  <div class="card-body flush">
+    <div class="rows">
+      {% include "academy/quiz/_batch_rows.html" with show_topic=True empty_text="Bu dars bo‘yicha hali test jo‘natilmagan." %}
     </div>
-  {% else %}
-    {% if lesson.status != 'completed' and attempts %}
-      <div class="callout warn" style="margin:0 20px 8px">
-        <span class="callout-icon">{% icon "alert" 18 %}</span>
-        <div class="grow">Dars hali “o‘tildi” deb belgilanmagan — havolalarni dars tugagach yuboring.</div>
-      </div>
-    {% endif %}
-    <div class="card-body flush">
-      <div class="rows">
-        {% for a in attempts %}
-          <div class="row quiz-row">
-            <a class="person grow" href="{{ a.student.get_absolute_url }}">
-              <span class="avatar sm" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
-              <span class="person-name truncate">{{ a.student.full_name }}</span>
-            </a>
-            <div class="quiz-actions">
-              {% if a.status == 'finished' %}
-                {% if a.timed_out %}<span class="meta">vaqt tugadi</span>{% endif %}
-                <span class="meta">{{ a.finished_at|date:"d.m H:i" }}</span>
-                <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
-              {% else %}
-                <span class="badge {% if a.status == 'active' %}warn{% endif %}">{{ a.get_status_display }}</span>
-                <a class="btn xs primary" href="{{ a.share_url }}" target="_blank" rel="noopener noreferrer">{% icon "send" 13 %} Telegramda yuborish</a>
-                {% if a.student.telegram %}<a class="btn xs ghost" href="https://t.me/{{ a.student.telegram|urlencode }}" target="_blank" rel="noopener noreferrer" title="Shogird bilan chatni ochish">@{{ a.student.telegram }}</a>{% endif %}
-                <button class="btn xs ghost" type="button" data-copy="{{ a.link }}">{% icon "link" 13 %} Nusxa</button>
-                <form method="post" action="{% url 'quiz_attempt_renew' a.pk %}">
-                  {% csrf_token %}
-                  <button class="btn xs ghost square" type="submit" data-confirm="Eski havola ishlamay qoladi. Yangi havola yaratilsinmi?" title="Yangi havola" aria-label="Yangi havola">{% icon "undo" 13 %}</button>
-                </form>
-              {% endif %}
-            </div>
-          </div>
-        {% empty %}
-          <div class="empty compact"><p>Havolalar hali yaratilmagan. “Havolalarni yaratish” tugmasi guruhning har bir faol shogirdi uchun shaxsiy, bir martalik havola tayyorlaydi.</p></div>
-        {% endfor %}
-      </div>
-    </div>
-  {% endif %}
+  </div>
 </section>
-{% endif %}
 {% endblock %}

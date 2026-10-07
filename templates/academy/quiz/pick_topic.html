@@ -1,0 +1,50 @@
+{% extends "academy/base.html" %}
+{% load ui %}
+{% block title %}Test jo‘natish · Darsxona{% endblock %}
+{% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>{% if lesson %}<a href="{{ lesson.get_absolute_url }}">{{ lesson.group.name }} · {{ lesson.held_on|date:"d.m.Y" }}</a><span class="sep">/</span>{% endif %}1-qadam: mavzu{% endblock %}
+{% block heading %}Qaysi mavzu bo‘yicha test jo‘natamiz?{% endblock %}
+{% block subheading %}<p class="page-sub">Mavzuni tanlang — keyingi qadamda shogirdlar, savollar soni va vaqtni belgilaysiz. {{ ready_n }} ta mavzuda savollar banki tayyor.</p>{% endblock %}
+{% block actions %}
+{% if lesson %}<a class="btn ghost" href="{% url 'attendance' lesson.pk %}">{% icon "left" 16 %} Yo‘qlamaga qaytish</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <label class="search-field" style="flex:1 1 320px">
+    <span class="sr-only">Mavzu qidirish</span>
+    {% icon "search" 16 %}
+    <input class="input" type="search" placeholder="Mavzu nomi bo‘yicha qidirish…" data-filter-input="topics" autofocus>
+  </label>
+  <span class="meta" data-filter-empty="topics" hidden>Hech narsa topilmadi.</span>
+</div>
+
+{% if featured %}
+  <section class="card module-card" data-filter-section>
+    <div class="card-head"><h2>{% icon "sparkle" 18 %} Tez tanlash</h2><span class="meta">{% if lesson %}{{ lesson.group.name }}{% else %}{{ group.name }}{% endif %}</span></div>
+    <div class="rows">
+      {% for t, label in featured %}
+        {% include "academy/quiz/_pick_row.html" with label=label %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{% for module, items in sections %}
+  <section class="card module-card" data-filter-section>
+    <div class="card-head">
+      <h2>{% icon "folder" 18 %} {% if module %}{{ module.title }}{% else %}Bo‘limsiz mavzular{% endif %} <span class="badge plain">{{ items|length }}</span></h2>
+    </div>
+    <div class="rows">
+      {% for t in items %}
+        {% include "academy/quiz/_pick_row.html" %}
+      {% endfor %}
+    </div>
+  </section>
+{% empty %}
+  <div class="card empty">
+    <span class="empty-icon">{% icon "book" 22 %}</span>
+    <strong>Mavzular yo‘q</strong>
+    <a class="btn sm primary" href="{% url 'topic_create' %}">{% icon "plus" 14 %} Mavzu qo‘shish</a>
+  </div>
+{% endfor %}
+{% endblock %}

@@ -96,10 +96,10 @@
       <div class="card-body flush">
         <div class="rows">
           {% for t in quiz_attempts %}
-            <a class="row" href="{{ t.lesson.get_absolute_url }}#quiz">
-              <div class="grow"><div class="row-title truncate">{{ t.quiz.topic.title }}</div><div class="meta">{{ t.lesson.held_on|date:"d.m.Y" }}</div></div>
+            <a class="row" href="{{ t.batch.get_absolute_url }}">
+              <div class="grow"><div class="row-title truncate">{{ t.quiz.topic.title }}</div><div class="meta">{{ t.created_at|date:"d.m.Y" }} · {{ t.batch.question_count }} savol · {{ t.batch.time_limit_minutes }} daq.</div></div>
               {% if t.status == 'finished' %}
-                <span class="badge {% if t.percent >= 80 %}ok{% elif t.percent >= 50 %}warn{% else %}bad{% endif %}">{{ t.percent }}%</span>
+                <span class="badge {% if t.percent >= 80 %}ok{% elif t.percent >= 50 %}warn{% else %}bad{% endif %}">{{ t.correct }}/{{ t.total }} · {{ t.percent }}%</span>
               {% else %}
                 <span class="badge">{{ t.get_status_display }}</span>
               {% endif %}

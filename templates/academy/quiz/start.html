@@ -3,8 +3,8 @@
 <h1>{{ topic.title }}</h1>
 <p class="muted">Salom, <strong class="strong">{{ attempt.student.full_name }}</strong>!</p>
 <ul class="rules">
-  <li>{{ question_n }} ta savol, har birida bitta to‘g‘ri javob.</li>
-  <li>Vaqt: <strong>{{ quiz.time_limit_minutes }} daqiqa</strong>. Vaqt tugasa test avtomatik yakunlanadi.</li>
+  <li>{{ attempt.question_count }} ta savol, har birida bitta to‘g‘ri javob.</li>
+  <li>Vaqt: <strong>{{ attempt.batch.time_limit_minutes }} daqiqa</strong>. Vaqt tugasa test avtomatik yakunlanadi.</li>
   <li>Havola <strong>faqat bir marta</strong> ishlaydi: boshlagandan keyin uni boshqa qurilmada ochib bo‘lmaydi.</li>
 </ul>
 <form method="post">
