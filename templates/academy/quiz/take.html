@@ -16,7 +16,8 @@
     <input type="hidden" name="timeout" value="0" data-quiz-timeout>
     {% for q in questions %}
       <fieldset class="card quiz-question">
-        <legend><span class="q-n">{{ forloop.counter }}</span>{{ q.text|linebreaksbr }}</legend>
+        <legend><span class="q-n">{{ forloop.counter }}</span>{{ q.title }}</legend>
+        {% if q.code %}<pre class="quiz-code">{{ q.code }}</pre>{% endif %}
         {% for c in q.shuffled %}
           <label class="quiz-choice">
             <input type="radio" name="q{{ q.pk }}" value="{{ c.pk }}"{% if q.picked == c.pk %} checked{% endif %}>

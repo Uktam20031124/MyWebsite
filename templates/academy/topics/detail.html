@@ -54,19 +54,25 @@
         {% if quiz %}<a class="btn xs ghost" href="{% url 'quiz_edit' topic.pk %}">{% icon "edit" 14 %} Tahrirlash</a>{% endif %}
       </div>
       <div class="card-body">
-        {% if quiz %}
-          <div class="strong">{{ question_n }} ta savol · {{ quiz.time_limit_minutes }} daqiqa</div>
+        {% if quiz and question_n %}
+          <div class="strong">Savollar banki: {{ question_n }} ta savol</div>
           {% if quiz_stats.n %}
-            <p class="meta">{{ quiz_stats.n }} ta o‘quvchi yechgan · o‘rtacha {{ quiz_stats.avg }}%</p>
+            <p class="meta">{{ quiz_stats.n }} marta yechilgan · o‘rtacha {{ quiz_stats.avg }}%</p>
           {% else %}
             <p class="meta">Hali hech kim yechmagan.</p>
           {% endif %}
-          <p class="meta">Test havolalari dars sahifasidan yuboriladi: dars → “Test jo‘natish”.</p>
+          <a class="btn primary block" href="{{ send_url }}" style="margin-top:12px">{% icon "send" 16 %} Test jo‘natish</a>
+          <p class="meta" style="margin:8px 0 0">Shogirdlar, savollar soni va vaqtni keyingi qadamda tanlaysiz.</p>
         {% else %}
-          <p class="meta">Mavzu o‘zlashtirilganini tekshirish uchun test qo‘shing — dars o‘tgach har bir o‘quvchiga Telegram orqali bir martalik havola yuboriladi.</p>
+          <p class="meta">Mavzu o‘zlashtirilganini tekshirish uchun test qo‘shing — har bir o‘quvchiga Telegram orqali bir martalik havola yuboriladi.</p>
           <a class="btn sm primary" href="{% url 'quiz_edit' topic.pk %}">{% icon "plus" 14 %} Test yaratish</a>
         {% endif %}
       </div>
+      {% if batches %}
+        <div class="card-body flush" style="border-top:1px solid var(--border)">
+          <div class="rows">{% include "academy/quiz/_batch_rows.html" %}</div>
+        </div>
+      {% endif %}
     </section>
 
     <section class="card">
@@ -91,7 +97,6 @@
           {% for lesson in lessons %}
             <a class="row" href="{{ lesson.get_absolute_url }}">
               <div class="grow"><div class="row-title">{{ lesson.group.code }}</div><div class="meta">{{ lesson.held_on|date:"d.m.Y" }}</div></div>
-              {% if quiz and lesson.status == 'completed' %}<span class="badge accent plain" title="Test jo‘natish">Test</span>{% endif %}
               <span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}info{% endif %}">{{ lesson.get_status_display }}</span>
             </a>
           {% empty %}

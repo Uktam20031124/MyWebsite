@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 
 from django.db import transaction
-from django.db.models import Avg, Count, Max, Q
+from django.db.models import Avg, Count, Max, Q, Sum
 from django.utils import timezone
 
 from .models import (
@@ -12,11 +12,16 @@ from .models import (
     Group,
     Lesson,
     Module,
+    Quiz,
     QuizAttempt,
+    QuizBatch,
     Student,
     SyllabusItem,
     Topic,
 )
+
+# Test formati modellarga bog'liq emas (data migratsiyada ham ishlatiladi); qayta eksport.
+from .quiz_format import QUIZ_FORMAT_HELP, parse_quiz  # noqa: F401
 
 
 def percent(part: int, total: int) -> int:
@@ -688,59 +693,53 @@ def export_topics() -> str:
 
 # --- Testlar ----------------------------------------------------------------
 
-QUIZ_FORMAT_HELP = """? Savol matni
-+ To'g'ri javob
-- Noto'g'ri javob
-- Noto'g'ri javob"""
 
+def create_quiz_batch(
+    quiz: Quiz,
+    students,
+    question_count: int,
+    time_limit_minutes: int,
+    lesson: Lesson | None = None,
+) -> QuizBatch:
+    """Tanlangan shogirdlarga bir martalik havolalar bilan test jo'natmasi yaratadi.
 
-def parse_quiz(text: str) -> tuple[list[tuple[str, list[tuple[str, bool]]]], list[str]]:
-    """Test matnini o'qiydi: (savollar, xatolar).
-
-    "?" bilan boshlangan qator — yangi savol, "+" — to'g'ri javob, "-" — noto'g'ri
-    javob. Boshqa qatorlar savol matnining davomi hisoblanadi.
+    Savollar soni bankdagidan oshmaydi. Guruh — dars guruhi yoki (hamma shogird bitta
+    guruhdan bo'lsa) o'sha guruh: jo'natmalarni guruh bo'yicha ko'rish uchun.
     """
-    questions: list[tuple[str, list[tuple[str, bool]]]] = []
-    errors: list[str] = []
-    for n, raw in enumerate(text.splitlines(), start=1):
-        line = raw.strip()
-        if not line:
-            continue
-        mark, rest = line[0], line[1:].strip()
-        if mark == "?":
-            questions.append((rest, []))
-        elif mark in "+-":
-            if not questions:
-                errors.append(f"{n}-qator: javobdan oldin savol yozing (“? …”).")
-            elif rest:
-                questions[-1][1].append((rest[:500], mark == "+"))
-        elif questions and not questions[-1][1]:
-            text_, choices = questions[-1]
-            questions[-1] = (f"{text_}\n{line}".strip(), choices)
-        else:
-            errors.append(f"{n}-qator: “?”, “+” yoki “-” bilan boshlanishi kerak.")
-    for i, (q_text, choices) in enumerate(questions, start=1):
-        if not q_text:
-            errors.append(f"{i}-savol: matni bo‘sh.")
-        if len(choices) < 2:
-            errors.append(f"{i}-savol: kamida 2 ta javob varianti kerak.")
-        if sum(ok for _, ok in choices) != 1:
-            errors.append(f"{i}-savol: aynan bitta to‘g‘ri javob (“+”) bo‘lishi kerak.")
-    return questions, errors
+    students = list(students)
+    group_ids = {s.group_id for s in students}
+    if lesson is not None:
+        group_id = lesson.group_id
+    else:
+        group_id = group_ids.pop() if len(group_ids) == 1 else None
+    with transaction.atomic():
+        batch = QuizBatch.objects.create(
+            quiz=quiz,
+            lesson=lesson,
+            group_id=group_id,
+            question_count=min(question_count, quiz.questions.count()),
+            time_limit_minutes=time_limit_minutes,
+        )
+        QuizAttempt.objects.bulk_create(
+            QuizAttempt(batch=batch, quiz=quiz, student=s) for s in students
+        )
+    return batch
 
 
-def ensure_quiz_attempts(lesson: Lesson) -> int:
-    """Dars guruhining faol shogirdlari uchun test havolalarini yaratadi.
+def annotate_batches(qs):
+    """Jo'natmalarga havolalar soni, yechganlar soni va to'g'ri javoblar yig'indisi.
 
-    Mavjud havolalarga tegilmaydi. Yaratilganlar sonini qaytaradi.
+    Natija `QuizBatch.avg_percent` va `QuizBatch.progress` xossalarida ishlatiladi.
     """
-    quiz = getattr(lesson.topic, "quiz", None) if lesson.topic_id else None
-    if quiz is None:
-        return 0
-    have = set(lesson.quiz_attempts.values_list("student_id", flat=True))
-    new = [
-        QuizAttempt(quiz=quiz, lesson=lesson, student=s)
-        for s in lesson.group.active_students.exclude(pk__in=have)
-    ]
-    QuizAttempt.objects.bulk_create(new)
-    return len(new)
+    finished = Q(attempts__status=QuizAttempt.Status.FINISHED)
+    return (
+        qs.select_related("quiz__topic", "group", "lesson__group")
+        .annotate(
+            sent_n=Count("attempts", distinct=True),
+            done_n=Count("attempts", filter=finished, distinct=True),
+            correct_sum=Sum("attempts__correct", filter=finished),
+            total_sum=Sum("attempts__total", filter=finished),
+        )
+        # GROUP BY so'rovida Meta.ordering qo'llanmaydi — tartib aniq ko'rsatiladi.
+        .order_by("-created_at", "-pk")
+    )

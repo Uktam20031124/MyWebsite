@@ -4,7 +4,19 @@ from datetime import time
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from academy.models import Attendance, Group, Lesson, Module, Student, SyllabusItem, Topic
+from academy.models import (
+    Attendance,
+    Choice,
+    Group,
+    Lesson,
+    Module,
+    Question,
+    Quiz,
+    Student,
+    SyllabusItem,
+    Topic,
+)
+from academy.quiz_bank import seed_quizzes, validate_bank
 from academy.school_data import GroupData, ModuleData, all_groups, all_modules
 
 
@@ -59,7 +71,8 @@ def validate(modules: list[ModuleData], groups: list[GroupData]) -> list[str]:
 class Command(BaseCommand):
     help = (
         "O'quv markazi ma'lumotlarini (academy/school_data) bazaga yozadi: mavzular katalogi, "
-        "guruhlar, o'quvchilar va guruh dasturlari. Qayta ishga tushirish xavfsiz. "
+        "guruhlar, o'quvchilar, guruh dasturlari va mavzu testlari (savollar banki). "
+        "Qayta ishga tushirish xavfsiz. "
         "--reset avval barcha o'quv ma'lumotlarini o'chiradi (foydalanuvchilar qoladi)."
     )
 
@@ -73,7 +86,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, reset, yes, **options):
         modules, groups = all_modules(), all_groups()
-        errors = validate(modules, groups)
+        errors = validate(modules, groups) + validate_bank()
         if errors:
             raise CommandError("Ma'lumotlarda xato:\n  " + "\n  ".join(errors))
 
@@ -86,11 +99,13 @@ class Command(BaseCommand):
             topics = self.load_topics(modules)
             for group in groups:
                 self.load_group(group, topics)
+            quizzes_new, questions_new = seed_quizzes(Topic, Quiz, Question, Choice)
 
         self.stdout.write(
             self.style.SUCCESS(
                 f"Tayyor: {len(modules)} bo'lim, {len(topics)} mavzu, {len(groups)} guruh, "
-                f"{sum(len(g.students) for g in groups)} o'quvchi."
+                f"{sum(len(g.students) for g in groups)} o'quvchi; "
+                f"testlar: {quizzes_new} yangi, {questions_new} ta savol qo'shildi."
             )
         )
 

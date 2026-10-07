@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
+from django.core.validators import MaxValueValidator
 from django.db.models import Q
 
-from .models import WEEKDAY_CHOICES, Group, Lesson, Module, Quiz, Student, Topic
+from .models import WEEKDAY_CHOICES, Group, Lesson, Module, Quiz, QuizBatch, Student, Topic
 from .services import QUIZ_FORMAT_HELP, parse_quiz, parse_topics
 
 
@@ -273,3 +274,35 @@ class QuizForm(StyledFormMixin, forms.ModelForm):
         if commit:
             quiz.replace_questions(self.parsed)
         return quiz
+
+
+class QuizSendForm(StyledFormMixin, forms.Form):
+    """Test jo'natish: kimga, nechta savol va qancha vaqt."""
+
+    students = forms.ModelMultipleChoiceField(
+        label="Shogirdlar",
+        queryset=Student.objects.none(),
+        widget=forms.CheckboxSelectMultiple,
+        error_messages={"required": "Kamida bitta shogirdni tanlang."},
+    )
+    question_count = forms.IntegerField(label="Savollar soni", min_value=1)
+    time_limit_minutes = forms.IntegerField(
+        label="Vaqt (daqiqa)", min_value=1, max_value=QuizBatch.MAX_TIME_LIMIT
+    )
+
+    def __init__(self, *args, quiz: Quiz, students, **kwargs):
+        self.bank_size = quiz.questions.count()
+        kwargs.setdefault(
+            "initial",
+            {
+                "question_count": min(10, self.bank_size),
+                "time_limit_minutes": quiz.time_limit_minutes,
+            },
+        )
+        super().__init__(*args, **kwargs)
+        self.fields["students"].queryset = students
+        count = self.fields["question_count"]
+        count.max_value = self.bank_size
+        count.validators.append(MaxValueValidator(self.bank_size))
+        count.widget.attrs.update(min=1, max=self.bank_size, inputmode="numeric")
+        self.fields["time_limit_minutes"].widget.attrs.update(inputmode="numeric")

@@ -240,6 +240,84 @@
     });
   }
 
+  // --- Ro'yxatni matn bo'yicha filtrlash: [data-filter-input="x"] → [data-filter-item="x"] --
+  $$("[data-filter-input]").forEach((input) => {
+    const scope = input.dataset.filterInput;
+    const items = $$(`[data-filter-item="${scope}"]`);
+    const empty = $(`[data-filter-empty="${scope}"]`);
+    input.addEventListener("input", () => {
+      const q = input.value.trim().toLowerCase();
+      let shown = 0;
+      items.forEach((el) => {
+        const hit = !q || el.dataset.filterText.includes(q);
+        el.hidden = !hit;
+        shown += hit;
+      });
+      // Bo'limda birorta ham mos mavzu qolmasa — bo'limni ham yashiramiz.
+      $$("[data-filter-section]").forEach((sec) => {
+        sec.hidden = !$$(`[data-filter-item="${scope}"]`, sec).some((el) => !el.hidden);
+      });
+      if (empty) empty.hidden = shown > 0;
+    });
+  });
+
+  // --- Test jo'natish: shogirdlarni belgilash, tez tanlash, vaqt maslahati ----
+  const updateCheckCount = (name) => {
+    const boxes = $$(`input[type="checkbox"][name="${name}"]`);
+    const counter = $(`[data-check-count="${name}"]`);
+    if (counter) {
+      const n = boxes.filter((b) => b.checked).length;
+      counter.innerHTML = `<span class="badge ${n ? "ok" : "bad"}">${n} / ${boxes.length} tanlandi</span>`;
+    }
+  };
+  $$("[data-check-count]").forEach((el) => updateCheckCount(el.dataset.checkCount));
+  document.addEventListener("change", (e) => {
+    if (e.target.matches('input[type="checkbox"]')) updateCheckCount(e.target.name);
+  });
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-check-all]");
+    if (!btn) return;
+    const name = btn.dataset.checkAll;
+    const mode = btn.dataset.checkValue;
+    $$(`input[type="checkbox"][name="${name}"]`).forEach((b) => {
+      b.checked = mode === "all" || (mode === "came" && b.hasAttribute("data-came"));
+    });
+    updateCheckCount(name);
+  });
+
+  const renderPresets = (input) => {
+    $$(`[data-preset="${input.id}"]`).forEach((b) =>
+      b.setAttribute("aria-pressed", String(b.dataset.value === input.value))
+    );
+  };
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-preset]");
+    if (!btn) return;
+    const input = document.getElementById(btn.dataset.preset);
+    input.value = btn.dataset.value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+
+  $$("[data-quiz-pace]").forEach((pace) => {
+    const count = document.getElementById(pace.dataset.count);
+    const time = document.getElementById(pace.dataset.time);
+    const render = () => {
+      [count, time].forEach(renderPresets);
+      const n = Number(count.value);
+      const m = Number(time.value);
+      if (!(n > 0 && m > 0)) {
+        pace.textContent = "";
+        return;
+      }
+      const sec = Math.round((m * 60) / n);
+      const label = sec >= 60 ? `${Math.floor(sec / 60)} daq. ${sec % 60 ? `${sec % 60} s` : ""}` : `${sec} s`;
+      pace.textContent = `Har bir savolga ≈ ${label.trim()}.` + (sec < 30 ? " Vaqt juda kam bo‘lishi mumkin." : "");
+      pace.classList.toggle("warn", sec < 30);
+    };
+    [count, time].forEach((el) => el.addEventListener("input", render));
+    render();
+  });
+
   // --- Saqlanmagan o'zgarishlar haqida ogohlantirish -------------------------
   $$("[data-dirty-guard]").forEach((form) => {
     let dirty = false;

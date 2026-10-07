@@ -46,6 +46,10 @@
         <a href="{% url 'topic_list' %}" {% if 'topic' in url_name or 'module' in url_name %}aria-current="page"{% endif %}>
           {% icon "book" %} Mavzular <span class="count">{{ nav_topics }}</span>
         </a>
+        <a href="{% url 'quiz_batches' %}" {% if url_name == 'quiz_send' or 'quiz_batch' in url_name %}aria-current="page"{% endif %}>
+          {% icon "target" %} Testlar
+          {% if nav_quiz_open %}<span class="count" title="Hali yechilmagan test havolalari">{{ nav_quiz_open }}</span>{% endif %}
+        </a>
       </div>
     </nav>
 

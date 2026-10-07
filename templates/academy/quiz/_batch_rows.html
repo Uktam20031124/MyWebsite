@@ -1,0 +1,16 @@
+{% load ui %}{% for b in batches %}
+  <a class="row" href="{{ b.get_absolute_url }}">
+    <div class="grow truncate">
+      <div class="row-title truncate">{% if show_topic %}{{ b.quiz.topic.title }}{% else %}{% if b.lesson %}{{ b.lesson.group.name }} · {{ b.lesson.held_on|date:"d.m.Y" }} darsi{% elif b.group %}{{ b.group.name }}{% else %}Bir nechta guruh{% endif %}{% endif %}</div>
+      <div class="meta">{% if show_topic %}{% if b.group %}{{ b.group.name }} · {% endif %}{% endif %}{{ b.created_at|date:"d.m.Y H:i" }} · {{ b.question_count }} savol · {{ b.time_limit_minutes }} daq.</div>
+    </div>
+    <span class="meta tabular nowrap" title="Yechganlar">{{ b.done_n }}/{{ b.sent_n }}</span>
+    {% if b.avg_percent is not None %}
+      <span class="badge {% if b.avg_percent >= 80 %}ok{% elif b.avg_percent >= 50 %}warn{% else %}bad{% endif %}">{{ b.avg_percent }}%</span>
+    {% else %}
+      <span class="badge plain">kutilmoqda</span>
+    {% endif %}
+  </a>
+{% empty %}
+  <div class="empty compact"><p>{{ empty_text|default:"Hali test jo‘natilmagan." }}</p></div>
+{% endfor %}
