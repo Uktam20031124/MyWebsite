@@ -130,6 +130,11 @@ Production’da havolalar to‘g‘ri domen bilan chiqishi uchun `DJANGO_ALLOWED
    python manage.py telegram_login --check  # qaysi akkaunt ulanganini ko'rish
    python manage.py telegram_login --logout # uzish
    ```
+   **Kod kelmasa** (Telegram yangi API ilova/server IP'dan kirishda kodni ba'zan yetkazmaydi) —
+   QR-kod bilan: telefonda Telegram → Sozlamalar → Qurilmalar → “Kompyuterni ulash”:
+   ```bash
+   python manage.py telegram_login --qr                    # (2FA bo'lsa: --qr --password PAROL)
+   ```
    Terminal so‘roviga javob berib bo‘lmasa (masalan, masofadan) — ikki bosqichda:
    ```bash
    python manage.py telegram_login --phone +998901234567   # Telegram'ga kod keladi
