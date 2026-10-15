@@ -238,12 +238,12 @@ class SendQuizTests(QuizTestCase):
         self.assertRedirects(response, f"{self.send}?lesson={self.lesson.pk}")
         self.assertTrue(Attendance.objects.filter(lesson=self.lesson, student=self.student).exists())
 
-    def test_batch_page_shows_telegram_share_link(self):
+    def test_batch_page_lists_recipients_without_share_links(self):
+        # Havola faqat ustozning Telegram akkauntidan boradi — sahifada share/nusxa yo'q.
         response = self.client.get(self.batch.get_absolute_url())
-        self.assertContains(response, "https://t.me/share/url?url=http%3A%2F%2Ftestserver%2Ft%2F")
-        self.assertContains(response, "3+ta+savol%2C+5+daqiqa")
-        self.assertContains(response, self.attempt.token)
-        self.assertContains(response, "https://t.me/sardor")
+        self.assertContains(response, "@sardor")
+        self.assertNotContains(response, "t.me/share")
+        self.assertNotContains(response, self.attempt.token)
 
     def test_renew_replaces_token(self):
         old = self.attempt.token

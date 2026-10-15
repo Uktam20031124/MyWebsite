@@ -5,8 +5,13 @@
 {% block heading %}{{ topic.title }}{% endblock %}
 {% block subheading %}<p class="page-sub">{% icon "target" 15 %} {{ batch.question_count }} ta savol · {% icon "clock" 15 %} {{ batch.time_limit_minutes }} daqiqa · har bir havola faqat bir marta ishlaydi</p>{% endblock %}
 {% block actions %}
-{% if attempts %}<button class="btn soft" type="button" data-copy="{{ links_text }}">{% icon "link" 16 %} Hammasini nusxalash</button>{% endif %}
-<a class="btn primary" href="{{ again_url }}">{% icon "send" 16 %} Yana jo‘natish</a>
+{% if telegram_ready and unsent_n %}
+  <form method="post" action="{% url 'quiz_batch_send' batch.pk %}">
+    {% csrf_token %}
+    <button class="btn primary" type="submit">{% icon "send" 16 %} Telegramda yuborish ({{ unsent_n }})</button>
+  </form>
+{% endif %}
+<a class="btn {% if telegram_ready and unsent_n %}soft{% else %}primary{% endif %}" href="{{ again_url }}">{% icon "plus" 16 %} Yana jo‘natish</a>
 {% endblock %}
 
 {% block content %}
@@ -29,10 +34,20 @@
   </article>
 </section>
 
+{% if not telegram_ready %}
+  <div class="callout warn" style="margin-bottom:18px">
+    <span class="callout-icon">{% icon "alert" 18 %}</span>
+    <div class="grow">
+      <strong>Telegram ulanmagan — havolalar yuborilmadi.</strong>
+      <div class="meta" style="margin-top:4px">Testlar faqat {{ sender_id }} akkauntidan yuboriladi. {{ telegram_hint }}</div>
+    </div>
+  </div>
+{% endif %}
+
 <section class="card quiz-card" id="quiz" aria-labelledby="links-h">
   <div class="card-head">
     <h2 id="links-h">{% icon "users" 18 %} Havolalar va natijalar</h2>
-    <span class="meta">Ochilmagan havolani “Telegramda yuborish” bilan shogirdga jo‘nating</span>
+    <span class="meta">{% icon "send" 13 %} Faqat {{ sender_id }} Telegram akkauntidan yuboriladi</span>
   </div>
   <div class="card-body flush">
     <div class="rows">
@@ -40,7 +55,10 @@
         <div class="row quiz-row">
           <a class="person grow" href="{{ a.student.get_absolute_url }}">
             <span class="avatar sm" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
-            <span class="person-name truncate">{{ a.student.full_name }}</span>
+            <span class="truncate">
+              <span class="person-name block truncate">{{ a.student.full_name }}</span>
+              <span class="person-meta">{% if a.username %}@{{ a.username }}{% elif a.phone %}{{ a.phone }}{% else %}Telegram username / telefon yo‘q{% endif %}</span>
+            </span>
           </a>
           <div class="quiz-actions">
             {% if a.status == 'finished' %}
@@ -48,10 +66,23 @@
               <span class="meta">{{ a.finished_at|date:"d.m H:i" }}</span>
               <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
             {% else %}
-              <span class="badge {% if a.status == 'active' %}warn{% endif %}">{{ a.get_status_display }}</span>
-              <a class="btn xs primary" href="{{ a.share_url }}" target="_blank" rel="noopener noreferrer">{% icon "send" 13 %} Telegramda yuborish</a>
-              {% if a.student.telegram %}<a class="btn xs ghost" href="https://t.me/{{ a.student.telegram|urlencode }}" target="_blank" rel="noopener noreferrer" title="Shogird bilan chatni ochish">@{{ a.student.telegram }}</a>{% endif %}
-              <button class="btn xs ghost" type="button" data-copy="{{ a.link }}">{% icon "link" 13 %} Nusxa</button>
+              {% if a.status == 'active' %}
+                <span class="badge warn">{{ a.get_status_display }}</span>
+              {% elif a.sent_at %}
+                <span class="badge info" title="Telegram orqali yuborilgan">Yuborildi · {{ a.sent_at|date:"d.m H:i" }}</span>
+              {% elif a.send_error %}
+                <span class="badge bad" title="{{ a.send_error }}">Yuborilmadi</span>
+                <span class="meta send-error">{{ a.send_error }}</span>
+              {% else %}
+                <span class="badge">Yuborilmagan</span>
+              {% endif %}
+              {% if telegram_ready and a.status == 'pending' %}
+                <form method="post" action="{% url 'quiz_batch_send' batch.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="attempt" value="{{ a.pk }}">
+                  <button class="btn xs {% if a.sent_at %}ghost{% else %}primary{% endif %}" type="submit" {% if not a.username and not a.phone %}disabled title="Shogird kartasiga Telegram username yoki telefon kiriting"{% endif %}>{% icon "send" 13 %} {% if a.sent_at or a.send_error %}Qayta yuborish{% else %}Yuborish{% endif %}</button>
+                </form>
+              {% endif %}
               <form method="post" action="{% url 'quiz_attempt_renew' a.pk %}">
                 {% csrf_token %}
                 <button class="btn xs ghost square" type="submit" data-confirm="Eski havola ishlamay qoladi. Yangi havola yaratilsinmi?" title="Yangi havola" aria-label="Yangi havola">{% icon "undo" 13 %}</button>

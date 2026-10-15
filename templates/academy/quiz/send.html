@@ -43,7 +43,7 @@
             <span class="avatar sm" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
             <span class="grow truncate">
               <span class="person-name block truncate">{{ row.student.full_name }}</span>
-              {% if row.student.telegram %}<span class="person-meta">@{{ row.student.telegram }}</span>{% endif %}
+              <span class="person-meta">{% if row.student.telegram %}@{{ row.student.telegram|cut:"@" }}{% elif row.student.phone %}{{ row.student.phone }}{% else %}<span class="send-error">Telegram / telefon yo‘q — yuborib bo‘lmaydi</span>{% endif %}</span>
             </span>
             {% if row.attendance %}<span class="badge {% if row.attendance == 'present' %}ok{% elif row.attendance == 'absent' %}bad{% elif row.attendance == 'late' %}warn{% else %}info{% endif %}">{{ row.attendance_label }}</span>{% endif %}
             {% if row.student.status != 'active' %}<span class="badge plain">{{ row.student.get_status_display }}</span>{% endif %}
@@ -92,7 +92,7 @@
           <ul class="rules">
             <li>Har bir shogird bankdan <strong>tasodifiy</strong> savollar oladi — savollar va javoblar tartibi ham har xil.</li>
             <li>Havola <strong>bir martalik</strong>: boshqa qurilmada ochilmaydi, vaqt tugasa test o‘zi yakunlanadi.</li>
-            <li>Keyingi sahifada har bir havolani Telegram orqali yuborasiz.</li>
+            <li>Havolalar darhol <strong>faqat {{ sender_id }}</strong> Telegram akkauntidan har bir shogirdga yuboriladi (@username yoki telefon orqali).</li>
           </ul>
         </div>
 

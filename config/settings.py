@@ -126,6 +126,14 @@ CACHES = {
 }
 
 LOGIN_URL = "login"
+
+# Test havolalari faqat shu Telegram akkauntidan yuboriladi (Telethon sessiyasi bilan).
+# API ID/hash: my.telegram.org → API development tools. Sessiya: manage.py telegram_login.
+TELEGRAM_API_ID = int(os.environ.get("TELEGRAM_API_ID") or 0)
+TELEGRAM_API_HASH = os.environ.get("TELEGRAM_API_HASH", "")
+TELEGRAM_SENDER_ID = int(os.environ.get("TELEGRAM_SENDER_ID") or 7365208463)
+TELEGRAM_SESSION_FILE = os.environ.get("TELEGRAM_SESSION_FILE", BASE_DIR / ".telegram_session")
+
 # Brute-force himoyasi: shuncha xato urinishdan keyin IP vaqtincha bloklanadi.
 LOGIN_FAILURE_LIMIT = int(os.environ.get("DJANGO_LOGIN_FAILURE_LIMIT", 5))
 LOGIN_LOCKOUT_SECONDS = int(os.environ.get("DJANGO_LOGIN_LOCKOUT_SECONDS", 15 * 60))

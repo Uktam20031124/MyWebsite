@@ -56,6 +56,7 @@ urlpatterns = [
     path("testlar/", views.QuizBatchListView.as_view(), name="quiz_batches"),
     path("testlar/jonatish/", views.quiz_send, name="quiz_send"),
     path("testlar/<int:pk>/", views.quiz_batch_detail, name="quiz_batch"),
+    path("testlar/<int:pk>/yuborish/", views.quiz_batch_send, name="quiz_batch_send"),
     path("testlar/<int:pk>/ochirish/", views.QuizBatchDeleteView.as_view(), name="quiz_batch_delete"),
     path("test-havola/<int:pk>/yangilash/", views.quiz_attempt_renew, name="quiz_attempt_renew"),
     # O'quvchi uchun ochiq test sahifasi (login talab qilinmaydi)

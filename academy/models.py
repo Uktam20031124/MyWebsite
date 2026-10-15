@@ -661,6 +661,9 @@ class QuizAttempt(models.Model):
     timed_out = models.BooleanField("Vaqt tugadi", default=False)
     correct = models.PositiveSmallIntegerField("To'g'ri javoblar", null=True, blank=True)
     total = models.PositiveSmallIntegerField("Savollar soni", null=True, blank=True)
+    # Ustozning Telegram akkauntidan yuborilgan payt va oxirgi xato (bo'lsa).
+    sent_at = models.DateTimeField("Telegramda yuborilgan", null=True, blank=True)
+    send_error = models.CharField("Yuborish xatosi", max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

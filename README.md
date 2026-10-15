@@ -97,8 +97,12 @@ O‘quvchi mavzuni to‘liq o‘zlashtirganini tekshirish uchun:
    saqlanadi, darsga kelganlar avtomatik belgilanadi), **dars sahifasi**, **mavzular ro‘yxati**
    (har bir mavzu yonida), **mavzu sahifasi** va yon menyudagi **Testlar** bo‘limi.
    Har bir shogird bankdan tasodifiy N ta savol oladi; savollar va variantlar tartibi ham har xil.
-3. **Jo‘natma sahifasi**: har bir shogird uchun shaxsiy havola (`/t/<token>/`). “Telegramda yuborish”
-   tugmasi Telegram’ni ochadi — kontaktni tanlab yuborasiz. “Nusxa” / “Hammasini nusxalash” ham bor.
+3. **Yuborish — faqat ustozning Telegram akkauntidan** (`TELEGRAM_SENDER_ID`, standart: `7365208463`).
+   Havolalar yaratilishi bilan sayt ularni shu akkauntdan har bir shogirdga o‘zi yuboradi: shogird
+   kartasidagi Telegram @username orqali, username bo‘lmasa — telefon raqami orqali. Jo‘natma
+   sahifasida har bir shogird uchun holat (“Yuborildi”, “Yuborilmadi” + sabab), “Telegramda yuborish”
+   (yuborilmaganlarga) va “Qayta yuborish” bor. Havolani boshqa akkauntdan yuborish (share / nusxa)
+   tugmalari yo‘q; sessiya boshqa akkauntga tegishli bo‘lsa, sayt hech narsa yubormaydi.
 4. O‘quvchi havolani bosadi → “Testni boshlash” → yuqorida **teskari sanoq taymer**. Vaqt tugasa
    test avtomatik yakunlanadi va natija (to‘g‘ri javoblar soni, foiz) ekranda ko‘rsatiladi.
 5. **Havola faqat bir marta ishlaydi**: boshlangandan keyin boshqa brauzer/qurilmada ochilmaydi,
@@ -110,6 +114,33 @@ O‘quvchi mavzuni to‘liq o‘zlashtirganini tekshirish uchun:
    Ochilmagan havolani “↻” bilan yangisiga almashtirish mumkin (eskisi ishlamay qoladi).
 
 Production’da havolalar to‘g‘ri domen bilan chiqishi uchun `DJANGO_ALLOWED_HOSTS` va HTTPS sozlangan bo‘lsin.
+
+### Telegram akkauntini ulash (bir marta)
+
+1. https://my.telegram.org → **API development tools** → ilova yarating; `api_id` va `api_hash` ni
+   `.env` ga yozing:
+   ```bash
+   TELEGRAM_API_ID=1234567
+   TELEGRAM_API_HASH=0123456789abcdef0123456789abcdef
+   # TELEGRAM_SENDER_ID=7365208463   # standart qiymat
+   ```
+2. Serverda: `pip install -r requirements.txt`, so‘ng
+   ```bash
+   python manage.py telegram_login          # telefon, Telegram'ga kelgan kod, (bo'lsa) 2FA parol
+   python manage.py telegram_login --check  # qaysi akkaunt ulanganini ko'rish
+   python manage.py telegram_login --logout # uzish
+   ```
+   Terminal so‘roviga javob berib bo‘lmasa (masalan, masofadan) — ikki bosqichda:
+   ```bash
+   python manage.py telegram_login --phone +998901234567   # Telegram'ga kod keladi
+   python manage.py telegram_login --code 12345            # (2FA bo'lsa: --password PAROL)
+   ```
+   Faqat `TELEGRAM_SENDER_ID` akkauntiga ruxsat beriladi — boshqa akkaunt bilan kirilsa, sessiya
+   saqlanmaydi. Sessiya `.telegram_session` faylida (`TELEGRAM_SESSION_FILE`, huquqlar 600) — u
+   akkauntga to‘liq kirish kaliti, hech kimga bermang va repozitoriyga qo‘shmang.
+3. Ko‘p notanish odamga qisqa vaqtda xabar yuborish Telegram’da spam cheklovini keltirib chiqarishi
+   mumkin: xabarlar orasida pauza bor, cheklov bo‘lsa yuborish to‘xtaydi va sabab ko‘rsatiladi.
+   O‘quvchilar sizning raqamingizni kontaktga saqlab qo‘ysa, xabarlar ishonchli yetib boradi.
 
 ## Imkoniyatlar
 
