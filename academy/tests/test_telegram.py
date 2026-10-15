@@ -282,3 +282,61 @@ class LoginCommandTests(SimpleTestCase):
         self.run_cmd(FakeLoginClient(), "--phone", "+998901234567")
         with self.assertRaisesMessage(CommandError, "Kod noto'g'ri"):
             self.run_cmd(FakeLoginClient(), "--code", "00000")
+
+
+class FakeQR:
+    def __init__(self, outcomes):
+        self.outcomes = list(outcomes)  # "timeout" | "ok" | "password"
+        self.url = "tg://login?token=abc"
+        self.recreated = 0
+
+    async def wait(self, timeout=None):
+        import asyncio
+
+        outcome = self.outcomes.pop(0)
+        if outcome == "timeout":
+            raise asyncio.TimeoutError
+        if outcome == "password":
+            raise errors.SessionPasswordNeededError(request=None)
+
+    async def recreate(self):
+        self.recreated += 1
+        self.url = f"tg://login?token=new{self.recreated}"
+
+
+class QrLoginTests(LoginCommandTests):
+    def qr_client(self, outcomes, **kwargs):
+        client = FakeLoginClient(**kwargs)
+        client.qr = FakeQR(outcomes)
+
+        async def qr_login():
+            return client.qr
+
+        client.qr_login = qr_login
+        return client
+
+    def test_qr_login_refreshes_expired_code(self):
+        client = self.qr_client(["timeout", "ok"], session="qr")
+        out = self.run_cmd(client, "--qr")
+        self.assertEqual(client.qr.recreated, 1)
+        self.assertIn("Kompyuterni ulash", out)
+        self.assertIn("Ulandi", out)
+        self.assertEqual(tg.load_session(), "session-qr")
+
+    def test_qr_login_with_two_factor(self):
+        from django.core.management import CommandError
+
+        with self.assertRaisesMessage(CommandError, "--password"):
+            self.run_cmd(self.qr_client(["password"]), "--qr")
+        out = self.run_cmd(FakeLoginClient(session="2fa"), "--password", "sir")
+        self.assertIn("Ulandi", out)
+        out = self.run_cmd(self.qr_client(["password"], session="direct"), "--qr", "--password", "sir")
+        self.assertEqual(tg.load_session(), "session-direct")
+
+    def test_qr_other_account_rejected(self):
+        from django.core.management import CommandError
+
+        client = self.qr_client(["ok"], me_id=42)
+        with self.assertRaisesMessage(CommandError, "ruxsat etilmagan"):
+            self.run_cmd(client, "--qr")
+        self.assertEqual(tg.load_session(), "")

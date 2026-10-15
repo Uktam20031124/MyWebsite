@@ -16,13 +16,19 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--qr",
+            action="store_true",
+            help="QR-kod bilan ulanish (kod kelmasa): Telegram → Sozlamalar → Qurilmalar → "
+            "Kompyuterni ulash",
+        )
         parser.add_argument("--phone", help="1-bosqich: shu raqamga kirish kodini yuborish")
         parser.add_argument("--code", help="2-bosqich: Telegram'ga kelgan kod")
         parser.add_argument("--password", help="2 bosqichli tasdiqlash paroli (yoqilgan bo'lsa)")
         parser.add_argument("--check", action="store_true", help="Saqlangan sessiyani tekshirish")
         parser.add_argument("--logout", action="store_true", help="Sessiyani o'chirish")
 
-    def handle(self, *args, phone, code, password, check, logout, **options):
+    def handle(self, *args, qr, phone, code, password, check, logout, **options):
         if not (settings.TELEGRAM_API_ID and settings.TELEGRAM_API_HASH):
             raise CommandError(
                 ".env faylga TELEGRAM_API_ID va TELEGRAM_API_HASH yozing "
@@ -32,6 +38,8 @@ class Command(BaseCommand):
             action = self.logout()
         elif check:
             action = self.check_session()
+        elif qr:
+            action = self.qr_login(password)
         elif phone:
             action = self.send_code(phone)
         elif code or password:
@@ -120,6 +128,54 @@ class Command(BaseCommand):
                 ) from exc
             except errors.PasswordHashInvalidError as exc:
                 raise tg.TelegramError("2 bosqichli parol noto'g'ri.") from exc
+            me = await self.accept(client)
+        self.pending_path().unlink(missing_ok=True)
+        self.stdout.write(self.style.SUCCESS(f"Ulandi: {self.describe(me)}."))
+
+    # --- QR-kod bilan kirish ---------------------------------------------------
+    # Telegram yangi API ilova/server IP'dan kirishda kodni ba'zan yetkazmaydi —
+    # QR bilan esa kod umuman kerak emas: telefondagi ilova kirishni tasdiqlaydi.
+
+    QR_ATTEMPTS = 6  # har biri ~30 s: jami ~3 daqiqa skanerlash uchun
+
+    def show_qr(self, url: str, n: int) -> None:
+        import qrcode
+
+        code = qrcode.QRCode(border=2)
+        code.add_data(url)
+        self.stdout.write(
+            f"\n[{n}/{self.QR_ATTEMPTS}] Telefoningizda: Telegram → Sozlamalar → Qurilmalar → "
+            "“Kompyuterni ulash” (Link Desktop Device) va shu QR-kodni skanerlang:\n"
+        )
+        code.print_ascii(out=self.stdout._out, invert=True)
+        self.stdout.flush()
+
+    async def qr_login(self, password: str | None):
+        from telethon import errors
+
+        async with tg.connected(tg.make_client()) as client:
+            qr = await client.qr_login()
+            for n in range(1, self.QR_ATTEMPTS + 1):
+                self.show_qr(qr.url, n)
+                try:
+                    await qr.wait(timeout=30)
+                    break
+                except asyncio.TimeoutError:
+                    await qr.recreate()  # QR eskirdi — yangisi
+                except errors.SessionPasswordNeededError:
+                    if not password:
+                        self.save_pending(session=client.session.save(), need_password=True)
+                        raise tg.TelegramError(
+                            "QR tasdiqlandi, lekin 2 bosqichli parol yoqilgan: "
+                            "python manage.py telegram_login --password PAROL"
+                        ) from None
+                    try:
+                        await client.sign_in(password=password)
+                    except errors.PasswordHashInvalidError as exc:
+                        raise tg.TelegramError("2 bosqichli parol noto'g'ri.") from exc
+                    break
+            else:
+                raise tg.TelegramError("QR-kod skanerlanmadi. Qayta urinib ko'ring: --qr")
             me = await self.accept(client)
         self.pending_path().unlink(missing_ok=True)
         self.stdout.write(self.style.SUCCESS(f"Ulandi: {self.describe(me)}."))
