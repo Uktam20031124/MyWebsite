@@ -31,7 +31,7 @@ class Command(BaseCommand):
         if logout:
             action = self.logout()
         elif check:
-            action = self.check()
+            action = self.check_session()
         elif phone:
             action = self.send_code(phone)
         elif code or password:
@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
     # --- Saqlangan sessiya ---------------------------------------------------
 
-    async def check(self):
+    async def check_session(self):  # `check` — Django tizim tekshiruvi nomi
         if not tg.load_session():
             raise tg.TelegramError("Sessiya yo'q. `python manage.py telegram_login` bilan ulaning.")
         async with tg.connected(tg.make_client(tg.load_session())) as client:
