@@ -130,6 +130,11 @@ Production’da havolalar to‘g‘ri domen bilan chiqishi uchun `DJANGO_ALLOWED
    python manage.py telegram_login --check  # qaysi akkaunt ulanganini ko'rish
    python manage.py telegram_login --logout # uzish
    ```
+   Terminal so‘roviga javob berib bo‘lmasa (masalan, masofadan) — ikki bosqichda:
+   ```bash
+   python manage.py telegram_login --phone +998901234567   # Telegram'ga kod keladi
+   python manage.py telegram_login --code 12345            # (2FA bo'lsa: --password PAROL)
+   ```
    Faqat `TELEGRAM_SENDER_ID` akkauntiga ruxsat beriladi — boshqa akkaunt bilan kirilsa, sessiya
    saqlanmaydi. Sessiya `.telegram_session` faylida (`TELEGRAM_SESSION_FILE`, huquqlar 600) — u
    akkauntga to‘liq kirish kaliti, hech kimga bermang va repozitoriyga qo‘shmang.

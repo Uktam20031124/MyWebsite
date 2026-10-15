@@ -32,7 +32,7 @@ class FakeClient:
         return self.authorized
 
     async def get_me(self):
-        return SimpleNamespace(id=self.me_id)
+        return SimpleNamespace(id=self.me_id, first_name="Ustoz", last_name="", username="ustoz")
 
     async def get_input_entity(self, username):
         if username in self.unknown:
@@ -198,3 +198,87 @@ class TelegramViewTests(TestCase):
         self.client.post(reverse("quiz_attempt_renew", args=[attempt.pk]))
         attempt.refresh_from_db()
         self.assertIsNone(attempt.sent_at)
+
+
+class FakeLoginClient(FakeClient):
+    """telegram_login uchun: kod yuborish, kirish va sessiya."""
+
+    def __init__(self, session="", me_id=SENDER, needs_password=False):
+        super().__init__(me_id=me_id)
+        self.session = SimpleNamespace(save=lambda: f"session-{session or 'new'}")
+        self.needs_password = needs_password
+        self.logged_out = False
+
+    async def send_code_request(self, phone):
+        return SimpleNamespace(phone_code_hash="hash123")
+
+    async def sign_in(self, phone=None, code=None, phone_code_hash=None, password=None):
+        if code and self.needs_password:
+            raise errors.SessionPasswordNeededError(request=None)
+        if code and (code != "12345" or phone_code_hash != "hash123"):
+            raise errors.PhoneCodeInvalidError(request=None)
+
+    async def log_out(self):
+        self.logged_out = True
+
+
+class LoginCommandTests(SimpleTestCase):
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+
+        self.tmp = Path(tempfile.mkdtemp())
+        self.settings = override_settings(
+            TELEGRAM_API_ID=1, TELEGRAM_API_HASH="x", TELEGRAM_SENDER_ID=SENDER,
+            TELEGRAM_SESSION_FILE=self.tmp / "session",
+        )
+        self.settings.enable()
+        self.addCleanup(self.settings.disable)
+
+    def run_cmd(self, client, *args):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        out = StringIO()
+        with mock.patch("academy.telegram_sender.make_client", return_value=client):
+            call_command("telegram_login", *args, stdout=out)
+        return out.getvalue()
+
+    def test_two_step_login_saves_session_for_allowed_account(self):
+        out = self.run_cmd(FakeLoginClient(), "--phone", "90 123 45 67")
+        self.assertIn("+998901234567", out)
+        self.assertFalse(tg.is_configured())
+        out = self.run_cmd(FakeLoginClient(session="pending"), "--code", "12345")
+        self.assertIn("Ulandi", out)
+        self.assertEqual(tg.load_session(), "session-pending")
+        self.assertTrue(tg.is_configured())
+        self.assertFalse((self.tmp / "session.pending").exists())
+        self.assertEqual((self.tmp / "session").stat().st_mode & 0o777, 0o600)
+
+    def test_other_account_is_rejected(self):
+        from django.core.management import CommandError
+
+        self.run_cmd(FakeLoginClient(), "--phone", "+998901234567")
+        client = FakeLoginClient(me_id=42)
+        with self.assertRaisesMessage(CommandError, "ruxsat etilmagan"):
+            self.run_cmd(client, "--code", "12345")
+        self.assertTrue(client.logged_out)
+        self.assertEqual(tg.load_session(), "")
+
+    def test_two_factor_password_step(self):
+        from django.core.management import CommandError
+
+        self.run_cmd(FakeLoginClient(), "--phone", "+998901234567")
+        with self.assertRaisesMessage(CommandError, "--password"):
+            self.run_cmd(FakeLoginClient(needs_password=True), "--code", "12345")
+        out = self.run_cmd(FakeLoginClient(session="2fa"), "--password", "sir")
+        self.assertIn("Ulandi", out)
+        self.assertEqual(tg.load_session(), "session-2fa")
+
+    def test_wrong_code(self):
+        from django.core.management import CommandError
+
+        self.run_cmd(FakeLoginClient(), "--phone", "+998901234567")
+        with self.assertRaisesMessage(CommandError, "Kod noto'g'ri"):
+            self.run_cmd(FakeLoginClient(), "--code", "00000")
