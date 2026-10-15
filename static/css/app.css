@@ -1359,6 +1359,7 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 .preset-chips .btn[aria-pressed="true"] { --btn-bg: var(--brand); --btn-fg: var(--brand-ink); --btn-bd: var(--brand); }
 .send-pace { margin: 12px 0 0; }
 .send-pace.warn { color: var(--warn); }
+.send-error { color: var(--bad); font-size: 12.5px; }
 @media (max-width: 640px) {
   .topic-tail { grid-column: 2; flex-wrap: wrap; }
 }

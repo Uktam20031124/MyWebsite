@@ -28,6 +28,7 @@ from django.views.generic import (
     UpdateView,
 )
 
+from . import telegram_sender
 from .forms import (
     GroupForm,
     LessonForm,
@@ -951,22 +952,60 @@ def finalize_expired_attempts(qs) -> None:
         attempt.finish(timed_out=True)
 
 
-def telegram_share_url(link: str, attempt: QuizAttempt) -> str:
-    batch = attempt.batch
-    text = (
-        f"{attempt.student.full_name}, “{attempt.quiz.topic.title}” mavzusi bo‘yicha test: "
-        f"{attempt.question_count} ta savol, {batch.time_limit_minutes} daqiqa. "
-        "Havola faqat bir marta ishlaydi."
+def quiz_message(link: str, attempt: QuizAttempt) -> str:
+    """Shogirdga Telegram'da boradigan xabar matni."""
+    return (
+        f"Salom, {attempt.student.full_name}!\n"
+        f"“{attempt.quiz.topic.title}” mavzusi bo‘yicha test: {attempt.question_count} ta savol, "
+        f"{attempt.batch.time_limit_minutes} daqiqa.\n\n{link}\n\n"
+        "Havola faqat bir marta ishlaydi — testni tayyor bo‘lganingizda oching."
     )
-    return "https://t.me/share/url?" + urlencode({"url": link, "text": text})
 
 
 def attempts_with_links(request, qs) -> list[QuizAttempt]:
     attempts = list(qs.select_related("student", "quiz__topic", "batch"))
     for a in attempts:
         a.link = request.build_absolute_uri(a.get_absolute_url())
-        a.share_url = telegram_share_url(a.link, a)
+        a.username, a.phone = telegram_sender.recipient_of(a.student)
     return attempts
+
+
+def send_quiz_links(request, attempts: list[QuizAttempt]) -> None:
+    """Havolalarni ustozning Telegram akkauntidan yuboradi va natijani xabar qiladi."""
+    items = [
+        telegram_sender.Outgoing(
+            key=a.pk,
+            username=a.username,
+            phone=a.phone,
+            first_name=a.student.full_name,
+            text=quiz_message(a.link, a),
+        )
+        for a in attempts
+    ]
+    try:
+        results = telegram_sender.send_messages(items)
+    except telegram_sender.TelegramError as exc:
+        messages.error(request, f"Yuborilmadi: {exc}")
+        return
+    now = timezone.now()
+    by_pk = {a.pk: a for a in attempts}
+    failed = []
+    for r in results:
+        attempt = by_pk[r.key]
+        if r.ok:
+            attempt.sent_at, attempt.send_error = now, ""
+        else:
+            attempt.send_error = r.error[:255]
+            failed.append(attempt.student.full_name)
+        attempt.save(update_fields=["sent_at", "send_error"])
+    sent = len(results) - len(failed)
+    if sent:
+        messages.success(request, f"Telegram orqali {sent} ta shogirdga yuborildi.")
+    if failed:
+        messages.warning(
+            request, f"{len(failed)} ta shogirdga yuborilmadi: " + ", ".join(failed)
+            + ". Sababi ro‘yxatda ko‘rsatilgan."
+        )
 
 
 def _send_url(**params) -> str:
@@ -1073,9 +1112,10 @@ def quiz_send(request):
         messages.success(
             request,
             f"{len(form.cleaned_data['students'])} ta shogird uchun havola tayyor: "
-            f"{batch.question_count} ta savol, {batch.time_limit_minutes} daqiqa. "
-            "Endi har biriga Telegram orqali yuboring.",
+            f"{batch.question_count} ta savol, {batch.time_limit_minutes} daqiqa.",
         )
+        if telegram_sender.is_configured():
+            send_quiz_links(request, attempts_with_links(request, batch.attempts.all()))
         return redirect(batch)
 
     if form.is_bound:
@@ -1110,6 +1150,7 @@ def quiz_send(request):
             ],
             "rows": rows,
             "has_attendance": bool(attendance),
+            "sender_id": telegram_sender.sender_id(),
             "change_topic_url": _send_url(lesson=lesson and lesson.pk, group=None if lesson else group.pk),
             "count_presets": [n for n in (5, 10, 15, 20) if n <= form.bank_size],
             "time_presets": [5, 10, 15, 20, 30],
@@ -1155,12 +1196,37 @@ def quiz_batch_detail(request, pk):
             "avg": percent(sum(a.correct for a in finished), sum(a.total for a in finished))
             if finished
             else None,
-            "links_text": "\n".join(f"{a.student.full_name}: {a.link}" for a in attempts),
+            "unsent_n": sum(
+                a.status == QuizAttempt.Status.PENDING and not a.sent_at for a in attempts
+            ),
+            "telegram_ready": telegram_sender.is_configured(),
+            "telegram_hint": telegram_sender.setup_hint(),
+            "sender_id": telegram_sender.sender_id(),
             "again_url": _send_url(
                 lesson=batch.lesson_id, group=batch.group_id, topic=batch.quiz.topic_id
             ),
         },
     )
+
+
+@login_required
+@require_POST
+def quiz_batch_send(request, pk):
+    """Ochilmagan havolalarni ustozning Telegram akkauntidan yuboradi.
+
+    `attempt` berilsa — faqat o'sha shogirdga (qayta yuborish), aks holda hali
+    yuborilmagan barcha ochilmagan havolalarga.
+    """
+    batch = get_object_or_404(QuizBatch, pk=pk)
+    qs = batch.attempts.filter(status=QuizAttempt.Status.PENDING)
+    attempt_id = request.POST.get("attempt", "")
+    qs = qs.filter(pk=attempt_id) if attempt_id.isdigit() else qs.filter(sent_at__isnull=True)
+    attempts = attempts_with_links(request, qs)
+    if attempts:
+        send_quiz_links(request, attempts)
+    else:
+        messages.info(request, "Yuboriladigan ochilmagan havola yo‘q.")
+    return redirect(batch)
 
 
 class QuizBatchDeleteView(AuthMixin, DeleteMessageMixin, DeleteView):
@@ -1191,8 +1257,11 @@ def quiz_attempt_renew(request, pk):
         attempt.question_ids = []
         attempt.answers = {}
         attempt.started_at = attempt.deadline = None
+        attempt.sent_at, attempt.send_error = None, ""  # yangi havola hali yuborilmagan
         attempt.save()
-        messages.success(request, f"{attempt.student} uchun yangi havola yaratildi.")
+        messages.success(
+            request, f"{attempt.student} uchun yangi havola yaratildi — uni qayta yuboring."
+        )
     return redirect(attempt.batch)
 
 

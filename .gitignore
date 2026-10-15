@@ -10,3 +10,4 @@ media/
 *.egg-info/
 .idea/
 .vscode/
+.telegram_session

@@ -142,7 +142,8 @@ class QuizAttemptAdmin(admin.ModelAdmin):
     search_fields = ("student__full_name", "quiz__topic__title")
     list_select_related = ("student", "quiz__topic", "batch__quiz__topic")
     readonly_fields = (
-        "token", "owner_key", "question_ids", "started_at", "deadline", "finished_at"
+        "token", "owner_key", "question_ids", "started_at", "deadline", "finished_at",
+        "sent_at", "send_error",
     )
 
 
