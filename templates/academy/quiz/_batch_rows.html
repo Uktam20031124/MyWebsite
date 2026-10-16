@@ -2,7 +2,7 @@
   <a class="row" href="{{ b.get_absolute_url }}">
     <div class="grow truncate">
       <div class="row-title truncate">{% if show_topic %}{{ b.quiz.topic.title }}{% else %}{% if b.lesson %}{{ b.lesson.group.name }} · {{ b.lesson.held_on|date:"d.m.Y" }} darsi{% elif b.group %}{{ b.group.name }}{% else %}Bir nechta guruh{% endif %}{% endif %}</div>
-      <div class="meta">{% if show_topic %}{% if b.group %}{{ b.group.name }} · {% endif %}{% endif %}{{ b.created_at|date:"d.m.Y H:i" }} · {{ b.question_count }} savol · {{ b.time_limit_minutes }} daq.</div>
+      <div class="meta">{% if show_topic %}{% if b.group %}{{ b.group.name }} · {% endif %}{% endif %}{{ b.created_at|date:"d.m.Y H:i" }} · {{ b.question_count }} savol · {{ b.time_limit_minutes }} daq.{% if b.scheduled_at and not b.scheduled_sent_at %} · ⏰ {{ b.scheduled_at|date:"d.m H:i" }} da yuboriladi{% endif %}{% if b.retake_of_id %} · qayta topshirish{% endif %}</div>
     </div>
     <span class="meta tabular nowrap" title="Yechganlar">{{ b.done_n }}/{{ b.sent_n }}</span>
     {% if b.avg_percent is not None %}

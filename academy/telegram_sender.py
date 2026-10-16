@@ -216,7 +216,74 @@ def send_text_to_self(text: str, client_factory=None) -> None:
     _run_on_self(action, client_factory)
 
 
-def _run_on_self(action, client_factory=None) -> None:
+def chat_ref(value: str) -> str | int:
+    """Guruh chati: "@guruh", "t.me/guruh" → "guruh"; "-100123…" → int; aks holda ""."""
+    value = (value or "").strip()
+    if re.fullmatch(r"-?\d{5,20}", value):
+        return int(value)
+    return normalize_username(value)
+
+
+async def _chat_entity(client, chat: str):
+    ref = chat_ref(chat)
+    try:
+        if isinstance(ref, int):
+            # Raqamli ID — sessiyada saqlanmaydi, dialoglar ichidan topamiz.
+            async for dialog in client.iter_dialogs():
+                if dialog.id == ref:
+                    return dialog.entity
+            raise ValueError(ref)
+        if ref:
+            return await client.get_input_entity(ref)
+    except (ValueError, TypeError) as exc:
+        raise TelegramError(
+            "Telegram chat topilmadi — akkauntingiz shu guruhda a’zo ekanini va nom/ID to‘g‘riligini "
+            "tekshiring."
+        ) from exc
+    raise TelegramError("Guruhning Telegram chati ko‘rsatilmagan.")
+
+
+def send_to_chat(chat: str, text: str, client_factory=None) -> None:
+    """Guruh chatiga xabar (masalan, haftalik reyting) — ustozning akkauntidan."""
+
+    async def action(client):
+        await client.send_message(await _chat_entity(client, chat), text, link_preview=False)
+
+    _run_on_self(action, client_factory)
+
+
+def send_file_to(item: Outgoing, path, caption: str = "", client_factory=None) -> None:
+    """O'quvchiga fayl (masalan, sertifikat PDF) — username yoki telefon orqali."""
+
+    async def action(client):
+        if not (item.username or item.phone):
+            raise TelegramError("O‘quvchida Telegram username ham, telefon ham yo‘q.")
+        try:
+            entity = await _resolve(client, item)
+            await client.send_file(entity, str(path), caption=caption, force_document=True)
+        except TelegramError:
+            raise
+        except Exception as exc:  # noqa: BLE001 — foydalanuvchiga tushunarli matn
+            raise TelegramError(_error_text(exc)) from exc
+
+    _run_on_self(action, client_factory)
+
+
+def list_chats(client_factory=None) -> list[dict]:
+    """Akkaunt a'zo bo'lgan guruh va kanallar: [{id, title, username}] — chatni tanlash uchun."""
+
+    async def action(client):
+        chats = []
+        async for dialog in client.iter_dialogs():
+            if dialog.is_group or dialog.is_channel:
+                username = getattr(dialog.entity, "username", None) or ""
+                chats.append({"id": dialog.id, "title": dialog.name, "username": username})
+        return chats
+
+    return _run_on_self(action, client_factory)
+
+
+def _run_on_self(action, client_factory=None):
     if client_factory is None:
         if not is_configured():
             raise TelegramError("Telegram ulanmagan. " + setup_hint())
@@ -228,10 +295,10 @@ def _run_on_self(action, client_factory=None) -> None:
     async def run():
         async with connected(client_factory()) as client:
             await check_account(client)
-            await action(client)
+            return await action(client)
 
     try:
-        asyncio.run(run())
+        return asyncio.run(run())
     except TelegramError:
         raise
     except (OSError, ConnectionError) as exc:

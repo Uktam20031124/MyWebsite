@@ -15,6 +15,41 @@
   let endAt = Date.now() + Number(timer.dataset.seconds) * 1000;
   let submitted = false;
 
+  // --- Test oynasidan chiqib ketishlar (boshqa tab, oyna yoki ilova) — ustozga ko'rinadi.
+  const leavesInput = form.querySelector("[data-quiz-leaves]");
+  const awayInput = form.querySelector("[data-quiz-away]");
+  const leaveNotice = document.querySelector("[data-quiz-leave-notice]");
+  let leaves = Number(leavesInput?.value || 0);
+  let awayMs = Number(awayInput?.value || 0) * 1000;
+  let awaySince = null;
+  let ownDialog = false; // o'zimizning confirm() oynamiz chiqib ketish hisoblanmaydi
+
+  const syncLeaveInputs = () => {
+    if (leavesInput) leavesInput.value = String(leaves);
+    if (awayInput) awayInput.value = String(Math.round(awayMs / 1000));
+  };
+  const leave = () => {
+    if (awaySince !== null || submitted || ownDialog) return;
+    awaySince = Date.now();
+    leaves += 1;
+    syncLeaveInputs();
+    save();
+  };
+  const back = () => {
+    if (awaySince === null) return;
+    awayMs += Date.now() - awaySince;
+    awaySince = null;
+    syncLeaveInputs();
+    if (leaveNotice) {
+      leaveNotice.hidden = false;
+      leaveNotice.querySelector("[data-count]").textContent = String(leaves);
+    }
+    save();
+  };
+  document.addEventListener("visibilitychange", () => (document.hidden ? leave() : back()));
+  window.addEventListener("blur", leave);
+  window.addEventListener("focus", back);
+
   const answered = () => form.querySelectorAll('input[type="radio"]:checked').length;
 
   const renderProgress = () => {
@@ -70,7 +105,10 @@
 
   form.addEventListener("submit", (e) => {
     const left = total - answered();
-    if (left > 0 && !window.confirm(`${left} ta savolga javob berilmagan. Testni yakunlaysizmi?`)) {
+    ownDialog = true;
+    const ok = left === 0 || window.confirm(`${left} ta savolga javob berilmagan. Testni yakunlaysizmi?`);
+    ownDialog = false;
+    if (!ok) {
       e.preventDefault();
       return;
     }

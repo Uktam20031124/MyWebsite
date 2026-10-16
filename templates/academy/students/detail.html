@@ -91,6 +91,35 @@
         </div>
       </div>
     </section>
+    <section class="card" id="portal" aria-labelledby="portal-h">
+      <div class="card-head"><h2 id="portal-h">{% icon "user" 18 %} Shaxsiy sahifa</h2></div>
+      <div class="card-body">
+        <p class="meta" style="margin:0 0 10px">O‘quvchi o‘z natijalari, o‘sishi va guruhdagi o‘rnini ko‘radi (to‘g‘ri javoblarsiz).</p>
+        <div class="contact-link">
+          <input class="input mono" value="{{ portal_link }}" readonly aria-label="Shaxsiy sahifa havolasi">
+          <a class="btn sm ghost square" href="{{ portal_link }}" target="_blank" rel="noopener" title="Ochish" aria-label="Ochish">{% icon "external" 14 %}</a>
+        </div>
+        <form method="post" action="{% url 'student_portal_action' student.pk %}" class="contact-link-actions" style="margin-top:10px">
+          {% csrf_token %}
+          {% if can_telegram %}<button class="btn sm primary" type="submit" name="action" value="send">{% icon "send" 14 %} Telegram’da yuborish</button>{% endif %}
+          <button class="btn sm ghost" type="submit" name="action" value="reset" data-confirm="Eski havola ishlamay qoladi. Yangisi yaratilsinmi?">{% icon "undo" 14 %} Yangilash</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="card" id="certificate" aria-labelledby="cert-h">
+      <div class="card-head"><h2 id="cert-h">{% icon "trophy" 18 %} Sertifikat</h2></div>
+      <form class="card-body" method="post" action="{% url 'student_certificate' student.pk %}" target="_blank" data-turbo="false">
+        {% csrf_token %}
+        <div class="field"><label class="label" for="cert-course">Kurs nomi</label><input class="input" id="cert-course" name="kurs" value="{{ course }}" maxlength="120"></div>
+        <div class="contact-link-actions" style="margin-top:10px">
+          <button class="btn sm soft" type="submit">{% icon "file" 14 %} Ko‘rish (PDF)</button>
+          <button class="btn sm ghost" type="submit" name="yuklab" value="1">{% icon "download" 14 %} Yuklab olish</button>
+          {% if can_telegram %}<button class="btn sm primary" type="submit" formaction="{% url 'student_certificate_send' student.pk %}" formtarget="_self" data-confirm="Sertifikat o‘quvchiga Telegram orqali yuborilsinmi?">{% icon "send" 14 %} Telegram’da yuborish</button>{% endif %}
+        </div>
+      </form>
+    </section>
+
     <section class="card" aria-labelledby="quiz-h">
       <div class="card-head"><h2 id="quiz-h">{% icon "target" 18 %} Testlar</h2>{% if quiz.n %}<span class="badge {{ quiz.pct|quiz_tone }}">o‘rtacha {{ quiz.pct }}%</span>{% endif %}</div>
       {% if quiz.recent|length > 1 %}

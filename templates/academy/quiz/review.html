@@ -34,6 +34,12 @@
   </article>
 </section>
 
+{% if attempt.leave_count %}
+<div class="callout warn" style="margin-bottom:16px">
+  <span class="callout-icon">{% icon "alert" 18 %}</span>
+  <div class="grow"><strong>Test paytida {{ attempt.leave_count }} marta boshqa oyna yoki ilovaga o‘tgan</strong> — tashqarida jami {% if attempt.away_seconds >= 60 %}{% widthratio attempt.away_seconds 60 1 %} daqiqa{% else %}{{ attempt.away_seconds }} soniya{% endif %}. Javoblarni boshqa joydan qidirgan bo‘lishi mumkin.</div>
+</div>
+{% endif %}
 <div class="toolbar">
   <nav class="seg-tabs" aria-label="Ko‘rinish">
     <a href="?" {% if not only_wrong %}aria-current="true"{% endif %}>Hammasi ({{ items|length }})</a>
@@ -53,6 +59,7 @@
             {% else %}
               <strong>{{ item.title }}</strong>
               {% if item.code %}<pre class="quiz-code">{{ item.code }}</pre>{% endif %}
+              {% if item.image %}<img class="quiz-image" src="{{ item.image }}" alt="Savol rasmi" loading="lazy">{% endif %}
             {% endif %}
           </div>
           {% if item.is_correct %}<span class="badge ok">To‘g‘ri</span>{% elif item.answered %}<span class="badge bad">Xato</span>{% else %}<span class="badge warn">Javob berilmagan</span>{% endif %}

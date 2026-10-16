@@ -1359,6 +1359,51 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 .result-item.ok .result-verdict { color: var(--ok); }
 .result-item.bad .result-verdict { color: var(--bad); }
 .result-item.skip .result-verdict { color: var(--warn); }
+/* Savol rasmi va test oynasidan chiqish ogohlantirishi */
+.quiz-image {
+  display: block; max-width: 100%; max-height: 360px; margin: 10px 0;
+  border: 1px solid var(--border); border-radius: var(--r); background: var(--surface-2); object-fit: contain;
+}
+.quiz-leave { position: sticky; top: 64px; z-index: 4; margin-bottom: 14px; }
+/* Test tahriri: savollar sifati va rasm yuklash */
+.q-quality { align-items: flex-start; }
+.q-quality .q-n {
+  display: inline-grid; place-items: center; flex: none; width: 26px; height: 26px;
+  border-radius: 8px; background: var(--surface-3); color: var(--text-2); font-size: 13px;
+}
+.q-quality.hard { background: var(--bad-soft); }
+.q-quality.easy { background: var(--info-soft); }
+.q-quality .quiz-code { margin: 8px 0; }
+.q-quality .quiz-image { max-height: 160px; }
+.q-image-form { flex: none; margin: 0; }
+.q-file { position: relative; cursor: pointer; }
+.q-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.q-hard-text { color: var(--bad); }
+/* Haftalik reyting kartasi */
+.leader-list { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; }
+.leader-list li::marker { font-weight: 700; color: var(--gold); }
+/* O'quvchining shaxsiy sahifasi */
+.portal { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; display: flex; flex-direction: column; gap: 14px; }
+.portal-head h1 { font-size: 30px; margin: 4px 0 6px; }
+.portal h2 { font-size: 17px; margin: 0 0 12px; }
+.portal-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.portal-kpis .card { display: flex; flex-direction: column; gap: 4px; }
+.portal-big { font: 600 30px/1.1 var(--font-display); color: var(--text); }
+.portal-big small { font-size: 16px; color: var(--text-3); }
+.portal-bars { height: 90px; }
+.portal-test {
+  display: flex; gap: 10px; align-items: center; padding: 10px 12px; margin-top: 8px;
+  border: 1px solid var(--accent); border-radius: var(--r); background: var(--accent-soft); color: var(--text);
+}
+.portal-attempt { border-top: 1px solid var(--border); padding: 10px 0; }
+.portal-attempt:first-of-type { border-top: 0; }
+.portal-attempt summary { display: flex; gap: 10px; align-items: center; cursor: pointer; list-style: none; }
+.portal-attempt summary::-webkit-details-marker { display: none; }
+.portal-attempt[open] summary { margin-bottom: 10px; }
+.portal-foot { text-align: center; }
+@media (max-width: 640px) {
+  .portal-kpis { grid-template-columns: minmax(0, 1fr); }
+}
 .quiz-code {
   margin: 0 0 12px; padding: 12px 14px;
   border: 1px solid var(--border); border-radius: var(--r);

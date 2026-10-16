@@ -166,6 +166,39 @@
       </div>
     </section>
 
+    <section class="card" id="motivation" aria-labelledby="mot-h">
+      <div class="card-head">
+        <h2 id="mot-h">{% icon "trophy" 18 %} Haftalik reyting</h2>
+        <span class="meta">oxirgi 7 kun · testlar</span>
+      </div>
+      <div class="card-body">
+        {% if board.rows %}
+          <ol class="leader-list">
+            {% for row in board.rows|slice:":3" %}<li><span class="strong">{{ row.student.full_name }}</span> <span class="meta">— {{ row.pct }}% ({{ row.n }} ta test)</span></li>{% endfor %}
+          </ol>
+          <p class="meta" style="margin:8px 0 12px">Guruh: {{ board.tests_n }} ta test, o‘rtacha {{ board.avg }}%.</p>
+        {% else %}
+          <p class="meta" style="margin:0 0 12px">Oxirgi 7 kunda test yechilmagan.</p>
+        {% endif %}
+        <p class="meta" style="margin:0 0 10px">Telegram chat: {% if group.telegram_chat %}<strong>{{ group.telegram_chat }}</strong>{% else %}tanlanmagan{% endif %} · har yakshanba 18:00 da avtomatik yuboriladi.</p>
+        <div class="contact-link-actions">
+          <a class="btn sm soft" href="{% url 'group_telegram_chat' group.pk %}">{% icon "send" 14 %} Chatni tanlash</a>
+          {% if telegram_ready and group.telegram_chat and board_text %}
+            <form method="post" action="{% url 'group_leaderboard_send' group.pk %}">
+              {% csrf_token %}
+              <button class="btn sm primary" type="submit" data-confirm="Haftalik reyting guruh chatiga hozir yuborilsinmi?">{% icon "trophy" 14 %} Hozir yuborish</button>
+            </form>
+          {% endif %}
+          {% if telegram_ready %}
+            <form method="post" action="{% url 'group_portal_send' group.pk %}">
+              {% csrf_token %}
+              <button class="btn sm ghost" type="submit" data-confirm="Har bir o‘quvchiga shaxsiy sahifa havolasi Telegram orqali yuborilsinmi?">{% icon "user" 14 %} Shaxsiy sahifalarni yuborish</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
     <section class="card" id="contacts" aria-labelledby="ct-h">
       <div class="card-head">
         <h2 id="ct-h">{% icon "send" 18 %} Telegram ma’lumotlari</h2>

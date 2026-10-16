@@ -201,6 +201,30 @@ Guruh sahifasida kimlarda ma’lumot yo‘qligi ko‘rinadi; shogirdlar ro‘yxa
 - `.env`: `DARSXONA_SITE_URL=https://...` (eslatmadagi havola uchun), ixtiyoriy
   `DARSXONA_REMINDER_AFTER_HOURS=3`.
 
+## Testlar: qo‘shimcha imkoniyatlar
+
+- **Ko‘chirishga qarshi qayd**: test paytida boshqa tab/oyna/ilovaga o‘tish soni va vaqti saqlanadi
+  (faqat oshadi). O‘quvchiga oldindan aytiladi; jo‘natma sahifasida ⚠️, “Javoblar”da batafsil.
+- **Qayta topshirish**: jo‘natma sahifasida “Qayta topshirish (N)” — 50% dan past olganlarga shu mavzu,
+  savollar soni va vaqt bilan yangi jo‘natma (savollar bankdan qayta tanlanadi).
+- **Savollar sifati**: test tahririda har bir savol necha marta tushgani va necha foizi to‘g‘ri;
+  kamida 5 javobdan keyin “juda qiyin” (< 30%) / “juda oson” (≥ 95%). Mavzu sahifasida ogohlantirish.
+- **Rasmli savollar**: test tahririda har bir savolga rasm (PNG/JPG/WEBP/GIF, ≤ 3 MB; turi fayl
+  mazmunidan tekshiriladi). Rasmlar `media/quiz/` da (`DARSXONA_MEDIA_DIR`), Django beradi.
+- **Rejalashtirish**: jo‘natishda “Qachon yuborilsin?” — havolalar o‘sha paytda yuboriladi
+  (`manage.py send_scheduled`, har 5 daqiqa).
+
+## Motivatsiya
+
+- **Haftalik reyting**: guruh sahifasida (oxirgi 7 kun testlari) va har yakshanba 18:00 da guruhning
+  Telegram chatiga (`manage.py weekly_leaderboard`). Chat — “Chatni tanlash” (akkaunt a’zo bo‘lgan
+  guruhlar ro‘yxati) yoki `manage.py telegram_chats`.
+- **Shaxsiy sahifa** (`/men/<kalit>/`): o‘quvchi natijalari, o‘sish grafigi, guruhdagi o‘rni,
+  yechilmagan testlari va har bir testdagi o‘z javoblari (to‘g‘ri variantlarsiz). O‘quvchi kartasidan
+  yoki guruhdan hammaga Telegram orqali yuboriladi; havolani yangilash mumkin.
+- **Sertifikat (PDF)**: o‘quvchi kartasida — kurs nomi, test va davomat natijalari, raqam, sana,
+  ustoz. Ko‘rish, yuklab olish yoki Telegram orqali o‘quvchiga yuborish.
+
 ## Baza zaxirasi (backup)
 
 ```bash

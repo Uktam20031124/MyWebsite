@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="uz" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#15251e">
+  <meta name="color-scheme" content="light dark">
+  <title>{{ student.full_name }} · natijalarim</title>
+  {% include "academy/includes/head.html" %}
+</head>
+<body class="quiz-body">
+<main class="portal">
+  <header class="portal-head">
+    <p class="kicker">Darsxona · {{ student.group.name }}</p>
+    <h1>{{ student.full_name }}</h1>
+    <p class="muted">Sizning natijalaringiz va o‘sishingiz.</p>
+  </header>
+
+  {% if pending %}
+    <section class="card pad portal-pending">
+      <h2>Yechilmagan testlar</h2>
+      {% for a in pending %}
+        <a class="portal-test" href="{{ a.get_absolute_url }}">
+          <span class="grow"><strong>{{ a.quiz.topic.title }}</strong><span class="meta block">{{ a.question_count }} ta savol · {{ a.batch.time_limit_minutes }} daqiqa</span></span>
+          <span class="btn sm primary">Boshlash</span>
+        </a>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  <section class="portal-kpis">
+    <div class="card pad"><span class="meta">O‘rtacha natija</span><strong class="portal-big">{% if stats.n %}{{ stats.pct }}%{% else %}—{% endif %}</strong><span class="meta">{{ stats.n }} ta test</span></div>
+    <div class="card pad"><span class="meta">Guruhda o‘rningiz</span><strong class="portal-big">{% if rank %}{{ rank }}<small>/{{ ranked_n }}</small>{% else %}—{% endif %}</strong><span class="meta">testlar bo‘yicha</span></div>
+    <div class="card pad"><span class="meta">Davomat</span><strong class="portal-big">{% if attendance.total %}{{ attendance.percent }}%{% else %}—{% endif %}</strong><span class="meta">{{ attendance.present }}/{{ attendance.total }} dars</span></div>
+  </section>
+
+  {% if stats.recent|length > 1 %}
+    <section class="card pad">
+      <h2>O‘sish</h2>
+      <div class="score-bars portal-bars" aria-label="Oxirgi testlar natijasi">
+        {% for a in stats.recent %}<span class="{% if a.percent < 50 %}low{% endif %}" style="height:{{ a.percent|add:4 }}%" title="{{ a.finished_at|date:'d.m' }} · {{ a.quiz.topic.title }} · {{ a.percent }}%"></span>{% endfor %}
+      </div>
+      <p class="meta">Oxirgi {{ stats.recent|length }} ta test, eskisidan yangisiga.</p>
+    </section>
+  {% endif %}
+
+  <section class="card pad">
+    <h2>Testlarim</h2>
+    {% for a in finished %}
+      <details class="portal-attempt">
+        <summary>
+          <span class="grow"><strong>{{ a.quiz.topic.title }}</strong><span class="meta block">{{ a.finished_at|date:"d.m.Y H:i" }}{% if a.timed_out %} · vaqt tugadi{% endif %}</span></span>
+          <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
+        </summary>
+        <ol class="result-list">
+          {% for item in a.items %}
+            <li class="result-item {% if item.is_correct %}ok{% elif item.answered %}bad{% else %}skip{% endif %}">
+              <span class="result-mark" aria-hidden="true">{% if item.is_correct %}✓{% elif item.answered %}✕{% else %}–{% endif %}</span>
+              <div class="result-body">
+                <div class="result-q">{{ forloop.counter }}. {{ item.title }}</div>
+                {% if item.code %}<pre class="quiz-code">{{ item.code }}</pre>{% endif %}
+                {% if item.image %}<img class="quiz-image" src="{{ item.image }}" alt="Savol rasmi" loading="lazy">{% endif %}
+                <div class="result-a">{% if item.answered %}Javobingiz: <strong>{{ item.picked_text }}</strong>{% else %}Javob berilmagan{% endif %} <span class="result-verdict">— {% if item.is_correct %}to‘g‘ri{% elif item.answered %}xato{% else %}javobsiz{% endif %}</span></div>
+              </div>
+            </li>
+          {% endfor %}
+        </ol>
+      </details>
+    {% empty %}
+      <p class="meta">Hali test yechmagansiz.</p>
+    {% endfor %}
+  </section>
+
+  <p class="meta portal-foot">Bu havola faqat sizniki — boshqalarga bermang. To‘g‘ri javoblarni ustozingizdan so‘rang.</p>
+</main>
+</body>
+</html>

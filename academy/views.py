@@ -1,7 +1,9 @@
 import csv
 import random
 import secrets
+import tempfile
 from datetime import date, timedelta
+from pathlib import Path
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -27,8 +29,9 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from django.views.static import serve as static_serve
 
-from . import telegram_sender
+from . import motivation, telegram_sender
 from .contacts import apply_contacts, has_contact, preview_contacts
 from .forms import (
     ContactImportForm,
@@ -51,6 +54,7 @@ from .models import (
     Group,
     Lesson,
     Module,
+    Question,
     Quiz,
     QuizAttempt,
     QuizBatch,
@@ -63,6 +67,7 @@ from .models import (
 )
 from .registrations import approve_existing, approve_new, reject, submit, suggestions
 from .services import (
+    QUALITY_MIN_ANSWERS,
     RATING_FORMULA,
     QuizStats,
     annotate_batches,
@@ -77,6 +82,7 @@ from .services import (
     import_topics,
     lesson_attendance_summary,
     percent,
+    question_quality,
     quiz_stats,
     rating,
     sessions_between,
@@ -316,6 +322,10 @@ class GroupDetailView(AuthMixin, DetailView):
         ctx["contact_total"] = len(active)
         ctx["contact_have"] = len(active) - len(ctx["contact_missing"])
         ctx["contact_link"] = contact_link(self.request, group) if group.contact_token else ""
+        board = motivation.weekly_leaderboard(group)
+        ctx["board"] = board
+        ctx["board_text"] = motivation.leaderboard_text(group, board)
+        ctx["telegram_ready"] = telegram_sender.is_configured()
         return ctx
 
 
@@ -533,6 +543,12 @@ class StudentDetailView(AuthMixin, DetailView):
             rate["avg_score"], rate["percent"] if rate["total"] else None, quiz.pct
         )
         ctx["rating_formula"] = RATING_FORMULA
+        student = self.object
+        ctx["portal_link"] = (
+            motivation.site_url(self.request) + motivation.portal_url(student)
+        )
+        ctx["course"] = motivation.default_course(student)
+        ctx["can_telegram"] = telegram_sender.is_configured() and has_contact(student)
         ctx["history"] = history
         ctx["timeline"] = history[:24][::-1]  # baho diagrammasi: eskisidan yangisiga
         ctx["quiz_attempts"] = self.object.quiz_attempts.select_related(
@@ -630,6 +646,7 @@ class TopicDetailView(AuthMixin, DetailView):
             stats["avg"] = percent(stats["correct"] or 0, stats["total"] or 0)
             ctx["batches"] = annotate_batches(quiz.batches.all())[:5]
             ctx["send_url"] = _send_url(topic=topic.pk)
+            ctx["hard_n"] = sum(r["flag"] == "hard" for r in question_quality(quiz))
         siblings = list(
             Topic.objects.filter(module_id=topic.module_id, is_active=True)
             .order_by("order", "title")
@@ -958,7 +975,80 @@ def quiz_edit(request, pk):
         form.save()
         messages.success(request, f"Test saqlandi: {len(form.parsed)} ta savol.")
         return redirect(f"{topic.get_absolute_url()}#quiz")
-    return render(request, "academy/quiz/form.html", {"form": form, "topic": topic})
+    quality = question_quality(quiz) if quiz.pk else []
+    return render(
+        request,
+        "academy/quiz/form.html",
+        {
+            "form": form,
+            "topic": topic,
+            "quality": quality,
+            "hard_n": sum(r["flag"] == "hard" for r in quality),
+            "easy_n": sum(r["flag"] == "easy" for r in quality),
+            "min_answers": QUALITY_MIN_ANSWERS,
+        },
+    )
+
+
+# Rasm fayl turini sarlavhasidan aniqlaymiz (Pillow'siz): kengaytma emas, mazmun muhim.
+IMAGE_SIGNATURES = {
+    b"\x89PNG\r\n\x1a\n": "png",
+    b"\xff\xd8\xff": "jpg",
+    b"GIF87a": "gif",
+    b"GIF89a": "gif",
+}
+
+
+def image_kind(head: bytes) -> str | None:
+    for signature, kind in IMAGE_SIGNATURES.items():
+        if head.startswith(signature):
+            return kind
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+@login_required
+@require_POST
+def quiz_question_image(request, pk):
+    """Savolga rasm yuklash yoki o'chirish (test tahrirlash sahifasidan)."""
+    question = get_object_or_404(Question.objects.select_related("quiz__topic"), pk=pk)
+    back = f"{reverse('quiz_edit', args=[question.quiz.topic_id])}#q{question.pk}"
+    if request.POST.get("action") == "remove":
+        if question.image:
+            question.image.delete(save=False)
+            question.image = ""
+            question.save(update_fields=["image"])
+            messages.info(request, "Rasm o‘chirildi.")
+        return redirect(back)
+    upload = request.FILES.get("image")
+    if upload is None:
+        messages.error(request, "Rasm faylini tanlang.")
+        return redirect(back)
+    if upload.size > settings.QUIZ_IMAGE_MAX_BYTES:
+        messages.error(request, "Rasm 3 MB dan katta bo‘lmasin.")
+        return redirect(back)
+    kind = image_kind(upload.read(16))
+    upload.seek(0)
+    if kind is None:
+        messages.error(request, "Faqat PNG, JPG, WEBP yoki GIF rasm yuklash mumkin.")
+        return redirect(back)
+    if question.image:
+        question.image.delete(save=False)
+    question.image.save(f"rasm.{kind}", upload, save=True)
+    messages.success(request, "Rasm qo‘shildi — o‘quvchilar savol ostida ko‘radi.")
+    return redirect(back)
+
+
+def media_file(request, path):
+    """Yuklangan rasmlar (faqat quiz/). Nomlari tasodifiy — taxmin qilib bo'lmaydi;
+    test sahifasi login'siz ochilgani uchun ular ham login'siz beriladi."""
+    if not path.startswith("quiz/") or ".." in path:
+        raise Http404
+    response = static_serve(request, path, document_root=settings.MEDIA_ROOT)
+    response["Cache-Control"] = "public, max-age=604800, immutable"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 class QuizDeleteView(AuthMixin, DeleteMessageMixin, DeleteView):
@@ -1142,7 +1232,15 @@ def quiz_send(request):
             f"{len(form.cleaned_data['students'])} ta shogird uchun havola tayyor: "
             f"{batch.question_count} ta savol, {batch.time_limit_minutes} daqiqa.",
         )
-        if telegram_sender.is_configured():
+        scheduled_at = form.cleaned_data.get("scheduled_at")
+        if scheduled_at:
+            QuizBatch.objects.filter(pk=batch.pk).update(scheduled_at=scheduled_at)
+            messages.info(
+                request,
+                f"Havolalar {timezone.localtime(scheduled_at):%d.%m %H:%M} da Telegram orqali "
+                "avtomatik yuboriladi.",
+            )
+        elif telegram_sender.is_configured():
             send_quiz_links(request, attempts_with_links(request, batch.attempts.all()))
         return redirect(batch)
 
@@ -1228,6 +1326,8 @@ def quiz_batch_detail(request, pk):
                 a.status == QuizAttempt.Status.PENDING and not a.sent_at for a in attempts
             ),
             "hardest": hardest_questions(finished),
+            "retake_n": sum(a.percent < RETAKE_BELOW for a in finished),
+            "retake_below": RETAKE_BELOW,
             "telegram_ready": telegram_sender.is_configured(),
             "telegram_hint": telegram_sender.setup_hint(),
             "sender_id": telegram_sender.sender_id(),
@@ -1281,6 +1381,35 @@ def quiz_attempt_review(request, pk):
     )
 
 
+RETAKE_BELOW = 50  # shundan past natija olganlar qayta topshiradi
+
+
+@login_required
+@require_POST
+def quiz_batch_retake(request, pk):
+    """Past natija olganlarga shu mavzu bo'yicha yangi test (savollar bankdan qayta
+    tasodifiy tanlanadi — boshqa savollar tushadi)."""
+    batch = get_object_or_404(QuizBatch.objects.select_related("quiz", "lesson"), pk=pk)
+    weak = [
+        a.student
+        for a in batch.attempts.filter(status=QuizAttempt.Status.FINISHED).select_related("student")
+        if a.percent < RETAKE_BELOW
+    ]
+    if not weak:
+        messages.info(request, f"{RETAKE_BELOW}% dan past natija olgan o‘quvchi yo‘q.")
+        return redirect(batch)
+    retake = create_quiz_batch(
+        batch.quiz, weak, batch.question_count, batch.time_limit_minutes, lesson=batch.lesson
+    )
+    QuizBatch.objects.filter(pk=retake.pk).update(retake_of=batch)
+    messages.success(
+        request, f"Qayta topshirish: {len(weak)} ta o‘quvchi uchun yangi havolalar tayyor."
+    )
+    if telegram_sender.is_configured():
+        send_quiz_links(request, attempts_with_links(request, retake.attempts.all()))
+    return redirect(retake)
+
+
 @login_required
 @require_POST
 def quiz_batch_send(request, pk):
@@ -1293,6 +1422,9 @@ def quiz_batch_send(request, pk):
     qs = batch.attempts.filter(status=QuizAttempt.Status.PENDING)
     attempt_id = request.POST.get("attempt", "")
     qs = qs.filter(pk=attempt_id) if attempt_id.isdigit() else qs.filter(sent_at__isnull=True)
+    if batch.scheduled_at and not batch.scheduled_sent_at:
+        # Qo'lda yuborildi — rejalashtirilgan yuborish endi kerak emas.
+        QuizBatch.objects.filter(pk=batch.pk).update(scheduled_sent_at=timezone.now())
     attempts = attempts_with_links(request, qs)
     if attempts:
         send_quiz_links(request, attempts)
@@ -1380,6 +1512,7 @@ def _student_review(attempt: QuizAttempt) -> list[dict]:
         {
             "title": item["title"],
             "code": item["code"],
+            "image": item.get("image", ""),
             "picked_text": item["picked_text"],
             "answered": item["answered"],
             "is_correct": item["is_correct"],
@@ -1457,7 +1590,7 @@ def quiz_take(request, token):
 @require_POST
 def quiz_save(request, token):
     """Javoblarni oraliq saqlash (JS): sahifa yopilsa ham vaqt tugaganda baholanadi."""
-    attempt = get_object_or_404(QuizAttempt.objects.select_related("quiz"), token=token)
+    attempt = get_object_or_404(QuizAttempt.objects.select_related("quiz", "batch"), token=token)
     if (
         attempt.status != QuizAttempt.Status.ACTIVE
         or not _is_owner(request, attempt)
@@ -1466,14 +1599,31 @@ def quiz_save(request, token):
         return JsonResponse({"ok": False}, status=409)
     attempt.answers = _posted_answers(request, attempt)
     attempt.save(update_fields=["answers"])
+    _record_leaves(request, attempt)
     return JsonResponse({"ok": True, "seconds_left": attempt.seconds_left()})
+
+
+def _record_leaves(request, attempt: QuizAttempt) -> None:
+    """Brauzerdan kelgan "test oynasidan chiqishlar" soni va vaqti — faqat oshadi
+    (o'quvchi kamaytira olmaydi); vaqt test muddatidan oshmaydi."""
+
+    def posted(name, cap):
+        value = request.POST.get(name, "")
+        return min(int(value), cap) if value.isdigit() else 0
+
+    leaves = max(attempt.leave_count, posted("leave_count", 999))
+    away = max(attempt.away_seconds, posted("away_seconds", attempt.batch.time_limit_minutes * 60))
+    if (leaves, away) != (attempt.leave_count, attempt.away_seconds):
+        QuizAttempt.objects.filter(pk=attempt.pk).update(leave_count=leaves, away_seconds=away)
+        attempt.leave_count, attempt.away_seconds = leaves, away
 
 
 @never_cache
 @require_POST
 def quiz_submit(request, token):
-    attempt = get_object_or_404(QuizAttempt.objects.select_related("quiz"), token=token)
+    attempt = get_object_or_404(QuizAttempt.objects.select_related("quiz", "batch"), token=token)
     if attempt.status == QuizAttempt.Status.ACTIVE and _is_owner(request, attempt):
+        _record_leaves(request, attempt)
         if attempt.is_expired(grace=QuizAttempt.GRACE_SECONDS):
             # Juda kech yuborilgan javoblar qabul qilinmaydi — oxirgi saqlangani baholanadi.
             attempt.finish(timed_out=True)
@@ -1744,3 +1894,182 @@ def registration_public(request, token):
     )
     response["X-Robots-Tag"] = "noindex, nofollow"
     return response
+
+
+# --- Motivatsiya: shaxsiy sahifa, sertifikat, haftalik reyting ----------------
+
+
+@never_cache
+def student_portal(request, token):
+    """O'quvchining shaxsiy sahifasi (login'siz, maxfiy havola): natijalar tarixi, o'sish,
+    guruhdagi o'rni va ochilmagan testlari. To'g'ri javoblar ko'rsatilmaydi."""
+    if not token:
+        raise Http404
+    student = get_object_or_404(Student.objects.select_related("group"), portal_token=token)
+    finished = list(
+        student.quiz_attempts.filter(status=QuizAttempt.Status.FINISHED, total__gt=0)
+        .select_related("quiz__topic", "batch")
+        .order_by("-finished_at")
+    )
+    for a in finished:
+        a.items = _student_review(a)
+    pending = list(
+        student.quiz_attempts.filter(status=QuizAttempt.Status.PENDING)
+        .select_related("quiz__topic", "batch")
+        .order_by("-created_at")
+    )
+    stats = quiz_stats([student.pk], timeline=12).get(student.pk, QuizStats())
+    rank, ranked_n = motivation.group_rank(student)
+    response = render(
+        request,
+        "academy/portal/student.html",
+        {
+            "student": student,
+            "stats": stats,
+            "rank": rank,
+            "ranked_n": ranked_n,
+            "finished": finished,
+            "pending": pending,
+            "attendance": student_attendance_rate(student),
+        },
+    )
+    response["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
+def _portal_message(student, url):
+    return (
+        f"Salom, {student.full_name}!\n"
+        "Bu sizning shaxsiy sahifangiz — test natijalaringiz, o‘sishingiz va guruhdagi o‘rningiz:\n\n"
+        f"{url}\n\nHavolani boshqalarga bermang."
+    )
+
+
+def _send_portal_links(request, students) -> None:
+    items = []
+    for s in students:
+        username, phone = telegram_sender.recipient_of(s)
+        url = motivation.site_url(request) + motivation.portal_url(s)
+        items.append(telegram_sender.Outgoing(s.pk, username, phone, s.full_name, _portal_message(s, url)))
+    try:
+        results = telegram_sender.send_messages(items)
+    except telegram_sender.TelegramError as exc:
+        messages.error(request, f"Yuborilmadi: {exc}")
+        return
+    ok = sum(r.ok for r in results)
+    failed = [r for r in results if not r.ok]
+    if ok:
+        messages.success(request, f"Shaxsiy sahifa havolasi {ok} ta o‘quvchiga yuborildi.")
+    if failed:
+        names = {s.pk: s.full_name for s in students}
+        messages.warning(
+            request,
+            f"{len(failed)} ta o‘quvchiga yuborilmadi: "
+            + "; ".join(f"{names[r.key]} — {r.error}" for r in failed[:5]),
+        )
+
+
+@login_required
+@require_POST
+def student_portal_action(request, pk):
+    student = get_object_or_404(Student, pk=pk)
+    if request.POST.get("action") == "reset":
+        student.portal_token = ""
+        student.save(update_fields=["portal_token"])
+        motivation.portal_url(student)
+        messages.success(request, "Yangi havola yaratildi — eskisi endi ishlamaydi.")
+    else:
+        _send_portal_links(request, [student])
+    return redirect(f"{student.get_absolute_url()}#portal")
+
+
+@login_required
+@require_POST
+def group_portal_send(request, pk):
+    group = get_object_or_404(Group, pk=pk)
+    students = [s for s in group.active_students if has_contact(s)]
+    if not students:
+        messages.warning(request, "Bu guruhda Telegram yoki telefoni bor faol o‘quvchi yo‘q.")
+    else:
+        _send_portal_links(request, students)
+    return redirect(f"{group.get_absolute_url()}#motivation")
+
+
+@login_required
+def student_certificate(request, pk):
+    student = get_object_or_404(Student.objects.select_related("group"), pk=pk)
+    data = request.POST if request.method == "POST" else request.GET
+    course = (data.get("kurs") or motivation.default_course(student)).strip()[:120]
+    teacher = request.user.get_full_name() or request.user.get_username()
+    pdf = motivation.certificate_pdf(student, course, teacher)
+    response = HttpResponse(pdf, content_type="application/pdf")
+    disposition = "attachment" if data.get("yuklab") else "inline"
+    response["Content-Disposition"] = (
+        f'{disposition}; filename="{motivation.certificate_filename(student)}"'
+    )
+    return response
+
+
+@login_required
+@require_POST
+def student_certificate_send(request, pk):
+    student = get_object_or_404(Student.objects.select_related("group"), pk=pk)
+    course = (request.POST.get("kurs") or motivation.default_course(student)).strip()[:120]
+    teacher = request.user.get_full_name() or request.user.get_username()
+    username, phone = telegram_sender.recipient_of(student)
+    item = telegram_sender.Outgoing(student.pk, username, phone, student.full_name, "")
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / motivation.certificate_filename(student)
+        path.write_bytes(motivation.certificate_pdf(student, course, teacher))
+        try:
+            telegram_sender.send_file_to(
+                item, path, caption=f"🎓 Tabriklaymiz, {student.full_name}! “{course}” kursi sertifikati."
+            )
+        except telegram_sender.TelegramError as exc:
+            messages.error(request, f"Sertifikat yuborilmadi: {exc}")
+        else:
+            messages.success(request, f"Sertifikat {student.full_name}ga Telegram orqali yuborildi.")
+    return redirect(f"{student.get_absolute_url()}#certificate")
+
+
+@login_required
+@require_POST
+def group_leaderboard_send(request, pk):
+    group = get_object_or_404(Group, pk=pk)
+    text = motivation.leaderboard_text(group, motivation.weekly_leaderboard(group))
+    if not group.telegram_chat:
+        messages.error(request, "Avval guruhning Telegram chatini tanlang.")
+    elif not text:
+        messages.info(request, "Oxirgi 7 kunda bu guruhda test yechilmagan — yuboriladigan reyting yo‘q.")
+    else:
+        try:
+            telegram_sender.send_to_chat(group.telegram_chat, text)
+        except telegram_sender.TelegramError as exc:
+            messages.error(request, f"Yuborilmadi: {exc}")
+        else:
+            messages.success(request, "Haftalik reyting guruh chatiga yuborildi.")
+    return redirect(f"{group.get_absolute_url()}#motivation")
+
+
+@login_required
+def group_telegram_chat(request, pk):
+    """Guruh chatini tanlash: akkaunt a'zo bo'lgan guruhlar ro'yxatidan."""
+    group = get_object_or_404(Group, pk=pk)
+    if request.method == "POST":
+        group.telegram_chat = request.POST.get("chat", "").strip()[:100]
+        group.save(update_fields=["telegram_chat"])
+        messages.success(
+            request,
+            "Telegram chat saqlandi." if group.telegram_chat else "Telegram chat olib tashlandi.",
+        )
+        return redirect(f"{group.get_absolute_url()}#motivation")
+    chats, error = [], ""
+    try:
+        chats = telegram_sender.list_chats()
+    except telegram_sender.TelegramError as exc:
+        error = str(exc)
+    return render(
+        request,
+        "academy/groups/telegram_chat.html",
+        {"group": group, "chats": chats, "error": error},
+    )

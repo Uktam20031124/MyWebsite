@@ -1,7 +1,10 @@
+from datetime import timedelta
+
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.validators import MaxValueValidator
 from django.db.models import Q
+from django.utils import timezone
 
 from .models import (
     WEEKDAY_CHOICES,
@@ -67,6 +70,7 @@ class GroupForm(StyledFormMixin, forms.ModelForm):
             "room",
             "start_date",
             "status",
+            "telegram_chat",
             "notes",
         ]
         widgets = {
@@ -300,6 +304,24 @@ class QuizSendForm(StyledFormMixin, forms.Form):
     time_limit_minutes = forms.IntegerField(
         label="Vaqt (daqiqa)", min_value=1, max_value=QuizBatch.MAX_TIME_LIMIT
     )
+    scheduled_at = forms.DateTimeField(
+        label="Qachon yuborilsin?",
+        required=False,
+        input_formats=["%Y-%m-%dT%H:%M"],
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
+        help_text="Bo‘sh — darhol. Vaqt ko‘rsatilsa, havolalar o‘sha paytda avtomatik yuboriladi.",
+    )
+
+    SCHEDULE_MAX_DAYS = 30
+
+    def clean_scheduled_at(self):
+        value = self.cleaned_data["scheduled_at"]
+        now = timezone.now()
+        if value and value <= now + timedelta(minutes=1):
+            raise forms.ValidationError("Kelajakdagi vaqtni tanlang (yoki bo‘sh qoldiring — darhol).")
+        if value and value > now + timedelta(days=self.SCHEDULE_MAX_DAYS):
+            raise forms.ValidationError(f"Ko‘pi bilan {self.SCHEDULE_MAX_DAYS} kun oldinga.")
+        return value
 
     def __init__(self, *args, quiz: Quiz, students, **kwargs):
         self.bank_size = quiz.questions.count()

@@ -19,6 +19,7 @@
         <div class="result-body">
           <div class="result-q">{{ forloop.counter }}. {{ item.title }}</div>
           {% if item.code %}<pre class="quiz-code">{{ item.code }}</pre>{% endif %}
+          {% if item.image %}<img class="quiz-image" src="{{ item.image }}" alt="Savol rasmi" loading="lazy">{% endif %}
           <div class="result-a">
             {% if item.answered %}Javobingiz: <strong>{{ item.picked_text }}</strong>{% else %}Javob berilmagan{% endif %}
             <span class="result-verdict">— {% if item.is_correct %}to‘g‘ri{% elif item.answered %}xato{% else %}javobsiz{% endif %}</span>

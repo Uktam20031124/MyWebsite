@@ -56,6 +56,7 @@
       <div class="card-body">
         {% if quiz and question_n %}
           <div class="strong">Savollar banki: {{ question_n }} ta savol</div>
+          {% if hard_n %}<a class="badge bad" href="{% url 'quiz_edit' topic.pk %}#savollar" title="Ko‘pchilik xato qilgan — matnini tekshiring">{{ hard_n }} ta savol juda qiyin</a>{% endif %}
           {% if quiz_stats.n %}
             <p class="meta">{{ quiz_stats.n }} marta yechilgan · o‘rtacha {{ quiz_stats.avg }}%</p>
           {% else %}
