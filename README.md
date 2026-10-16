@@ -112,7 +112,8 @@ O‘quvchi mavzuni to‘liq o‘zlashtirganini tekshirish uchun:
 6. Natijalar jo‘natma sahifasida, “Testlar” bo‘limida (guruh bo‘yicha), dars va mavzu sahifalarida
    (o‘rtacha foiz) va o‘quvchi kartasida ko‘rinadi.
    Ochilmagan havolani “↻” bilan yangisiga almashtirish mumkin (eskisi ishlamay qoladi).
-7. **Javoblar tahlili — faqat ustoz uchun.** O‘quvchi natija sahifasida faqat ballni ko‘radi. Ustoz esa
+7. **Javoblar tahlili.** O‘quvchi test tugagach har bir savolda o‘z javobi to‘g‘ri yoki xato ekanini ko‘radi
+   (to‘g‘ri variantning o‘zi unga ko‘rsatilmaydi — javoblar tarqalib ketmasligi uchun). Ustoz esa
    jo‘natma sahifasida har bir o‘quvchi yonidagi **“Javoblar”** orqali har bir savolni, o‘quvchi tanlagan
    javobni (xato — qizil), to‘g‘ri javobni (yashil) va javobsiz qolganlarni ko‘radi (“Faqat xatolar”
    filtri, oldingi/keyingi o‘quvchi). Jo‘natma sahifasida — **eng ko‘p xato qilingan savollar** (foiz,

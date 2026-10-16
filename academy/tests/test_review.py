@@ -59,12 +59,35 @@ class SnapshotTests(ReviewTestCase):
 
 
 class StudentCannotSeeAnswersTests(ReviewTestCase):
-    def test_result_page_shows_only_score(self):
+    def test_result_page_shows_own_marks_but_not_correct_answers(self):
         page = self.client.get(self.url)  # o'quvchining o'z brauzeri (cookie bor)
         self.assertContains(page, "33%")
         self.assertContains(page, "1 / 3 to‘g‘ri javob")
-        for secret in ("[ ]", "( )", "2 + 2 nechiga teng?", "to‘g‘ri javob</span>", "Xato"):
+        # O'z javoblari va to'g'ri/xato belgisi ko'rinadi.
+        self.assertContains(page, "Javobingiz: <strong>4</strong>")
+        self.assertContains(page, "Javobingiz: <strong>( )</strong>")
+        self.assertContains(page, "— to‘g‘ri", count=1)
+        self.assertContains(page, "— xato", count=1)
+        self.assertContains(page, "Javob berilmagan")
+        # To'g'ri variant (xato va javobsiz savollarda) va boshqa variantlar ko'rinmaydi.
+        for secret in ("[ ]", "0 va 1", "1 va 2", "to‘g‘ri javob</span>", "<strong>5</strong>"):
             self.assertNotContains(page, secret)
+
+    def test_result_order_matches_order_shown_in_test(self):
+        from academy.views import _shuffled_questions, review_in_shown_order
+
+        shown = [q.pk for q in _shuffled_questions(self.attempt)]
+        self.assertEqual([i["id"] for i in review_in_shown_order(self.attempt)], shown)
+        page = self.client.get(self.url).content.decode()
+        titles = [self.quiz.questions.get(pk=pk).text.split("\n")[0] for pk in shown]
+        positions = [page.index(f"{n}. {t}".replace("'", "&#x27;")) for n, t in enumerate(titles, 1)]
+        self.assertEqual(positions, sorted(positions))
+
+    def test_other_device_sees_nothing(self):
+        self.client.cookies.clear()
+        page = self.client.get(self.url)
+        self.assertEqual(page.status_code, 410)
+        self.assertNotContains(page, "Javobingiz", status_code=410)
 
     def test_review_requires_login(self):
         response = self.client.get(self.review_url)

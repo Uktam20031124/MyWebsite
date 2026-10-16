@@ -1236,7 +1236,7 @@ def quiz_attempt_review(request, pk):
         pk=pk,
         status=QuizAttempt.Status.FINISHED,
     )
-    items = attempt.review()
+    items = review_in_shown_order(attempt)
     wrong = [i for i in items if not i["is_correct"]]
     others = list(
         attempt.batch.attempts.filter(status=QuizAttempt.Status.FINISHED)
@@ -1356,6 +1356,31 @@ def _posted_answers(request, attempt: QuizAttempt) -> dict:
     return answers
 
 
+def _student_review(attempt: QuizAttempt) -> list[dict]:
+    """O'quvchi uchun: har bir savol, o'zi tanlagan javob va to'g'ri/xato belgisi.
+
+    To'g'ri variant ataylab berilmaydi (shablonga ham tushmaydi) — u faqat ustozga
+    ko'rinadi, aks holda birinchi yechgan o'quvchi javoblarni boshqalarga tarqatishi mumkin.
+    """
+    return [
+        {
+            "title": item["title"],
+            "code": item["code"],
+            "picked_text": item["picked_text"],
+            "answered": item["answered"],
+            "is_correct": item["is_correct"],
+        }
+        for item in review_in_shown_order(attempt)
+        if not item.get("missing")
+    ]
+
+
+def review_in_shown_order(attempt: QuizAttempt) -> list[dict]:
+    """Javoblar tahlili — o'quvchiga test paytida ko'rsatilgan tartibda (raqamlar mos)."""
+    shown = {q.pk: i for i, q in enumerate(_shuffled_questions(attempt))}
+    return sorted(attempt.review(), key=lambda item: shown.get(item["id"], len(shown)))
+
+
 def _quiz_page(request, attempt, template, status=200, **extra):
     response = render(
         request,
@@ -1380,7 +1405,7 @@ def quiz_take(request, token):
 
     if attempt.status == Status.FINISHED:
         if owner:
-            return _quiz_page(request, attempt, "result")
+            return _quiz_page(request, attempt, "result", items=_student_review(attempt))
         return _quiz_page(request, attempt, "used", status=410)
 
     if attempt.status == Status.ACTIVE:
