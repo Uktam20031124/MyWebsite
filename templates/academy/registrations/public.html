@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="uz" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#15251e">
+  <meta name="color-scheme" content="light dark">
+  <title>Ro‘yxatdan o‘tish · {{ link.title }}</title>
+  <meta property="og:title" content="Ro‘yxatdan o‘tish: {{ link.title }}">
+  <meta property="og:description" content="F.I.Sh., telefon va Telegram username’ingizni yuboring">
+  {% include "academy/includes/head.html" %}
+</head>
+<body class="quiz-body">
+  <main class="quiz-shell">
+    <div class="card pad quiz-panel">
+      <p class="kicker">Darsxona · {{ link.title }}</p>
+      {% if done %}
+        <h1>Rahmat, {{ done.full_name }}!</h1>
+        <p class="muted">Ma’lumotingiz ustozga yuborildi. Tekshirilgach, testlar sizga Telegram (@{{ done.telegram }}) orqali keladi.</p>
+        <ul class="rules" style="margin-top:14px">
+          <li>Telefon: {{ done.phone }}</li>
+          <li>Telegram: @{{ done.telegram }}</li>
+        </ul>
+        <p class="meta" style="margin-top:12px">Xato yozgan bo‘lsangiz — sahifani qayta ochib, xuddi shu telefon raqami bilan qayta yuboring: ma’lumot yangilanadi.</p>
+      {% elif not link.is_active %}
+        <h1>Ro‘yxat yopilgan</h1>
+        <p class="muted">Bu havola endi ariza qabul qilmaydi. Ustozingizga murojaat qiling.</p>
+      {% else %}
+        <h1>Ro‘yxatdan o‘tish</h1>
+        <p class="muted">Ustozingiz testlar va xabarlarni Telegram orqali yuboradi. Ma’lumotlaringizni to‘g‘ri kiriting.</p>
+        <form method="post" novalidate class="contact-self">
+          {% csrf_token %}
+          {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+          {% for field in form %}
+            <div class="field{% if field.errors %} has-error{% endif %}">
+              {{ field.label_tag }}{{ field }}
+              {% if field.name == 'telegram' %}<div class="hint">Telegram → Sozlamalar → “Username”. Yo‘q bo‘lsa — o‘sha yerda yarating (masalan, @ali_2010).</div>{% endif %}
+              {{ field.errors }}
+            </div>
+          {% endfor %}
+          <button class="btn primary block" type="submit">Yuborish</button>
+        </form>
+        <p class="meta" style="margin-top:14px">Ma’lumotlaringiz faqat ustozingizga ko‘rinadi.</p>
+      {% endif %}
+    </div>
+  </main>
+</body>
+</html>

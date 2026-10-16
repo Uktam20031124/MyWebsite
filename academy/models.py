@@ -766,3 +766,79 @@ def _as_int(value):
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def new_registration_token() -> str:
+    return secrets.token_urlsafe(9)
+
+
+class RegistrationLink(models.Model):
+    """Ochiq ro'yxatdan o'tish havolasi (Telegram guruhlariga tashlanadi)."""
+
+    title = models.CharField("Nomi", max_length=120, help_text="Masalan: S-009 Telegram guruhi")
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="registration_links",
+        verbose_name="Guruh",
+        help_text="Arizalar shu guruhga taklif qilinadi (bo'sh — tasdiqlashda tanlaysiz).",
+    )
+    token = models.CharField(max_length=24, unique=True, default=new_registration_token, editable=False)
+    is_active = models.BooleanField("Faol", default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Ro'yxat havolasi"
+        verbose_name_plural = "Ro'yxat havolalari"
+
+    def __str__(self) -> str:
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("registration_public", args=[self.token])
+
+
+class Registration(models.Model):
+    """O'quvchi to'ldirgan ariza: ustoz tekshirib, bazaga qo'shadi yoki rad etadi."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Kutilmoqda"
+        APPROVED = "approved", "Qabul qilingan"
+        REJECTED = "rejected", "Rad etilgan"
+
+    link = models.ForeignKey(
+        RegistrationLink,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="registrations",
+        verbose_name="Havola",
+    )
+    full_name = models.CharField("F.I.Sh.", max_length=160)
+    phone = models.CharField("Telefon", max_length=40)
+    telegram = models.CharField("Telegram", max_length=80)
+    status = models.CharField(
+        "Holat", max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
+    )
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="registrations",
+        verbose_name="O'quvchi",
+    )
+    ip = models.GenericIPAddressField(null=True, blank=True, editable=False)
+    created_at = models.DateTimeField("Yuborilgan", auto_now_add=True)
+    reviewed_at = models.DateTimeField("Ko'rib chiqilgan", null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Ariza"
+        verbose_name_plural = "Arizalar"
+
+    def __str__(self) -> str:
+        return f"{self.full_name} ({self.get_status_display()})"

@@ -40,6 +40,10 @@
         <a href="{% url 'student_list' %}" {% if 'student' in url_name %}aria-current="page"{% endif %}>
           {% icon "users" %} Shogirdlar <span class="count">{{ nav_students }}</span>
         </a>
+        <a href="{% url 'registrations' %}" {% if 'registration' in url_name %}aria-current="page"{% endif %}>
+          {% icon "user" %} Arizalar
+          {% if nav_registrations %}<span class="count hot" title="Tekshirilishi kutilayotgan arizalar">{{ nav_registrations }}</span>{% endif %}
+        </a>
         <a href="{% url 'lesson_list' %}" {% if 'lesson' in url_name or url_name == 'attendance' %}aria-current="page"{% endif %}>
           {% icon "lesson" %} Darslar <span class="count">{{ nav_lessons }}</span>
         </a>

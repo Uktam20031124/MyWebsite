@@ -1,0 +1,128 @@
+{% extends "academy/base.html" %}
+{% load ui %}
+{% block title %}Arizalar · Darsxona{% endblock %}
+{% block kicker %}{% icon "users" 15 %} O‘quvchilar ma’lumotlari{% endblock %}
+{% block heading %}Arizalar{% endblock %}
+{% block subheading %}<p class="page-sub">Havolani Telegram guruhlariga tashlang — o‘quvchilar F.I.Sh., telefon va Telegram username’ini yuboradi. Siz tekshirib, bazaga qo‘shasiz.</p>{% endblock %}
+{% block actions %}
+{% if auto_n %}
+  <form method="post" action="{% url 'registration_approve_all' %}">
+    {% csrf_token %}
+    <button class="btn primary" type="submit" data-confirm="{{ auto_n }} ta ariza tasdiqlanadi: ismi yagona o‘quvchiga mos kelganlar biriktiriladi, mos kelmagan va havolasi guruhga bog‘langanlar yangi o‘quvchi sifatida qo‘shiladi. Davom etilsinmi?">{% icon "check" 16 %} Ishonchlilarni tasdiqlash ({{ auto_n }})</button>
+  </form>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="card" id="links" aria-labelledby="links-h">
+  <div class="card-head">
+    <h2 id="links-h">{% icon "link" 18 %} Havolalar</h2>
+    <span class="meta">Har bir Telegram guruhi uchun alohida havola — arizalar o‘sha guruhga taklif qilinadi</span>
+  </div>
+  <div class="card-body flush">
+    <div class="rows">
+      {% for link in links %}
+        <div class="row reg-link{% if not link.is_active %} muted{% endif %}">
+          <div class="grow">
+            <div class="row-title">{{ link.title }} {% if not link.is_active %}<span class="badge plain">To‘xtatilgan</span>{% endif %}</div>
+            <div class="meta">{% if link.group %}{{ link.group.name }}{% else %}Guruhsiz{% endif %} · {{ link.total_n }} ta ariza{% if link.pending_n %} · <strong>{{ link.pending_n }} ta kutilmoqda</strong>{% endif %}</div>
+            <div class="contact-link" style="margin-top:8px">
+              <input class="input mono" value="{{ link.url }}" readonly aria-label="Havola">
+              <button class="btn sm soft" type="button" data-copy="{{ link.url }}">{% icon "link" 14 %} Nusxa</button>
+            </div>
+          </div>
+          <form method="post" action="{% url 'registration_link_action' link.pk %}" class="contact-link-actions">
+            {% csrf_token %}
+            {% if link.is_active %}
+              <button class="btn xs ghost" type="submit" name="action" value="off">To‘xtatish</button>
+            {% else %}
+              <button class="btn xs ghost" type="submit" name="action" value="on">Yoqish</button>
+            {% endif %}
+            <button class="btn xs danger-ghost square" type="submit" name="action" value="delete" data-confirm="Havola o‘chiriladi (yuborilgan arizalar saqlanadi). Davom etilsinmi?" title="O‘chirish" aria-label="O‘chirish">{% icon "trash" 13 %}</button>
+          </form>
+        </div>
+      {% empty %}
+        <div class="empty compact"><p>Hali havola yo‘q. Pastda birinchisini yarating.</p></div>
+      {% endfor %}
+    </div>
+  </div>
+  <form method="post" class="card-foot reg-link-form" novalidate>
+    {% csrf_token %}
+    <div class="field{% if link_form.title.errors %} has-error{% endif %}">{{ link_form.title.label_tag }}{{ link_form.title }}{{ link_form.title.errors }}</div>
+    <div class="field">{{ link_form.group.label_tag }}{{ link_form.group }}</div>
+    <button class="btn primary" type="submit">{% icon "plus" 16 %} Havola yaratish</button>
+  </form>
+</section>
+
+<div class="toolbar" style="margin-top:22px">
+  <nav class="seg-tabs" aria-label="Holat">
+    {% for value, label, n in statuses %}
+      <a href="?status={{ value }}" {% if status == value %}aria-current="true"{% endif %}>{{ label }} <span class="meta">{{ n }}</span></a>
+    {% endfor %}
+  </nav>
+</div>
+
+<section class="card" aria-label="Arizalar">
+  <div class="card-body flush">
+    <div class="rows">
+      {% for r in regs %}
+        <div class="row reg-row">
+          <div class="grow">
+            <div class="row-title">{{ r.full_name }}</div>
+            <div class="meta">
+              {{ r.phone }} · <a href="https://t.me/{{ r.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">@{{ r.telegram }}</a>
+              · {% if r.link %}{{ r.link.title }}{% else %}havola o‘chirilgan{% endif %} · {{ r.created_at|date:"d.m H:i" }}
+            </div>
+            {% if status == 'pending' %}
+              {% if r.suggested|length == 1 %}
+                <div class="reg-hint ok">{% icon "check" 13 %} Bazada bor: <a href="{{ r.suggested.0.get_absolute_url }}">{{ r.suggested.0.full_name }}</a> ({{ r.suggested.0.group.name }}){% if r.suggested.0.telegram or r.suggested.0.phone %} — hozir: {{ r.suggested.0.telegram|default:"—" }} · {{ r.suggested.0.phone|default:"—" }}{% endif %}</div>
+              {% elif r.suggested %}
+                <div class="reg-hint warn">{% icon "alert" 13 %} Bir nechta mos: {% for s in r.suggested %}{{ s.full_name }} ({{ s.group.code }}){% if not forloop.last %}, {% endif %}{% endfor %} — to‘g‘risini tanlang</div>
+              {% else %}
+                <div class="reg-hint">{% icon "plus" 13 %} Bazada topilmadi — yangi o‘quvchi sifatida qo‘shish mumkin</div>
+              {% endif %}
+            {% elif r.student %}
+              <div class="meta">→ <a href="{{ r.student.get_absolute_url }}">{{ r.student.full_name }}</a> ({{ r.student.group.name }}) · {{ r.reviewed_at|date:"d.m H:i" }}</div>
+            {% endif %}
+          </div>
+
+          {% if status == 'pending' %}
+            <div class="reg-actions">
+              <form method="post" action="{% url 'registration_action' r.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="attach">
+                <select class="input" name="student" aria-label="Qaysi o‘quvchiga">
+                  <option value="">— o‘quvchini tanlang —</option>
+                  {% for s in students %}<option value="{{ s.pk }}" {% if r.suggested|length == 1 and r.suggested.0.pk == s.pk %}selected{% endif %}>{{ s.full_name }} · {{ s.group.code }}</option>{% endfor %}
+                </select>
+                <button class="btn sm {% if r.suggested|length == 1 %}primary{% else %}soft{% endif %}" type="submit">{% icon "check" 14 %} Biriktirish</button>
+              </form>
+              <form method="post" action="{% url 'registration_action' r.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+                <select class="input" name="group" aria-label="Guruh">
+                  <option value="">— guruh —</option>
+                  {% for g in groups %}<option value="{{ g.pk }}" {% if g.pk == r.default_group_id %}selected{% endif %}>{{ g.name }}</option>{% endfor %}
+                </select>
+                <button class="btn sm {% if not r.suggested %}primary{% else %}soft{% endif %}" type="submit">{% icon "plus" 14 %} Yangi o‘quvchi</button>
+              </form>
+              <form method="post" action="{% url 'registration_action' r.pk %}">
+                {% csrf_token %}
+                <button class="btn sm danger-ghost" type="submit" name="action" value="reject" data-confirm="Ariza rad etilsinmi?">{% icon "x" 14 %} Rad etish</button>
+              </form>
+            </div>
+          {% else %}
+            <span class="badge {% if r.status == 'approved' %}ok{% else %}bad{% endif %}">{{ r.get_status_display }}</span>
+          {% endif %}
+        </div>
+      {% empty %}
+        <div class="empty">
+          <span class="empty-icon">{% icon "user" 22 %}</span>
+          <strong>{% if status == 'pending' %}Kutilayotgan ariza yo‘q{% else %}Ro‘yxat bo‘sh{% endif %}</strong>
+          {% if status == 'pending' %}<p>Havolani Telegram guruhiga tashlang — arizalar shu yerda paydo bo‘ladi.</p>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
