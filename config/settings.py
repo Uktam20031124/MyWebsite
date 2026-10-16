@@ -48,6 +48,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Sahifalar Turbo bilan ochiladi: xatoli forma javobini Turbo ko'rsatadigan qiladi.
+    "academy.middleware.TurboFormStatusMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
