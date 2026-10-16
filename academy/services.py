@@ -126,8 +126,65 @@ def filter_students(params, qs=None):
     return qs
 
 
-# Reyting = o'rtacha ball × 0.7 + davomat foizi × 0.3 (ikkalasi ham 0–100).
+# Reyting (hammasi 0–100): ball × 0.5 + test × 0.3 + davomat × 0.2.
+# Test natijasi yo'q bo'lsa — ball × 0.7 + davomat × 0.3 (avvalgi formula); ball yo'q
+# bo'lsa — test × 0.7 + davomat × 0.3. Davomat ma'lumoti yo'q bo'lsa, qolgan qismlar
+# o'z vaznlari nisbatida hisoblanadi.
 RATING_SCORE_WEIGHT = 0.7
+RATING_WEIGHTS = {"score": 0.5, "quiz": 0.3, "attendance": 0.2}
+RATING_FORMULA = "ball × 0.5 + test × 0.3 + davomat × 0.2"
+
+
+def rating(avg_score, attendance_pct, quiz_pct=None) -> int | None:
+    """Jurnal, o'quvchi kartasi va bosh sahifadagi yagona reyting formulasi."""
+    if avg_score is not None and quiz_pct is not None:
+        parts = [(avg_score, RATING_WEIGHTS["score"]), (quiz_pct, RATING_WEIGHTS["quiz"])]
+    elif avg_score is not None or quiz_pct is not None:
+        value = avg_score if avg_score is not None else quiz_pct
+        parts = [(value, RATING_SCORE_WEIGHT)]
+    else:
+        return None
+    if attendance_pct is not None:
+        parts.append((attendance_pct, 1 - sum(w for _, w in parts)))
+    total = sum(w for _, w in parts)
+    return round(sum(v * w for v, w in parts) / total)
+
+
+@dataclass
+class QuizStats:
+    """O'quvchining yakunlangan testlari: umumiy va oxirgi testlar foizi."""
+
+    n: int = 0
+    pct: int | None = None  # barcha savollar bo'yicha to'g'ri javoblar foizi
+    recent_pct: int | None = None  # oxirgi 3 ta test
+    recent: list = field(default_factory=list)  # oxirgi testlar (eskisidan yangisiga)
+
+
+RECENT_QUIZZES = 3
+
+
+def quiz_stats(student_ids, timeline: int = 0) -> dict[int, QuizStats]:
+    """{o'quvchi_id: QuizStats} — bitta so'rov. ``timeline`` — grafik uchun oxirgi N test."""
+    rows = (
+        QuizAttempt.objects.filter(
+            student_id__in=list(student_ids), status=QuizAttempt.Status.FINISHED, total__gt=0
+        )
+        .select_related("quiz__topic")
+        .order_by("finished_at", "pk")
+    )
+    by_student: dict[int, list] = defaultdict(list)
+    for attempt in rows:
+        by_student[attempt.student_id].append(attempt)
+    stats = {}
+    for student_id, attempts in by_student.items():
+        recent = attempts[-RECENT_QUIZZES:]
+        stats[student_id] = QuizStats(
+            n=len(attempts),
+            pct=percent(sum(a.correct for a in attempts), sum(a.total for a in attempts)),
+            recent_pct=percent(sum(a.correct for a in recent), sum(a.total for a in recent)),
+            recent=attempts[-timeline:] if timeline else [],
+        )
+    return stats
 
 
 @dataclass
@@ -141,6 +198,7 @@ class JournalRow:
     student: Student
     cells: list[JournalCell]
     rank: int | None = None
+    quiz: QuizStats = field(default_factory=QuizStats)
 
     @property
     def marked(self) -> int:
@@ -161,10 +219,7 @@ class JournalRow:
 
     @property
     def rating(self) -> int | None:
-        if self.avg_score is None:
-            return None
-        w = RATING_SCORE_WEIGHT
-        return round(self.avg_score * w + self.percent * (1 - w))
+        return rating(self.avg_score, self.percent if self.marked else None, self.quiz.pct)
 
 
 def rank_rows(rows: list[JournalRow]) -> None:
@@ -209,6 +264,9 @@ def group_journal(group: Group, limit: int | None = None):
         )
         for student in students
     ]
+    stats = quiz_stats(r.student.pk for r in rows)
+    for row in rows:
+        row.quiz = stats.get(row.student.pk, QuizStats())
     rank_rows(rows)
     return lessons, rows
 
@@ -419,14 +477,6 @@ def attendance_trend(weeks: int = 8) -> list[dict]:
     ]
 
 
-def rating(avg_score: float | None, attendance_pct: int) -> int | None:
-    """Jurnaldagi reyting bilan bir xil formula."""
-    if avg_score is None:
-        return None
-    w = RATING_SCORE_WEIGHT
-    return round(avg_score * w + attendance_pct * (1 - w))
-
-
 def student_insights(top: int = 5, risk: int = 6) -> dict:
     """Faol shogirdlar: reyting yetakchilari va e'tibor talab qiladiganlar (bitta so'rov)."""
     students = list(
@@ -434,21 +484,38 @@ def student_insights(top: int = 5, risk: int = 6) -> dict:
         .select_related("group")
         .annotate(score_avg=Avg("attendances__score"))
     )
+    stats = quiz_stats(s.pk for s in students)
     for s in students:
         s.att_pct = percent(s.att_present, s.att_total)
-        s.rating = rating(s.score_avg, s.att_pct) if s.att_total else None
         s.score_avg = round(s.score_avg) if s.score_avg is not None else None
+        s.quiz = stats.get(s.pk, QuizStats())
+        s.rating = rating(s.score_avg, s.att_pct if s.att_total else None, s.quiz.pct)
+        s.risk_reasons = risk_reasons(s)
     leaders = sorted((s for s in students if s.rating is not None), key=lambda s: -s.rating)
     at_risk = sorted(
-        (
-            s
-            for s in students
-            if s.att_total >= 2
-            and (s.att_pct < 70 or (s.score_avg is not None and s.score_avg < 60))
-        ),
-        key=lambda s: (s.att_pct, s.score_avg or 0),
+        (s for s in students if s.risk_reasons),
+        key=lambda s: (-len(s.risk_reasons), s.quiz.recent_pct or 100, s.att_pct),
     )
     return {"leaders": leaders[:top], "at_risk": at_risk[:risk]}
+
+
+# "Ortda qolayotgan" chegaralari.
+RISK_ATTENDANCE = 70
+RISK_SCORE = 60
+RISK_QUIZ = 50
+RISK_MIN_QUIZZES = 2
+
+
+def risk_reasons(s) -> list[str]:
+    """Nima uchun e'tibor kerak: past davomat, past ball yoki oxirgi testlar past."""
+    reasons = []
+    if s.att_total >= 2 and s.att_pct < RISK_ATTENDANCE:
+        reasons.append(f"davomat {s.att_pct}%")
+    if s.att_total >= 2 and s.score_avg is not None and s.score_avg < RISK_SCORE:
+        reasons.append(f"ball {s.score_avg}")
+    if s.quiz.n >= RISK_MIN_QUIZZES and s.quiz.recent_pct < RISK_QUIZ:
+        reasons.append(f"oxirgi testlar {s.quiz.recent_pct}%")
+    return reasons
 
 
 def dashboard_payload():

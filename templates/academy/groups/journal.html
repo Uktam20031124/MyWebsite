@@ -3,7 +3,7 @@
 {% block title %}Jurnal · {{ group.name }} · Darsxona{% endblock %}
 {% block kicker %}<a href="{% url 'group_list' %}">Guruhlar</a><span class="sep">/</span><a href="{{ group.get_absolute_url }}">{{ group.name }}</a>{% endblock %}
 {% block heading %}Davomat jurnali{% endblock %}
-{% block subheading %}<p class="page-sub">Reyting = o‘rtacha ball × 0.7 + davomat × 0.3. Sanani bosing — dars sahifasi ochiladi.</p>{% endblock %}
+{% block subheading %}<p class="page-sub">Reyting = ball × 0.5 + test × 0.3 + davomat × 0.2 (test bo‘lmasa: ball × 0.7 + davomat × 0.3). Sanani bosing — dars sahifasi ochiladi.</p>{% endblock %}
 {% block actions %}
 {% if show_all %}
   <a class="btn ghost" href="{% url 'group_journal' group.pk %}">Oxirgi {{ limit }} dars</a>
@@ -26,7 +26,7 @@
     </div>
     <span class="meta">{{ lessons|length }} dars · {{ rows|length }} shogird</span>
   </div>
-  {% if lessons and rows %}
+  {% if rows and lessons or rows and has_quiz %}
   <div class="table-wrap">
     <table class="table journal">
       <thead>
@@ -39,7 +39,8 @@
           {% endfor %}
           <th scope="col" class="right">Davomat</th>
           <th scope="col" class="right" title="O‘rtacha ball (0–100)">Ball</th>
-          <th scope="col" class="right" title="Reyting = ball × 0.7 + davomat × 0.3">Reyting</th>
+          <th scope="col" class="right" title="Yakunlangan testlardagi to‘g‘ri javoblar foizi">Test</th>
+          <th scope="col" class="right" title="ball × 0.5 + test × 0.3 + davomat × 0.2">Reyting</th>
         </tr>
       </thead>
       <tbody>
@@ -68,6 +69,7 @@
             {% if row.marked %}<span class="badge {{ row.percent|tone }}">{{ row.percent }}%</span><div class="meta">{{ row.attended }}/{{ row.marked }}</div>{% else %}—{% endif %}
           </td>
           <td class="right tabular">{{ row.avg_score|default_if_none:"—" }}</td>
+          <td class="right nowrap">{% if row.quiz.n %}<span class="badge {{ row.quiz.pct|quiz_tone }}">{{ row.quiz.pct }}%</span><div class="meta">{{ row.quiz.n }} ta test</div>{% else %}—{% endif %}</td>
           <td class="right nowrap">
             {% if row.rating is not None %}
               <strong class="tabular">{{ row.rating }}</strong>

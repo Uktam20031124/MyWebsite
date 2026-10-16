@@ -668,6 +668,8 @@ class QuizAttempt(models.Model):
     total = models.PositiveSmallIntegerField("Savollar soni", null=True, blank=True)
     # Ustozning Telegram akkauntidan yuborilgan payt va oxirgi xato (bo'lsa).
     sent_at = models.DateTimeField("Telegramda yuborilgan", null=True, blank=True)
+    # Ochilmagan test haqida bitta avtomatik eslatma (manage.py quiz_reminders).
+    reminded_at = models.DateTimeField("Eslatma yuborilgan", null=True, blank=True)
     send_error = models.CharField("Yuborish xatosi", max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

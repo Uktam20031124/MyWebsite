@@ -136,6 +136,15 @@ TELEGRAM_API_HASH = os.environ.get("TELEGRAM_API_HASH", "")
 TELEGRAM_SENDER_ID = int(os.environ.get("TELEGRAM_SENDER_ID") or 7730996406)
 TELEGRAM_SESSION_FILE = os.environ.get("TELEGRAM_SESSION_FILE", BASE_DIR / ".telegram_session")
 
+# Saytning ochiq manzili: fonda ishlaydigan buyruqlar (eslatmalar) havola yasashi uchun.
+SITE_URL = os.environ.get("DARSXONA_SITE_URL", "").rstrip("/")
+# Ochilmagan test haqida eslatma: yuborilgandan shuncha soat o'tgach, faqat kunduzi
+# (mahalliy vaqt bo'yicha [boshi, oxiri) soatlar oralig'ida), har bir havolaga bir marta.
+QUIZ_REMINDER_AFTER_HOURS = int(os.environ.get("DARSXONA_REMINDER_AFTER_HOURS", 3))
+QUIZ_REMINDER_HOURS = (9, 21)
+# Bundan eski jo'natmalar uchun eslatma yuborilmaydi.
+QUIZ_REMINDER_MAX_AGE_DAYS = 3
+
 # Baza zaxirasi (manage.py backup_db): katalog va necha kunlik nusxa saqlanadi.
 BACKUP_DIR = os.environ.get("DARSXONA_BACKUP_DIR", BASE_DIR / "backups")
 BACKUP_KEEP_DAYS = int(os.environ.get("DARSXONA_BACKUP_KEEP_DAYS", 14))
