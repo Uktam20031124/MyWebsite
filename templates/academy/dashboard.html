@@ -142,12 +142,12 @@
               <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
               <div class="grow">
                 <div class="row-title truncate">{{ s.full_name }}</div>
-                <div class="meta">{{ s.group.code }} · ball {{ s.score_avg }} · davomat {{ s.att_pct }}%</div>
+                <div class="meta">{{ s.group.code }}{% if s.score_avg is not None %} · ball {{ s.score_avg }}{% endif %}{% if s.quiz.n %} · test {{ s.quiz.pct }}%{% endif %}{% if s.att_total %} · davomat {{ s.att_pct }}%{% endif %}</div>
               </div>
               <strong class="tabular">{{ s.rating }}</strong>
             </a>
           {% empty %}
-            <div class="empty compact"><p>Reyting yo‘qlamada ball qo‘yilgach paydo bo‘ladi.</p></div>
+            <div class="empty compact"><p>Reyting yo‘qlamada ball qo‘yilgach yoki test yechilgach paydo bo‘ladi.</p></div>
           {% endfor %}
         </div>
       </div>
@@ -157,7 +157,7 @@
     <section class="card" aria-labelledby="risk-h">
       <div class="card-head">
         <h2 id="risk-h">{% icon "alert" 18 %} E’tibor talab qiladi</h2>
-        <span class="meta">davomat &lt; 70% yoki ball &lt; 60</span>
+        <span class="meta">davomat &lt; 70%, ball &lt; 60 yoki oxirgi testlar &lt; 50%</span>
       </div>
       <div class="card-body flush">
         <div class="rows">
@@ -166,9 +166,9 @@
               <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
               <div class="grow">
                 <div class="row-title truncate">{{ s.full_name }}</div>
-                <div class="meta">{{ s.group.code }} · {{ s.att_present }}/{{ s.att_total }} dars{% if s.score_avg is not None %} · ball {{ s.score_avg }}{% endif %}</div>
+                <div class="meta">{{ s.group.code }} · {{ s.risk_reasons|join:" · " }}</div>
               </div>
-              <span class="badge {{ s.att_pct|tone }}">{{ s.att_pct }}%</span>
+              {% if s.quiz.n >= 2 and s.quiz.recent_pct < 50 %}<span class="badge bad" title="Oxirgi testlar">{{ s.quiz.recent_pct }}%</span>{% elif s.att_total %}<span class="badge {{ s.att_pct|tone }}">{{ s.att_pct }}%</span>{% endif %}
             </a>
           {% endfor %}
         </div>

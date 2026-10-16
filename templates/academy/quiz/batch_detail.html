@@ -70,7 +70,7 @@
               {% if a.status == 'active' %}
                 <span class="badge warn">{{ a.get_status_display }}</span>
               {% elif a.sent_at %}
-                <span class="badge info" title="Telegram orqali yuborilgan">Yuborildi · {{ a.sent_at|date:"d.m H:i" }}</span>
+                <span class="badge info" title="Telegram orqali yuborilgan">Yuborildi · {{ a.sent_at|date:"d.m H:i" }}</span>{% if a.reminded_at %}<span class="meta" title="Avtomatik eslatma">eslatildi {{ a.reminded_at|date:"d.m H:i" }}</span>{% endif %}
               {% elif a.send_error %}
                 <span class="badge bad" title="{{ a.send_error }}">Yuborilmadi</span>
                 <span class="meta send-error">{{ a.send_error }}</span>

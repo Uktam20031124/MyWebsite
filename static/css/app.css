@@ -1187,6 +1187,7 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 }
 .score-bars span.absent { background: var(--bad-soft); opacity: 1; }
 .score-bars span.none { background: var(--surface-3); opacity: 1; }
+.score-bars span.low { background: var(--bad); opacity: 0.75; }
 
 /* --- Pagination ---------------------------------------------------------- */
 .pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; border-top: 1px solid var(--border); }

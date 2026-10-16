@@ -288,7 +288,7 @@ class JournalAndExportTests(ViewTestCase):
 
         body = self.client.get(
             reverse("group_journal", args=[self.group.pk]) + "?format=csv").content.decode()
-        self.assertIn("Aliyev Sardor;Keldi (90);Keldi (70);2;2;100;80;86;1", body)
+        self.assertIn("Aliyev Sardor;Keldi (90);Keldi (70);2;2;100;80;;0;86;1", body)
 
     def test_rank_ties_share_place(self):
         from academy.services import JournalCell, JournalRow, rank_rows

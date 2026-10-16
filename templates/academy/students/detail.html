@@ -33,12 +33,12 @@
   <article class="kpi">
     <div class="kpi-top"><span class="kpi-label">Reyting</span><span class="kpi-icon gold">{% icon "trophy" 17 %}</span></div>
     <div class="kpi-value">{{ rating|default_if_none:"—" }}</div>
-    <div class="kpi-foot">ball × 0.7 + davomat × 0.3</div>
+    <div class="kpi-foot">{{ rating_formula }}</div>
   </article>
   <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">Guruh</span><span class="kpi-icon info">{% icon "layers" 17 %}</span></div>
-    <div class="kpi-value" style="font-size:24px"><a href="{{ student.group.get_absolute_url }}">{{ student.group.code }}</a></div>
-    <div class="kpi-foot truncate">{{ student.group.schedule|default:student.group.name }}</div>
+    <div class="kpi-top"><span class="kpi-label">Testlar</span><span class="kpi-icon info">{% icon "target" 17 %}</span></div>
+    <div class="kpi-value">{% if quiz.n %}{{ quiz.pct }}<small>%</small>{% else %}—{% endif %}</div>
+    <div class="kpi-foot">{% if quiz.n %}{{ quiz.n }} ta test · oxirgi 3 tasi: {{ quiz.recent_pct }}%{% else %}hali test yechmagan{% endif %}</div>
   </article>
 </section>
 
@@ -92,7 +92,14 @@
       </div>
     </section>
     <section class="card" aria-labelledby="quiz-h">
-      <div class="card-head"><h2 id="quiz-h">{% icon "target" 18 %} Testlar</h2></div>
+      <div class="card-head"><h2 id="quiz-h">{% icon "target" 18 %} Testlar</h2>{% if quiz.n %}<span class="badge {{ quiz.pct|quiz_tone }}">o‘rtacha {{ quiz.pct }}%</span>{% endif %}</div>
+      {% if quiz.recent|length > 1 %}
+        <div class="card-body" style="padding-bottom:6px">
+          <div class="score-bars" aria-label="Oxirgi testlar natijasi">
+            {% for a in quiz.recent %}<span class="{% if a.percent < 50 %}low{% endif %}" style="height:{{ a.percent|add:4 }}%" title="{{ a.finished_at|date:'d.m' }} · {{ a.quiz.topic.title }} · {{ a.percent }}%"></span>{% endfor %}
+          </div>
+        </div>
+      {% endif %}
       <div class="card-body flush">
         <div class="rows">
           {% for t in quiz_attempts %}

@@ -63,6 +63,8 @@ from .models import (
 )
 from .registrations import approve_existing, approve_new, reject, submit, suggestions
 from .services import (
+    RATING_FORMULA,
+    QuizStats,
     annotate_batches,
     create_quiz_batch,
     dashboard_payload,
@@ -75,6 +77,7 @@ from .services import (
     import_topics,
     lesson_attendance_summary,
     percent,
+    quiz_stats,
     rating,
     sessions_between,
     start_session,
@@ -343,6 +346,8 @@ def group_journal_view(request, pk):
             "Belgilangan",
             "Davomat %",
             "O‘rtacha ball",
+            "Test %",
+            "Testlar soni",
             "Reyting",
             "O‘rin",
         ]
@@ -354,6 +359,8 @@ def group_journal_view(request, pk):
                 row.marked,
                 row.percent,
                 blank_if_none(row.avg_score),
+                blank_if_none(row.quiz.pct),
+                row.quiz.n,
                 blank_if_none(row.rating),
                 blank_if_none(row.rank),
             ]
@@ -369,6 +376,8 @@ def group_journal_view(request, pk):
             "group": group,
             "lessons": lessons,
             "rows": rows,
+            # Dars hali bo'lmasa ham test natijalari jurnalda ko'rinsin.
+            "has_quiz": any(row.quiz.n for row in rows),
             "show_all": show_all,
             "limit": JOURNAL_LIMIT,
         },
@@ -518,7 +527,12 @@ class StudentDetailView(AuthMixin, DetailView):
             ).order_by("-lesson__held_on")[:40]
         )
         ctx["rate"] = rate
-        ctx["rating"] = rating(rate["avg_score"], rate["percent"]) if rate["total"] else None
+        quiz = quiz_stats([self.object.pk], timeline=12).get(self.object.pk, QuizStats())
+        ctx["quiz"] = quiz
+        ctx["rating"] = rating(
+            rate["avg_score"], rate["percent"] if rate["total"] else None, quiz.pct
+        )
+        ctx["rating_formula"] = RATING_FORMULA
         ctx["history"] = history
         ctx["timeline"] = history[:24][::-1]  # baho diagrammasi: eskisidan yangisiga
         ctx["quiz_attempts"] = self.object.quiz_attempts.select_related(

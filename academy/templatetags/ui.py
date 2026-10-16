@@ -50,6 +50,15 @@ def tone(pct) -> str:
 
 
 @register.filter
+def quiz_tone(pct) -> str:
+    """Test foizi uchun ton — test sahifalaridagi bilan bir xil: 80+ ok, 50+ warn."""
+    if pct is None or pct == "":
+        return ""
+    pct = float(pct)
+    return "ok" if pct >= 80 else "warn" if pct >= 50 else "bad"
+
+
+@register.filter
 def weekday_short(day) -> str:
     return _SHORT[day.weekday()]
 

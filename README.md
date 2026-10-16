@@ -69,7 +69,7 @@ Yangi guruh yoki mavzu qo‘shish: `groups.py`/`python.py` ga yozing va `load_sc
 
 Yo‘qlama sahifasida har bir o‘quvchiga darsdagi **ball (0–100)** qo‘yiladi (bo‘sh — baholanmagan).
 Guruh jurnalida avtomatik: o‘rtacha ball, davomat foizi va
-**reyting = o‘rtacha ball × 0.7 + davomat × 0.3**, o‘rinlar (teng reytingga bir xil o‘rin).
+**reyting = ball × 0.5 + test × 0.3 + davomat × 0.2** (test natijasi bo‘lmasa — ball × 0.7 + davomat × 0.3), o‘rinlar (teng reytingga bir xil o‘rin).
 Jurnalni “Excel (CSV)” tugmasi bilan yuklab olish mumkin.
 
 ## Mavzu testlari (Telegram orqali, bir martalik havola)
@@ -185,6 +185,21 @@ Test havolalari faqat Telegram username yoki telefoni bor o‘quvchilarga yubori
    to‘ldiriladi (boshqaning ma’lumotini o‘zgartirib bo‘lmaydi), havolani yangilash/o‘chirish mumkin.
 
 Guruh sahifasida kimlarda ma’lumot yo‘qligi ko‘rinadi; shogirdlar ro‘yxatida “Telegram/telefon yo‘q” filtri bor.
+
+## Test natijalari reytingda va avtomatik Telegram xabarlari
+
+- **Reyting** = ball × 0.5 + **test** × 0.3 + davomat × 0.2 (test bo‘lmasa — ball × 0.7 + davomat × 0.3;
+  davomat yo‘q bo‘lsa — qolganlari o‘z vaznlari nisbatida). Guruh jurnalida “Test” ustuni (dars hali
+  bo‘lmasa ham), CSV’da “Test %”, o‘quvchi kartasida testlar o‘rtachasi va oxirgi testlar grafigi.
+- **Bosh sahifa → E’tibor talab qiladi**: davomat < 70%, ball < 60 yoki **oxirgi 3 test < 50%** (kamida
+  2 ta test) — sababi bilan.
+- **Eslatma** (`manage.py quiz_reminders`, har soat): Telegram’da yuborilgan, lekin 3 soatda ochilmagan
+  havola haqida o‘quvchiga **bitta** eslatma, faqat 09:00–21:00 (Toshkent). Jo‘natma sahifasida “eslatildi”.
+- **Kun yakuni** (`manage.py daily_report`, har kuni 20:00): ustozning “Saqlangan xabarlar”iga — bugun
+  nechta test yechildi, o‘rtacha foiz, mavzular bo‘yicha, 50% dan past olganlar, ochilmagan havolalar,
+  arizalar va Telegram’i yo‘q o‘quvchilar soni. `--dry-run` — faqat ekranga.
+- `.env`: `DARSXONA_SITE_URL=https://...` (eslatmadagi havola uchun), ixtiyoriy
+  `DARSXONA_REMINDER_AFTER_HOURS=3`.
 
 ## Baza zaxirasi (backup)
 
