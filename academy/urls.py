@@ -32,6 +32,13 @@ urlpatterns = [
     path("guruhlar/<int:pk>/aloqa-havola/", views.group_contact_link, name="group_contact_link"),
     # O'quvchi o'z Telegram/telefonini kiritadigan ochiq sahifa (login talab qilinmaydi)
     path("aloqa/<str:token>/", views.contact_self, name="contact_self"),
+    # Ro'yxatdan o'tish arizalari
+    path("arizalar/", views.registrations, name="registrations"),
+    path("arizalar/tasdiqlash/", views.registration_approve_all, name="registration_approve_all"),
+    path("arizalar/<int:pk>/", views.registration_action, name="registration_action"),
+    path("arizalar/havola/<int:pk>/", views.registration_link_action, name="registration_link_action"),
+    # O'quvchi to'ldiradigan ochiq sahifa (login talab qilinmaydi)
+    path("royxat/<str:token>/", views.registration_public, name="registration_public"),
     path("shogirdlar/<int:pk>/", views.StudentDetailView.as_view(), name="student_detail"),
     path("shogirdlar/<int:pk>/tahrir/", views.StudentUpdateView.as_view(), name="student_update"),
     path("shogirdlar/<int:pk>/ochirish/", views.StudentDeleteView.as_view(), name="student_delete"),

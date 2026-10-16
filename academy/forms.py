@@ -3,7 +3,17 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.validators import MaxValueValidator
 from django.db.models import Q
 
-from .models import WEEKDAY_CHOICES, Group, Lesson, Module, Quiz, QuizBatch, Student, Topic
+from .models import (
+    WEEKDAY_CHOICES,
+    Group,
+    Lesson,
+    Module,
+    Quiz,
+    QuizBatch,
+    RegistrationLink,
+    Student,
+    Topic,
+)
 from .services import QUIZ_FORMAT_HELP, parse_quiz, parse_topics
 from .telegram_sender import normalize_phone, normalize_username
 
@@ -368,3 +378,54 @@ class ContactSelfForm(forms.Form):
         if not self.errors and not (data.get("telegram") or data.get("phone")):
             raise forms.ValidationError("Telegram username yoki telefon raqamini kiriting.")
         return data
+
+
+class RegistrationForm(forms.Form):
+    """Ochiq ro'yxatdan o'tish formasi (o'quvchi to'ldiradi)."""
+
+    full_name = forms.CharField(label="Familiya, ism, otasining ismi", max_length=160)
+    phone = forms.CharField(label="Telefon raqami", max_length=40)
+    telegram = forms.CharField(label="Telegram username", max_length=80)
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("label_suffix", "")
+        super().__init__(*args, **kwargs)
+        attrs = {
+            "full_name": {"placeholder": "Aliyev Sardor Akmalovich", "autocomplete": "name"},
+            "phone": {"placeholder": "+998 90 123 45 67", "inputmode": "tel", "autocomplete": "tel"},
+            "telegram": {"placeholder": "@username", "autocomplete": "off", "autocapitalize": "off"},
+        }
+        for name, field in self.fields.items():
+            field.widget.attrs.update(attrs[name], **{"class": "input"})
+
+    def clean_full_name(self):
+        name = " ".join(self.cleaned_data["full_name"].split())
+        if len(name.split()) < 2:
+            raise forms.ValidationError("Familiya va ismingizni to‘liq yozing.")
+        # Hammasi kichik yoki katta harfda yozilgan bo'lsa — "Aliyev Sardor" ko'rinishiga.
+        return name.title() if name.islower() or name.isupper() else name
+
+    def clean_phone(self):
+        value = normalize_phone(self.cleaned_data["phone"])
+        if not value:
+            raise forms.ValidationError("Telefon raqami noto‘g‘ri (masalan, +998 90 123 45 67).")
+        return value
+
+    def clean_telegram(self):
+        value = normalize_username(self.cleaned_data["telegram"])
+        if not value:
+            raise forms.ValidationError(
+                "Username noto‘g‘ri: 5–32 ta lotin harf, raqam yoki “_” (masalan, @ali_2010)."
+            )
+        return value
+
+
+class RegistrationLinkForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = RegistrationLink
+        fields = ["title", "group"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["group"].queryset = Group.objects.filter(status=Group.Status.ACTIVE)
+        self.fields["group"].empty_label = "— guruhsiz (tasdiqlashda tanlanadi) —"

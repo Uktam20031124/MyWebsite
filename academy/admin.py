@@ -12,6 +12,8 @@ from .models import (
     Quiz,
     QuizAttempt,
     QuizBatch,
+    Registration,
+    RegistrationLink,
     Student,
     SyllabusItem,
     Topic,
@@ -152,3 +154,19 @@ class SyllabusItemAdmin(admin.ModelAdmin):
     list_display = ("group", "order", "topic", "status", "taught_on")
     list_filter = ("status", "group")
     list_select_related = ("group", "topic")
+
+
+@admin.register(RegistrationLink)
+class RegistrationLinkAdmin(admin.ModelAdmin):
+    list_display = ("title", "group", "is_active", "created_at")
+    list_filter = ("is_active",)
+    readonly_fields = ("token",)
+
+
+@admin.register(Registration)
+class RegistrationAdmin(admin.ModelAdmin):
+    list_display = ("full_name", "phone", "telegram", "link", "status", "created_at")
+    list_filter = ("status", "link")
+    search_fields = ("full_name", "phone", "telegram")
+    list_select_related = ("link",)
+    readonly_fields = ("ip", "created_at", "reviewed_at")

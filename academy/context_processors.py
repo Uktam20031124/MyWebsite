@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from .models import Group, Lesson, QuizAttempt, Student, Topic
+from .models import Group, Lesson, QuizAttempt, Registration, Student, Topic
 
 
 def nav_counts(request):
@@ -19,5 +19,8 @@ def nav_counts(request):
         "nav_today": today_groups.count(),
         "nav_quiz_open": QuizAttempt.objects.exclude(
             status=QuizAttempt.Status.FINISHED
+        ).count(),
+        "nav_registrations": Registration.objects.filter(
+            status=Registration.Status.PENDING
         ).count(),
     }

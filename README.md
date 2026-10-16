@@ -147,6 +147,21 @@ Production’da havolalar to‘g‘ri domen bilan chiqishi uchun `DJANGO_ALLOWED
    mumkin: xabarlar orasida pauza bor, cheklov bo‘lsa yuborish to‘xtaydi va sabab ko‘rsatiladi.
    O‘quvchilar sizning raqamingizni kontaktga saqlab qo‘ysa, xabarlar ishonchli yetib boradi.
 
+## Ro‘yxatdan o‘tish arizalari (Telegram guruhlari uchun havola)
+
+`Arizalar` bo‘limida har bir Telegram guruhi uchun havola yaratasiz (`/royxat/<kalit>/`) va guruhga
+tashlaysiz. O‘quvchi **F.I.Sh., telefon va Telegram username** yuboradi — ma’lumot bazaga o‘z-o‘zidan
+yozilmaydi, **ariza** bo‘lib keladi (yon menyuda soni, Telegram ulangan bo‘lsa — “Saqlangan xabarlar”ga
+bildirishnoma). Har bir arizada mos o‘quvchi taklif qilinadi:
+
+- **Biriktirish** — mavjud o‘quvchining telefoni va Telegram’i yangilanadi;
+- **Yangi o‘quvchi** — tanlangan guruhga qo‘shiladi (havola guruhi oldindan tanlangan);
+- **Rad etish**.
+
+“Ishonchlilarni tasdiqlash” — ismi yagona o‘quvchiga mos kelganlarni biriktiradi, bazada yo‘q va havolasi
+guruhga bog‘langanlarni yangi o‘quvchi qiladi; qolganlarini siz hal qilasiz. O‘quvchi xato yozsa, xuddi shu
+telefon bilan qayta yuboradi — yangi ariza ochilmaydi, o‘sha yangilanadi. Havolani to‘xtatish/o‘chirish mumkin.
+
 ## O‘quvchilarning Telegram / telefoni
 
 Test havolalari faqat Telegram username yoki telefoni bor o‘quvchilarga yuboriladi. To‘ldirishning ikki yo‘li:

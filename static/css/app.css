@@ -1370,6 +1370,22 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 .contact-self .field { margin-bottom: 14px; }
 .contact-self .field label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
 .contact-self .btn { margin-top: 6px; }
+
+/* Arizalar */
+.reg-link { align-items: flex-start; }
+.reg-link-form { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+.reg-link-form .field label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
+.reg-row { align-items: flex-start; flex-wrap: wrap; }
+.reg-hint { margin-top: 6px; font-size: 13px; color: var(--text-2); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.reg-hint.ok { color: var(--ok); }
+.reg-hint.warn { color: var(--warn); }
+.reg-actions { display: flex; flex-direction: column; gap: 6px; min-width: min(100%, 340px); }
+.reg-actions form { display: flex; gap: 6px; margin: 0; }
+.reg-actions .input { height: 32px; font-size: 13px; flex: 1; min-width: 0; }
+@media (max-width: 760px) {
+  .reg-link-form { grid-template-columns: minmax(0, 1fr); }
+  .reg-actions { width: 100%; }
+}
 @media (max-width: 640px) {
   .topic-tail { grid-column: 2; flex-wrap: wrap; }
 }

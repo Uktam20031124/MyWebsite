@@ -39,6 +39,8 @@ from .forms import (
     ModuleForm,
     QuizForm,
     QuizSendForm,
+    RegistrationForm,
+    RegistrationLinkForm,
     StudentForm,
     TopicForm,
     TopicImportForm,
@@ -52,11 +54,14 @@ from .models import (
     Quiz,
     QuizAttempt,
     QuizBatch,
+    Registration,
+    RegistrationLink,
     Student,
     SyllabusItem,
     Topic,
     new_attempt_token,
 )
+from .registrations import approve_existing, approve_new, reject, submit, suggestions
 from .services import (
     annotate_batches,
     create_quiz_batch,
@@ -1492,6 +1497,166 @@ def contact_self(request, token):
         request,
         "academy/contacts/self.html",
         {"group": group, "form": form, "saved": saved},
+    )
+    response["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
+# --- Ro'yxatdan o'tish arizalari --------------------------------------------
+
+REGISTRATION_LIMIT = 8  # bir IP'dan soatiga shuncha ariza
+
+
+@login_required
+def registrations(request):
+    """Havolalar va arizalar: kutilayotganlarni tekshirib, bazaga qo'shish."""
+    if request.method == "POST":
+        link_form = RegistrationLinkForm(request.POST)
+        if link_form.is_valid():
+            link = link_form.save()
+            messages.success(request, f"“{link.title}” havolasi yaratildi — nusxalab guruhga tashlang.")
+            return redirect(f"{reverse('registrations')}#links")
+    else:
+        link_form = RegistrationLinkForm()
+
+    status = choice_param(request, "status", Registration.Status) or Registration.Status.PENDING
+    pending = Q(registrations__status=Registration.Status.PENDING)
+    links = list(
+        RegistrationLink.objects.select_related("group").annotate(
+            total_n=Count("registrations"), pending_n=Count("registrations", filter=pending)
+        )
+    )
+    for link in links:
+        link.url = request.build_absolute_uri(link.get_absolute_url())
+    regs = list(
+        Registration.objects.filter(status=status).select_related(
+            "link__group", "student__group"
+        )[:300]
+    )
+    if status == Registration.Status.PENDING:
+        for reg in regs:
+            reg.suggested = suggestions(reg)
+            reg.default_group_id = reg.link.group_id if reg.link_id else None
+    counts = dict(Registration.objects.values_list("status").annotate(n=Count("pk")))
+    return render(
+        request,
+        "academy/registrations/list.html",
+        {
+            "link_form": link_form,
+            "links": links,
+            "regs": regs,
+            "status": status,
+            "statuses": [(v, label, counts.get(v, 0)) for v, label in Registration.Status.choices],
+            "groups": Group.objects.filter(status=Group.Status.ACTIVE).order_by("name"),
+            "students": Student.objects.select_related("group").order_by("full_name"),
+            "auto_n": sum(_auto_target(r) is not None for r in regs)
+            if status == Registration.Status.PENDING
+            else 0,
+        },
+    )
+
+
+def _auto_target(reg):
+    """Ishonchli avtomatik qaror: yagona mos o'quvchi → biriktirish; mos yo'q va havola
+    guruhi bor → yangi o'quvchi. Aks holda None (ustoz o'zi hal qiladi)."""
+    suggested = getattr(reg, "suggested", None)
+    if suggested is None:
+        suggested = suggestions(reg)
+    if len(suggested) == 1:
+        return ("attach", suggested[0])
+    if not suggested and reg.link_id and reg.link.group_id:
+        return ("create", reg.link.group)
+    return None
+
+
+@login_required
+@require_POST
+def registration_action(request, pk):
+    reg = get_object_or_404(
+        Registration.objects.select_related("link__group"),
+        pk=pk,
+        status=Registration.Status.PENDING,
+    )
+    action = request.POST.get("action")
+    if action == "reject":
+        reject(reg)
+        messages.info(request, f"{reg.full_name} — ariza rad etildi.")
+    elif action == "attach":
+        student = Student.objects.filter(pk=request.POST.get("student") or 0).first()
+        if student is None:
+            messages.error(request, "Biriktirish uchun o‘quvchini tanlang.")
+        else:
+            approve_existing(reg, student)
+            messages.success(request, f"{student.full_name}: telefon va Telegram yangilandi.")
+    elif action == "create":
+        group = Group.objects.filter(pk=request.POST.get("group") or 0).first()
+        if group is None:
+            messages.error(request, "Yangi o‘quvchi uchun guruhni tanlang.")
+        else:
+            student = approve_new(reg, group)
+            messages.success(request, f"{student.full_name} — {group.name} guruhiga qo‘shildi.")
+    return redirect(reverse("registrations"))
+
+
+@login_required
+@require_POST
+def registration_approve_all(request):
+    """Ishonchli arizalarni bir bosishda tasdiqlash (qolganlari ustozga qoladi)."""
+    attached = created = 0
+    for reg in Registration.objects.filter(status=Registration.Status.PENDING).select_related(
+        "link__group"
+    ):
+        target = _auto_target(reg)
+        if target is None:
+            continue
+        kind, obj = target
+        if kind == "attach":
+            approve_existing(reg, obj)
+            attached += 1
+        else:
+            approve_new(reg, obj)
+            created += 1
+    messages.success(
+        request,
+        f"Tasdiqlandi: {attached} ta mavjud o‘quvchiga biriktirildi, {created} ta yangi qo‘shildi.",
+    )
+    return redirect(reverse("registrations"))
+
+
+@login_required
+@require_POST
+def registration_link_action(request, pk):
+    link = get_object_or_404(RegistrationLink, pk=pk)
+    action = request.POST.get("action")
+    if action == "delete":
+        link.delete()
+        messages.info(request, f"“{link.title}” havolasi o‘chirildi (arizalar saqlanadi).")
+    else:
+        link.is_active = action == "on"
+        link.save(update_fields=["is_active"])
+        state = "yoqildi" if link.is_active else "to‘xtatildi — endi ariza qabul qilmaydi"
+        messages.info(request, f"“{link.title}” havolasi {state}.")
+    return redirect(f"{reverse('registrations')}#links")
+
+
+@never_cache
+def registration_public(request, token):
+    """O'quvchi to'ldiradigan ochiq sahifa (login talab qilinmaydi)."""
+    link = get_object_or_404(RegistrationLink.objects.select_related("group"), token=token)
+    form = RegistrationForm(request.POST or None)
+    done = None
+    if request.method == "POST" and link.is_active:
+        key = f"registration:{client_ip(request)}"
+        if cache.get(key, 0) >= REGISTRATION_LIMIT:
+            form.add_error(None, "Juda ko‘p urinish. Birozdan keyin qayta urinib ko‘ring.")
+        elif form.is_valid():
+            cache.set(key, cache.get(key, 0) + 1, 3600)
+            done, _ = submit(link, ip=client_ip(request) or None, **form.cleaned_data)
+    response = render(
+        request,
+        "academy/registrations/public.html",
+        {"link": link, "form": form, "done": done},
+        status=200 if link.is_active or done else 410,
     )
     response["X-Robots-Tag"] = "noindex, nofollow"
     return response

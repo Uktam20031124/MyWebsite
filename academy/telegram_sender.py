@@ -200,6 +200,23 @@ async def _send_all(client, items: list[Outgoing], delay: float) -> list[Result]
 
 def send_file_to_self(path, caption: str = "", client_factory=None) -> None:
     """Faylni ruxsat etilgan akkauntning "Saqlangan xabarlar"iga yuboradi (zaxira uchun)."""
+
+    async def action(client):
+        await client.send_file("me", str(path), caption=caption, force_document=True)
+
+    _run_on_self(action, client_factory)
+
+
+def send_text_to_self(text: str, client_factory=None) -> None:
+    """Ustozning o'ziga ("Saqlangan xabarlar") qisqa xabar — bildirishnoma uchun."""
+
+    async def action(client):
+        await client.send_message("me", text, link_preview=False)
+
+    _run_on_self(action, client_factory)
+
+
+def _run_on_self(action, client_factory=None) -> None:
     if client_factory is None:
         if not is_configured():
             raise TelegramError("Telegram ulanmagan. " + setup_hint())
@@ -211,7 +228,7 @@ def send_file_to_self(path, caption: str = "", client_factory=None) -> None:
     async def run():
         async with connected(client_factory()) as client:
             await check_account(client)
-            await client.send_file("me", str(path), caption=caption, force_document=True)
+            await action(client)
 
     try:
         asyncio.run(run())

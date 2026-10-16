@@ -65,7 +65,7 @@ def parse_line(raw: str) -> tuple[str, str, str]:
     return name, username, phone
 
 
-def _match(name: str, students: list[Student]) -> list[Student]:
+def match_students(name: str, students: list[Student]) -> list[Student]:
     key = name_key(name)
     if not key:
         return []
@@ -96,7 +96,7 @@ def preview_contacts(text: str, students) -> list[ContactLine]:
         if not name:
             row.error = "Ism yozilmagan"
             continue
-        found = _match(name, students)
+        found = match_students(name, students)
         if not found:
             row.error = "Bunday o‘quvchi topilmadi"
             continue
