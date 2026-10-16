@@ -68,6 +68,13 @@ class Group(models.Model):
     notes = models.TextField("Izoh", blank=True)
     # O'quvchilar o'z Telegram/telefonini kiritadigan ochiq havola kaliti (bo'sh — o'chiq).
     contact_token = models.CharField(max_length=32, blank=True, editable=False, db_index=True)
+    # Guruhning Telegram chati (@username yoki raqamli ID) — haftalik reyting uchun.
+    telegram_chat = models.CharField(
+        "Telegram guruh chati",
+        max_length=100,
+        blank=True,
+        help_text="@guruh_nomi, t.me/guruh_nomi yoki raqamli ID (manage.py telegram_chats).",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -151,6 +158,8 @@ class Student(models.Model):
     )
     joined_at = models.DateField("Qo'shilgan", default=timezone.localdate)
     notes = models.TextField("Izoh", blank=True)
+    # O'quvchining shaxsiy natijalar sahifasi kaliti (/men/<kalit>/); bo'sh — hali yaratilmagan.
+    portal_token = models.CharField(max_length=32, blank=True, editable=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -521,12 +530,19 @@ class Quiz(models.Model):
             self.questions.exclude(pk__in=keep).delete()
 
 
+def question_image_path(instance, filename: str) -> str:
+    """Taxmin qilib bo'lmaydigan nom: quiz/<tasodifiy>.<kengaytma>."""
+    ext = filename.rsplit(".", 1)[-1].lower()[:5] if "." in filename else "bin"
+    return f"quiz/{secrets.token_urlsafe(12)}.{ext}"
+
+
 class Question(models.Model):
     quiz = models.ForeignKey(
         Quiz, on_delete=models.CASCADE, related_name="questions", verbose_name="Test"
     )
     text = models.TextField("Savol")
     order = models.PositiveIntegerField("Tartib", default=0)
+    image = models.FileField("Rasm", upload_to=question_image_path, blank=True)
 
     class Meta:
         ordering = ["order", "id"]
@@ -600,6 +616,17 @@ class QuizBatch(models.Model):
         "Vaqt (daq.)", validators=[MinValueValidator(1), MaxValueValidator(MAX_TIME_LIMIT)]
     )
     created_at = models.DateTimeField("Jo'natilgan", auto_now_add=True)
+    # Belgilangan vaqtda yuborish (manage.py send_scheduled); bo'sh — darhol.
+    scheduled_at = models.DateTimeField("Yuborish vaqti", null=True, blank=True)
+    scheduled_sent_at = models.DateTimeField("Rejali yuborilgan", null=True, blank=True)
+    retake_of = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="retakes",
+        verbose_name="Qayta topshirish (asosiy jo'natma)",
+    )
 
     class Meta:
         ordering = ["-created_at", "-pk"]
@@ -656,6 +683,9 @@ class QuizAttempt(models.Model):
     owner_key = models.CharField(max_length=64, blank=True, editable=False)
     # Boshlanganda bankdan tasodifiy tanlangan savollar (har bir o'quvchida o'zicha).
     question_ids = models.JSONField("Savollar", default=list, blank=True, editable=False)
+    # Test paytida boshqa oyna/ilovaga o'tishlar (ko'chirishga qarshi qayd) — faqat ustozga.
+    leave_count = models.PositiveSmallIntegerField("Chiqib ketishlar", default=0)
+    away_seconds = models.PositiveIntegerField("Tashqarida (s)", default=0)
     answers = models.JSONField("Javoblar", default=dict, blank=True)
     # Yakunlanganda: savollar, variantlar, tanlangani va to'g'ri javob nusxasi — faqat
     # ustoz ko'radi; test keyinchalik tahrirlansa ham natija tahlili o'zgarmaydi.
@@ -756,6 +786,7 @@ class QuizAttempt(models.Model):
             review.append({
                 "id": qid,
                 "text": q.text,
+                "image": q.image.url if q.image else "",
                 "choices": choices,
                 "picked": picked,
                 "is_correct": any(c["correct"] and c["id"] == picked for c in choices),

@@ -44,4 +44,41 @@
     </div>
   </aside>
 </div>
+
+{% if quality %}
+<section class="card" style="margin-top:18px" id="savollar" aria-labelledby="quality-h">
+  <div class="card-head">
+    <div>
+      <h2 id="quality-h">{% icon "target" 18 %} Savollar: statistika va rasmlar</h2>
+      <div class="meta">Necha foizi to‘g‘ri yechgani (kamida {{ min_answers }} ta javobdan keyin baholanadi){% if hard_n or easy_n %} · {% if hard_n %}<strong class="q-hard-text">{{ hard_n }} ta juda qiyin</strong>{% endif %}{% if hard_n and easy_n %}, {% endif %}{% if easy_n %}{{ easy_n }} ta juda oson{% endif %}{% endif %}</div>
+    </div>
+  </div>
+  <div class="card-body flush">
+    <div class="rows">
+      {% for r in quality %}
+        <div class="row q-quality {{ r.flag }}" id="q{{ r.question.pk }}">
+          <span class="q-n">{{ forloop.counter }}</span>
+          <div class="grow">
+            <div class="row-title">{{ r.question.title }}</div>
+            {% if r.question.code %}<pre class="quiz-code">{{ r.question.code }}</pre>{% endif %}
+            <div class="meta">
+              {% if r.asked %}{{ r.asked }} marta tushgan · <strong>{{ r.pct }}%</strong> to‘g‘ri{% else %}hali hech kimga tushmagan{% endif %}
+              {% if r.flag == 'hard' %} · <span class="badge bad">Juda qiyin — matnini tekshiring</span>{% elif r.flag == 'easy' %} · <span class="badge info">Juda oson</span>{% endif %}
+            </div>
+            {% if r.question.image %}<img class="quiz-image" src="{{ r.question.image.url }}" alt="{{ forloop.counter }}-savol rasmi" loading="lazy">{% endif %}
+          </div>
+          <form class="q-image-form" method="post" enctype="multipart/form-data" action="{% url 'quiz_question_image' r.question.pk %}" data-turbo="false">
+            {% csrf_token %}
+            {% if r.question.image %}
+              <button class="btn xs danger-ghost" type="submit" name="action" value="remove" data-confirm="Rasm o‘chirilsinmi?">{% icon "trash" 13 %} Rasmni o‘chirish</button>
+            {% else %}
+              <label class="btn xs soft q-file">{% icon "upload" 13 %} Rasm qo‘shish<input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif" data-autosubmit-file></label>
+            {% endif %}
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
 {% endblock %}

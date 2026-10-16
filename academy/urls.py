@@ -32,6 +32,14 @@ urlpatterns = [
     path("guruhlar/<int:pk>/aloqa-havola/", views.group_contact_link, name="group_contact_link"),
     # O'quvchi o'z Telegram/telefonini kiritadigan ochiq sahifa (login talab qilinmaydi)
     path("aloqa/<str:token>/", views.contact_self, name="contact_self"),
+    path("shogirdlar/<int:pk>/sahifa/", views.student_portal_action, name="student_portal_action"),
+    path("shogirdlar/<int:pk>/sertifikat/", views.student_certificate, name="student_certificate"),
+    path("shogirdlar/<int:pk>/sertifikat/yuborish/", views.student_certificate_send, name="student_certificate_send"),
+    path("guruhlar/<int:pk>/sahifalar/", views.group_portal_send, name="group_portal_send"),
+    path("guruhlar/<int:pk>/reyting/", views.group_leaderboard_send, name="group_leaderboard_send"),
+    path("guruhlar/<int:pk>/telegram-chat/", views.group_telegram_chat, name="group_telegram_chat"),
+    # O'quvchining shaxsiy sahifasi (login talab qilinmaydi, maxfiy havola)
+    path("men/<str:token>/", views.student_portal, name="student_portal"),
     # Ro'yxatdan o'tish arizalari
     path("arizalar/", views.registrations, name="registrations"),
     path("arizalar/tasdiqlash/", views.registration_approve_all, name="registration_approve_all"),
@@ -68,7 +76,11 @@ urlpatterns = [
     path("testlar/jonatish/", views.quiz_send, name="quiz_send"),
     path("testlar/<int:pk>/", views.quiz_batch_detail, name="quiz_batch"),
     path("testlar/natija/<int:pk>/", views.quiz_attempt_review, name="quiz_attempt_review"),
+    path("savollar/<int:pk>/rasm/", views.quiz_question_image, name="quiz_question_image"),
+    # Savol rasmlari (test sahifasi login'siz ochiladi)
+    path("media/<path:path>", views.media_file, name="media_file"),
     path("testlar/<int:pk>/yuborish/", views.quiz_batch_send, name="quiz_batch_send"),
+    path("testlar/<int:pk>/qayta/", views.quiz_batch_retake, name="quiz_batch_retake"),
     path("testlar/<int:pk>/ochirish/", views.QuizBatchDeleteView.as_view(), name="quiz_batch_delete"),
     path("test-havola/<int:pk>/yangilash/", views.quiz_attempt_renew, name="quiz_attempt_renew"),
     # O'quvchi uchun ochiq test sahifasi (login talab qilinmaydi)

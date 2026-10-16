@@ -95,6 +95,8 @@
   // --- Filtr o'zgarganda formani yuborish ----------------------------------
   document.addEventListener("change", (e) => {
     if (e.target.matches("[data-autosubmit]")) e.target.form?.requestSubmit();
+    // Fayl tanlanishi bilan yuklash (savol rasmi).
+    else if (e.target.matches("[data-autosubmit-file]") && e.target.files.length) e.target.form?.submit();
   });
 
   // --- Buyruqlar paneli (Ctrl+K, /) -----------------------------------------

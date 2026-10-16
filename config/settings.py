@@ -105,6 +105,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# Yuklangan fayllar (savol rasmlari). Django o'zi beradi (/media/quiz/...), nginx shart emas.
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.environ.get("DARSXONA_MEDIA_DIR", BASE_DIR / "media")
+QUIZ_IMAGE_MAX_BYTES = 3 * 1024 * 1024
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {

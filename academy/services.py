@@ -858,3 +858,31 @@ def hardest_questions(attempts, limit: int = 10) -> list[dict]:
         rows.append(s)
     rows.sort(key=lambda s: (-s["pct_wrong"], -s["wrong"]))
     return rows[:limit]
+
+
+# Savollar sifati: kamida shuncha javobdan keyin baholanadi.
+QUALITY_MIN_ANSWERS = 5
+QUALITY_HARD_BELOW = 30  # shundan kam to'g'ri — juda qiyin yoki noaniq yozilgan
+QUALITY_EASY_FROM = 95  # shundan ko'p to'g'ri — juda oson
+
+
+def question_quality(quiz) -> list[dict]:
+    """Bankdagi har bir savol: necha marta tushgan, necha foizi to'g'ri, belgi."""
+    seen: dict[int, list[int]] = defaultdict(lambda: [0, 0])
+    for attempt in quiz.attempts.filter(status=QuizAttempt.Status.FINISHED):
+        for item in attempt.review():
+            if not item.get("missing"):
+                seen[item["id"]][0] += 1
+                seen[item["id"]][1] += item["is_correct"]
+    rows = []
+    for q in quiz.questions.all():
+        asked, correct = seen.get(q.pk, (0, 0))
+        pct = percent(correct, asked) if asked else None
+        flag = ""
+        if asked >= QUALITY_MIN_ANSWERS:
+            if pct < QUALITY_HARD_BELOW:
+                flag = "hard"
+            elif pct >= QUALITY_EASY_FROM:
+                flag = "easy"
+        rows.append({"question": q, "asked": asked, "pct": pct, "flag": flag})
+    return rows

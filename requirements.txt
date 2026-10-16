@@ -4,3 +4,4 @@ python-dotenv>=1.0
 whitenoise>=6.7
 telethon>=1.36,<2
 qrcode>=7.4
+reportlab>=4.0

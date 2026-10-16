@@ -3,7 +3,7 @@
 {% block title %}{{ topic.title }} · Test · Darsxona{% endblock %}
 {% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>{% if batch.lesson %}<a href="{{ batch.lesson.get_absolute_url }}">{{ batch.lesson.group.name }} · {{ batch.lesson.held_on|date:"d.m.Y" }}</a>{% elif batch.group %}<a href="{{ batch.group.get_absolute_url }}">{{ batch.group.name }}</a>{% else %}Bir nechta guruh{% endif %}<span class="sep">·</span>{{ batch.created_at|date:"d.m.Y H:i" }}{% endblock %}
 {% block heading %}{{ topic.title }}{% endblock %}
-{% block subheading %}<p class="page-sub">{% icon "target" 15 %} {{ batch.question_count }} ta savol · {% icon "clock" 15 %} {{ batch.time_limit_minutes }} daqiqa · har bir havola faqat bir marta ishlaydi</p>{% endblock %}
+{% block subheading %}<p class="page-sub">{% icon "target" 15 %} {{ batch.question_count }} ta savol · {% icon "clock" 15 %} {{ batch.time_limit_minutes }} daqiqa · har bir havola faqat bir marta ishlaydi{% if batch.retake_of %} · {% icon "undo" 15 %} <a href="{{ batch.retake_of.get_absolute_url }}">qayta topshirish</a>{% endif %}</p>{% endblock %}
 {% block actions %}
 {% if telegram_ready and unsent_n %}
   <form method="post" action="{% url 'quiz_batch_send' batch.pk %}">
@@ -11,10 +11,22 @@
     <button class="btn primary" type="submit">{% icon "send" 16 %} Telegramda yuborish ({{ unsent_n }})</button>
   </form>
 {% endif %}
+{% if retake_n %}
+  <form method="post" action="{% url 'quiz_batch_retake' batch.pk %}">
+    {% csrf_token %}
+    <button class="btn soft" type="submit" data-confirm="{{ retake_n }} ta o‘quvchiga ({{ retake_below }}% dan past) shu mavzu bo‘yicha yangi test jo‘natilsinmi? Savollar boshqacha tushadi.">{% icon "undo" 16 %} Qayta topshirish ({{ retake_n }})</button>
+  </form>
+{% endif %}
 <a class="btn {% if telegram_ready and unsent_n %}soft{% else %}primary{% endif %}" href="{{ again_url }}">{% icon "plus" 16 %} Yana jo‘natish</a>
 {% endblock %}
 
 {% block content %}
+{% if batch.scheduled_at and not batch.scheduled_sent_at %}
+<div class="callout next" style="margin-bottom:16px">
+  <span class="callout-icon">{% icon "clock" 18 %}</span>
+  <div class="grow"><strong>Havolalar {{ batch.scheduled_at|date:"d.m.Y H:i" }} da avtomatik yuboriladi.</strong><div class="meta">Hozir yubormoqchi bo‘lsangiz — “Telegramda yuborish” tugmasi.</div></div>
+</div>
+{% endif %}
 <section class="kpis">
   <article class="kpi">
     <div class="kpi-top"><span class="kpi-label">Jo‘natildi</span><span class="kpi-icon info">{% icon "send" 17 %}</span></div>
@@ -62,7 +74,7 @@
           </a>
           <div class="quiz-actions">
             {% if a.status == 'finished' %}
-              {% if a.timed_out %}<span class="meta">vaqt tugadi</span>{% endif %}
+              {% if a.timed_out %}<span class="meta">vaqt tugadi</span>{% endif %}{% if a.leave_count %}<span class="badge warn" title="Test oynasidan chiqib ketgan: {{ a.leave_count }} marta, jami {{ a.away_seconds }} s">⚠️ {{ a.leave_count }}</span>{% endif %}
               <span class="meta">{{ a.finished_at|date:"d.m H:i" }}</span>
               <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
               <a class="btn xs soft" href="{% url 'quiz_attempt_review' a.pk %}" title="Qaysi savollarda xato qilgani (faqat siz ko‘rasiz)">{% icon "search" 13 %} Javoblar</a>

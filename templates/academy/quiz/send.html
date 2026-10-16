@@ -86,6 +86,12 @@
             {{ form.time_limit_minutes.errors }}
           </div>
           <p class="meta send-pace" data-quiz-pace data-count="{{ form.question_count.id_for_label }}" data-time="{{ form.time_limit_minutes.id_for_label }}" aria-live="polite"></p>
+          <div class="field{% if form.scheduled_at.errors %} has-error{% endif %}" style="margin-top:16px">
+            <label for="{{ form.scheduled_at.id_for_label }}">{{ form.scheduled_at.label }} <span class="meta">(ixtiyoriy)</span></label>
+            {{ form.scheduled_at }}
+            <div class="hint">{{ form.scheduled_at.help_text }}</div>
+            {{ form.scheduled_at.errors }}
+          </div>
         </div>
 
         <div class="prose-block">

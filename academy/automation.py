@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from . import telegram_sender as tg
 from .contacts import has_contact
-from .models import QuizAttempt, Registration, Student
+from .models import QuizAttempt, QuizBatch, Registration, Student
 from .services import percent
 
 
@@ -135,3 +135,41 @@ def daily_report(day=None) -> str:
     if settings.SITE_URL:
         lines.append(f"\n{settings.SITE_URL}/testlar/")
     return "\n".join(lines)
+
+
+def send_scheduled(now=None, sender=None) -> ReminderResult:
+    """Vaqti kelgan rejalashtirilgan jo'natmalar: hali yuborilmagan havolalarni yuboradi."""
+    from .views import quiz_message  # xabar matni bitta joyda
+
+    now = now or timezone.now()
+    batches = list(
+        QuizBatch.objects.filter(scheduled_at__lte=now, scheduled_sent_at__isnull=True)
+    )
+    if not batches:
+        return ReminderResult()
+    if not settings.SITE_URL:
+        return ReminderResult(skipped="DARSXONA_SITE_URL sozlanmagan")
+    attempts = list(
+        QuizAttempt.objects.filter(
+            batch__in=batches, status=QuizAttempt.Status.PENDING, sent_at__isnull=True
+        ).select_related("student", "quiz__topic", "batch")
+    )
+    outcome = ReminderResult()
+    if attempts:
+        items = []
+        for a in attempts:
+            username, phone = tg.recipient_of(a.student)
+            link = settings.SITE_URL + a.get_absolute_url()
+            items.append(tg.Outgoing(a.pk, username, phone, a.student.full_name, quiz_message(link, a)))
+        by_pk = {a.pk: a for a in attempts}
+        for r in (sender or tg.send_messages)(items):
+            attempt = by_pk[r.key]
+            if r.ok:
+                attempt.sent_at, attempt.send_error = now, ""
+                outcome.sent += 1
+            else:
+                attempt.send_error = r.error[:255]
+                outcome.failed += 1
+            attempt.save(update_fields=["sent_at", "send_error"])
+    QuizBatch.objects.filter(pk__in=[b.pk for b in batches]).update(scheduled_sent_at=now)
+    return outcome
