@@ -7,6 +7,9 @@
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}Darsxona{% endblock %}</title>
   {% include "academy/includes/head.html" %}
+  {# Turbo: havola va formalar sahifani to'liq qayta yuklamasdan ochiladi (faqat <body> almashadi). #}
+  <script src="{% static 'vendor/turbo-8.0.12.umd.js' %}" defer data-turbo-track="reload"></script>
+  <script src="{% static 'js/app.js' %}" defer data-turbo-track="reload"></script>
 </head>
 <body>
 {% include "academy/includes/icons.html" %}
@@ -71,8 +74,8 @@
         <span data-theme-icon="light">{% icon "moon" %}</span><span data-theme-icon="dark" hidden>{% icon "sun" %}</span>
         <span data-theme-label>Tungi rejim</span>
       </button>
-      {% if request.user.is_staff %}<a class="side-btn" href="{% url 'admin:index' %}">{% icon "shield" %} Admin panel</a>{% endif %}
-      <form method="post" action="{% url 'logout' %}">
+      {% if request.user.is_staff %}<a class="side-btn" href="{% url 'admin:index' %}" data-turbo="false">{% icon "shield" %} Admin panel</a>{% endif %}
+      <form method="post" action="{% url 'logout' %}" data-turbo="false">
         {% csrf_token %}
         <button class="side-btn" type="submit">{% icon "logout" %} Chiqish</button>
       </form>
@@ -143,11 +146,9 @@
       {"title": "Yangi shogird qo‘shish", "meta": "Amal", "icon": "plus", "url": "{% url 'student_create' %}"},
       {"title": "Yangi guruh yaratish", "meta": "Amal", "icon": "plus", "url": "{% url 'group_create' %}"},
       {"title": "Mavzularni import qilish", "meta": "Amal", "icon": "upload", "url": "{% url 'topic_import' %}"},
-      {"title": "Shogirdlar ro‘yxatini yuklab olish (CSV)", "meta": "Amal", "icon": "download", "url": "{% url 'student_export' %}"}
+      {"title": "Shogirdlar ro‘yxatini yuklab olish (CSV)", "meta": "Amal", "icon": "download", "url": "{% url 'student_export' %}", "download": true}
     ]
   </script>
 </dialog>
-
-<script src="{% static 'js/app.js' %}" defer></script>
 </body>
 </html>{% endwith %}

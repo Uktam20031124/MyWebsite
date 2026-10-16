@@ -1390,6 +1390,9 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
   .topic-tail { grid-column: 2; flex-wrap: wrap; }
 }
 
+/* Turbo: sahifa yuklanayotganini ko'rsatuvchi chiziq (to'liq refresh o'rniga) */
+.turbo-progress-bar { height: 3px; background: var(--accent); }
+
 /* --- Moslashuv ----------------------------------------------------------- */
 @media (max-width: 1200px) {
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }

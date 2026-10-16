@@ -5,7 +5,7 @@
 {% block heading %}Shogirdlar{% endblock %}
 {% block actions %}
 <a class="btn soft" href="{% url 'contacts_import' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "send" 16 %} Telegram kiritish</a>
-<a class="btn soft" href="{% url 'student_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">{% icon "download" 16 %} CSV</a>
+<a class="btn soft" data-turbo="false" href="{% url 'student_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">{% icon "download" 16 %} CSV</a>
 <a class="btn primary" href="{% url 'student_create' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "plus" 16 %} Yangi shogird</a>
 {% endblock %}
 

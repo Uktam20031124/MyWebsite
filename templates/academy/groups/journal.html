@@ -11,7 +11,7 @@
   <a class="btn ghost" href="{% url 'group_journal' group.pk %}?all=1">Barcha darslar</a>
 {% endif %}
 <button class="btn soft" type="button" onclick="window.print()">{% icon "print" 16 %} Chop etish</button>
-<a class="btn primary" href="{% url 'group_journal' group.pk %}?format=csv">{% icon "download" 16 %} Excel (CSV)</a>
+<a class="btn primary" data-turbo="false" href="{% url 'group_journal' group.pk %}?format=csv">{% icon "download" 16 %} Excel (CSV)</a>
 {% endblock %}
 
 {% block content %}
