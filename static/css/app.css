@@ -1393,6 +1393,42 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 /* Turbo: sahifa yuklanayotganini ko'rsatuvchi chiziq (to'liq refresh o'rniga) */
 .turbo-progress-bar { height: 3px; background: var(--accent); }
 
+/* Test javoblari tahlili (faqat ustoz) */
+.review-list { display: flex; flex-direction: column; gap: 12px; }
+.review-item { padding: 16px 20px; border-left: 4px solid var(--border); }
+.review-item.ok { border-left-color: var(--ok); }
+.review-item.bad { border-left-color: var(--bad); }
+.review-item.skip { border-left-color: var(--warn); }
+.review-head { display: flex; gap: 12px; align-items: flex-start; }
+.review-head .grow { flex: 1; min-width: 0; }
+.review-head .q-n {
+  display: inline-grid; place-items: center; flex: none; width: 26px; height: 26px;
+  border-radius: 8px; background: var(--surface-3); color: var(--text-2); font-size: 13px;
+}
+.review-head .quiz-code { margin: 10px 0 0; }
+.review-choices { list-style: none; margin: 12px 0 0 38px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.review-choices li {
+  display: flex; gap: 10px; align-items: center;
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r); font-size: 14.5px;
+}
+.review-choices li.correct { border-color: var(--ok); background: var(--ok-soft); }
+.review-choices li.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.review-mark { width: 16px; flex: none; display: inline-grid; place-items: center; }
+.review-choices li .grow { flex: 1; min-width: 0; }
+.review-choices li .review-tag { flex: none; }
+.review-choices li.correct .review-mark { color: var(--ok); }
+.review-choices li.wrong .review-mark { color: var(--bad); }
+.review-tag { font-size: 12px; font-weight: 600; color: var(--bad); }
+.review-tag.ok { color: var(--ok); }
+.hard-row { align-items: flex-start; }
+.hard-pct { flex: none; min-width: 48px; text-align: center; padding: 4px 8px; border-radius: 9px; font-weight: 700; font-size: 14px; }
+.hard-pct.bad { background: var(--bad-soft); color: var(--bad); }
+.hard-pct.warn { background: var(--warn-soft); color: var(--warn); }
+.hard-row .quiz-code { margin: 8px 0; }
+@media (max-width: 640px) {
+  .review-choices { margin-left: 0; }
+}
+
 /* --- Moslashuv ----------------------------------------------------------- */
 @media (max-width: 1200px) {
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }

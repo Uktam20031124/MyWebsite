@@ -748,3 +748,46 @@ def annotate_batches(qs):
         # GROUP BY so'rovida Meta.ordering qo'llanmaydi — tartib aniq ko'rsatiladi.
         .order_by("-created_at", "-pk")
     )
+
+
+def hardest_questions(attempts, limit: int = 10) -> list[dict]:
+    """Jo'natmadagi yakunlangan testlar bo'yicha eng ko'p xato qilingan savollar.
+
+    Har bir savol uchun: necha kishiga tushgan, nechtasi xato/javobsiz, to'g'ri javob
+    va eng ko'p tanlangan noto'g'ri variant — mavzuning qaysi joyini qayta tushuntirish
+    kerakligini ko'rsatadi.
+    """
+    stats: dict = {}
+    for attempt in attempts:
+        for item in attempt.review():
+            if item.get("missing"):
+                continue
+            s = stats.setdefault(
+                item["id"],
+                {
+                    "title": item["title"],
+                    "code": item["code"],
+                    "correct_text": item["correct_text"],
+                    "asked": 0,
+                    "wrong": 0,
+                    "unanswered": 0,
+                    "wrong_picks": defaultdict(int),
+                },
+            )
+            s["asked"] += 1
+            if not item["is_correct"]:
+                s["wrong"] += 1
+                if item["answered"]:
+                    s["wrong_picks"][item["picked_text"]] += 1
+                else:
+                    s["unanswered"] += 1
+    rows = []
+    for s in stats.values():
+        picks = sorted(s.pop("wrong_picks").items(), key=lambda kv: -kv[1])
+        if not s["wrong"]:
+            continue
+        s["top_wrong"], s["top_wrong_n"] = picks[0] if picks else ("", 0)
+        s["pct_wrong"] = percent(s["wrong"], s["asked"])
+        rows.append(s)
+    rows.sort(key=lambda s: (-s["pct_wrong"], -s["wrong"]))
+    return rows[:limit]

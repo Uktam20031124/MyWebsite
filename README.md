@@ -97,7 +97,7 @@ O‘quvchi mavzuni to‘liq o‘zlashtirganini tekshirish uchun:
    saqlanadi, darsga kelganlar avtomatik belgilanadi), **dars sahifasi**, **mavzular ro‘yxati**
    (har bir mavzu yonida), **mavzu sahifasi** va yon menyudagi **Testlar** bo‘limi.
    Har bir shogird bankdan tasodifiy N ta savol oladi; savollar va variantlar tartibi ham har xil.
-3. **Yuborish — faqat ustozning Telegram akkauntidan** (`TELEGRAM_SENDER_ID`, standart: `7365208463`).
+3. **Yuborish — faqat ustozning Telegram akkauntidan** (`TELEGRAM_SENDER_ID`, standart: `7730996406`).
    Havolalar yaratilishi bilan sayt ularni shu akkauntdan har bir shogirdga o‘zi yuboradi: shogird
    kartasidagi Telegram @username orqali, username bo‘lmasa — telefon raqami orqali. Jo‘natma
    sahifasida har bir shogird uchun holat (“Yuborildi”, “Yuborilmadi” + sabab), “Telegramda yuborish”
@@ -112,6 +112,12 @@ O‘quvchi mavzuni to‘liq o‘zlashtirganini tekshirish uchun:
 6. Natijalar jo‘natma sahifasida, “Testlar” bo‘limida (guruh bo‘yicha), dars va mavzu sahifalarida
    (o‘rtacha foiz) va o‘quvchi kartasida ko‘rinadi.
    Ochilmagan havolani “↻” bilan yangisiga almashtirish mumkin (eskisi ishlamay qoladi).
+7. **Javoblar tahlili — faqat ustoz uchun.** O‘quvchi natija sahifasida faqat ballni ko‘radi. Ustoz esa
+   jo‘natma sahifasida har bir o‘quvchi yonidagi **“Javoblar”** orqali har bir savolni, o‘quvchi tanlagan
+   javobni (xato — qizil), to‘g‘ri javobni (yashil) va javobsiz qolganlarni ko‘radi (“Faqat xatolar”
+   filtri, oldingi/keyingi o‘quvchi). Jo‘natma sahifasida — **eng ko‘p xato qilingan savollar** (foiz,
+   to‘g‘ri javob, eng ko‘p tanlangan xato variant). Test yakunlanganda javoblar nusxasi saqlanadi —
+   keyinchalik savollar tahrirlansa ham natija tahlili o‘zgarmaydi.
 
 Production’da havolalar to‘g‘ri domen bilan chiqishi uchun `DJANGO_ALLOWED_HOSTS` va HTTPS sozlangan bo‘lsin.
 
@@ -122,7 +128,7 @@ Production’da havolalar to‘g‘ri domen bilan chiqishi uchun `DJANGO_ALLOWED
    ```bash
    TELEGRAM_API_ID=1234567
    TELEGRAM_API_HASH=0123456789abcdef0123456789abcdef
-   # TELEGRAM_SENDER_ID=7365208463   # standart qiymat
+   # TELEGRAM_SENDER_ID=7730996406   # standart qiymat
    ```
 2. Serverda: `pip install -r requirements.txt`, so‘ng
    ```bash

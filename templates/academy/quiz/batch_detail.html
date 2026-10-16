@@ -65,6 +65,7 @@
               {% if a.timed_out %}<span class="meta">vaqt tugadi</span>{% endif %}
               <span class="meta">{{ a.finished_at|date:"d.m H:i" }}</span>
               <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
+              <a class="btn xs soft" href="{% url 'quiz_attempt_review' a.pk %}" title="Qaysi savollarda xato qilgani (faqat siz ko‘rasiz)">{% icon "search" 13 %} Javoblar</a>
             {% else %}
               {% if a.status == 'active' %}
                 <span class="badge warn">{{ a.get_status_display }}</span>
@@ -96,6 +97,33 @@
     </div>
   </div>
 </section>
+
+{% if hardest %}
+<section class="card" style="margin-top:18px" aria-labelledby="hard-h">
+  <div class="card-head">
+    <h2 id="hard-h">{% icon "alert" 18 %} Eng ko‘p xato qilingan savollar</h2>
+    <span class="meta">Shu mavzuning qaysi joyini qayta tushuntirish kerakligini ko‘rsatadi</span>
+  </div>
+  <div class="card-body flush">
+    <div class="rows">
+      {% for q in hardest %}
+        <div class="row hard-row">
+          <span class="hard-pct {% if q.pct_wrong >= 50 %}bad{% else %}warn{% endif %}" title="Xato qilganlar ulushi">{{ q.pct_wrong }}%</span>
+          <div class="grow">
+            <div class="row-title">{{ q.title }}</div>
+            {% if q.code %}<pre class="quiz-code">{{ q.code }}</pre>{% endif %}
+            <div class="meta">
+              {{ q.asked }} kishidan {{ q.wrong }} tasi xato{% if q.unanswered %} ({{ q.unanswered }} tasi javobsiz){% endif %}
+              · <span class="review-tag ok">to‘g‘ri: {{ q.correct_text }}</span>
+              {% if q.top_wrong_n %}· ko‘p tanlangan xato: «{{ q.top_wrong }}» ({{ q.top_wrong_n }}){% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
 
 <a class="btn danger-ghost sm" href="{% url 'quiz_batch_delete' batch.pk %}" style="margin-top:18px">{% icon "trash" 15 %} Jo‘natmani o‘chirish</a>
 {% endblock %}
