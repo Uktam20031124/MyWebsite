@@ -112,6 +112,11 @@ def filter_students(params, qs=None):
         qs = qs.filter(group_id=group)
     if status in Student.Status.values:
         qs = qs.filter(status=status)
+    contact_missing = Q(telegram__regex=r"^\s*$") & Q(phone__regex=r"^\s*$")
+    if params.get("contact") == "missing":
+        qs = qs.filter(contact_missing)
+    elif params.get("contact") == "has":
+        qs = qs.exclude(contact_missing)
     if q:
         qs = qs.filter(
             Q(full_name__icontains=q)

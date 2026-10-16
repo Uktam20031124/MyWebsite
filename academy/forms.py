@@ -5,6 +5,7 @@ from django.db.models import Q
 
 from .models import WEEKDAY_CHOICES, Group, Lesson, Module, Quiz, QuizBatch, Student, Topic
 from .services import QUIZ_FORMAT_HELP, parse_quiz, parse_topics
+from .telegram_sender import normalize_phone, normalize_username
 
 
 class LoginForm(AuthenticationForm):
@@ -306,3 +307,64 @@ class QuizSendForm(StyledFormMixin, forms.Form):
         count.validators.append(MaxValueValidator(self.bank_size))
         count.widget.attrs.update(min=1, max=self.bank_size, inputmode="numeric")
         self.fields["time_limit_minutes"].widget.attrs.update(inputmode="numeric")
+
+
+class ContactImportForm(StyledFormMixin, forms.Form):
+    """Telegram/telefonlarni ro'yxatdan ommaviy kiritish (ko'rib chiqish → tasdiqlash)."""
+
+    text = forms.CharField(
+        label="Ro‘yxat",
+        widget=forms.Textarea(attrs={"rows": 14, "spellcheck": "false"}),
+    )
+    group = forms.ModelChoiceField(
+        label="Guruh",
+        queryset=Group.objects.order_by("name"),
+        required=False,
+        empty_label="Barcha guruhlar",
+        help_text="Bir xil ismli o‘quvchilar boshqa guruhda bo‘lsa, guruhni tanlang.",
+    )
+
+
+class ContactSelfForm(forms.Form):
+    """O'quvchining o'zi to'ldiradigan ochiq forma (guruh havolasi orqali)."""
+
+    student = forms.ModelChoiceField(
+        label="Ismingiz", queryset=Student.objects.none(), empty_label="— ismingizni tanlang —"
+    )
+    telegram = forms.CharField(label="Telegram username", max_length=80, required=False)
+    phone = forms.CharField(label="Telefon raqami", max_length=40, required=False)
+
+    def __init__(self, *args, students, **kwargs):
+        kwargs.setdefault("label_suffix", "")
+        super().__init__(*args, **kwargs)
+        self.fields["student"].queryset = students
+        self.fields["telegram"].widget.attrs.update(
+            placeholder="@username", autocomplete="off", autocapitalize="off"
+        )
+        self.fields["phone"].widget.attrs.update(
+            placeholder="+998 90 123 45 67", inputmode="tel", autocomplete="tel"
+        )
+        for f in self.fields.values():
+            f.widget.attrs.setdefault("class", "input")
+
+    def clean_telegram(self):
+        raw = self.cleaned_data["telegram"].strip()
+        value = normalize_username(raw)
+        if raw and not value:
+            raise forms.ValidationError(
+                "Username noto‘g‘ri: 5–32 ta lotin harf, raqam yoki “_” (masalan, @ali_2010)."
+            )
+        return value
+
+    def clean_phone(self):
+        raw = self.cleaned_data["phone"].strip()
+        value = normalize_phone(raw)
+        if raw and not value:
+            raise forms.ValidationError("Telefon raqami noto‘g‘ri (masalan, +998 90 123 45 67).")
+        return value
+
+    def clean(self):
+        data = super().clean()
+        if not self.errors and not (data.get("telegram") or data.get("phone")):
+            raise forms.ValidationError("Telegram username yoki telefon raqamini kiriting.")
+        return data

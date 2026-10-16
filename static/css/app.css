@@ -1360,6 +1360,16 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 .send-pace { margin: 12px 0 0; }
 .send-pace.warn { color: var(--warn); }
 .send-error { color: var(--bad); font-size: 12.5px; }
+
+/* Aloqa ma'lumotlari */
+.contact-link { display: flex; gap: 6px; align-items: center; }
+.contact-link .input { flex: 1; min-width: 0; height: 32px; font-size: 12.5px; }
+.contact-link-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.contact-preview tr.error td { background: var(--bad-soft); }
+.contact-preview tr.update td:last-child .badge { white-space: nowrap; }
+.contact-self .field { margin-bottom: 14px; }
+.contact-self .field label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+.contact-self .btn { margin-top: 6px; }
 @media (max-width: 640px) {
   .topic-tail { grid-column: 2; flex-wrap: wrap; }
 }

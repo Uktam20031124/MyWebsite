@@ -147,6 +147,33 @@ Production’da havolalar to‘g‘ri domen bilan chiqishi uchun `DJANGO_ALLOWED
    mumkin: xabarlar orasida pauza bor, cheklov bo‘lsa yuborish to‘xtaydi va sabab ko‘rsatiladi.
    O‘quvchilar sizning raqamingizni kontaktga saqlab qo‘ysa, xabarlar ishonchli yetib boradi.
 
+## O‘quvchilarning Telegram / telefoni
+
+Test havolalari faqat Telegram username yoki telefoni bor o‘quvchilarga yuboriladi. To‘ldirishning ikki yo‘li:
+
+1. **Ommaviy kiritish** (`Shogirdlar → Telegram kiritish`): ro‘yxatni istalgan ko‘rinishda qo‘yasiz —
+   ```text
+   Aliyev Sardor — @sardor_a — +998 90 123 45 67
+   2) Karimova Nigina, t.me/nigina
+   ```
+   Ism-familiya tartibi va qisqartma muhim emas; har bir qator ko‘rsatiladi (yangilanadi / o‘zgarishsiz /
+   topilmadi / bir nechta mos), tasdiqlagandan keyingina saqlanadi.
+2. **O‘quvchi o‘zi to‘ldiradi** (`Guruh → Telegram ma’lumotlari → Havola yaratish`): havolani guruh
+   chatiga tashlaysiz, o‘quvchi ismini tanlab username/telefonini kiritadi. Faqat bo‘sh maydonlar
+   to‘ldiriladi (boshqaning ma’lumotini o‘zgartirib bo‘lmaydi), havolani yangilash/o‘chirish mumkin.
+
+Guruh sahifasida kimlarda ma’lumot yo‘qligi ko‘rinadi; shogirdlar ro‘yxatida “Telegram/telefon yo‘q” filtri bor.
+
+## Baza zaxirasi (backup)
+
+```bash
+python manage.py backup_db              # DARSXONA_BACKUP_DIR ga siqilgan nusxa, eski (14 kundan) o'chadi
+python manage.py backup_db --telegram   # + nusxa Telegram "Saqlangan xabarlar"ga (server tashqarisida)
+```
+Nusxa sayt ishlab turganda ham xavfsiz olinadi (SQLite backup API) va yaxlitligi tekshiriladi.
+Serverda systemd timer'lar: har kuni 03:30 — lokal nusxa, har yakshanba 04:00 — Telegram'ga ham.
+Tiklash: `gunzip -c darsxona-YYYYMMDD-HHMMSS.sqlite3.gz > db.sqlite3` (avval xizmatni to‘xtating).
+
 ## Imkoniyatlar
 
 - **Bosh sahifa** — bugungi va navbatdagi darslar, haftalik davomat, yakunlanmagan (sanasi o‘tgan) darslar,
