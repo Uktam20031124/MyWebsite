@@ -12,7 +12,7 @@ from academy.services import create_quiz_batch, parse_quiz
 from . import factories as f
 from .test_quiz import QUIZ_TEXT
 
-SENDER = 7365208463
+SENDER = 7730996406
 
 
 class FakeClient:
@@ -77,7 +77,7 @@ class SenderTests(SimpleTestCase):
 
     def test_only_allowed_account_can_send(self):
         client = FakeClient(me_id=111)
-        with self.assertRaisesMessage(tg.TelegramError, "7365208463"):
+        with self.assertRaisesMessage(tg.TelegramError, "7730996406"):
             self.send([item(1, username="ali")], client)
         self.assertEqual(client.sent, [])
 
@@ -162,13 +162,13 @@ class TelegramViewTests(TestCase):
         send.assert_not_called()
         page = self.client.get(QuizBatch.objects.get().get_absolute_url())
         self.assertContains(page, "Telegram ulanmagan")
-        self.assertContains(page, "7365208463")
+        self.assertContains(page, "7730996406")
         self.assertNotContains(page, "t.me/share")
 
     @mock.patch("academy.telegram_sender.is_configured", return_value=True)
     @mock.patch(
         "academy.telegram_sender.send_messages",
-        side_effect=tg.TelegramError("Ulangan akkaunt (1) ruxsat etilganidan (7365208463) farq qiladi"),
+        side_effect=tg.TelegramError("Ulangan akkaunt (1) ruxsat etilganidan (7730996406) farq qiladi"),
     )
     def test_wrong_account_error_is_shown(self, send, _):
         batch = create_quiz_batch(self.quiz, [self.ali], 3, 5)

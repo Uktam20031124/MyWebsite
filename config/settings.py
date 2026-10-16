@@ -133,7 +133,7 @@ LOGIN_URL = "login"
 # API ID/hash: my.telegram.org → API development tools. Sessiya: manage.py telegram_login.
 TELEGRAM_API_ID = int(os.environ.get("TELEGRAM_API_ID") or 0)
 TELEGRAM_API_HASH = os.environ.get("TELEGRAM_API_HASH", "")
-TELEGRAM_SENDER_ID = int(os.environ.get("TELEGRAM_SENDER_ID") or 7365208463)
+TELEGRAM_SENDER_ID = int(os.environ.get("TELEGRAM_SENDER_ID") or 7730996406)
 TELEGRAM_SESSION_FILE = os.environ.get("TELEGRAM_SESSION_FILE", BASE_DIR / ".telegram_session")
 
 # Baza zaxirasi (manage.py backup_db): katalog va necha kunlik nusxa saqlanadi.

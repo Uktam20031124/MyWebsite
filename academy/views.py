@@ -71,6 +71,7 @@ from .services import (
     group_journal,
     group_progress,
     groups_with_stats,
+    hardest_questions,
     import_topics,
     lesson_attendance_summary,
     percent,
@@ -1212,12 +1213,56 @@ def quiz_batch_detail(request, pk):
             "unsent_n": sum(
                 a.status == QuizAttempt.Status.PENDING and not a.sent_at for a in attempts
             ),
+            "hardest": hardest_questions(finished),
             "telegram_ready": telegram_sender.is_configured(),
             "telegram_hint": telegram_sender.setup_hint(),
             "sender_id": telegram_sender.sender_id(),
             "again_url": _send_url(
                 lesson=batch.lesson_id, group=batch.group_id, topic=batch.quiz.topic_id
             ),
+        },
+    )
+
+
+@login_required
+def quiz_attempt_review(request, pk):
+    """Faqat ustoz uchun: o'quvchining har bir savolga bergan javobi va to'g'ri javob.
+
+    O'quvchining o'zi natija sahifasida faqat ballni ko'radi — xatolar va to'g'ri
+    javoblar unga ko'rsatilmaydi.
+    """
+    attempt = get_object_or_404(
+        QuizAttempt.objects.select_related("student__group", "quiz__topic", "batch"),
+        pk=pk,
+        status=QuizAttempt.Status.FINISHED,
+    )
+    items = attempt.review()
+    wrong = [i for i in items if not i["is_correct"]]
+    others = list(
+        attempt.batch.attempts.filter(status=QuizAttempt.Status.FINISHED)
+        .select_related("student")
+        .order_by("student__full_name")
+    )
+    index = next(i for i, a in enumerate(others) if a.pk == attempt.pk)
+    duration = (
+        int((attempt.finished_at - attempt.started_at).total_seconds())
+        if attempt.started_at and attempt.finished_at
+        else None
+    )
+    return render(
+        request,
+        "academy/quiz/review.html",
+        {
+            "attempt": attempt,
+            "batch": attempt.batch,
+            "topic": attempt.quiz.topic,
+            "items": items,
+            "wrong_n": len(wrong),
+            "unanswered_n": sum(not i["answered"] for i in items),
+            "only_wrong": request.GET.get("xato") == "1",
+            "duration": divmod(duration, 60) if duration is not None else None,
+            "prev": others[index - 1] if index > 0 else None,
+            "next": others[index + 1] if index + 1 < len(others) else None,
         },
     )
 

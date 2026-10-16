@@ -657,6 +657,9 @@ class QuizAttempt(models.Model):
     # Boshlanganda bankdan tasodifiy tanlangan savollar (har bir o'quvchida o'zicha).
     question_ids = models.JSONField("Savollar", default=list, blank=True, editable=False)
     answers = models.JSONField("Javoblar", default=dict, blank=True)
+    # Yakunlanganda: savollar, variantlar, tanlangani va to'g'ri javob nusxasi — faqat
+    # ustoz ko'radi; test keyinchalik tahrirlansa ham natija tahlili o'zgarmaydi.
+    snapshot = models.JSONField("Javoblar tahlili", default=list, blank=True, editable=False)
     started_at = models.DateTimeField("Boshlangan", null=True, blank=True)
     deadline = models.DateTimeField("Tugash vaqti", null=True, blank=True)
     finished_at = models.DateTimeField("Tugagan", null=True, blank=True)
@@ -731,6 +734,47 @@ class QuizAttempt(models.Model):
         qs = self.quiz.questions.all()
         return qs.filter(pk__in=self.question_ids) if self.question_ids else qs
 
+    def build_review(self) -> list[dict]:
+        """O'quvchiga tushgan savollar, variantlar, tanlagani va to'g'ri javob — hozirgi
+        savollar bankidan. Tartib — o'quvchiga berilgan tartib (question_ids)."""
+        question_ids = self.question_ids or list(self.quiz.questions.values_list("pk", flat=True))
+        questions = {
+            q.pk: q for q in Question.objects.filter(pk__in=question_ids).prefetch_related("choices")
+        }
+        review = []
+        for qid in question_ids:
+            picked = _as_int(self.answers.get(str(qid)))
+            q = questions.get(qid)
+            if q is None:
+                # Test yechilayotganda o'chirilgan savol ham umumiy songa kiradi (javobsiz).
+                review.append({"id": qid, "text": "", "missing": True, "choices": [],
+                               "picked": picked, "is_correct": False})
+                continue
+            choices = [{"id": c.pk, "text": c.text, "correct": c.is_correct} for c in q.choices.all()]
+            review.append({
+                "id": qid,
+                "text": q.text,
+                "choices": choices,
+                "picked": picked,
+                "is_correct": any(c["correct"] and c["id"] == picked for c in choices),
+            })
+        return review
+
+    def review(self) -> list[dict]:
+        """Ustoz uchun javoblar tahlili: yakunlanganda saqlangan nusxa (keyinchalik test
+        tahrirlansa ham o'zgarmaydi); eski natijalarda — hozirgi bankdan."""
+        # Nusxa: ko'rsatish uchun qo'shilgan maydonlar bazadagi snapshot'ga tushmasin.
+        items = [dict(item) for item in (self.snapshot or self.build_review())]
+        for item in items:
+            title, _, code = item["text"].partition("\n")
+            item["title"], item["code"] = title, code
+            item["answered"] = item["picked"] is not None
+            item["correct_text"] = next((c["text"] for c in item["choices"] if c["correct"]), "")
+            item["picked_text"] = next(
+                (c["text"] for c in item["choices"] if c["id"] == item["picked"]), ""
+            )
+        return items
+
     def finish(self, answers: dict | None = None, timed_out: bool = False) -> None:
         """Javoblarni baholab, testni yakunlaydi. `answers`: {savol_id: variant_id}."""
         with transaction.atomic():
@@ -740,20 +784,10 @@ class QuizAttempt(models.Model):
                 return
             if answers is not None:
                 attempt.answers = answers
-            question_ids = attempt.question_ids or list(
-                attempt.quiz.questions.values_list("pk", flat=True)
-            )
-            correct_ids = set(
-                Choice.objects.filter(question_id__in=question_ids, is_correct=True).values_list(
-                    "question_id", "pk"
-                )
-            )
-            # Test yechilayotganda o'chirilgan savol ham umumiy songa kiradi (javobsiz).
-            attempt.correct = sum(
-                (qid, _as_int(attempt.answers.get(str(qid)))) in correct_ids
-                for qid in question_ids
-            )
-            attempt.total = len(question_ids)
+            # Baholash va ustoz ko'radigan javoblar tahlili — bitta nusxadan.
+            attempt.snapshot = attempt.build_review()
+            attempt.correct = sum(item["is_correct"] for item in attempt.snapshot)
+            attempt.total = len(attempt.snapshot)
             attempt.status = self.Status.FINISHED
             attempt.finished_at = timezone.now()
             attempt.timed_out = timed_out
