@@ -13,7 +13,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.db import connection, transaction
 from django.db.models import Avg, Count, Q, Sum
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -29,7 +29,10 @@ from django.views.generic import (
 )
 
 from . import telegram_sender
+from .contacts import apply_contacts, has_contact, preview_contacts
 from .forms import (
+    ContactImportForm,
+    ContactSelfForm,
     GroupForm,
     LessonForm,
     LoginForm,
@@ -299,6 +302,11 @@ class GroupDetailView(AuthMixin, DetailView):
             ).filter(free__gt=0),
             next_item=group.next_syllabus_item(),
         )
+        active = [s for s in students if s.status == Student.Status.ACTIVE]
+        ctx["contact_missing"] = [s for s in active if not has_contact(s)]
+        ctx["contact_total"] = len(active)
+        ctx["contact_have"] = len(active) - len(ctx["contact_missing"])
+        ctx["contact_link"] = contact_link(self.request, group) if group.contact_token else ""
         return ctx
 
 
@@ -1386,3 +1394,104 @@ def quiz_submit(request, token):
                 timed_out=request.POST.get("timeout") == "1" or attempt.is_expired(),
             )
     return redirect(attempt.get_absolute_url())
+
+
+# --- Aloqa ma'lumotlari (Telegram / telefon) ---------------------------------
+
+
+@login_required
+def contacts_import(request):
+    """Ro'yxatdan ommaviy kiritish: ko'rib chiqish → tasdiqlash."""
+    initial = {"group": int_param(request, "group")}
+    form = ContactImportForm(request.POST or None, initial=initial)
+    rows = None
+    if request.method == "POST" and form.is_valid():
+        group = form.cleaned_data["group"]
+        students = Student.objects.select_related("group").order_by("full_name")
+        if group:
+            students = students.filter(group=group)
+        rows = preview_contacts(form.cleaned_data["text"], students)
+        if request.POST.get("confirm") == "1":
+            updated = apply_contacts(rows)
+            messages.success(request, f"{updated} ta o‘quvchining aloqa ma’lumotlari yangilandi.")
+            return redirect(f"{reverse('student_list')}?contact=missing")
+    missing = Student.objects.filter(status=Student.Status.ACTIVE)
+    return render(
+        request,
+        "academy/students/contacts_import.html",
+        {
+            "form": form,
+            "rows": rows,
+            "update_n": sum(r.status == "update" for r in rows or []),
+            "error_n": sum(r.status == "error" for r in rows or []),
+            "missing_n": sum(not has_contact(s) for s in missing),
+        },
+    )
+
+
+def contact_link(request, group: Group) -> str:
+    return request.build_absolute_uri(reverse("contact_self", args=[group.contact_token]))
+
+
+@login_required
+@require_POST
+def group_contact_link(request, pk):
+    """Guruhning "o'zi to'ldirish" havolasini yaratish / yangilash / o'chirish."""
+    group = get_object_or_404(Group, pk=pk)
+    if request.POST.get("action") == "off":
+        group.contact_token = ""
+        messages.success(request, "Havola o‘chirildi — endi u ishlamaydi.")
+    else:
+        renew = bool(group.contact_token)
+        group.contact_token = secrets.token_urlsafe(12)
+        messages.success(
+            request,
+            "Yangi havola yaratildi (eskisi ishlamaydi)." if renew else "Havola yaratildi.",
+        )
+    group.save(update_fields=["contact_token"])
+    return redirect(f"{group.get_absolute_url()}#contacts")
+
+
+CONTACT_SELF_LIMIT = 10  # bir IP'dan soatiga shuncha saqlash
+
+
+@never_cache
+def contact_self(request, token):
+    """O'quvchi o'zi Telegram/telefonini kiritadi (login talab qilinmaydi).
+
+    Faqat hali kiritilmagan maydonlar to'ldiriladi — boshqaning ma'lumotini
+    o'zgartirib bo'lmaydi; o'zgartirish ustoz orqali.
+    """
+    if not token:  # o'chirilgan havola (bo'sh kalit) hech qachon mos kelmasin
+        raise Http404
+    group = get_object_or_404(Group, contact_token=token)
+    students = group.students.filter(status=Student.Status.ACTIVE).order_by("full_name")
+    form = ContactSelfForm(request.POST or None, students=students)
+    saved = None
+    if request.method == "POST":
+        key = f"contact-self:{client_ip(request)}"
+        if cache.get(key, 0) >= CONTACT_SELF_LIMIT:
+            form.add_error(None, "Juda ko‘p urinish. Birozdan keyin qayta urinib ko‘ring.")
+        elif form.is_valid():
+            cache.set(key, cache.get(key, 0) + 1, 3600)
+            student = form.cleaned_data["student"]
+            fields, kept = [], []
+            for name in ("telegram", "phone"):
+                value = form.cleaned_data[name]
+                if not value:
+                    continue
+                if getattr(student, name).strip():
+                    kept.append(name)
+                else:
+                    setattr(student, name, value)
+                    fields.append(name)
+            if fields:
+                student.save(update_fields=fields)
+            saved = {"student": student, "fields": fields, "kept": kept}
+    response = render(
+        request,
+        "academy/contacts/self.html",
+        {"group": group, "form": form, "saved": saved},
+    )
+    response["X-Robots-Tag"] = "noindex, nofollow"
+    return response

@@ -66,6 +66,8 @@ class Group(models.Model):
         db_index=True,
     )
     notes = models.TextField("Izoh", blank=True)
+    # O'quvchilar o'z Telegram/telefonini kiritadigan ochiq havola kaliti (bo'sh — o'chiq).
+    contact_token = models.CharField(max_length=32, blank=True, editable=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

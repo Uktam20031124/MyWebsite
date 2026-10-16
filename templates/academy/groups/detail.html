@@ -166,6 +166,46 @@
       </div>
     </section>
 
+    <section class="card" id="contacts" aria-labelledby="ct-h">
+      <div class="card-head">
+        <h2 id="ct-h">{% icon "send" 18 %} Telegram ma’lumotlari</h2>
+        <span class="badge {% if contact_missing %}warn{% else %}ok{% endif %}" title="Telegram yoki telefoni bor / faol o‘quvchilar">{{ contact_have }} / {{ contact_total }}</span>
+      </div>
+      <div class="card-body">
+        {% if contact_missing %}
+          <p class="meta" style="margin:0 0 10px">Test havolalari faqat Telegram username yoki telefoni bor o‘quvchilarga yuboriladi. Yo‘qlar:</p>
+          <div class="chips" style="margin-bottom:14px">
+            {% for s in contact_missing %}<a class="tag" href="{% url 'student_update' s.pk %}">{{ s.full_name }}</a>{% endfor %}
+          </div>
+        {% else %}
+          <p class="meta" style="margin:0 0 14px">Barcha faol o‘quvchilarga test yuborish mumkin.</p>
+        {% endif %}
+
+        <div class="prose-block" style="padding-top:0;border-top:0">
+          <h3>{% icon "link" 15 %} O‘quvchilar o‘zi to‘ldiradigan havola</h3>
+          {% if contact_link %}
+            <div class="contact-link">
+              <input class="input mono" value="{{ contact_link }}" readonly aria-label="Havola">
+              <button class="btn sm soft" type="button" data-copy="{{ contact_link }}">{% icon "link" 14 %} Nusxa</button>
+            </div>
+            <p class="meta" style="margin:8px 0 10px">Guruh chatiga tashlang: har bir o‘quvchi ismini tanlab, username yoki telefonini kiritadi. Mavjud ma’lumot ustidan yozilmaydi.</p>
+            <form method="post" action="{% url 'group_contact_link' group.pk %}" class="contact-link-actions">
+              {% csrf_token %}
+              <button class="btn xs ghost" type="submit" data-confirm="Eski havola ishlamay qoladi. Yangisi yaratilsinmi?">{% icon "undo" 13 %} Yangilash</button>
+              <button class="btn xs danger-ghost" type="submit" name="action" value="off">{% icon "x" 13 %} O‘chirish</button>
+            </form>
+          {% else %}
+            <p class="meta" style="margin:0 0 10px">Havolani guruh chatiga tashlasangiz, o‘quvchilar o‘z Telegram username yoki telefonini o‘zlari kiritadi.</p>
+            <form method="post" action="{% url 'group_contact_link' group.pk %}">
+              {% csrf_token %}
+              <button class="btn sm primary" type="submit">{% icon "plus" 14 %} Havola yaratish</button>
+            </form>
+          {% endif %}
+        </div>
+        <a class="btn sm soft" href="{% url 'contacts_import' %}?group={{ group.pk }}" style="margin-top:12px">{% icon "upload" 14 %} Ro‘yxatdan ommaviy kiritish</a>
+      </div>
+    </section>
+
     <section class="card" aria-labelledby="ls-h">
       <div class="card-head">
         <h2 id="ls-h">{% icon "lesson" 18 %} So‘nggi darslar</h2>

@@ -4,6 +4,7 @@
 {% block kicker %}{% icon "users" 15 %} O‘quv markazi{% endblock %}
 {% block heading %}Shogirdlar{% endblock %}
 {% block actions %}
+<a class="btn soft" href="{% url 'contacts_import' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "send" 16 %} Telegram kiritish</a>
 <a class="btn soft" href="{% url 'student_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">{% icon "download" 16 %} CSV</a>
 <a class="btn primary" href="{% url 'student_create' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "plus" 16 %} Yangi shogird</a>
 {% endblock %}
@@ -27,8 +28,13 @@
       <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
     {% endfor %}
   </select>
+  <select class="input" name="contact" data-autosubmit aria-label="Telegram">
+    <option value="">Telegram: hammasi</option>
+    <option value="missing" {% if request.GET.contact == 'missing' %}selected{% endif %}>Telegram/telefon yo‘q</option>
+    <option value="has" {% if request.GET.contact == 'has' %}selected{% endif %}>Telegram/telefon bor</option>
+  </select>
   <button class="btn soft" type="submit">Qidirish</button>
-  {% if request.GET.q or request.GET.group or request.GET.status %}<a class="btn ghost" href="{% url 'student_list' %}">{% icon "x" 15 %} Tozalash</a>{% endif %}
+  {% if request.GET.q or request.GET.group or request.GET.status or request.GET.contact %}<a class="btn ghost" href="{% url 'student_list' %}">{% icon "x" 15 %} Tozalash</a>{% endif %}
 </form>
 
 <section class="card">

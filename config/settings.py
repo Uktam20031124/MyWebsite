@@ -134,6 +134,10 @@ TELEGRAM_API_HASH = os.environ.get("TELEGRAM_API_HASH", "")
 TELEGRAM_SENDER_ID = int(os.environ.get("TELEGRAM_SENDER_ID") or 7365208463)
 TELEGRAM_SESSION_FILE = os.environ.get("TELEGRAM_SESSION_FILE", BASE_DIR / ".telegram_session")
 
+# Baza zaxirasi (manage.py backup_db): katalog va necha kunlik nusxa saqlanadi.
+BACKUP_DIR = os.environ.get("DARSXONA_BACKUP_DIR", BASE_DIR / "backups")
+BACKUP_KEEP_DAYS = int(os.environ.get("DARSXONA_BACKUP_KEEP_DAYS", 14))
+
 # Brute-force himoyasi: shuncha xato urinishdan keyin IP vaqtincha bloklanadi.
 LOGIN_FAILURE_LIMIT = int(os.environ.get("DJANGO_LOGIN_FAILURE_LIMIT", 5))
 LOGIN_LOCKOUT_SECONDS = int(os.environ.get("DJANGO_LOGIN_LOCKOUT_SECONDS", 15 * 60))

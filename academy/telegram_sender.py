@@ -198,6 +198,29 @@ async def _send_all(client, items: list[Outgoing], delay: float) -> list[Result]
     return results
 
 
+def send_file_to_self(path, caption: str = "", client_factory=None) -> None:
+    """Faylni ruxsat etilgan akkauntning "Saqlangan xabarlar"iga yuboradi (zaxira uchun)."""
+    if client_factory is None:
+        if not is_configured():
+            raise TelegramError("Telegram ulanmagan. " + setup_hint())
+        session = load_session()
+
+        def client_factory():
+            return make_client(session)
+
+    async def run():
+        async with connected(client_factory()) as client:
+            await check_account(client)
+            await client.send_file("me", str(path), caption=caption, force_document=True)
+
+    try:
+        asyncio.run(run())
+    except TelegramError:
+        raise
+    except (OSError, ConnectionError) as exc:
+        raise TelegramError("Telegram serveriga ulanib bo‘lmadi — internetni tekshiring.") from exc
+
+
 def send_messages(
     items: list[Outgoing], client_factory=None, delay: float = SEND_DELAY_SECONDS
 ) -> list[Result]:

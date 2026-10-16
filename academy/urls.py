@@ -28,6 +28,10 @@ urlpatterns = [
     path("shogirdlar/", views.StudentListView.as_view(), name="student_list"),
     path("shogirdlar/yangi/", views.StudentCreateView.as_view(), name="student_create"),
     path("shogirdlar/eksport/", views.student_export, name="student_export"),
+    path("shogirdlar/aloqa/", views.contacts_import, name="contacts_import"),
+    path("guruhlar/<int:pk>/aloqa-havola/", views.group_contact_link, name="group_contact_link"),
+    # O'quvchi o'z Telegram/telefonini kiritadigan ochiq sahifa (login talab qilinmaydi)
+    path("aloqa/<str:token>/", views.contact_self, name="contact_self"),
     path("shogirdlar/<int:pk>/", views.StudentDetailView.as_view(), name="student_detail"),
     path("shogirdlar/<int:pk>/tahrir/", views.StudentUpdateView.as_view(), name="student_update"),
     path("shogirdlar/<int:pk>/ochirish/", views.StudentDeleteView.as_view(), name="student_delete"),
