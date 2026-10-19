@@ -1,9 +1,9 @@
-"""O'quvchilarning Telegram/telefon ma'lumotlarini ommaviy kiritish.
+"""O'quvchilarning Telegram/telefon/email ma'lumotlarini ommaviy kiritish.
 
 Ro'yxat har qanday ko'rinishda bo'lishi mumkin (Excel, Telegram, Word'dan nusxa):
     Aliyev Sardor — @sardor_a — +998 90 123 45 67
-    2) Karimova Nigina, t.me/nigina, 901234567
-Har bir qatordan ism, username va telefon ajratiladi, ism mavjud o'quvchiga moslanadi.
+    2) Karimova Nigina, t.me/nigina, 901234567, nigina@gmail.com
+Har bir qatordan ism, username, telefon va email ajratiladi, ism mavjud o'quvchiga moslanadi.
 """
 
 import re
@@ -13,6 +13,8 @@ from django.db import transaction
 
 from .models import Student
 from .telegram_sender import normalize_phone, normalize_username
+
+_EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
 _TELEGRAM_RE = re.compile(
     r"(?:https?://)?(?:www\.)?(?:t|telegram)\.me/([A-Za-z][A-Za-z0-9_]{3,31})|@([A-Za-z][A-Za-z0-9_]{3,31})"
@@ -36,6 +38,7 @@ class ContactLine:
     name: str = ""
     username: str = ""
     phone: str = ""
+    email: str = ""
     student: Student | None = None
     candidates: list = field(default_factory=list)
     error: str = ""
@@ -50,7 +53,18 @@ class ContactLine:
 
 def parse_line(raw: str) -> tuple[str, str, str]:
     """Qatordan (ism, username, telefon) — topilmagan qismlar bo'sh."""
+    return parse_contact(raw)[:3]
+
+
+def parse_contact(raw: str) -> tuple[str, str, str, str]:
+    """Qatordan (ism, username, telefon, email) — topilmagan qismlar bo'sh."""
     text = _NUMBERING_RE.sub("", raw.strip())
+    # Email birinchi: aks holda "ali@gmail.com" ichidagi "@gmail" username bo'lib qoladi.
+    email = ""
+    em = _EMAIL_RE.search(text)
+    if em:
+        email = em.group().lower()
+        text = text[: em.start()] + " " + text[em.end() :]
     username = ""
     tg = _TELEGRAM_RE.search(text)
     if tg:
@@ -62,7 +76,7 @@ def parse_line(raw: str) -> tuple[str, str, str]:
         phone = normalize_phone(ph.group())
         text = text[: ph.start()] + " " + text[ph.end() :]
     name = " ".join(text.split()).strip(_SEPARATORS)
-    return name, username, phone
+    return name, username, phone, email
 
 
 def match_students(name: str, students: list[Student]) -> list[Student]:
@@ -87,11 +101,11 @@ def preview_contacts(text: str, students) -> list[ContactLine]:
     for n, raw in enumerate(text.splitlines(), start=1):
         if not raw.strip():
             continue
-        name, username, phone = parse_line(raw)
-        row = ContactLine(n, raw.strip(), name, username, phone)
+        name, username, phone, email = parse_contact(raw)
+        row = ContactLine(n, raw.strip(), name, username, phone, email)
         rows.append(row)
-        if not (username or phone):
-            row.error = "Telegram username ham, telefon ham topilmadi"
+        if not (username or phone or email):
+            row.error = "Telegram username, telefon yoki email topilmadi"
             continue
         if not name:
             row.error = "Ism yozilmagan"
@@ -109,6 +123,8 @@ def preview_contacts(text: str, students) -> list[ContactLine]:
             row.changes["telegram"] = (student.telegram, username)
         if phone and normalize_phone(student.phone) != phone:
             row.changes["phone"] = (student.phone, phone)
+        if email and student.email.lower() != email:
+            row.changes["email"] = (student.email, email)
     # Bitta o'quvchi ikki marta yozilgan bo'lsa — oxirgisi hisobga olinadi.
     seen = {}
     for row in rows:
@@ -134,5 +150,10 @@ def apply_contacts(rows: list[ContactLine]) -> int:
     return updated
 
 
-def has_contact(student: Student) -> bool:
+def has_telegram(student: Student) -> bool:
     return bool(normalize_username(student.telegram) or normalize_phone(student.phone))
+
+
+def has_contact(student: Student) -> bool:
+    """Telegram, telefon yoki email — biror kanal orqali yetib borsa bo'ldi."""
+    return has_telegram(student) or bool(student.email)

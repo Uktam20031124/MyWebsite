@@ -173,7 +173,7 @@ class DailyReportTests(QuizInsightTestCase):
         self.assertIn("Qiynalayotgan Bola (S-1) — 25%", text)
         self.assertIn("Ochilmagan havolalar: 1 ta", text)
         self.assertIn("Tekshirilmagan arizalar: 1 ta", text)
-        self.assertIn("Telegram/telefoni yo‘q o‘quvchilar: 1 ta", text)
+        self.assertIn("Telegram/telefon/emaili yo‘q o‘quvchilar: 1 ta", text)
         self.assertIn("https://darsxona.test/testlar/", text)
 
     def test_empty_day_and_command(self):

@@ -70,7 +70,7 @@
           <div class="grow">
             <div class="row-title">{{ r.full_name }}</div>
             <div class="meta">
-              {{ r.phone }} · <a href="https://t.me/{{ r.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">@{{ r.telegram }}</a>
+              {{ r.phone }} · <a href="https://t.me/{{ r.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">@{{ r.telegram }}</a>{% if r.email %} · {{ r.email }}{% endif %}
               · {% if r.link %}{{ r.link.title }}{% else %}havola o‘chirilgan{% endif %} · {{ r.created_at|date:"d.m H:i" }}
             </div>
             {% if status == 'pending' %}

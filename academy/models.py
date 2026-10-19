@@ -149,6 +149,7 @@ class Student(models.Model):
     full_name = models.CharField("F.I.Sh.", max_length=160)
     phone = models.CharField("Telefon", max_length=40, blank=True)
     telegram = models.CharField("Telegram", max_length=80, blank=True)
+    email = models.EmailField("Email", blank=True)
     status = models.CharField(
         "Holat",
         max_length=16,
@@ -619,6 +620,8 @@ class QuizBatch(models.Model):
     # Belgilangan vaqtda yuborish (manage.py send_scheduled); bo'sh — darhol.
     scheduled_at = models.DateTimeField("Yuborish vaqti", null=True, blank=True)
     scheduled_sent_at = models.DateTimeField("Rejali yuborilgan", null=True, blank=True)
+    # Havolalar qaysi kanallar orqali yuboriladi (rejalashtirilgan yuborish uchun): "telegram,email".
+    channels = models.CharField("Kanallar", max_length=32, default="telegram", blank=True)
     retake_of = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,
@@ -700,6 +703,9 @@ class QuizAttempt(models.Model):
     sent_at = models.DateTimeField("Telegramda yuborilgan", null=True, blank=True)
     # Ochilmagan test haqida bitta avtomatik eslatma (manage.py quiz_reminders).
     reminded_at = models.DateTimeField("Eslatma yuborilgan", null=True, blank=True)
+    # Email (Gmail) orqali yuborilgan payt va oxirgi xato (bo'lsa).
+    email_sent_at = models.DateTimeField("Emailga yuborilgan", null=True, blank=True)
+    email_error = models.CharField("Email xatosi", max_length=255, blank=True)
     send_error = models.CharField("Yuborish xatosi", max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -887,6 +893,7 @@ class Registration(models.Model):
     full_name = models.CharField("F.I.Sh.", max_length=160)
     phone = models.CharField("Telefon", max_length=40)
     telegram = models.CharField("Telegram", max_length=80)
+    email = models.EmailField("Email", blank=True)
     status = models.CharField(
         "Holat", max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
     )

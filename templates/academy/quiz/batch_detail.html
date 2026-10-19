@@ -11,20 +11,27 @@
     <button class="btn primary" type="submit">{% icon "send" 16 %} Telegramda yuborish ({{ unsent_n }})</button>
   </form>
 {% endif %}
+{% if email_ready and email_unsent_n %}
+  <form method="post" action="{% url 'quiz_batch_send' batch.pk %}">
+    {% csrf_token %}
+    <input type="hidden" name="channel" value="email">
+    <button class="btn {% if telegram_ready and unsent_n %}soft{% else %}primary{% endif %}" type="submit">{% icon "mail" 16 %} Emailga yuborish ({{ email_unsent_n }})</button>
+  </form>
+{% endif %}
 {% if retake_n %}
   <form method="post" action="{% url 'quiz_batch_retake' batch.pk %}">
     {% csrf_token %}
     <button class="btn soft" type="submit" data-confirm="{{ retake_n }} ta o‘quvchiga ({{ retake_below }}% dan past) shu mavzu bo‘yicha yangi test jo‘natilsinmi? Savollar boshqacha tushadi.">{% icon "undo" 16 %} Qayta topshirish ({{ retake_n }})</button>
   </form>
 {% endif %}
-<a class="btn {% if telegram_ready and unsent_n %}soft{% else %}primary{% endif %}" href="{{ again_url }}">{% icon "plus" 16 %} Yana jo‘natish</a>
+<a class="btn {% if telegram_ready and unsent_n or email_ready and email_unsent_n %}soft{% else %}primary{% endif %}" href="{{ again_url }}">{% icon "plus" 16 %} Yana jo‘natish</a>
 {% endblock %}
 
 {% block content %}
 {% if batch.scheduled_at and not batch.scheduled_sent_at %}
 <div class="callout next" style="margin-bottom:16px">
   <span class="callout-icon">{% icon "clock" 18 %}</span>
-  <div class="grow"><strong>Havolalar {{ batch.scheduled_at|date:"d.m.Y H:i" }} da avtomatik yuboriladi.</strong><div class="meta">Hozir yubormoqchi bo‘lsangiz — “Telegramda yuborish” tugmasi.</div></div>
+  <div class="grow"><strong>Havolalar {{ batch.scheduled_at|date:"d.m.Y H:i" }} da avtomatik yuboriladi.</strong><div class="meta">Kanal: {% if 'telegram' in batch.channels %}Telegram{% endif %}{% if 'telegram' in batch.channels and 'email' in batch.channels %} va {% endif %}{% if 'email' in batch.channels %}email{% endif %}. Hozir yubormoqchi bo‘lsangiz — yuqoridagi “yuborish” tugmasi.</div></div>
 </div>
 {% endif %}
 <section class="kpis">
@@ -52,6 +59,7 @@
     <div class="grow">
       <strong>Telegram ulanmagan — havolalar yuborilmadi.</strong>
       <div class="meta" style="margin-top:4px">Testlar faqat {{ sender_id }} akkauntidan yuboriladi. {{ telegram_hint }}</div>
+      {% if email_ready %}<div class="meta" style="margin-top:4px">Gmail ulangan — havolalarni email orqali yuborishingiz mumkin.</div>{% else %}<div class="meta" style="margin-top:4px">Yoki Gmail orqali: {{ email_hint }}</div>{% endif %}
     </div>
   </div>
 {% endif %}
@@ -59,7 +67,7 @@
 <section class="card quiz-card" id="quiz" aria-labelledby="links-h">
   <div class="card-head">
     <h2 id="links-h">{% icon "users" 18 %} Havolalar va natijalar</h2>
-    <span class="meta">{% icon "send" 13 %} Faqat {{ sender_id }} Telegram akkauntidan yuboriladi</span>
+    <span class="meta">{% icon "send" 13 %} Telegram: faqat {{ sender_id }} akkauntidan{% if email_ready %} · {% icon "mail" 13 %} Email: {{ email_n }} kishida bor{% endif %}</span>
   </div>
   <div class="card-body flush">
     <div class="rows">
@@ -69,7 +77,7 @@
             <span class="avatar sm" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
             <span class="truncate">
               <span class="person-name block truncate">{{ a.student.full_name }}</span>
-              <span class="person-meta">{% if a.username %}@{{ a.username }}{% elif a.phone %}{{ a.phone }}{% else %}Telegram username / telefon yo‘q{% endif %}</span>
+              <span class="person-meta">{% if a.username %}@{{ a.username }}{% elif a.phone %}{{ a.phone }}{% else %}Telegram username / telefon yo‘q{% endif %}{% if a.student.email %} · {{ a.student.email }}{% endif %}</span>
             </span>
           </a>
           <div class="quiz-actions">
@@ -86,14 +94,30 @@
               {% elif a.send_error %}
                 <span class="badge bad" title="{{ a.send_error }}">Yuborilmadi</span>
                 <span class="meta send-error">{{ a.send_error }}</span>
-              {% else %}
+              {% elif not a.email_sent_at %}
                 <span class="badge">Yuborilmagan</span>
+              {% endif %}
+              {% if a.status == 'pending' %}
+                {% if a.email_sent_at %}
+                  <span class="badge info" title="Email orqali yuborilgan">{% icon "mail" 12 %} {{ a.email_sent_at|date:"d.m H:i" }}</span>
+                {% elif a.email_error %}
+                  <span class="badge bad" title="{{ a.email_error }}">{% icon "mail" 12 %} xato</span>
+                  <span class="meta send-error">{{ a.email_error }}</span>
+                {% endif %}
               {% endif %}
               {% if telegram_ready and a.status == 'pending' %}
                 <form method="post" action="{% url 'quiz_batch_send' batch.pk %}">
                   {% csrf_token %}
                   <input type="hidden" name="attempt" value="{{ a.pk }}">
                   <button class="btn xs {% if a.sent_at %}ghost{% else %}primary{% endif %}" type="submit" {% if not a.username and not a.phone %}disabled title="Shogird kartasiga Telegram username yoki telefon kiriting"{% endif %}>{% icon "send" 13 %} {% if a.sent_at or a.send_error %}Qayta yuborish{% else %}Yuborish{% endif %}</button>
+                </form>
+              {% endif %}
+              {% if email_ready and a.status == 'pending' and a.student.email %}
+                <form method="post" action="{% url 'quiz_batch_send' batch.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="attempt" value="{{ a.pk }}">
+                  <input type="hidden" name="channel" value="email">
+                  <button class="btn xs {% if a.email_sent_at %}ghost{% else %}soft{% endif %}" type="submit" title="Email: {{ a.student.email }}">{% icon "mail" 13 %} {% if a.email_sent_at or a.email_error %}Qayta{% else %}Email{% endif %}</button>
                 </form>
               {% endif %}
               <form method="post" action="{% url 'quiz_attempt_renew' a.pk %}">

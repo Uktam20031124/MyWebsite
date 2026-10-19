@@ -31,8 +31,9 @@ from django.views.generic import (
 )
 from django.views.static import serve as static_serve
 
-from . import motivation, telegram_sender
-from .contacts import apply_contacts, has_contact, preview_contacts
+from . import delivery, mailer, motivation, telegram_sender
+from .contacts import apply_contacts, has_contact, has_telegram, preview_contacts
+from .delivery import quiz_message  # noqa: F401 — eski import yo'llari uchun
 from .forms import (
     ContactImportForm,
     ContactSelfForm,
@@ -326,6 +327,7 @@ class GroupDetailView(AuthMixin, DetailView):
         ctx["board"] = board
         ctx["board_text"] = motivation.leaderboard_text(group, board)
         ctx["telegram_ready"] = telegram_sender.is_configured()
+        ctx["email_ready"] = mailer.is_configured()
         return ctx
 
 
@@ -476,13 +478,14 @@ def student_export(request):
             s.group.code,
             s.phone,
             f"@{s.telegram}" if s.telegram else "",
+            s.email,
             labels.get(s.status, s.status),
             f"{s.joined_at:%d.%m.%Y}",
             percent(s.att_present, s.att_total) if s.att_total else "",
         ]
         for s in students_with_stats(filter_students(request.GET))
     )
-    header = ["F.I.Sh.", "Guruh", "Telefon", "Telegram", "Holat", "Qo‘shilgan", "Davomat %"]
+    header = ["F.I.Sh.", "Guruh", "Telefon", "Telegram", "Email", "Holat", "Qo‘shilgan", "Davomat %"]
     stamp = timezone.localdate().isoformat()
     return csv_response(f"shogirdlar-{stamp}.csv", header, rows)
 
@@ -548,7 +551,8 @@ class StudentDetailView(AuthMixin, DetailView):
             motivation.site_url(self.request) + motivation.portal_url(student)
         )
         ctx["course"] = motivation.default_course(student)
-        ctx["can_telegram"] = telegram_sender.is_configured() and has_contact(student)
+        ctx["can_telegram"] = telegram_sender.is_configured() and has_telegram(student)
+        ctx["can_email"] = mailer.is_configured() and bool(student.email)
         ctx["history"] = history
         ctx["timeline"] = history[:24][::-1]  # baho diagrammasi: eskisidan yangisiga
         ctx["quiz_attempts"] = self.object.quiz_attempts.select_related(
@@ -1070,16 +1074,6 @@ def finalize_expired_attempts(qs) -> None:
         attempt.finish(timed_out=True)
 
 
-def quiz_message(link: str, attempt: QuizAttempt) -> str:
-    """Shogirdga Telegram'da boradigan xabar matni."""
-    return (
-        f"Salom, {attempt.student.full_name}!\n"
-        f"“{attempt.quiz.topic.title}” mavzusi bo‘yicha test: {attempt.question_count} ta savol, "
-        f"{attempt.batch.time_limit_minutes} daqiqa.\n\n{link}\n\n"
-        "Havola faqat bir marta ishlaydi — testni tayyor bo‘lganingizda oching."
-    )
-
-
 def attempts_with_links(request, qs) -> list[QuizAttempt]:
     attempts = list(qs.select_related("student", "quiz__topic", "batch"))
     for a in attempts:
@@ -1088,42 +1082,47 @@ def attempts_with_links(request, qs) -> list[QuizAttempt]:
     return attempts
 
 
-def send_quiz_links(request, attempts: list[QuizAttempt]) -> None:
-    """Havolalarni ustozning Telegram akkauntidan yuboradi va natijani xabar qiladi."""
-    items = [
-        telegram_sender.Outgoing(
-            key=a.pk,
-            username=a.username,
-            phone=a.phone,
-            first_name=a.student.full_name,
-            text=quiz_message(a.link, a),
-        )
-        for a in attempts
-    ]
-    try:
-        results = telegram_sender.send_messages(items)
-    except telegram_sender.TelegramError as exc:
-        messages.error(request, f"Yuborilmadi: {exc}")
+def report_outcome(request, out: delivery.Outcome, names_of=lambda a: a.student.full_name) -> None:
+    """Bitta kanal natijasini ustozga xabar qiladi."""
+    if out.error:
+        messages.error(request, f"{out.label}: yuborilmadi — {out.error}")
         return
-    now = timezone.now()
-    by_pk = {a.pk: a for a in attempts}
-    failed = []
-    for r in results:
-        attempt = by_pk[r.key]
-        if r.ok:
-            attempt.sent_at, attempt.send_error = now, ""
-        else:
-            attempt.send_error = r.error[:255]
-            failed.append(attempt.student.full_name)
-        attempt.save(update_fields=["sent_at", "send_error"])
-    sent = len(results) - len(failed)
-    if sent:
-        messages.success(request, f"Telegram orqali {sent} ta shogirdga yuborildi.")
-    if failed:
+    if out.sent:
+        messages.success(request, f"{out.label} orqali {len(out.sent)} ta shogirdga yuborildi.")
+    if out.failed:
         messages.warning(
-            request, f"{len(failed)} ta shogirdga yuborilmadi: " + ", ".join(failed)
-            + ". Sababi ro‘yxatda ko‘rsatilgan."
+            request,
+            f"{out.label}: {len(out.failed)} ta shogirdga yuborilmadi: "
+            + ", ".join(names_of(a) for a, _ in out.failed)
+            + ". Sababi ro‘yxatda ko‘rsatilgan.",
         )
+    if out.no_contact:
+        names = ", ".join(names_of(a) for a in out.no_contact[:5])
+        more = f" va yana {len(out.no_contact) - 5} kishi" if len(out.no_contact) > 5 else ""
+        messages.info(
+            request, f"Emaili kiritilmagan {len(out.no_contact)} ta shogird: {names}{more}."
+        )
+
+
+def ready_channels(request, channels) -> list[str]:
+    """Tanlangan kanallardan ulanganlari; ulanmaganlari haqida ogohlantiradi."""
+    ready = []
+    for channel in delivery.parse_channels(channels):
+        if delivery.is_ready(channel):
+            ready.append(channel)
+        else:
+            messages.warning(
+                request,
+                f"{delivery.CHANNEL_LABELS[channel]} ulanmagan — yuborilmadi. "
+                + delivery.setup_hint(channel),
+            )
+    return ready
+
+
+def send_quiz_links(request, attempts: list[QuizAttempt], channels=(delivery.TELEGRAM,)) -> None:
+    """Havolalarni tanlangan kanallar (Telegram / email) orqali yuboradi va natijani xabar qiladi."""
+    for out in delivery.deliver_links(attempts, channels, link_of=lambda a: a.link):
+        report_outcome(request, out)
 
 
 def _send_url(**params) -> str:
@@ -1233,15 +1232,21 @@ def quiz_send(request):
             f"{batch.question_count} ta savol, {batch.time_limit_minutes} daqiqa.",
         )
         scheduled_at = form.cleaned_data.get("scheduled_at")
+        channels = delivery.parse_channels(form.cleaned_data["channels"])
+        QuizBatch.objects.filter(pk=batch.pk).update(
+            scheduled_at=scheduled_at, channels=",".join(channels)
+        )
         if scheduled_at:
-            QuizBatch.objects.filter(pk=batch.pk).update(scheduled_at=scheduled_at)
+            labels = " va ".join(delivery.CHANNEL_LABELS[c] for c in channels)
             messages.info(
                 request,
-                f"Havolalar {timezone.localtime(scheduled_at):%d.%m %H:%M} da Telegram orqali "
+                f"Havolalar {timezone.localtime(scheduled_at):%d.%m %H:%M} da {labels} orqali "
                 "avtomatik yuboriladi.",
             )
-        elif telegram_sender.is_configured():
-            send_quiz_links(request, attempts_with_links(request, batch.attempts.all()))
+        else:
+            ready = ready_channels(request, channels)
+            if ready:
+                send_quiz_links(request, attempts_with_links(request, batch.attempts.all()), ready)
         return redirect(batch)
 
     if form.is_bound:
@@ -1277,6 +1282,8 @@ def quiz_send(request):
             "rows": rows,
             "has_attendance": bool(attendance),
             "sender_id": telegram_sender.sender_id(),
+            "telegram_ready": telegram_sender.is_configured(),
+            "email_ready": mailer.is_configured(),
             "change_topic_url": _send_url(lesson=lesson and lesson.pk, group=None if lesson else group.pk),
             "count_presets": [n for n in (5, 10, 15, 20) if n <= form.bank_size],
             "time_presets": [5, 10, 15, 20, 30],
@@ -1325,11 +1332,20 @@ def quiz_batch_detail(request, pk):
             "unsent_n": sum(
                 a.status == QuizAttempt.Status.PENDING and not a.sent_at for a in attempts
             ),
+            "email_unsent_n": sum(
+                a.status == QuizAttempt.Status.PENDING
+                and not a.email_sent_at
+                and bool(a.student.email)
+                for a in attempts
+            ),
+            "email_n": sum(bool(a.student.email) for a in attempts),
             "hardest": hardest_questions(finished),
             "retake_n": sum(a.percent < RETAKE_BELOW for a in finished),
             "retake_below": RETAKE_BELOW,
             "telegram_ready": telegram_sender.is_configured(),
             "telegram_hint": telegram_sender.setup_hint(),
+            "email_ready": mailer.is_configured(),
+            "email_hint": mailer.setup_hint(),
             "sender_id": telegram_sender.sender_id(),
             "again_url": _send_url(
                 lesson=batch.lesson_id, group=batch.group_id, topic=batch.quiz.topic_id
@@ -1401,33 +1417,42 @@ def quiz_batch_retake(request, pk):
     retake = create_quiz_batch(
         batch.quiz, weak, batch.question_count, batch.time_limit_minutes, lesson=batch.lesson
     )
-    QuizBatch.objects.filter(pk=retake.pk).update(retake_of=batch)
+    QuizBatch.objects.filter(pk=retake.pk).update(retake_of=batch, channels=batch.channels)
     messages.success(
         request, f"Qayta topshirish: {len(weak)} ta o‘quvchi uchun yangi havolalar tayyor."
     )
-    if telegram_sender.is_configured():
-        send_quiz_links(request, attempts_with_links(request, retake.attempts.all()))
+    # Asl jo'natma qaysi kanallar orqali ketgan bo'lsa — qayta topshirish ham o'shalar orqali.
+    ready = [c for c in delivery.parse_channels(batch.channels) if delivery.is_ready(c)]
+    if ready:
+        send_quiz_links(request, attempts_with_links(request, retake.attempts.all()), ready)
     return redirect(retake)
 
 
 @login_required
 @require_POST
 def quiz_batch_send(request, pk):
-    """Ochilmagan havolalarni ustozning Telegram akkauntidan yuboradi.
+    """Ochilmagan havolalarni yuboradi: `channel` — telegram (standart) yoki email.
 
-    `attempt` berilsa — faqat o'sha shogirdga (qayta yuborish), aks holda hali
-    yuborilmagan barcha ochilmagan havolalarga.
+    `attempt` berilsa — faqat o'sha shogirdga (qayta yuborish), aks holda shu kanal
+    orqali hali yuborilmagan barcha ochilmagan havolalarga.
     """
     batch = get_object_or_404(QuizBatch, pk=pk)
+    channel = (delivery.parse_channels(request.POST.get("channel", "")) or [delivery.TELEGRAM])[0]
     qs = batch.attempts.filter(status=QuizAttempt.Status.PENDING)
     attempt_id = request.POST.get("attempt", "")
-    qs = qs.filter(pk=attempt_id) if attempt_id.isdigit() else qs.filter(sent_at__isnull=True)
+    sent_field = delivery.FIELDS[channel][0]
+    if attempt_id.isdigit():
+        qs = qs.filter(pk=attempt_id)
+    else:
+        qs = qs.filter(**{f"{sent_field}__isnull": True})
+        if channel == delivery.EMAIL:
+            qs = qs.exclude(student__email="")
     if batch.scheduled_at and not batch.scheduled_sent_at:
         # Qo'lda yuborildi — rejalashtirilgan yuborish endi kerak emas.
         QuizBatch.objects.filter(pk=batch.pk).update(scheduled_sent_at=timezone.now())
     attempts = attempts_with_links(request, qs)
     if attempts:
-        send_quiz_links(request, attempts)
+        send_quiz_links(request, attempts, [channel])
     else:
         messages.info(request, "Yuboriladigan ochilmagan havola yo‘q.")
     return redirect(batch)
@@ -1715,7 +1740,7 @@ def contact_self(request, token):
             cache.set(key, cache.get(key, 0) + 1, 3600)
             student = form.cleaned_data["student"]
             fields, kept = [], []
-            for name in ("telegram", "phone"):
+            for name in ("telegram", "phone", "email"):
                 value = form.cleaned_data[name]
                 if not value:
                     continue
@@ -1945,28 +1970,61 @@ def _portal_message(student, url):
     )
 
 
-def _send_portal_links(request, students) -> None:
-    items = []
-    for s in students:
-        username, phone = telegram_sender.recipient_of(s)
-        url = motivation.site_url(request) + motivation.portal_url(s)
-        items.append(telegram_sender.Outgoing(s.pk, username, phone, s.full_name, _portal_message(s, url)))
+def _portal_mail(student, url) -> mailer.Mail:
+    return mailer.Mail(
+        key=student.pk,
+        to=student.email,
+        subject="Shaxsiy sahifangiz — Darsxona",
+        text=_portal_message(student, url),
+        html=mailer.button_html(
+            "Shaxsiy sahifangiz",
+            [
+                f"Salom, {student.full_name}!",
+                "Bu yerda test natijalaringiz, o‘sishingiz va guruhdagi o‘rningiz ko‘rinadi.",
+            ],
+            url=url,
+            button="Sahifani ochish",
+            footer="Havolani boshqalarga bermang.",
+        ),
+    )
+
+
+def _send_portal_links(request, students, channel=delivery.TELEGRAM) -> None:
+    def url_of(s):
+        return motivation.site_url(request) + motivation.portal_url(s)
+
+    names = {s.pk: s.full_name for s in students}
     try:
-        results = telegram_sender.send_messages(items)
-    except telegram_sender.TelegramError as exc:
+        if channel == delivery.EMAIL:
+            results = mailer.send_mails([_portal_mail(s, url_of(s)) for s in students])
+        else:
+            items = []
+            for s in students:
+                username, phone = telegram_sender.recipient_of(s)
+                items.append(
+                    telegram_sender.Outgoing(
+                        s.pk, username, phone, s.full_name, _portal_message(s, url_of(s))
+                    )
+                )
+            results = telegram_sender.send_messages(items)
+    except (telegram_sender.TelegramError, mailer.MailError) as exc:
         messages.error(request, f"Yuborilmadi: {exc}")
         return
+    label = delivery.CHANNEL_LABELS[channel]
     ok = sum(r.ok for r in results)
     failed = [r for r in results if not r.ok]
     if ok:
-        messages.success(request, f"Shaxsiy sahifa havolasi {ok} ta o‘quvchiga yuborildi.")
+        messages.success(request, f"Shaxsiy sahifa havolasi {label} orqali {ok} ta o‘quvchiga yuborildi.")
     if failed:
-        names = {s.pk: s.full_name for s in students}
         messages.warning(
             request,
             f"{len(failed)} ta o‘quvchiga yuborilmadi: "
             + "; ".join(f"{names[r.key]} — {r.error}" for r in failed[:5]),
         )
+
+
+def _channel_param(request) -> str:
+    return (delivery.parse_channels(request.POST.get("channel", "")) or [delivery.TELEGRAM])[0]
 
 
 @login_required
@@ -1979,7 +2037,7 @@ def student_portal_action(request, pk):
         motivation.portal_url(student)
         messages.success(request, "Yangi havola yaratildi — eskisi endi ishlamaydi.")
     else:
-        _send_portal_links(request, [student])
+        _send_portal_links(request, [student], _channel_param(request))
     return redirect(f"{student.get_absolute_url()}#portal")
 
 
@@ -1987,11 +2045,17 @@ def student_portal_action(request, pk):
 @require_POST
 def group_portal_send(request, pk):
     group = get_object_or_404(Group, pk=pk)
-    students = [s for s in group.active_students if has_contact(s)]
-    if not students:
-        messages.warning(request, "Bu guruhda Telegram yoki telefoni bor faol o‘quvchi yo‘q.")
+    channel = _channel_param(request)
+    if channel == delivery.EMAIL:
+        students = [s for s in group.active_students if mailer.valid_email(s.email)]
+        missing = "emaili kiritilgan"
     else:
-        _send_portal_links(request, students)
+        students = [s for s in group.active_students if has_telegram(s)]
+        missing = "Telegram yoki telefoni bor"
+    if not students:
+        messages.warning(request, f"Bu guruhda {missing} faol o‘quvchi yo‘q.")
+    else:
+        _send_portal_links(request, students, channel)
     return redirect(f"{group.get_absolute_url()}#motivation")
 
 
@@ -2016,6 +2080,23 @@ def student_certificate_send(request, pk):
     student = get_object_or_404(Student.objects.select_related("group"), pk=pk)
     course = (request.POST.get("kurs") or motivation.default_course(student)).strip()[:120]
     teacher = request.user.get_full_name() or request.user.get_username()
+    if _channel_param(request) == delivery.EMAIL:
+        filename = motivation.certificate_filename(student)
+        pdf = motivation.certificate_pdf(student, course, teacher)
+        greeting = f"Tabriklaymiz, {student.full_name}! “{course}” kursi sertifikati ilova qilingan."
+        try:
+            mailer.send_one(
+                student.email,
+                f"Sertifikat: {course}",
+                greeting,
+                mailer.button_html("Sertifikat", [greeting, "PDF faylni yuklab oling yoki chop eting."]),
+                attachments=[(filename, pdf, "application/pdf")],
+            )
+        except mailer.MailError as exc:
+            messages.error(request, f"Sertifikat yuborilmadi: {exc}")
+        else:
+            messages.success(request, f"Sertifikat {student.full_name}ga email orqali yuborildi.")
+        return redirect(f"{student.get_absolute_url()}#certificate")
     username, phone = telegram_sender.recipient_of(student)
     item = telegram_sender.Outgoing(student.pk, username, phone, student.full_name, "")
     with tempfile.TemporaryDirectory() as tmp:

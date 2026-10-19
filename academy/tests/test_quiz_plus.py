@@ -185,7 +185,13 @@ class ScheduleTests(Base):
     def post_send(self, when):
         return self.client.post(
             f"{reverse('quiz_send')}?topic={self.topic.pk}&group={self.group.pk}",
-            {"students": [self.ali.pk], "question_count": 6, "time_limit_minutes": 10, "scheduled_at": when},
+            {
+                "students": [self.ali.pk],
+                "question_count": 6,
+                "time_limit_minutes": 10,
+                "scheduled_at": when,
+                "channels": ["telegram"],
+            },
         )
 
     @mock.patch("academy.telegram_sender.is_configured", return_value=True)

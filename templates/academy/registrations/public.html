@@ -17,10 +17,11 @@
       <p class="kicker">Darsxona · {{ link.title }}</p>
       {% if done %}
         <h1>Rahmat, {{ done.full_name }}!</h1>
-        <p class="muted">Ma’lumotingiz ustozga yuborildi. Tekshirilgach, testlar sizga Telegram (@{{ done.telegram }}) orqali keladi.</p>
+        <p class="muted">Ma’lumotingiz ustozga yuborildi. Tekshirilgach, testlar sizga Telegram (@{{ done.telegram }}) {% if done.email %} yoki emailingizga ({{ done.email }}){% endif %} orqali keladi.</p>
         <ul class="rules" style="margin-top:14px">
           <li>Telefon: {{ done.phone }}</li>
           <li>Telegram: @{{ done.telegram }}</li>
+          {% if done.email %}<li>Email: {{ done.email }}</li>{% endif %}
         </ul>
         <p class="meta" style="margin-top:12px">Xato yozgan bo‘lsangiz — sahifani qayta ochib, xuddi shu telefon raqami bilan qayta yuboring: ma’lumot yangilanadi.</p>
       {% elif not link.is_active %}

@@ -1,9 +1,9 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}Telegram ma’lumotlari · Darsxona{% endblock %}
-{% block kicker %}<a href="{% url 'student_list' %}">Shogirdlar</a><span class="sep">/</span>Telegram va telefon{% endblock %}
-{% block heading %}Telegram / telefonlarni kiritish{% endblock %}
-{% block subheading %}<p class="page-sub">Ro‘yxatni qo‘ying → ko‘rib chiqing → tasdiqlang. {% if missing_n %}Hozir <strong>{{ missing_n }}</strong> ta faol o‘quvchida Telegram ham, telefon ham yo‘q — ularga test yuborib bo‘lmaydi.{% else %}Barcha faol o‘quvchilarda aloqa ma’lumoti bor.{% endif %}</p>{% endblock %}
+{% block title %}Aloqa ma’lumotlari · Darsxona{% endblock %}
+{% block kicker %}<a href="{% url 'student_list' %}">Shogirdlar</a><span class="sep">/</span>Telegram, telefon, email{% endblock %}
+{% block heading %}Telegram / telefon / emaillarni kiritish{% endblock %}
+{% block subheading %}<p class="page-sub">Ro‘yxatni qo‘ying → ko‘rib chiqing → tasdiqlang. {% if missing_n %}Hozir <strong>{{ missing_n }}</strong> ta faol o‘quvchida Telegram, telefon va email yo‘q — ularga test yuborib bo‘lmaydi.{% else %}Barcha faol o‘quvchilarda aloqa ma’lumoti bor.{% endif %}</p>{% endblock %}
 {% block actions %}<a class="btn ghost" href="{% url 'student_list' %}?contact=missing">{% icon "users" 16 %} Kimlarda yo‘q</a>{% endblock %}
 
 {% block content %}
@@ -14,7 +14,7 @@
       {% if form.non_field_errors %}<div class="form-errors" role="alert">{% icon "alert" 18 %}{{ form.non_field_errors }}</div>{% endif %}
       <div class="field{% if form.text.errors %} has-error{% endif %}">
         {{ form.text.label_tag }}
-        <textarea class="input mono" name="{{ form.text.html_name }}" id="{{ form.text.id_for_label }}" rows="14" spellcheck="false" placeholder="Aliyev Sardor — @sardor_a — +998 90 123 45 67&#10;Karimova Nigina @nigina">{{ form.text.value|default:"" }}</textarea>
+        <textarea class="input mono" name="{{ form.text.html_name }}" id="{{ form.text.id_for_label }}" rows="14" spellcheck="false" placeholder="Aliyev Sardor — @sardor_a — +998 90 123 45 67&#10;Karimova Nigina @nigina nigina@gmail.com">{{ form.text.value|default:"" }}</textarea>
         {{ form.text.errors }}
       </div>
       <div class="field" style="margin-top:16px;max-width:360px">
@@ -30,7 +30,7 @@
           </div>
           <div class="table-wrap">
             <table class="table contact-preview">
-              <thead><tr><th>#</th><th>O‘quvchi</th><th>Telegram</th><th>Telefon</th><th>Holat</th></tr></thead>
+              <thead><tr><th>#</th><th>O‘quvchi</th><th>Telegram</th><th>Telefon</th><th>Email</th><th>Holat</th></tr></thead>
               <tbody>
                 {% for r in rows %}
                   <tr class="{{ r.status }}">
@@ -41,6 +41,7 @@
                     </td>
                     <td>{% if r.username %}@{{ r.username }}{% if r.changes.telegram and r.changes.telegram.0 %}<div class="meta">edi: {{ r.changes.telegram.0 }}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>
                     <td class="nowrap">{% if r.phone %}{{ r.phone }}{% if r.changes.phone and r.changes.phone.0 %}<div class="meta">edi: {{ r.changes.phone.0 }}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>
+                    <td>{% if r.email %}{{ r.email }}{% if r.changes.email and r.changes.email.0 %}<div class="meta">edi: {{ r.changes.email.0 }}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>
                     <td>
                       {% if r.status == 'update' %}<span class="badge ok">Yangilanadi</span>
                       {% elif r.status == 'same' %}<span class="badge plain">O‘zgarishsiz</span>

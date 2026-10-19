@@ -43,7 +43,7 @@
             <span class="avatar sm" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
             <span class="grow truncate">
               <span class="person-name block truncate">{{ row.student.full_name }}</span>
-              <span class="person-meta">{% if row.student.telegram %}@{{ row.student.telegram|cut:"@" }}{% elif row.student.phone %}{{ row.student.phone }}{% else %}<span class="send-error">Telegram / telefon yo‘q — yuborib bo‘lmaydi</span>{% endif %}</span>
+              <span class="person-meta">{% if row.student.telegram %}@{{ row.student.telegram|cut:"@" }}{% elif row.student.phone %}{{ row.student.phone }}{% elif not row.student.email %}<span class="send-error">Telegram / telefon / email yo‘q — yuborib bo‘lmaydi</span>{% endif %}{% if row.student.email %}{% if row.student.telegram or row.student.phone %} · {% endif %}{{ row.student.email }}{% endif %}</span>
             </span>
             {% if row.attendance %}<span class="badge {% if row.attendance == 'present' %}ok{% elif row.attendance == 'absent' %}bad{% elif row.attendance == 'late' %}warn{% else %}info{% endif %}">{{ row.attendance_label }}</span>{% endif %}
             {% if row.student.status != 'active' %}<span class="badge plain">{{ row.student.get_status_display }}</span>{% endif %}
@@ -92,13 +92,27 @@
             <div class="hint">{{ form.scheduled_at.help_text }}</div>
             {{ form.scheduled_at.errors }}
           </div>
+          <fieldset class="field channel-field{% if form.channels.errors %} has-error{% endif %}" style="margin-top:16px">
+            <legend>{{ form.channels.label }}</legend>
+            <div class="channel-picks">
+              {% for value, label in form.channels.field.choices %}
+                <label class="channel-pick">
+                  <input type="checkbox" name="{{ form.channels.html_name }}" value="{{ value }}" {% if value in form.channels.value %}checked{% endif %}>
+                  {% if value == 'email' %}{% icon "mail" 15 %}{% else %}{% icon "send" 15 %}{% endif %} {{ label }}
+                  {% if value == 'telegram' and not telegram_ready or value == 'email' and not email_ready %}<span class="meta">· ulanmagan</span>{% endif %}
+                </label>
+              {% endfor %}
+            </div>
+            <div class="hint">{{ form.channels.help_text }}</div>
+            {{ form.channels.errors }}
+          </fieldset>
         </div>
 
         <div class="prose-block">
           <ul class="rules">
             <li>Har bir shogird bankdan <strong>tasodifiy</strong> savollar oladi — savollar va javoblar tartibi ham har xil.</li>
             <li>Havola <strong>bir martalik</strong>: boshqa qurilmada ochilmaydi, vaqt tugasa test o‘zi yakunlanadi.</li>
-            <li>Havolalar darhol <strong>faqat {{ sender_id }}</strong> Telegram akkauntidan har bir shogirdga yuboriladi (@username yoki telefon orqali).</li>
+            <li>Telegram: havolalar <strong>faqat {{ sender_id }}</strong> akkauntidan yuboriladi (@username yoki telefon orqali). Email: Gmail orqali, shogird kartasidagi manzilga.</li>
           </ul>
         </div>
 

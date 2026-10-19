@@ -129,7 +129,12 @@ class TelegramViewTests(TestCase):
     def post_send(self):
         return self.client.post(
             f"{reverse('quiz_send')}?topic={self.topic.pk}&group={self.group.pk}",
-            {"students": [self.ali.pk, self.nocontact.pk], "question_count": 3, "time_limit_minutes": 5},
+            {
+                "students": [self.ali.pk, self.nocontact.pk],
+                "question_count": 3,
+                "time_limit_minutes": 5,
+                "channels": ["telegram"],
+            },
         )
 
     @mock.patch("academy.telegram_sender.is_configured", return_value=True)
