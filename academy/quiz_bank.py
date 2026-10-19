@@ -1,12 +1,15 @@
 """Tayyor test savollari banki: ``academy/school_data/quizzes_*.py`` → bazadagi mavzular.
 
+Ruscha tarjimalar: ``quizzes_*_ru.py`` (savollar) va ``titles_ru.py`` (mavzu nomlari);
+``seed_translations`` ularni bazadagi o'zbekcha savollarga matni bo'yicha bog'laydi.
+
 ``seed_quizzes`` model klasslarini parametr sifatida oladi: data migratsiyada tarixiy
 modellar, ``load_school`` buyrug'ida esa haqiqiy modellar beriladi.
 """
 
 from django.db.models import Max
 
-from .quiz_format import Parsed, parse_quiz
+from .quiz_format import Parsed, parse_quiz, translation_errors
 from .school_data import all_modules
 
 # Bank ustozning testini "to'ldirmaydigan" chegara: shuncha va undan ko'p savolli test
@@ -20,6 +23,19 @@ def bank_texts() -> dict[str, str]:
     from .school_data.quizzes_starter import QUIZZES as STARTER
 
     return {**STARTER, **PYTHON}
+
+
+def bank_texts_ru() -> dict[str, str]:
+    from .school_data.quizzes_python_ru import QUIZZES as PYTHON
+    from .school_data.quizzes_starter_ru import QUIZZES as STARTER
+
+    return {**STARTER, **PYTHON}
+
+
+def bank_titles_ru() -> dict[str, str]:
+    from .school_data.titles_ru import TITLES
+
+    return TITLES
 
 
 def bank_entries() -> list[tuple[str, str, str, Parsed]]:
@@ -51,6 +67,16 @@ def validate_bank() -> list[str]:
         titles = [q for q, _ in parsed]
         if len(set(titles)) != len(titles):
             errors.append(f"Test banki, {key}: savol takrorlangan")
+    for key, text in bank_texts_ru().items():
+        if key not in bank_texts():
+            errors.append(f"Ruscha bank: noma'lum mavzu kaliti {key}")
+            continue
+        translated, parse_errors = parse_quiz(text)
+        errors += [f"Ruscha bank, {key}: {e}" for e in parse_errors]
+        if not parse_errors:
+            original = parse_quiz(bank_texts()[key])[0]
+            errors += [f"Ruscha bank, {key}: {e}" for e in translation_errors(original, translated)]
+    errors += [f"Ruscha nom: noma'lum mavzu kaliti {k}" for k in set(bank_titles_ru()) - keys]
     return errors
 
 
@@ -88,3 +114,50 @@ def seed_quizzes(Topic, Quiz, Question, Choice) -> tuple[int, int]:
             )
             added += 1
     return created, added
+
+
+def seed_translations(Topic, Question, Choice) -> tuple[int, int]:
+    """Ruscha tarjimalarni bazaga yozadi: (nomi tarjima qilingan mavzular, savollar).
+
+    Savol o'zbekcha matni va variantlari bankdagisi bilan aynan bir xil bo'lsa — tarjima
+    yoziladi (variantlar matni bo'yicha moslanadi). Ustoz tahrirlagan savollarga va
+    ustoz kiritgan tarjimalarga tegilmaydi, shuning uchun qayta ishga tushirish xavfsiz.
+    """
+    texts_ru, titles_ru = bank_texts_ru(), bank_titles_ru()
+    # (o'zbekcha savol, variantlar to'plami) -> (ruscha matn, {o'zbekcha variant: ruscha})
+    # Variantlar ham kalitda: turli mavzularda bir xil savol matni uchrashi mumkin.
+    by_text = {}
+    for key, text in bank_texts().items():
+        if key not in texts_ru:
+            continue
+        original, translated = parse_quiz(text)[0], parse_quiz(texts_ru[key])[0]
+        for (uz_q, uz_choices), (ru_q, ru_choices) in zip(original, translated, strict=True):
+            by_text[(uz_q, frozenset(c for c, _ in uz_choices))] = (
+                ru_q,
+                {uz: ru for (uz, _), (ru, _) in zip(uz_choices, ru_choices, strict=True)},
+            )
+
+    topics = 0
+    for _key, module_title, topic_title, _parsed in bank_entries():
+        title_ru = titles_ru.get(_key)
+        if title_ru:
+            topics += Topic.objects.filter(
+                module__title__iexact=module_title, title__iexact=topic_title, title_ru=""
+            ).update(title_ru=title_ru)
+
+    questions = 0
+    for q in Question.objects.filter(text_ru="", text__in={text for text, _ in by_text}):
+        choices = list(Choice.objects.filter(question=q))
+        found = by_text.get((q.text, frozenset(c.text for c in choices)))
+        if found is None:
+            continue  # ustoz variantlarni o'zgartirgan — tarjima mos emas
+        ru_text, choice_map = found
+        q.text_ru = "" if ru_text == q.text else ru_text
+        q.save(update_fields=["text_ru"])
+        for c in choices:
+            ru = choice_map[c.text]
+            if not c.text_ru and ru != c.text:
+                c.text_ru = ru
+                c.save(update_fields=["text_ru"])
+        questions += bool(q.text_ru)
+    return topics, questions

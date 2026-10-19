@@ -16,7 +16,7 @@ from academy.models import (
     SyllabusItem,
     Topic,
 )
-from academy.quiz_bank import seed_quizzes, validate_bank
+from academy.quiz_bank import seed_quizzes, seed_translations, validate_bank
 from academy.school_data import GroupData, ModuleData, all_groups, all_modules
 
 
@@ -100,12 +100,14 @@ class Command(BaseCommand):
             for group in groups:
                 self.load_group(group, topics)
             quizzes_new, questions_new = seed_quizzes(Topic, Quiz, Question, Choice)
+            _titles_ru, questions_ru = seed_translations(Topic, Question, Choice)
 
         self.stdout.write(
             self.style.SUCCESS(
                 f"Tayyor: {len(modules)} bo'lim, {len(topics)} mavzu, {len(groups)} guruh, "
                 f"{sum(len(g.students) for g in groups)} o'quvchi; "
-                f"testlar: {quizzes_new} yangi, {questions_new} ta savol qo'shildi."
+                f"testlar: {quizzes_new} yangi, {questions_new} ta savol qo'shildi; "
+                f"ruscha tarjima: {questions_ru} ta savol."
             )
         )
 

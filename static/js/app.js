@@ -160,6 +160,14 @@
     });
     updateCheckCount(name);
   });
+  // Test jo'natish: hamma o'quvchiga bir xil til (UZ / RU).
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-lang-all]");
+    if (!btn) return;
+    $$(`input[type="radio"][name^="lang_"][value="${btn.dataset.langAll}"]`).forEach((r) => {
+      r.checked = true;
+    });
+  });
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-preset]");
     if (!btn) return;

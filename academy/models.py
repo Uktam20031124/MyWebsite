@@ -133,6 +133,13 @@ class Group(models.Model):
         return len(new_items)
 
 
+class QuizLanguage(models.TextChoices):
+    """Test qaysi tilda yechiladi (savollar, sahifa matnlari, xabar)."""
+
+    UZ = "uz", "O‘zbekcha"
+    RU = "ru", "Русский"
+
+
 class Student(models.Model):
     class Status(models.TextChoices):
         ACTIVE = "active", "Faol"
@@ -150,6 +157,10 @@ class Student(models.Model):
     phone = models.CharField("Telefon", max_length=40, blank=True)
     telegram = models.CharField("Telegram", max_length=80, blank=True)
     email = models.EmailField("Email", blank=True)
+    # Test jo'natishda shu til oldindan tanlanadi (har safar o'zgartirish mumkin).
+    quiz_language = models.CharField(
+        "Test tili", max_length=2, choices=QuizLanguage.choices, default=QuizLanguage.UZ
+    )
     status = models.CharField(
         "Holat",
         max_length=16,
@@ -220,6 +231,9 @@ class Topic(models.Model):
         blank=True,
     )
     title = models.CharField("Mavzu", max_length=200)
+    title_ru = models.CharField(
+        "Mavzu (ruscha)", max_length=200, blank=True, help_text="Ruscha testlarda ko'rsatiladi."
+    )
     description = models.TextField("Tavsif", blank=True)
     homework = models.TextField(
         "Uyga vazifa (shablon)",
@@ -251,6 +265,9 @@ class Topic(models.Model):
 
     def get_absolute_url(self):
         return reverse("topic_detail", args=[self.pk])
+
+    def title_in(self, lang: str) -> str:
+        return self.title_ru if lang == QuizLanguage.RU and self.title_ru else self.title
 
     def resource_list(self) -> list[dict]:
         items = []
@@ -504,6 +521,47 @@ class Quiz(models.Model):
             blocks.append("\n".join(lines))
         return "\n\n".join(blocks)
 
+    def as_text_ru(self) -> str:
+        """Ruscha tarjima tahrirlash formatida; tarjima qilinmagan joylar — o'zbekchasi.
+        Hech narsa tarjima qilinmagan bo'lsa — bo'sh."""
+        questions = list(self.questions.prefetch_related("choices"))
+        if not any(q.text_ru or any(c.text_ru for c in q.choices.all()) for q in questions):
+            return ""
+        ru = QuizLanguage.RU
+        blocks = []
+        for q in questions:
+            lines = [f"? {q.text_in(ru)}"]
+            lines += [f"{'+' if c.is_correct else '-'} {c.text_in(ru)}" for c in q.choices.all()]
+            blocks.append("\n".join(lines))
+        return "\n\n".join(blocks)
+
+    def apply_translation(self, translated) -> int:
+        """Ruscha tarjimani savollarga tartib bo'yicha yozadi (`translation_errors` bilan
+        tekshirilgan bo'lishi kerak). O'zbekchasi bilan bir xil matn — "tarjima yo'q".
+        Bo'sh ro'yxat — barcha tarjimalar o'chiriladi. Natija: tarjimasi bor savollar soni."""
+        with transaction.atomic():
+            if not translated:
+                Question.objects.filter(quiz=self).update(text_ru="")
+                Choice.objects.filter(question__quiz=self).update(text_ru="")
+                return 0
+            done = 0
+            for q, (text, choices) in zip(self.questions.prefetch_related("choices"), translated, strict=False):
+                value = "" if text == q.text else text
+                if value != q.text_ru:
+                    q.text_ru = value
+                    q.save(update_fields=["text_ru"])
+                done += bool(q.text_ru)
+                for c, (ru, _ok) in zip(q.choices.all(), choices, strict=False):
+                    value = "" if ru == c.text else ru
+                    if value != c.text_ru:
+                        c.text_ru = value
+                        c.save(update_fields=["text_ru"])
+            return done
+
+    @property
+    def translated_count(self) -> int:
+        return self.questions.exclude(text_ru="").count()
+
     def replace_questions(self, parsed) -> None:
         """Savollarni `parse_quiz` natijasi bilan almashtiradi.
 
@@ -542,6 +600,8 @@ class Question(models.Model):
         Quiz, on_delete=models.CASCADE, related_name="questions", verbose_name="Test"
     )
     text = models.TextField("Savol")
+    # Ruscha tarjima (bo'sh — tarjima qilinmagan, o'zbekchasi ko'rsatiladi).
+    text_ru = models.TextField("Savol (ruscha)", blank=True)
     order = models.PositiveIntegerField("Tartib", default=0)
     image = models.FileField("Rasm", upload_to=question_image_path, blank=True)
 
@@ -567,12 +627,16 @@ class Question(models.Model):
     def signature(self) -> tuple:
         return (self.text, tuple((c.text, c.is_correct) for c in self.choices.all()))
 
+    def text_in(self, lang: str) -> str:
+        return self.text_ru if lang == QuizLanguage.RU and self.text_ru else self.text
+
 
 class Choice(models.Model):
     question = models.ForeignKey(
         Question, on_delete=models.CASCADE, related_name="choices", verbose_name="Savol"
     )
     text = models.CharField("Javob", max_length=500)
+    text_ru = models.CharField("Javob (ruscha)", max_length=500, blank=True)
     is_correct = models.BooleanField("To'g'ri", default=False)
     order = models.PositiveIntegerField("Tartib", default=0)
 
@@ -583,6 +647,9 @@ class Choice(models.Model):
 
     def __str__(self) -> str:
         return self.text
+
+    def text_in(self, lang: str) -> str:
+        return self.text_ru if lang == QuizLanguage.RU and self.text_ru else self.text
 
 
 class QuizBatch(models.Model):
@@ -682,6 +749,9 @@ class QuizAttempt(models.Model):
     status = models.CharField(
         "Holat", max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
     )
+    language = models.CharField(
+        "Til", max_length=2, choices=QuizLanguage.choices, default=QuizLanguage.UZ
+    )
     # Testni boshlagan brauzer kaliti (cookie): havola boshqa joyda qayta ochilmaydi.
     owner_key = models.CharField(max_length=64, blank=True, editable=False)
     # Boshlanganda bankdan tasodifiy tanlangan savollar (har bir o'quvchida o'zicha).
@@ -756,7 +826,15 @@ class QuizAttempt(models.Model):
         """Testni boshlaydi va savollarni tanlaydi. Faqat birinchi chaqiruv muvaffaqiyatli."""
         now = timezone.now()
         pool = list(self.quiz.questions.values_list("pk", flat=True))
-        picked = random.SystemRandom().sample(pool, min(self.batch.question_count, len(pool)))
+        count = min(self.batch.question_count, len(pool))
+        if self.language == QuizLanguage.RU:
+            # Tarjimasi bor savollar yetarli bo'lsa — faqat ulardan (aralash til bo'lmasin).
+            translated = list(
+                self.quiz.questions.exclude(text_ru="").values_list("pk", flat=True)
+            )
+            if len(translated) >= count:
+                pool = translated
+        picked = random.SystemRandom().sample(pool, count)
         started = QuizAttempt.objects.filter(pk=self.pk, status=self.Status.PENDING).update(
             status=self.Status.ACTIVE,
             owner_key=owner_key,
@@ -788,10 +866,14 @@ class QuizAttempt(models.Model):
                 review.append({"id": qid, "text": "", "missing": True, "choices": [],
                                "picked": picked, "is_correct": False})
                 continue
-            choices = [{"id": c.pk, "text": c.text, "correct": c.is_correct} for c in q.choices.all()]
+            choices = [
+                {"id": c.pk, "text": c.text, "text_ru": c.text_ru, "correct": c.is_correct}
+                for c in q.choices.all()
+            ]
             review.append({
                 "id": qid,
                 "text": q.text,
+                "text_ru": q.text_ru,
                 "image": q.image.url if q.image else "",
                 "choices": choices,
                 "picked": picked,
@@ -799,18 +881,23 @@ class QuizAttempt(models.Model):
             })
         return review
 
-    def review(self) -> list[dict]:
-        """Ustoz uchun javoblar tahlili: yakunlanganda saqlangan nusxa (keyinchalik test
-        tahrirlansa ham o'zgarmaydi); eski natijalarda — hozirgi bankdan."""
+    def review(self, lang: str = QuizLanguage.UZ) -> list[dict]:
+        """Javoblar tahlili: yakunlanganda saqlangan nusxa (keyinchalik test tahrirlansa
+        ham o'zgarmaydi); eski natijalarda — hozirgi bankdan. `lang` — matnlar tili
+        (tarjimasi bo'lmasa o'zbekchasi)."""
+
+        def pick(d):
+            return d.get("text_ru") or d["text"] if lang == QuizLanguage.RU else d["text"]
+
         # Nusxa: ko'rsatish uchun qo'shilgan maydonlar bazadagi snapshot'ga tushmasin.
         items = [dict(item) for item in (self.snapshot or self.build_review())]
         for item in items:
-            title, _, code = item["text"].partition("\n")
+            title, _, code = (pick(item) if item["text"] else "").partition("\n")
             item["title"], item["code"] = title, code
             item["answered"] = item["picked"] is not None
-            item["correct_text"] = next((c["text"] for c in item["choices"] if c["correct"]), "")
+            item["correct_text"] = next((pick(c) for c in item["choices"] if c["correct"]), "")
             item["picked_text"] = next(
-                (c["text"] for c in item["choices"] if c["id"] == item["picked"]), ""
+                (pick(c) for c in item["choices"] if c["id"] == item["picked"]), ""
             )
         return items
 

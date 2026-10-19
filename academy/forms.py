@@ -13,10 +13,12 @@ from .models import (
     Module,
     Quiz,
     QuizBatch,
+    QuizLanguage,
     RegistrationLink,
     Student,
     Topic,
 )
+from .quiz_format import translation_errors
 from .services import QUIZ_FORMAT_HELP, parse_quiz, parse_topics
 from .telegram_sender import normalize_phone, normalize_username
 
@@ -118,6 +120,7 @@ class StudentForm(StyledFormMixin, forms.ModelForm):
             "phone",
             "telegram",
             "email",
+            "quiz_language",
             "status",
             "joined_at",
             "notes",
@@ -135,6 +138,14 @@ class StudentForm(StyledFormMixin, forms.ModelForm):
 
     def clean_email(self):
         return self.cleaned_data["email"].strip().lower()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Eski formalar/importlar bu maydonni yubormasa — o'zbekcha.
+        self.fields["quiz_language"].required = False
+
+    def clean_quiz_language(self):
+        return self.cleaned_data["quiz_language"] or QuizLanguage.UZ
 
     def clean_phone(self):
         phone = self.cleaned_data["phone"].strip()
@@ -157,6 +168,7 @@ class TopicForm(StyledFormMixin, forms.ModelForm):
         fields = [
             "module",
             "title",
+            "title_ru",
             "description",
             "homework",
             "resources",
@@ -269,16 +281,28 @@ class QuizForm(StyledFormMixin, forms.ModelForm):
         help_text="“?” — savol, “+” — to‘g‘ri javob, “-” — noto‘g‘ri javob. "
         "Savollar orasida bo‘sh qator qoldirish mumkin.",
     )
+    text_ru = forms.CharField(
+        label="Ruscha tarjima (ixtiyoriy)",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 18, "spellcheck": "false"}),
+        help_text="Xuddi o‘sha savollar xuddi o‘sha tartibda, to‘g‘ri javob (“+”) xuddi o‘sha "
+        "o‘rinda. Tarjima qilinmagan savolni o‘zbekcha qoldiring. Bo‘sh — testni faqat "
+        "o‘zbekcha yechish mumkin.",
+    )
 
     class Meta:
         model = Quiz
-        fields = ["time_limit_minutes", "text"]
+        fields = ["time_limit_minutes", "text", "text_ru"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["text"].widget.attrs["placeholder"] = QUIZ_FORMAT_HELP
+        self.fields["text_ru"].widget.attrs["placeholder"] = (
+            "? Какой скобкой записывается список в Python?\n+ [ ]\n- ( )\n- { }"
+        )
         if self.instance.pk:
             self.fields["text"].initial = self.instance.as_text()
+            self.fields["text_ru"].initial = self.instance.as_text_ru()
 
     def clean_text(self):
         parsed, errors = parse_quiz(self.cleaned_data["text"])
@@ -289,10 +313,30 @@ class QuizForm(StyledFormMixin, forms.ModelForm):
         self.parsed = parsed
         return self.cleaned_data["text"]
 
+    def clean_text_ru(self):
+        text = self.cleaned_data["text_ru"]
+        self.parsed_ru = []
+        if not text.strip():
+            return text
+        parsed, errors = parse_quiz(text)
+        if errors:
+            raise forms.ValidationError(errors)
+        self.parsed_ru = parsed
+        return text
+
+    def clean(self):
+        data = super().clean()
+        if getattr(self, "parsed", None) and getattr(self, "parsed_ru", None):
+            errors = translation_errors(self.parsed, self.parsed_ru)
+            if errors:
+                self.add_error("text_ru", errors)
+        return data
+
     def save(self, commit=True):
         quiz = super().save(commit=commit)
         if commit:
             quiz.replace_questions(self.parsed)
+            self.translated = quiz.apply_translation(self.parsed_ru)
         return quiz
 
 

@@ -59,6 +59,7 @@ from .models import (
     Quiz,
     QuizAttempt,
     QuizBatch,
+    QuizLanguage,
     Registration,
     RegistrationLink,
     Student,
@@ -66,6 +67,7 @@ from .models import (
     Topic,
     new_attempt_token,
 )
+from .quiz_i18n import attempt_texts
 from .registrations import approve_existing, approve_new, reject, submit, suggestions
 from .services import (
     QUALITY_MIN_ANSWERS,
@@ -977,7 +979,8 @@ def quiz_edit(request, pk):
     form = QuizForm(request.POST or None, instance=quiz)
     if request.method == "POST" and form.is_valid():
         form.save()
-        messages.success(request, f"Test saqlandi: {len(form.parsed)} ta savol.")
+        ru = f", ruscha tarjimasi bor: {form.translated} ta" if form.translated else ""
+        messages.success(request, f"Test saqlandi: {len(form.parsed)} ta savol{ru}.")
         return redirect(f"{topic.get_absolute_url()}#quiz")
     quality = question_quality(quiz) if quiz.pk else []
     return render(
@@ -1125,6 +1128,19 @@ def send_quiz_links(request, attempts: list[QuizAttempt], channels=(delivery.TEL
         report_outcome(request, out)
 
 
+def posted_languages(request, students) -> dict:
+    """Jo'natish formasidagi har bir o'quvchi tili; o'zgarganlari o'quvchiga eslab qolinadi
+    (keyingi safar shu til oldindan tanlanadi)."""
+    valid = set(QuizLanguage.values)
+    languages = {}
+    for s in students:
+        lang = request.POST.get(f"lang_{s.pk}", "")
+        languages[s.pk] = lang if lang in valid else s.quiz_language
+        if languages[s.pk] != s.quiz_language:
+            Student.objects.filter(pk=s.pk).update(quiz_language=languages[s.pk])
+    return languages
+
+
 def _send_url(**params) -> str:
     """Jo'natish sahifasi havolasi (bo'sh parametrlar tashlab yuboriladi)."""
     query = urlencode({k: v for k, v in params.items() if v})
@@ -1219,12 +1235,14 @@ def quiz_send(request):
     form = QuizSendForm(request.POST or None, quiz=quiz, students=students)
 
     if request.method == "POST" and form.is_valid():
+        languages = posted_languages(request, form.cleaned_data["students"])
         batch = create_quiz_batch(
             quiz,
             form.cleaned_data["students"],
             form.cleaned_data["question_count"],
             form.cleaned_data["time_limit_minutes"],
             lesson=lesson,
+            languages=languages,
         )
         messages.success(
             request,
@@ -1261,6 +1279,9 @@ def quiz_send(request):
     rows = [
         {
             "student": s,
+            "language": request.POST.get(f"lang_{s.pk}", s.quiz_language)
+            if form.is_bound
+            else s.quiz_language,
             "checked": str(s.pk) in checked,
             "attendance": attendance.get(s.pk),
             "attendance_label": status_labels.get(attendance.get(s.pk), ""),
@@ -1286,6 +1307,8 @@ def quiz_send(request):
             "email_ready": mailer.is_configured(),
             "change_topic_url": _send_url(lesson=lesson and lesson.pk, group=None if lesson else group.pk),
             "count_presets": [n for n in (5, 10, 15, 20) if n <= form.bank_size],
+            "languages": QuizLanguage.choices,
+            "translated_n": quiz.translated_count,
             "time_presets": [5, 10, 15, 20, 30],
         },
     )
@@ -1406,16 +1429,22 @@ def quiz_batch_retake(request, pk):
     """Past natija olganlarga shu mavzu bo'yicha yangi test (savollar bankdan qayta
     tasodifiy tanlanadi — boshqa savollar tushadi)."""
     batch = get_object_or_404(QuizBatch.objects.select_related("quiz", "lesson"), pk=pk)
-    weak = [
-        a.student
+    weak_attempts = [
+        a
         for a in batch.attempts.filter(status=QuizAttempt.Status.FINISHED).select_related("student")
         if a.percent < RETAKE_BELOW
     ]
+    weak = [a.student for a in weak_attempts]
     if not weak:
         messages.info(request, f"{RETAKE_BELOW}% dan past natija olgan o‘quvchi yo‘q.")
         return redirect(batch)
     retake = create_quiz_batch(
-        batch.quiz, weak, batch.question_count, batch.time_limit_minutes, lesson=batch.lesson
+        batch.quiz,
+        weak,
+        batch.question_count,
+        batch.time_limit_minutes,
+        lesson=batch.lesson,
+        languages={a.student_id: a.language for a in weak_attempts},
     )
     QuizBatch.objects.filter(pk=retake.pk).update(retake_of=batch, channels=batch.channels)
     messages.success(
@@ -1509,11 +1538,15 @@ def _is_owner(request, attempt: QuizAttempt) -> bool:
 def _shuffled_questions(attempt: QuizAttempt) -> list:
     """Savollar va variantlar har bir o'quvchida o'z tartibida (urug' — token)."""
     rng = random.Random(attempt.token)
+    lang = attempt.language
     questions = list(attempt.questions().prefetch_related("choices"))
     rng.shuffle(questions)
     for q in questions:
+        q.shown_title, _, q.shown_code = q.text_in(lang).partition("\n")
         q.shuffled = list(q.choices.all())
         rng.shuffle(q.shuffled)
+        for c in q.shuffled:
+            c.shown_text = c.text_in(lang)
         q.picked = attempt.answers.get(str(q.pk))
     return questions
 
@@ -1542,22 +1575,29 @@ def _student_review(attempt: QuizAttempt) -> list[dict]:
             "answered": item["answered"],
             "is_correct": item["is_correct"],
         }
-        for item in review_in_shown_order(attempt)
+        for item in review_in_shown_order(attempt, lang=attempt.language)
         if not item.get("missing")
     ]
 
 
-def review_in_shown_order(attempt: QuizAttempt) -> list[dict]:
-    """Javoblar tahlili — o'quvchiga test paytida ko'rsatilgan tartibda (raqamlar mos)."""
+def review_in_shown_order(attempt: QuizAttempt, lang: str = "uz") -> list[dict]:
+    """Javoblar tahlili — o'quvchiga test paytida ko'rsatilgan tartibda (raqamlar mos).
+    Ustoz o'zbekcha ko'radi, o'quvchi — o'z tilida."""
     shown = {q.pk: i for i, q in enumerate(_shuffled_questions(attempt))}
-    return sorted(attempt.review(), key=lambda item: shown.get(item["id"], len(shown)))
+    return sorted(attempt.review(lang), key=lambda item: shown.get(item["id"], len(shown)))
 
 
 def _quiz_page(request, attempt, template, status=200, **extra):
     response = render(
         request,
         f"academy/quiz/{template}.html",
-        {"attempt": attempt, "quiz": attempt.quiz, "topic": attempt.quiz.topic, **extra},
+        {
+            "attempt": attempt,
+            "quiz": attempt.quiz,
+            "topic": attempt.quiz.topic,
+            "t": attempt_texts(attempt),
+            **extra,
+        },
         status=status,
     )
     response["X-Robots-Tag"] = "noindex, nofollow"

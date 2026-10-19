@@ -772,9 +772,11 @@ def create_quiz_batch(
     question_count: int,
     time_limit_minutes: int,
     lesson: Lesson | None = None,
+    languages: dict | None = None,
 ) -> QuizBatch:
     """Tanlangan shogirdlarga bir martalik havolalar bilan test jo'natmasi yaratadi.
 
+    `languages` — {shogird_id: "uz"|"ru"}; berilmagan shogirdga uning odatiy tili.
     Savollar soni bankdagidan oshmaydi. Guruh — dars guruhi yoki (hamma shogird bitta
     guruhdan bo'lsa) o'sha guruh: jo'natmalarni guruh bo'yicha ko'rish uchun.
     """
@@ -793,7 +795,13 @@ def create_quiz_batch(
             time_limit_minutes=time_limit_minutes,
         )
         QuizAttempt.objects.bulk_create(
-            QuizAttempt(batch=batch, quiz=quiz, student=s) for s in students
+            QuizAttempt(
+                batch=batch,
+                quiz=quiz,
+                student=s,
+                language=(languages or {}).get(s.pk, s.quiz_language),
+            )
+            for s in students
         )
     return batch
 

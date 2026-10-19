@@ -1065,6 +1065,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); width
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
 .seg label:has(input:focus-visible) { box-shadow: var(--ring); }
 .seg label:has(input:checked) { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.seg.xs { padding: 2px; border-radius: 9px; flex-shrink: 0; }
+.seg.xs label { height: 26px; padding: 0 9px; font-size: 12px; border-radius: 7px; }
+.send-pick { display: flex; align-items: center; gap: 12px; min-width: 0; cursor: pointer; }
 .seg label:has(input[value="present"]:checked) { background: var(--ok); color: #fff; }
 .seg label:has(input[value="late"]:checked) { background: var(--warn); color: #fff; }
 .seg label:has(input[value="absent"]:checked) { background: var(--bad); color: #fff; }
@@ -1365,6 +1368,7 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
   border: 1px solid var(--border); border-radius: var(--r); background: var(--surface-2); object-fit: contain;
 }
 .quiz-leave { position: sticky; top: 64px; z-index: 4; margin-bottom: 14px; }
+.quiz-leave[hidden] { display: none; }
 /* Test tahriri: savollar sifati va rasm yuklash */
 .q-quality { align-items: flex-start; }
 .q-quality .q-n {
@@ -1419,7 +1423,7 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 .send-groups .seg-tabs { flex-wrap: nowrap; white-space: nowrap; }
 .send-student { cursor: pointer; }
 .send-student:hover { background: var(--surface-2); }
-.send-student:has(input:checked) { background: var(--accent-soft); }
+.send-student:has(input[type="checkbox"]:checked) { background: var(--accent-soft); }
 .send-student:has(input:focus-visible) { box-shadow: inset var(--ring); }
 .send-students.has-error { box-shadow: inset 3px 0 0 var(--bad); }
 .send-settings .field label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: var(--text); }

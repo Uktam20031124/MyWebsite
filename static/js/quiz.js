@@ -53,7 +53,7 @@
   const answered = () => form.querySelectorAll('input[type="radio"]:checked').length;
 
   const renderProgress = () => {
-    if (progress) progress.textContent = `${answered()} / ${total} ta savolga javob berildi`;
+    if (progress) progress.textContent = (form.dataset.progressText || "{answered} / {total}").replace("{answered}", answered()).replace("{total}", total);
   };
 
   const submit = (timedOut) => {
@@ -106,7 +106,7 @@
   form.addEventListener("submit", (e) => {
     const left = total - answered();
     ownDialog = true;
-    const ok = left === 0 || window.confirm(`${left} ta savolga javob berilmagan. Testni yakunlaysizmi?`);
+    const ok = left === 0 || window.confirm((form.dataset.confirmText || "{left}?").replace("{left}", left));
     ownDialog = false;
     if (!ok) {
       e.preventDefault();

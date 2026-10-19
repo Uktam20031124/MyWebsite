@@ -8,7 +8,7 @@
   <section class="card pad">
     <form method="post" novalidate data-dirty-guard>
       {% csrf_token %}
-      {% include "academy/includes/form_fields.html" with wide="text" %}
+      {% include "academy/includes/form_fields.html" with wide="text text_ru" %}
       <div class="form-actions">
         <button class="btn primary" type="submit">{% icon "check" 16 %} Saqlash</button>
         <a class="btn ghost" href="{{ topic.get_absolute_url }}">Bekor</a>
@@ -27,6 +27,7 @@
         <li>Savol va birinchi javob orasidagi qatorlar — kod: o‘quvchiga alohida blokda, chekinishlari bilan ko‘rsatiladi.</li>
         <li>Bu — savollar banki: jo‘natishda har bir o‘quvchiga undan tasodifiy N ta savol tushadi, variantlar ham aralashadi.</li>
         <li>Vaqt — jo‘natishda taklif qilinadigan qiymat; har bir jo‘natmada o‘zgartirsa bo‘ladi.</li>
+        <li><strong>Ruscha tarjima</strong> — xuddi shu savollar shu tartibda. Jo‘natishda har bir o‘quvchiga til tanlanadi; ruscha tanlanganlar savollarni ruscha ko‘radi (tarjimasi yo‘q savol — o‘zbekcha).</li>
       </ul>
     </div>
     <div class="prose-block">

@@ -16,6 +16,7 @@ from django.utils import timezone
 from . import delivery, mailer
 from .contacts import has_contact
 from .models import QuizAttempt, QuizBatch, Registration, Student
+from .quiz_i18n import message_parts
 from .services import percent
 
 
@@ -51,30 +52,22 @@ def due_reminders(now=None):
 
 
 def reminder_text(attempt: QuizAttempt, link: str) -> str:
-    return (
-        f"Salom, {attempt.student.full_name}!\n"
-        f"“{attempt.quiz.topic.title}” mavzusi bo‘yicha test hali ochilmagan: "
-        f"{attempt.question_count} ta savol, {attempt.batch.time_limit_minutes} daqiqa.\n\n"
-        f"{link}\n\nVaqtingiz bo‘lganda yechib qo‘ying — natija ustozga boradi."
-    )
+    m = message_parts(attempt)
+    return f"{m['hello']}\n{m['rem_quiz']}\n\n{link}\n\n{m['rem_tail']}"
 
 
 def reminder_mail(link: str, attempt: QuizAttempt) -> mailer.Mail:
+    m = message_parts(attempt)
     return mailer.Mail(
         key=attempt.pk,
         to=attempt.student.email,
-        subject=f"Eslatma: “{attempt.quiz.topic.title}” testi hali ochilmagan",
+        subject=m["rem_subject"],
         text=reminder_text(attempt, link),
         html=mailer.button_html(
-            "Test hali ochilmagan",
-            [
-                f"Salom, {attempt.student.full_name}!",
-                f"“{attempt.quiz.topic.title}” mavzusi bo‘yicha test: {attempt.question_count} ta "
-                f"savol, {attempt.batch.time_limit_minutes} daqiqa.",
-                "Vaqtingiz bo‘lganda yechib qo‘ying — natija ustozga boradi.",
-            ],
+            m["rem_title"],
+            [m["hello"], m["rem_quiz"], m["rem_tail"]],
             url=link,
-            button="Testni boshlash",
+            button=m["msg_button"],
         ),
     )
 

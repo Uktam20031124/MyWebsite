@@ -55,3 +55,23 @@ def parse_quiz(text: str) -> tuple[Parsed, list[str]]:
             errors.append(f"{i}-savol: javob variantlari takrorlangan.")
         questions.append((q_text, choices))
     return questions, errors
+
+
+def translation_errors(parsed: Parsed, translated: Parsed) -> list[str]:
+    """Tarjima asl test bilan mosmi: savollar soni, har birida variantlar soni va to'g'ri
+    javob o'rni bir xil bo'lishi kerak (tarjima tartib bo'yicha bog'lanadi)."""
+    if len(translated) != len(parsed):
+        return [
+            f"Ruscha matnda {len(translated)} ta savol, o‘zbekchada {len(parsed)} ta — soni va "
+            "tartibi bir xil bo‘lsin (tarjima qilinmagan savolni o‘zbekcha qoldiring)."
+        ]
+    errors = []
+    for i, ((_, choices), (_, ru_choices)) in enumerate(zip(parsed, translated, strict=True), start=1):
+        if len(ru_choices) != len(choices):
+            errors.append(
+                f"{i}-savol: ruscha variantlar soni ({len(ru_choices)}) o‘zbekchadagidan "
+                f"({len(choices)}) farq qiladi."
+            )
+        elif [ok for _, ok in ru_choices] != [ok for _, ok in choices]:
+            errors.append(f"{i}-savol: ruscha matnda to‘g‘ri javob (“+”) boshqa o‘rinda.")
+    return errors
