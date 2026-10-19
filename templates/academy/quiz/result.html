@@ -1,17 +1,17 @@
 {% extends "academy/quiz/public_base.html" %}
-{% block title %}Natija · {{ topic.title }}{% endblock %}
+{% block title %}{{ t.result }} · {{ t.topic }}{% endblock %}
 {% block panel %}
-<h1>Natija</h1>
-<p class="meta">{{ attempt.student.full_name }} · {{ topic.title }}</p>
-{% if attempt.timed_out %}<div class="callout warn" style="margin-top:12px"><div class="grow">Vaqt tugadi — test avtomatik yakunlandi.</div></div>{% endif %}
+<h1>{{ t.result }}</h1>
+<p class="meta">{{ attempt.student.full_name }} · {{ t.topic }}</p>
+{% if attempt.timed_out %}<div class="callout warn" style="margin-top:12px"><div class="grow">{{ t.timed_out }}</div></div>{% endif %}
 <div class="quiz-score {% if attempt.percent >= 80 %}ok{% elif attempt.percent >= 50 %}warn{% else %}bad{% endif %}">
   <div class="quiz-score-n">{{ attempt.percent }}%</div>
-  <p>{{ attempt.correct }} / {{ attempt.total }} to‘g‘ri javob</p>
+  <p>{{ t.score }}</p>
 </div>
-<p class="muted">{% if attempt.percent >= 80 %}Ajoyib! Mavzu yaxshi o‘zlashtirilgan.{% elif attempt.percent >= 50 %}Yomon emas, lekin mavzuni yana bir bor takrorlang.{% else %}Mavzuni qayta o‘rganib chiqing va ustozingizdan yordam so‘rang.{% endif %}</p>
+<p class="muted">{% if attempt.percent >= 80 %}{{ t.verdict_high }}{% elif attempt.percent >= 50 %}{{ t.verdict_mid }}{% else %}{{ t.verdict_low }}{% endif %}</p>
 
 {% if items %}
-  <h2 class="result-h">Javoblaringiz</h2>
+  <h2 class="result-h">{{ t.your_answers }}</h2>
   <ol class="result-list">
     {% for item in items %}
       <li class="result-item {% if item.is_correct %}ok{% elif item.answered %}bad{% else %}skip{% endif %}">
@@ -19,17 +19,17 @@
         <div class="result-body">
           <div class="result-q">{{ forloop.counter }}. {{ item.title }}</div>
           {% if item.code %}<pre class="quiz-code">{{ item.code }}</pre>{% endif %}
-          {% if item.image %}<img class="quiz-image" src="{{ item.image }}" alt="Savol rasmi" loading="lazy">{% endif %}
+          {% if item.image %}<img class="quiz-image" src="{{ item.image }}" alt="{{ t.image_alt }}" loading="lazy">{% endif %}
           <div class="result-a">
-            {% if item.answered %}Javobingiz: <strong>{{ item.picked_text }}</strong>{% else %}Javob berilmagan{% endif %}
-            <span class="result-verdict">— {% if item.is_correct %}to‘g‘ri{% elif item.answered %}xato{% else %}javobsiz{% endif %}</span>
+            {% if item.answered %}{{ t.your_answer }}: <strong>{{ item.picked_text }}</strong>{% else %}{{ t.no_answer }}{% endif %}
+            <span class="result-verdict">— {% if item.is_correct %}{{ t.right }}{% elif item.answered %}{{ t.wrong }}{% else %}{{ t.skipped }}{% endif %}</span>
           </div>
         </div>
       </li>
     {% endfor %}
   </ol>
-  <p class="meta">To‘g‘ri javoblarni ustozingizdan so‘rang — mavzuni birga takrorlaysiz.</p>
+  <p class="meta">{{ t.ask_teacher }}</p>
 {% endif %}
 
-<p class="meta">Natija ustozingizga yuborildi. Test qayta ochilmaydi.</p>
+<p class="meta">{{ t.sent_to_teacher }}</p>
 {% endblock %}

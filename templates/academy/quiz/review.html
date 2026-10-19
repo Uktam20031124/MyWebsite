@@ -3,7 +3,7 @@
 {% block title %}{{ attempt.student.full_name }} · javoblar · Darsxona{% endblock %}
 {% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span><a href="{{ batch.get_absolute_url }}">{{ topic.title|truncatechars:40 }}</a><span class="sep">/</span>Javoblar{% endblock %}
 {% block heading %}{{ attempt.student.full_name }}{% endblock %}
-{% block subheading %}<p class="page-sub">{% icon "shield" 15 %} Faqat siz ko‘rasiz — o‘quvchiga xatolari va to‘g‘ri javoblar ko‘rsatilmaydi.</p>{% endblock %}
+{% block subheading %}<p class="page-sub">{% icon "shield" 15 %} Faqat siz ko‘rasiz — o‘quvchiga xatolari va to‘g‘ri javoblar ko‘rsatilmaydi.{% if attempt.language == 'ru' %} · O‘quvchi testni <strong>rus tilida</strong> yechgan (bu yerda o‘zbekcha ko‘rsatilgan).{% endif %}</p>{% endblock %}
 {% block actions %}
 {% if prev %}<a class="btn ghost" href="{% url 'quiz_attempt_review' prev.pk %}{% if only_wrong %}?xato=1{% endif %}" title="{{ prev.student.full_name }}">{% icon "left" 16 %} Oldingi</a>{% endif %}
 {% if next %}<a class="btn ghost" href="{% url 'quiz_attempt_review' next.pk %}{% if only_wrong %}?xato=1{% endif %}" title="{{ next.student.full_name }}">Keyingi {% icon "right" 16 %}</a>{% endif %}

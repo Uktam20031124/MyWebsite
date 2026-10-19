@@ -91,3 +91,21 @@ class LoadSchoolCommandTests(TestCase):
         with mock.patch("sys.stdin.isatty", return_value=False), self.assertRaises(CommandError):
             load(reset=True)
         self.assertTrue(Group.objects.filter(code="OLD-1").exists())
+
+
+class BankTranslationTests(TestCase):
+    def test_whole_bank_gets_russian_and_rerun_is_safe(self):
+        from academy.models import Question
+
+        out = load()
+        self.assertIn("ruscha tarjima: 636 ta savol", out)
+        self.assertFalse(Question.objects.filter(text_ru="").exists())
+        topic = Topic.objects.get(title__startswith="Pythonga kirish")
+        self.assertTrue(topic.title_ru.startswith("Введение в Python"))
+        # Ustoz tarjimasi qayta yuklashda saqlanib qoladi.
+        q = topic.quiz.questions.first()
+        q.text_ru = "Мой перевод"
+        q.save()
+        self.assertIn("ruscha tarjima: 0 ta savol", load())
+        q.refresh_from_db()
+        self.assertEqual(q.text_ru, "Мой перевод")

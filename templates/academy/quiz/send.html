@@ -33,12 +33,16 @@
           {% if has_attendance %}<button type="button" class="btn sm ghost" data-check-all="students" data-check-value="came">Darsga kelganlar</button>{% endif %}
           <button type="button" class="btn sm ghost" data-check-all="students" data-check-value="none">Hech kim</button>
           <span class="spacer"></span>
+          <span class="meta">Til — hammasi:</span>
+          <button type="button" class="btn sm ghost" data-lang-all="uz">UZ</button>
+          <button type="button" class="btn sm ghost" data-lang-all="ru">RU</button>
           <span class="att-counts" data-check-count="students" aria-live="polite"></span>
         </div>
       {% endif %}
       <div class="rows send-students{% if form.students.errors %} has-error{% endif %}" role="group" aria-labelledby="students-h">
         {% for row in rows %}
-          <label class="row send-student">
+          <div class="row send-student">
+           <label class="send-pick grow">
             <input type="checkbox" name="students" value="{{ row.student.pk }}" {% if row.checked %}checked{% endif %} {% if row.attendance == 'present' or row.attendance == 'late' %}data-came{% endif %}>
             <span class="avatar sm" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
             <span class="grow truncate">
@@ -47,7 +51,11 @@
             </span>
             {% if row.attendance %}<span class="badge {% if row.attendance == 'present' %}ok{% elif row.attendance == 'absent' %}bad{% elif row.attendance == 'late' %}warn{% else %}info{% endif %}">{{ row.attendance_label }}</span>{% endif %}
             {% if row.student.status != 'active' %}<span class="badge plain">{{ row.student.get_status_display }}</span>{% endif %}
-          </label>
+           </label>
+            <div class="seg xs" role="radiogroup" aria-label="{{ row.student.full_name }}: test tili">
+              {% for value, label in languages %}<label title="{{ label }}"><input type="radio" name="lang_{{ row.student.pk }}" value="{{ value }}"{% if row.language == value %} checked{% endif %}>{{ value|upper }}</label>{% endfor %}
+            </div>
+          </div>
         {% empty %}
           <div class="empty compact">
             <span class="empty-icon">{% icon "users" 22 %}</span>
@@ -110,6 +118,7 @@
 
         <div class="prose-block">
           <ul class="rules">
+            <li><strong>Til</strong> har bir o‘quvchiga alohida tanlanadi (UZ / RU) va keyingi safar uchun eslab qolinadi. Ruscha tarjimasi bor savollar: <strong>{{ translated_n }} / {{ form.bank_size }}</strong>{% if translated_n < form.bank_size %} — tarjimasi yo‘q savollar o‘zbekcha ko‘rinadi{% if translated_n == 0 %} (<a href="{% url 'quiz_edit' topic.pk %}">tarjima qo‘shish</a>){% endif %}{% endif %}.</li>
             <li>Har bir shogird bankdan <strong>tasodifiy</strong> savollar oladi — savollar va javoblar tartibi ham har xil.</li>
             <li>Havola <strong>bir martalik</strong>: boshqa qurilmada ochilmaydi, vaqt tugasa test o‘zi yakunlanadi.</li>
             <li>Telegram: havolalar <strong>faqat {{ sender_id }}</strong> akkauntidan yuboriladi (@username yoki telefon orqali). Email: Gmail orqali, shogird kartasidagi manzilga.</li>

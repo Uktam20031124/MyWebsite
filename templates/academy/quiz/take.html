@@ -3,43 +3,43 @@
 {% block body %}
 <header class="quiz-bar">
   <div>
-    <div class="quiz-bar-title">{{ topic.title }}</div>
+    <div class="quiz-bar-title">{{ t.topic }}</div>
     <small>{{ attempt.student.full_name }}</small>
   </div>
-  <div class="quiz-timer" role="timer" aria-live="off" aria-label="Qolgan vaqt" data-quiz-timer data-seconds="{{ seconds_left }}">
+  <div class="quiz-timer" role="timer" aria-live="off" aria-label="{{ t.time_left }}" data-quiz-timer data-seconds="{{ seconds_left }}">
     {{ seconds_left }} s
   </div>
 </header>
 <main class="quiz-main">
-  <form method="post" action="{% url 'quiz_submit' attempt.token %}" data-quiz-form data-save-url="{% url 'quiz_save' attempt.token %}">
+  <form method="post" action="{% url 'quiz_submit' attempt.token %}" data-quiz-form data-save-url="{% url 'quiz_save' attempt.token %}" data-progress-text="{{ t.progress }}" data-confirm-text="{{ t.confirm_unanswered }}">
     {% csrf_token %}
     <input type="hidden" name="timeout" value="0" data-quiz-timeout>
     <input type="hidden" name="leave_count" value="{{ attempt.leave_count }}" data-quiz-leaves>
     <input type="hidden" name="away_seconds" value="{{ attempt.away_seconds }}" data-quiz-away>
     <div class="callout warn quiz-leave" role="alert" hidden data-quiz-leave-notice>
-      <div class="grow"><strong>Test oynasidan chiqdingiz</strong> — bu qayd qilindi va ustozingizga ko‘rinadi (jami: <span data-count>0</span> marta).</div>
+      <div class="grow">{{ t.leave_notice|safe }}</div>
     </div>
     {% for q in questions %}
       <fieldset class="card quiz-question">
-        <legend><span class="q-n">{{ forloop.counter }}</span>{{ q.title }}</legend>
-        {% if q.code %}<pre class="quiz-code">{{ q.code }}</pre>{% endif %}
-        {% if q.image %}<img class="quiz-image" src="{{ q.image.url }}" alt="{{ forloop.counter }}-savol rasmi" loading="lazy">{% endif %}
+        <legend><span class="q-n">{{ forloop.counter }}</span>{{ q.shown_title }}</legend>
+        {% if q.shown_code %}<pre class="quiz-code">{{ q.shown_code }}</pre>{% endif %}
+        {% if q.image %}<img class="quiz-image" src="{{ q.image.url }}" alt="{{ t.image_alt }} {{ forloop.counter }}" loading="lazy">{% endif %}
         {% for c in q.shuffled %}
           <label class="quiz-choice">
             <input type="radio" name="q{{ q.pk }}" value="{{ c.pk }}"{% if q.picked == c.pk %} checked{% endif %}>
-            <span>{{ c.text }}</span>
+            <span>{{ c.shown_text }}</span>
           </label>
         {% endfor %}
       </fieldset>
     {% endfor %}
     <div class="quiz-submit">
       <span class="meta" data-quiz-progress></span>
-      <button class="btn primary" type="submit">Testni yakunlash</button>
+      <button class="btn primary" type="submit">{{ t.finish }}</button>
     </div>
   </form>
 </main>
 <div class="quiz-overlay" hidden data-quiz-overlay>
-  <div class="card pad quiz-panel"><h2>Vaqt tugadi</h2><p class="muted">Javoblaringiz yuborilmoqda…</p></div>
+  <div class="card pad quiz-panel"><h2>{{ t.time_up }}</h2><p class="muted">{{ t.sending }}</p></div>
 </div>
 <script src="{% static 'js/quiz.js' %}" defer></script>
 {% endblock %}

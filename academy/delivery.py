@@ -13,6 +13,7 @@ from django.utils import timezone
 from . import mailer
 from . import telegram_sender as tg
 from .models import QuizAttempt
+from .quiz_i18n import message_parts
 
 TELEGRAM, EMAIL = "telegram", "email"
 CHANNELS = (TELEGRAM, EMAIL)
@@ -49,31 +50,25 @@ def setup_hint(channel: str) -> str:
 
 
 def quiz_message(link: str, attempt: QuizAttempt) -> str:
-    """Shogirdga boradigan xabar matni (Telegram va emailning oddiy matn qismi)."""
-    return (
-        f"Salom, {attempt.student.full_name}!\n"
-        f"“{attempt.quiz.topic.title}” mavzusi bo‘yicha test: {attempt.question_count} ta savol, "
-        f"{attempt.batch.time_limit_minutes} daqiqa.\n\n{link}\n\n"
-        "Havola faqat bir marta ishlaydi — testni tayyor bo‘lganingizda oching."
-    )
+    """Shogirdga boradigan xabar matni (Telegram va emailning oddiy matn qismi) —
+    o'quvchining test tilida."""
+    m = message_parts(attempt)
+    return f"{m['hello']}\n{m['msg_quiz']}\n\n{link}\n\n{m['msg_once']}"
 
 
 def quiz_mail(link: str, attempt: QuizAttempt) -> mailer.Mail:
-    topic = attempt.quiz.topic.title
+    m = message_parts(attempt)
     return mailer.Mail(
         key=attempt.pk,
         to=attempt.student.email,
-        subject=f"Test: {topic}",
+        subject=m["msg_subject"],
         text=quiz_message(link, attempt),
         html=mailer.button_html(
-            f"“{topic}” bo‘yicha test",
-            [
-                f"Salom, {attempt.student.full_name}!",
-                f"{attempt.question_count} ta savol, {attempt.batch.time_limit_minutes} daqiqa.",
-            ],
+            m["msg_title"],
+            [m["hello"], m["msg_counts"]],
             url=link,
-            button="Testni boshlash",
-            footer="Havola faqat bir marta ishlaydi — testni tayyor bo‘lganingizda oching.",
+            button=m["msg_button"],
+            footer=m["msg_once"],
         ),
     )
 
