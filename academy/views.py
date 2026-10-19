@@ -32,7 +32,7 @@ from django.views.generic import (
 )
 from django.views.static import serve as static_serve
 
-from . import coins, delivery, mailer, motivation, profiles, review_access, telegram_sender
+from . import coins, delivery, engagement, mailer, motivation, profiles, review_access, telegram_sender
 from .contacts import apply_contacts, has_contact, has_telegram, preview_contacts
 from .delivery import quiz_message  # noqa: F401 — eski import yo'llari uchun
 from .forms import (
@@ -63,6 +63,7 @@ from .models import (
     QuizLanguage,
     Registration,
     RegistrationLink,
+    Reward,
     Student,
     SyllabusItem,
     TestRequest,
@@ -332,6 +333,7 @@ class GroupDetailView(AuthMixin, DetailView):
         ctx["board"] = board
         ctx["board_text"] = motivation.leaderboard_text(group, board)
         ctx["telegram_ready"] = telegram_sender.is_configured()
+        ctx["coin_board"] = engagement.weekly_board(self.object.pk)[: engagement.LEADERBOARD_SIZE]
         ctx["email_ready"] = mailer.is_configured()
         return ctx
 
@@ -1440,6 +1442,7 @@ def quiz_review_requests(request):
             "pending": list(review_access.pending_requests()),
             "decided": decided,
             "access_requests": list(profiles.pending_access()),
+            "purchase_requests": list(engagement.pending_purchases()),
             "test_requests": list(profiles.pending_tests()),
             "access_hours": profiles.ACCESS_HOURS,
         },
@@ -2067,6 +2070,7 @@ def student_portal(request, token):
     )
     stats = quiz_stats([student.pk], timeline=12).get(student.pk, QuizStats())
     rank, ranked_n = motivation.group_rank(student)
+    board = engagement.weekly_board(student.group_id)
     response = render(
         request,
         "academy/portal/student.html",
@@ -2084,6 +2088,19 @@ def student_portal(request, token):
             "coin_balance": coins.balance(student),
             "coin_history": student.coins.select_related("attempt__quiz__topic")[:10],
             "coin_rules": coins.RULES,
+            "coin_available": engagement.available(student),
+            "streak": engagement.streak_info(student),
+            "streak_every": engagement.STREAK_BONUS_EVERY,
+            "streak_bonus": engagement.STREAK_BONUS,
+            "mistake_topics": engagement.mistakes_by_topic(student),
+            "open_mistakes_n": engagement.open_mistakes(student).count(),
+            "board": board[: engagement.LEADERBOARD_SIZE],
+            "my_board": next((r for r in board if r["student"].pk == student.pk), None),
+            "rewards": Reward.objects.filter(is_active=True),
+            "purchases": student.purchases.all()[:5],
+            "pending_reward_ids": set(
+                student.purchases.filter(status="pending").values_list("reward_id", flat=True)
+            ),
         },
     )
     response["X-Robots-Tag"] = "noindex, nofollow"

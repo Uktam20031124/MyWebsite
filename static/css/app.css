@@ -1615,3 +1615,30 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 .portal-topic.new strong { color: var(--accent); }
 .study-timer { display: grid; gap: 6px; border-left: 4px solid var(--accent); }
 .study-timer p { margin: 0; }
+
+/* --- Motivatsiya: streak, mashq, reyting, do'kon --------------------------- */
+.portal-hero { display: grid; grid-template-columns: 1fr 1.6fr; gap: 12px; }
+@media (max-width: 560px) { .portal-hero { grid-template-columns: 1fr; } }
+.hero-card { display: grid; gap: 4px; align-content: start; }
+.streak-card.on .portal-big { color: #d9622b; }
+.streak-week { display: flex; gap: 6px; margin: 4px 0; }
+.streak-week span { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; background: var(--surface-3); color: var(--text-2); }
+.streak-week span.on { background: #f3a26b; color: #fff; font-weight: 700; }
+.mistake-topics { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+.chip-link { display: inline-flex; gap: 6px; align-items: center; padding: 6px 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 13px; color: var(--text); text-decoration: none; }
+.chip-link b { color: var(--accent); }
+.chip-link.on { border-color: var(--accent); background: var(--accent-soft); }
+.practice-card { padding: 18px; }
+.practice-meta { display: flex; align-items: center; gap: 4px; margin: 0 0 8px; }
+.practice-meta .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--surface-3); display: inline-block; }
+.practice-meta .dot.on { background: var(--ok, #2f7a4f); }
+.practice-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; }
+.practice-feedback { margin-bottom: 14px; }
+.board { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.board li { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.board li.me { outline: 2px solid var(--accent); }
+.board-place { width: 26px; text-align: center; font-weight: 700; }
+.shop-item { display: flex; gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.shop-item:first-of-type { border-top: 0; }
+.shop-cost { font-weight: 700; white-space: nowrap; }
+.profile-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 14px; }

@@ -1,4 +1,10 @@
-// O'quvchi profili: mustahkamlash / tayyorlanish teskari sanog'i.
+// "Olish" kabi tugmalar: data-confirm bo'lsa — tasdiqlash so'raladi.
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-confirm]");
+  if (btn && !window.confirm(btn.dataset.confirm)) e.preventDefault();
+});
+
+// O'quvchi profili: mustahkamlash teskari sanog'i.
 // <span data-countdown="SONIYA">…</span> — 0 ga yetganda sahifa yangilanadi (tugma ochiladi).
 // Vaqt server tomonida ham tekshiriladi; bu faqat qulaylik.
 (() => {

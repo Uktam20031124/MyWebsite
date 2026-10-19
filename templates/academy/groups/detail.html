@@ -166,6 +166,15 @@
       </div>
     </section>
 
+    <section class="card" id="coin-board" aria-labelledby="coin-h">
+      <div class="card-head"><h2 id="coin-h">🏆 Haftaning eng faollari</h2><span class="meta">coin · dushanbadan</span></div>
+      <div class="card-body">
+        <ol class="board">
+          {% for r in coin_board %}<li><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><a class="grow" href="{{ r.student.get_absolute_url }}">{{ r.student.full_name }}</a><strong>{{ r.coins }} 🪙</strong></li>{% empty %}<li class="meta">Faol o‘quvchi yo‘q.</li>{% endfor %}
+        </ol>
+      </div>
+    </section>
+
     <section class="card" id="motivation" aria-labelledby="mot-h">
       <div class="card-head">
         <h2 id="mot-h">{% icon "trophy" 18 %} Haftalik reyting</h2>

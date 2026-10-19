@@ -1,0 +1,50 @@
+{% extends "academy/portal/_base.html" %}
+{% block title %}Xatolar ustida ishlash · {{ student.full_name }}{% endblock %}
+{% block main %}
+<header class="portal-head">
+  <p class="kicker"><a href="{% url 'student_portal' student.portal_token %}#mistakes">← Profilga qaytish</a></p>
+  <h1>Xatolar ustida ishlash 💪</h1>
+  <p class="muted">Qoldi: <strong>{{ open_n }}</strong> ta savol · o‘zlashtirildi: <strong>{{ fixed_n }}</strong></p>
+</header>
+
+{% if feedback %}
+  <div class="callout {% if feedback.correct %}next{% else %}warn{% endif %} practice-feedback" role="status">
+    <div class="grow">
+      {% if feedback.fixed %}🎉 <strong>Zo‘r! Savol o‘zlashtirildi</strong> — ro‘yxatdan chiqdi, +{{ fixed_coins }} 🪙.
+      {% elif feedback.correct %}✅ <strong>To‘g‘ri!</strong> Yana {{ feedback.left }} marta to‘g‘ri yechsangiz, ro‘yxatdan chiqadi.
+      {% else %}❌ <strong>Xato.</strong> Bu savol keyinroq yana chiqadi — mavzu materialini qarab chiqing.{% endif %}
+    </div>
+  </div>
+{% endif %}
+
+{% if topics|length > 1 %}
+  <nav class="mistake-topics" aria-label="Mavzu bo‘yicha">
+    <a class="chip-link{% if not topic_id %} on{% endif %}" href="{% url 'portal_practice' student.portal_token %}">Hammasi <b>{{ open_n }}</b></a>
+    {% for t in topics %}<a class="chip-link{% if topic_id == t.topic_id %} on{% endif %}" href="?mavzu={{ t.topic_id }}">{{ t.title }} <b>{{ t.n }}</b></a>{% endfor %}
+  </nav>
+{% endif %}
+
+{% if mistake %}
+  <form method="post" class="card quiz-question practice-card">
+    {% csrf_token %}
+    <input type="hidden" name="mistake" value="{{ mistake.pk }}">
+    <p class="meta practice-meta">{{ mistake.question.quiz.topic.title }} · {% for i in "123" %}<span class="dot{% if forloop.counter <= mistake.streak %} on{% endif %}"></span>{% endfor %} {{ mistake.streak }}/{{ resolve_after }}</p>
+    <legend>{{ question.title }}</legend>
+    {% if question.code %}<pre class="quiz-code">{{ question.code }}</pre>{% endif %}
+    {% if question.image %}<img class="quiz-image" src="{{ question.image }}" alt="Savol rasmi" loading="lazy">{% endif %}
+    {% for c in choices %}
+      <label class="quiz-choice"><input type="radio" name="choice" value="{{ c.pk }}" required> <span>{{ c.text }}</span></label>
+    {% endfor %}
+    <div class="practice-actions">
+      <a class="btn ghost" href="{% url 'portal_study' student.portal_token mistake.question.quiz.topic_id %}">📘 Material</a>
+      <button class="btn primary" type="submit">Tekshirish</button>
+    </div>
+  </form>
+{% else %}
+  <section class="card pad">
+    <h2>🎉 Hammasi o‘zlashtirildi!</h2>
+    <p class="muted">{% if topic_id %}Bu mavzu bo‘yicha{% else %}Hozircha{% endif %} xato savollar qolmadi. Yangi test yeching — o‘sishda davom eting.</p>
+    <a class="btn primary block" href="{% url 'student_portal' student.portal_token %}#topics">Testlarga o‘tish</a>
+  </section>
+{% endif %}
+{% endblock %}

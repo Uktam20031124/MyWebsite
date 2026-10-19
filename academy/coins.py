@@ -21,6 +21,8 @@ RULES = [
     "60–74% — 5 coin",
     "60% dan past — 1 coin (urinish uchun)",
     f"Mustahkamlab, qayta topshirib o‘tsangiz (60%+) — yana +{RETAKE_BONUS}",
+    "Xatolar mashqida savolni 3 marta ketma-ket to‘g‘ri yechsangiz — +2",
+    "Har 7 kun ketma-ket faol bo‘lsangiz (🔥 streak) — +10",
 ]
 
 

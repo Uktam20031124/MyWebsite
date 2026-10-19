@@ -192,12 +192,16 @@ class ProfileFlowTests(TestCase):
         self.assertContains(page, "<h3>Что такое цикл?</h3>")
         self.assertNotContains(page, "Sikl nima?")
 
-    def test_teacher_adds_taught_topics(self, notify):
+    def test_taught_topics_appear_automatically(self, notify):
         SyllabusItem.objects.create(group=self.group, topic=self.other, status=SyllabusItem.Status.TAUGHT)
-        page = self.teacher.get(self.ali.get_absolute_url())
-        self.assertContains(page, "O‘tilgan mavzularni qo‘shish (1)")
-        self.teacher.post(reverse("student_allowed_topics", args=[self.ali.pk]), {"action": "taught"})
-        self.assertEqual(list(self.ali.allowed_topics.all()), [self.other])
+        self.grant()
+        page = self.client.get(self.portal)
+        self.assertContains(page, "Funksiyalar")  # ustoz ruxsatisiz — o'tilgan mavzu
+        self.assertNotContains(page, "Sikllar")  # o'tilmagan va qo'shilmagan
+        card = self.teacher.get(self.ali.get_absolute_url())
+        self.assertContains(card, "o‘tildi · avtomatik")
+        self.allow(self.topic)  # ustoz qo'shimcha mavzu beradi
+        self.assertContains(self.client.get(self.portal), "Sikllar")
 
     def test_teacher_endpoints_require_login(self, notify):
         anon = self.client_class()

@@ -115,21 +115,21 @@
         {% if profile_open %}<span class="badge ok">ochiq · {{ student.profile_until|date:"H:i" }} gacha</span>{% elif student.profile_requested_at %}<span class="badge warn">🔑 kirish so‘ralgan</span>{% else %}<span class="badge plain">yopiq</span>{% endif %}
       </div>
       <div class="card-body">
-        <p class="meta" style="margin:0 0 10px">O‘quvchi profil havolasini ochib, kirishga ruxsat so‘raydi. Siz 2–4 soatga ochasiz; shu vaqtda u quyida belgilangan mavzulardan testni o‘zi boshlaydi (kuniga mavzu boshiga 2 tagacha). 60% dan past natijada — 20 daqiqalik mustahkamlash, keyin qayta test.</p>
+        <p class="meta" style="margin:0 0 10px">O‘quvchi profil havolasini ochib, kirishga ruxsat so‘raydi. Siz 2–4 soatga ochasiz; shu vaqtda u guruhda o‘tilgan (va siz qo‘shgan) mavzulardan testni o‘zi boshlaydi (kuniga mavzu boshiga 2 tagacha). 60% dan past natijada — 20 daqiqalik mustahkamlash, keyin qayta test.</p>
         <form method="post" action="{% url 'student_profile_access' student.pk %}" class="contact-link-actions">
           {% csrf_token %}
           {% for h in access_hours %}<button class="btn sm {% if student.profile_requested_at %}primary{% else %}soft{% endif %}" type="submit" name="action" value="{{ h }}">{{ h }} soatga ochish</button>{% endfor %}
           {% if profile_open or student.profile_requested_at %}<button class="btn sm ghost" type="submit" name="action" value="close">{% if profile_open %}Yopish{% else %}Rad etish{% endif %}</button>{% endif %}
         </form>
 
-        <details class="profile-topics" style="margin-top:16px"{% if not allowed_n %} open{% endif %}>
-          <summary><strong>Test uchun mavzular: {{ allowed_n }} ta</strong>{% if taught_missing %} <span class="meta">· o‘tilgan {{ taught_missing }} ta mavzu belgilanmagan</span>{% endif %}</summary>
-          {% if taught_missing %}
-            <form method="post" action="{% url 'student_allowed_topics' student.pk %}" style="margin:10px 0">
-              {% csrf_token %}
-              <button class="btn sm soft" type="submit" name="action" value="taught">{% icon "check" 14 %} O‘tilgan mavzularni qo‘shish ({{ taught_missing }})</button>
-            </form>
-          {% endif %}
+        <div class="profile-stats">
+          <span>🔥 <strong>{{ streak.days }}</strong> kun streak</span>
+          <span>💪 <strong>{{ open_mistakes_n }}</strong> ta xato savol</span>
+        </div>
+
+        <details class="profile-topics" style="margin-top:14px">
+          <summary><strong>Test uchun mavzular: {{ allowed_n }} ta</strong> <span class="meta">· o‘tilgan {{ taught_n }} tasi avtomatik</span></summary>
+          <p class="meta" style="margin:8px 0">Guruhda o‘tilgan mavzular profilda o‘zi chiqadi. Bu yerda qo‘shimcha mavzular belgilashingiz mumkin.</p>
           <form method="post" action="{% url 'student_allowed_topics' student.pk %}">
             {% csrf_token %}
             <div class="topic-picks">
@@ -138,7 +138,11 @@
                 <div class="topic-pick-group">
                   <div class="meta strong">{{ m.grouper.title|default:"Bo‘limsiz" }}</div>
                   {% for row in m.list %}
-                    <label class="topic-pick"><input type="checkbox" name="topics" value="{{ row.topic.pk }}"{% if row.allowed %} checked{% endif %}> {{ row.topic.title }}{% if row.taught %} <span class="badge plain">o‘tildi</span>{% endif %}</label>
+                    {% if row.taught %}
+                      <label class="topic-pick"><input type="checkbox" checked disabled> {{ row.topic.title }} <span class="badge plain">o‘tildi · avtomatik</span></label>
+                    {% else %}
+                      <label class="topic-pick"><input type="checkbox" name="topics" value="{{ row.topic.pk }}"{% if row.allowed %} checked{% endif %}> {{ row.topic.title }}</label>
+                    {% endif %}
                   {% endfor %}
                 </div>
               {% endfor %}
