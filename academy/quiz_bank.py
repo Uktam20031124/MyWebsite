@@ -39,6 +39,13 @@ def bank_study() -> dict[str, str]:
     return {**STARTER, **PYTHON}
 
 
+def bank_study_ru() -> dict[str, str]:
+    from .school_data.study_python_ru import STUDY as PYTHON
+    from .school_data.study_starter_ru import STUDY as STARTER
+
+    return {**STARTER, **PYTHON}
+
+
 def bank_titles_ru() -> dict[str, str]:
     from .school_data.titles_ru import TITLES
 
@@ -85,6 +92,7 @@ def validate_bank() -> list[str]:
             errors += [f"Ruscha bank, {key}: {e}" for e in translation_errors(original, translated)]
     errors += [f"Ruscha nom: noma'lum mavzu kaliti {k}" for k in set(bank_titles_ru()) - keys]
     errors += [f"Mustahkamlash materiali: noma'lum mavzu kaliti {k}" for k in set(bank_study()) - keys]
+    errors += [f"Ruscha material: o'zbekchasi yo'q — {k}" for k in set(bank_study_ru()) - set(bank_study())]
     return errors
 
 
@@ -172,15 +180,19 @@ def seed_translations(Topic, Question, Choice) -> tuple[int, int]:
 
 
 def seed_study(Topic) -> int:
-    """"Darsni qayta mustahkamlash" materialini mavzularga yozadi — faqat bo'shlariga
-    (ustoz yozgan yoki tahrirlagan materialga tegilmaydi). Yozilgan mavzular soni."""
-    texts = bank_study()
+    """"Darsni qayta mustahkamlash" materialini (o'zbekcha va ruscha) mavzularga yozadi —
+    faqat bo'shlariga (ustoz yozgan yoki tahrirlagan materialga tegilmaydi).
+    Natija: o'zbekcha material yozilgan mavzular soni."""
+    texts, texts_ru = bank_study(), bank_study_ru()
+    # Eski migratsiyalardagi (tarixiy) modelda study_ru maydoni hali yo'q.
+    if not any(f.name == "study_ru" for f in Topic._meta.get_fields()):
+        texts_ru = {}
     filled = 0
     for module in all_modules():
         for t in module.topics:
-            text = texts.get(t.key)
-            if text:
-                filled += Topic.objects.filter(
-                    module__title__iexact=module.title, title__iexact=t.title, study=""
-                ).update(study=text.strip())
+            same = {"module__title__iexact": module.title, "title__iexact": t.title}
+            if texts.get(t.key):
+                filled += Topic.objects.filter(study="", **same).update(study=texts[t.key].strip())
+            if texts_ru.get(t.key):
+                Topic.objects.filter(study_ru="", **same).update(study_ru=texts_ru[t.key].strip())
     return filled

@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from academy import coins, profiles
+from academy import coins
 from academy.models import QuizAttempt, StudySession, SyllabusItem, TestRequest
 from academy.services import parse_quiz
 from academy.templatetags.ui import study_md
