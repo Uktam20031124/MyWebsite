@@ -9,18 +9,23 @@ from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from . import coins, engagement, profiles
 from .forms import RewardForm
+from .middleware import activate_default_language
 from .models import Purchase, QuizAttempt, Reward, Student, TestRequest, Topic
 
 
-def _student(token) -> Student:
+def _student(request, token) -> Student:
+    """Profil egasi (maxfiy havola bo'yicha); standart til — uning test tili."""
     if not token:  # o'chirilgan havola (bo'sh kalit) hech qachon mos kelmasin
         raise Http404
-    return get_object_or_404(Student.objects.select_related("group"), portal_token=token)
+    student = get_object_or_404(Student.objects.select_related("group"), portal_token=token)
+    activate_default_language(request, student.quiz_language)
+    return student
 
 
 def _portal_url(token, anchor="") -> str:
@@ -39,7 +44,7 @@ def _page(request, template, context, status=200):
 @never_cache
 @require_POST
 def portal_access_request(request, token):
-    profiles.request_access(_student(token))
+    profiles.request_access(_student(request, token))
     return redirect(_portal_url(token))
 
 
@@ -47,7 +52,7 @@ def portal_access_request(request, token):
 @require_POST
 def portal_test_request(request, token, topic_id):
     """O'quvchi testni o'zi boshlaydi (ustoz ruxsati shart emas) → savollar soni va vaqt."""
-    student = _student(token)
+    student = _student(request, token)
     topic = get_object_or_404(Topic, pk=topic_id)
     try:
         req = profiles.begin_test(student, topic)
@@ -60,7 +65,7 @@ def portal_test_request(request, token, topic_id):
 @never_cache
 def portal_test_start(request, token, pk):
     """Ruxsat berilgan so'rov: o'quvchi savollar soni va vaqtni tanlaydi → boshlash sahifasi."""
-    student = _student(token)
+    student = _student(request, token)
     if not profiles.is_open(student):
         return redirect(_portal_url(token))
     req = get_object_or_404(TestRequest.objects.select_related("topic"), pk=pk, student=student)
@@ -96,7 +101,7 @@ def portal_test_start(request, token, pk):
 @never_cache
 def portal_study(request, token, topic_id):
     """"Darsni qayta mustahkamlash": mavzu materiali, bajarilgan misollar, qayta topshirish."""
-    student = _student(token)
+    student = _student(request, token)
     if not profiles.is_open(student):
         return redirect(_portal_url(token))
     topic = get_object_or_404(Topic.objects.select_related("module"), pk=topic_id)
@@ -119,7 +124,7 @@ def portal_study(request, token, topic_id):
 @never_cache
 def portal_practice(request, token):
     """"Xatolar ustida ishlash": bitta savol — javob — darhol natija (to'g'ri variant ochilmaydi)."""
-    student = _student(token)
+    student = _student(request, token)
     if not profiles.is_open(student):
         return redirect(_portal_url(token))
     topic_id = request.GET.get("mavzu", "")
@@ -131,7 +136,7 @@ def portal_practice(request, token):
                 student, int(request.POST.get("mistake", 0)), int(request.POST.get("choice", 0) or 0)
             )
         except (ValueError, engagement.EngagementError) as exc:
-            messages.error(request, str(exc) if isinstance(exc, engagement.EngagementError) else "Javobni tanlang.")
+            messages.error(request, str(exc) if isinstance(exc, engagement.EngagementError) else _("Javobni tanlang."))
         else:
             request.session[f"practice_{student.pk}"] = {
                 "correct": result.correct,
@@ -146,7 +151,7 @@ def portal_practice(request, token):
     question = choices = None
     if mistake:
         q = mistake.question
-        title, _, code = q.text_in(lang).partition("\n")
+        title, _sep, code = q.text_in(lang).partition("\n")
         question = {"title": title, "code": code, "image": q.image.url if q.image else ""}
         choices = [{"pk": c.pk, "text": c.text_in(lang)} for c in engagement.shuffled_choices(mistake, token)]
     return _page(
@@ -172,7 +177,7 @@ def portal_practice(request, token):
 @never_cache
 @require_POST
 def portal_buy(request, token, reward_id):
-    student = _student(token)
+    student = _student(request, token)
     if not profiles.is_open(student):
         return redirect(_portal_url(token))
     try:
@@ -180,7 +185,12 @@ def portal_buy(request, token, reward_id):
     except engagement.EngagementError as exc:
         messages.error(request, str(exc))
     else:
-        messages.success(request, f"“{p.title}” so‘rovi ustozga yuborildi. Tasdiqlansa, {p.cost} coin yechiladi.")
+        messages.success(
+            request,
+            _("“{title}” so‘rovi ustozga yuborildi. Tasdiqlansa, {cost} coin yechiladi.").format(
+                title=p.title, cost=p.cost
+            ),
+        )
         profiles.notify(f"🛍 {student.full_name} ({student.group.code}): “{p.title}” ({p.cost} coin) so‘radi.")
     return redirect(_portal_url(token, "shop"))
 
@@ -202,11 +212,12 @@ def student_profile_access(request, pk):
     if action.isdigit() and int(action) in profiles.ACCESS_HOURS:
         profiles.grant_access(student, int(action))
         messages.success(
-            request, f"{student.full_name}: profil {action} soatga ochildi."
+            request,
+            _("{full_name}: profil {action} soatga ochildi.").format(full_name=student.full_name, action=action),
         )
     else:
         profiles.close_access(student)
-        messages.info(request, f"{student.full_name}: profilga kirish yopildi.")
+        messages.info(request, _("{full_name}: profilga kirish yopildi.").format(full_name=student.full_name))
     return redirect(_back(request, student))
 
 
@@ -217,11 +228,11 @@ def student_allowed_topics(request, pk):
     if request.POST.get("action") == "taught":
         ids = profiles.taught_topic_ids(student)
         student.allowed_topics.add(*ids)
-        messages.success(request, f"O‘tilgan {len(ids)} ta mavzu qo‘shildi.")
+        messages.success(request, _("O‘tilgan {n} ta mavzu qo‘shildi.").format(n=len(ids)))
     else:
         ids = [int(v) for v in request.POST.getlist("topics") if v.isdigit()]
         student.allowed_topics.set(Topic.objects.filter(pk__in=ids))
-        messages.success(request, f"Test uchun ruxsat etilgan mavzular: {len(ids)} ta.")
+        messages.success(request, _("Test uchun ruxsat etilgan mavzular: {n} ta.").format(n=len(ids)))
     return redirect(f"{student.get_absolute_url()}#profile")
 
 
@@ -234,7 +245,7 @@ def test_request_decide(request, pk):
     messages.success(
         request,
         f"{req.student.full_name} — “{req.topic.title}”: "
-        + ("ruxsat berildi." if approve else "rad etildi."),
+        + (_("ruxsat berildi.") if approve else _("rad etildi.")),
     )
     return redirect(_back(request, req.student))
 
@@ -270,11 +281,13 @@ def purchase_decide(request, pk):
     engagement.decide_purchase(p, approve)
     p.refresh_from_db()
     if approve and p.status != Purchase.Status.APPROVED:
-        messages.error(request, f"{p.student.full_name}: coin yetmaydi — so‘rov rad etildi.")
+        messages.error(
+            request, _("{full_name}: coin yetmaydi — so‘rov rad etildi.").format(full_name=p.student.full_name)
+        )
     else:
         messages.success(
             request,
-            f"{p.student.full_name} — “{p.title}”: " + ("berildi, coin yechildi." if approve else "rad etildi."),
+            f"{p.student.full_name} — “{p.title}”: " + (_("berildi, coin yechildi.") if approve else _("rad etildi.")),
         )
     return redirect(_back(request, p.student))
 
@@ -286,7 +299,7 @@ def rewards(request, pk=None):
     form = RewardForm(request.POST or None, instance=reward)
     if request.method == "POST" and form.is_valid():
         form.save()
-        messages.success(request, "Sovg'a saqlandi.")
+        messages.success(request, _("Sovg'a saqlandi."))
         return redirect("rewards")
     items = Reward.objects.annotate(
         given=Count("purchases", filter=Q(purchases__status=Purchase.Status.APPROVED)),

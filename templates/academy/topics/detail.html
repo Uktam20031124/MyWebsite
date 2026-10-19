@@ -1,43 +1,43 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}{{ topic.title }} · Minar Test{% endblock %}
-{% block kicker %}<a href="{% url 'topic_list' %}">Mavzular</a><span class="sep">/</span>{% if topic.module %}<a href="{{ topic.module.get_absolute_url }}">{{ topic.module.title }}</a>{% else %}Bo‘limsiz{% endif %}<span class="sep">·</span>{% icon "clock" 14 %} {{ topic.duration_minutes }} daq.{% endblock %}
-{% block heading %}{{ topic.title }}{% endblock %}
+{% load i18n ui %}
+{% block title %}{% blocktranslate with title=topic|topic_title trimmed %}{{ title }} · Minar Test{% endblocktranslate %}{% endblock %}
+{% block kicker %}<a href="{% url 'topic_list' %}">{% translate "Mavzular" %}</a><span class="sep">/</span>{% if topic.module %}<a href="{{ topic.module.get_absolute_url }}">{{ topic.module.title }}</a>{% else %}{% translate "Bo‘limsiz" %}{% endif %}<span class="sep">·</span>{% icon "clock" 14 %} {% blocktranslate with duration_minutes=topic.duration_minutes trimmed %}{{ duration_minutes }} daq.{% endblocktranslate %}{% endblock %}
+{% block heading %}{{ topic|topic_title }}{% endblock %}
 {% block actions %}
-<a class="btn soft" href="{% url 'topic_update' topic.pk %}">{% icon "edit" 16 %} Tahrirlash</a>
-<a class="btn primary" href="{% url 'lesson_create' %}?topic={{ topic.pk }}">{% icon "plus" 16 %} Dars yozish</a>
+<a class="btn soft" href="{% url 'topic_update' topic.pk %}">{% icon "edit" 16 %} {% translate "Tahrirlash" %}</a>
+<a class="btn primary" href="{% url 'lesson_create' %}?topic={{ topic.pk }}">{% icon "plus" 16 %} {% translate "Dars yozish" %}</a>
 {% endblock %}
 
 {% block content %}
 {% if not topic.is_active %}
   <div class="callout warn" style="margin-bottom:16px">
     <span class="callout-icon">{% icon "alert" 18 %}</span>
-    <div class="grow">Bu mavzu yashirilgan: yangi dars va dasturlarda ko‘rinmaydi.</div>
+    <div class="grow">{% translate "Bu mavzu yashirilgan: yangi dars va dasturlarda ko‘rinmaydi." %}</div>
   </div>
 {% endif %}
 
 <div class="split">
   <article class="card pad">
     <div class="prose-block">
-      <h3>{% icon "file" 15 %} Dars rejasi</h3>
-      {% if topic.description %}<div class="prose">{{ topic.description|linebreaks }}</div>{% else %}<p class="meta">Tavsif yozilmagan.</p>{% endif %}
+      <h3>{% icon "file" 15 %} {% translate "Dars rejasi" %}</h3>
+      {% if topic.description %}<div class="prose">{{ topic.description|linebreaks }}</div>{% else %}<p class="meta">{% translate "Tavsif yozilmagan." %}</p>{% endif %}
     </div>
     {% if topic.homework %}
       <div class="prose-block">
-        <h3>{% icon "edit" 15 %} Uyga vazifa shabloni</h3>
+        <h3>{% icon "edit" 15 %} {% translate "Uyga vazifa shabloni" %}</h3>
         <div class="prose">{{ topic.homework|linebreaks }}</div>
       </div>
     {% endif %}
     {% if topic.study %}
       <details class="prose-block">
-        <summary><h3 style="display:inline">{% icon "book" 15 %} Mustahkamlash materiali</h3> <span class="meta">— past natija olgan o‘quvchi profilida ko‘radi</span></summary>
+        <summary><h3 style="display:inline">{% icon "book" 15 %} {% translate "Mustahkamlash materiali" %}</h3> <span class="meta">{% translate "— past natija olgan o‘quvchi profilida ko‘radi" %}</span></summary>
         <div class="study">{{ topic.study|study_md }}</div>
       </details>
     {% endif %}
     {% with resources=topic.resource_list %}
       {% if resources %}
         <div class="prose-block">
-          <h3>{% icon "link" 15 %} Materiallar</h3>
+          <h3>{% icon "link" 15 %} {% translate "Materiallar" %}</h3>
           <ul class="resources">
             {% for r in resources %}
               <li>{% if r.url %}<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{% icon "external" 15 %} {{ r.text }}</a>{% else %}<span>{% icon "book" 15 %} {{ r.text }}</span>{% endif %}</li>
@@ -46,33 +46,33 @@
         </div>
       {% endif %}
     {% endwith %}
-    <nav class="form-actions" aria-label="Bo‘lim ichida">
-      {% if prev_id %}<a class="btn soft sm" href="{% url 'topic_detail' prev_id %}">{% icon "left" 15 %} Oldingi mavzu</a>{% endif %}
+    <nav class="form-actions" aria-label="{% translate "Bo‘lim ichida" %}">
+      {% if prev_id %}<a class="btn soft sm" href="{% url 'topic_detail' prev_id %}">{% icon "left" 15 %} {% translate "Oldingi mavzu" %}</a>{% endif %}
       <span class="spacer"></span>
-      {% if next_id %}<a class="btn soft sm" href="{% url 'topic_detail' next_id %}">Keyingi mavzu {% icon "right" 15 %}</a>{% endif %}
+      {% if next_id %}<a class="btn soft sm" href="{% url 'topic_detail' next_id %}">{% translate "Keyingi mavzu" %} {% icon "right" 15 %}</a>{% endif %}
     </nav>
   </article>
 
   <aside class="stack">
     <section class="card quiz-card" id="quiz" aria-labelledby="quiz-h">
       <div class="card-head">
-        <h2 id="quiz-h">{% icon "target" 18 %} Test</h2>
-        {% if quiz %}<a class="btn xs ghost" href="{% url 'quiz_edit' topic.pk %}">{% icon "edit" 14 %} Tahrirlash</a>{% endif %}
+        <h2 id="quiz-h">{% icon "target" 18 %} {% translate "Test" %}</h2>
+        {% if quiz %}<a class="btn xs ghost" href="{% url 'quiz_edit' topic.pk %}">{% icon "edit" 14 %} {% translate "Tahrirlash" %}</a>{% endif %}
       </div>
       <div class="card-body">
         {% if quiz and question_n %}
-          <div class="strong">Savollar banki: {{ question_n }} ta savol</div>
-          {% if hard_n %}<a class="badge bad" href="{% url 'quiz_edit' topic.pk %}#savollar" title="Ko‘pchilik xato qilgan — matnini tekshiring">{{ hard_n }} ta savol juda qiyin</a>{% endif %}
+          <div class="strong">{% blocktranslate with question_n=question_n trimmed %}Savollar banki: {{ question_n }} ta savol{% endblocktranslate %}</div>
+          {% if hard_n %}<a class="badge bad" href="{% url 'quiz_edit' topic.pk %}#savollar" title="{% translate "Ko‘pchilik xato qilgan — matnini tekshiring" %}">{% blocktranslate with hard_n=hard_n trimmed %}{{ hard_n }} ta savol juda qiyin{% endblocktranslate %}</a>{% endif %}
           {% if quiz_stats.n %}
-            <p class="meta">{{ quiz_stats.n }} marta yechilgan · o‘rtacha {{ quiz_stats.avg }}%</p>
+            <p class="meta">{% blocktranslate with n=quiz_stats.n avg=quiz_stats.avg trimmed %}{{ n }} marta yechilgan · o‘rtacha {{ avg }}%{% endblocktranslate %}</p>
           {% else %}
-            <p class="meta">Hali hech kim yechmagan.</p>
+            <p class="meta">{% translate "Hali hech kim yechmagan." %}</p>
           {% endif %}
-          <a class="btn primary block" href="{{ send_url }}" style="margin-top:12px">{% icon "send" 16 %} Test jo‘natish</a>
-          <p class="meta" style="margin:8px 0 0">Shogirdlar, savollar soni va vaqtni keyingi qadamda tanlaysiz.</p>
+          <a class="btn primary block" href="{{ send_url }}" style="margin-top:12px">{% icon "send" 16 %} {% translate "Test jo‘natish" %}</a>
+          <p class="meta" style="margin:8px 0 0">{% translate "Shogirdlar, savollar soni va vaqtni keyingi qadamda tanlaysiz." %}</p>
         {% else %}
-          <p class="meta">Mavzu o‘zlashtirilganini tekshirish uchun test qo‘shing — har bir o‘quvchiga Telegram orqali bir martalik havola yuboriladi.</p>
-          <a class="btn sm primary" href="{% url 'quiz_edit' topic.pk %}">{% icon "plus" 14 %} Test yaratish</a>
+          <p class="meta">{% translate "Mavzu o‘zlashtirilganini tekshirish uchun test qo‘shing — har bir o‘quvchiga Telegram orqali bir martalik havola yuboriladi." %}</p>
+          <a class="btn sm primary" href="{% url 'quiz_edit' topic.pk %}">{% icon "plus" 14 %} {% translate "Test yaratish" %}</a>
         {% endif %}
       </div>
       {% if batches %}
@@ -83,7 +83,7 @@
     </section>
 
     <section class="card">
-      <div class="card-head"><h2>{% icon "layers" 18 %} Guruhlar dasturida</h2></div>
+      <div class="card-head"><h2>{% icon "layers" 18 %} {% translate "Guruhlar dasturida" %}</h2></div>
       <div class="card-body flush">
         <div class="rows">
           {% for item in syllabus_items %}
@@ -92,13 +92,13 @@
               <span class="badge {% if item.status == 'taught' %}ok{% elif item.status == 'skipped' %}warn{% else %}info{% endif %}">{{ item.get_status_display }}{% if item.taught_on %} · {{ item.taught_on|date:"d.m" }}{% endif %}</span>
             </a>
           {% empty %}
-            <div class="empty compact"><p>Hech bir guruh dasturida yo‘q.</p></div>
+            <div class="empty compact"><p>{% translate "Hech bir guruh dasturida yo‘q." %}</p></div>
           {% endfor %}
         </div>
       </div>
     </section>
     <section class="card">
-      <div class="card-head"><h2>{% icon "lesson" 18 %} Darslar</h2></div>
+      <div class="card-head"><h2>{% icon "lesson" 18 %} {% translate "Darslar" %}</h2></div>
       <div class="card-body flush">
         <div class="rows">
           {% for lesson in lessons %}
@@ -107,7 +107,7 @@
               <span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}info{% endif %}">{{ lesson.get_status_display }}</span>
             </a>
           {% empty %}
-            <div class="empty compact"><p>Bu mavzuda dars yozilmagan.</p></div>
+            <div class="empty compact"><p>{% translate "Bu mavzuda dars yozilmagan." %}</p></div>
           {% endfor %}
         </div>
       </div>

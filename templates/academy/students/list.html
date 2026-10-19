@@ -1,47 +1,47 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Shogirdlar · Minar Test{% endblock %}
-{% block kicker %}{% icon "users" 15 %} O‘quv markazi{% endblock %}
-{% block heading %}Shogirdlar{% endblock %}
+{% load i18n ui %}
+{% block title %}{% translate "Shogirdlar · Minar Test" %}{% endblock %}
+{% block kicker %}{% icon "users" 15 %} {% translate "O‘quv markazi" %}{% endblock %}
+{% block heading %}{% translate "Shogirdlar" %}{% endblock %}
 {% block actions %}
-<a class="btn soft" href="{% url 'contacts_import' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "send" 16 %} Telegram kiritish</a>
-<a class="btn soft" data-turbo="false" href="{% url 'student_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">{% icon "download" 16 %} CSV</a>
-<a class="btn primary" href="{% url 'student_create' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "plus" 16 %} Yangi shogird</a>
+<a class="btn soft" href="{% url 'contacts_import' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "send" 16 %} {% translate "Telegram kiritish" %}</a>
+<a class="btn soft" data-turbo="false" href="{% url 'student_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">{% icon "download" 16 %} {% translate "CSV" %}</a>
+<a class="btn primary" href="{% url 'student_create' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "plus" 16 %} {% translate "Yangi shogird" %}</a>
 {% endblock %}
 
 {% block content %}
 <form class="toolbar" method="get" role="search">
   <label class="search-field">
-    <span class="sr-only">Qidirish</span>
+    <span class="sr-only">{% translate "Qidirish" %}</span>
     {% icon "search" 16 %}
-    <input class="input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Ism, telefon yoki @telegram">
+    <input class="input" type="search" name="q" value="{{ request.GET.q }}" placeholder="{% translate "Ism, telefon yoki @telegram" %}">
   </label>
-  <select class="input" name="group" data-autosubmit aria-label="Guruh">
-    <option value="">Barcha guruhlar</option>
+  <select class="input" name="group" data-autosubmit aria-label="{% translate "Guruh" %}">
+    <option value="">{% translate "Barcha guruhlar" %}</option>
     {% for g in groups %}
       <option value="{{ g.pk }}" {% if request.GET.group == g.pk|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
     {% endfor %}
   </select>
-  <select class="input" name="status" data-autosubmit aria-label="Holat">
-    <option value="">Har qanday holat</option>
+  <select class="input" name="status" data-autosubmit aria-label="{% translate "Holat" %}">
+    <option value="">{% translate "Har qanday holat" %}</option>
     {% for value, label in statuses %}
       <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
     {% endfor %}
   </select>
-  <select class="input" name="contact" data-autosubmit aria-label="Telegram">
-    <option value="">Telegram: hammasi</option>
-    <option value="missing" {% if request.GET.contact == 'missing' %}selected{% endif %}>Telegram/telefon yo‘q</option>
-    <option value="has" {% if request.GET.contact == 'has' %}selected{% endif %}>Telegram/telefon bor</option>
+  <select class="input" name="contact" data-autosubmit aria-label="{% translate "Telegram" %}">
+    <option value="">{% translate "Telegram: hammasi" %}</option>
+    <option value="missing" {% if request.GET.contact == 'missing' %}selected{% endif %}>{% translate "Telegram/telefon yo‘q" %}</option>
+    <option value="has" {% if request.GET.contact == 'has' %}selected{% endif %}>{% translate "Telegram/telefon bor" %}</option>
   </select>
-  <button class="btn soft" type="submit">Qidirish</button>
-  {% if request.GET.q or request.GET.group or request.GET.status or request.GET.contact %}<a class="btn ghost" href="{% url 'student_list' %}">{% icon "x" 15 %} Tozalash</a>{% endif %}
+  <button class="btn soft" type="submit">{% translate "Qidirish" %}</button>
+  {% if request.GET.q or request.GET.group or request.GET.status or request.GET.contact %}<a class="btn ghost" href="{% url 'student_list' %}">{% icon "x" 15 %} {% translate "Tozalash" %}</a>{% endif %}
 </form>
 
 <section class="card">
   {% if students %}
   <div class="table-wrap">
     <table class="table">
-      <thead><tr><th>Shogird</th><th>Guruh</th><th>Aloqa</th><th style="width:200px">Davomat</th><th>Holat</th></tr></thead>
+      <thead><tr><th>{% translate "Shogird" %}</th><th>{% translate "Guruh" %}</th><th>{% translate "Aloqa" %}</th><th style="width:200px">{% translate "Davomat" %}</th><th>{% translate "Holat" %}</th></tr></thead>
       <tbody>
         {% for s in students %}
         <tr>
@@ -50,7 +50,7 @@
               <span class="avatar" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
               <span class="truncate">
                 <span class="person-name block truncate">{{ s.full_name }}</span>
-                <span class="person-meta">{{ s.joined_at|date:"d.m.Y" }} dan</span>
+                <span class="person-meta">{% blocktranslate with joined_at=s.joined_at|date:"d.m.Y" trimmed %}{{ joined_at }} dan{% endblocktranslate %}</span>
               </span>
             </a>
           </td>
@@ -64,7 +64,7 @@
               {% widthratio s.att_present s.att_total 100 as pct %}
               <div class="nowrap" style="display:flex;justify-content:space-between;font-size:13px"><strong class="tabular">{{ pct }}%</strong><span class="meta">{{ s.att_present }}/{{ s.att_total }}</span></div>
               <div class="bar thin {{ pct|tone }}" style="margin-top:5px"><span style="width:{{ pct }}%"></span></div>
-            {% else %}<span class="meta">hali yo‘q</span>{% endif %}
+            {% else %}<span class="meta">{% translate "hali yo‘q" %}</span>{% endif %}
           </td>
           <td><span class="badge {% if s.status == 'active' %}ok{% elif s.status == 'dropped' %}bad{% elif s.status == 'paused' %}warn{% else %}info{% endif %}">{{ s.get_status_display }}</span></td>
         </tr>
@@ -76,8 +76,8 @@
   {% else %}
     <div class="empty">
       <span class="empty-icon">{% icon "users" 24 %}</span>
-      <strong>Shogird topilmadi</strong>
-      <p>{% if request.GET.q or request.GET.group or request.GET.status %}Filtrni o‘zgartirib ko‘ring.{% else %}Birinchi shogirdni qo‘shing.{% endif %}</p>
+      {% blocktranslate trimmed %}<strong>Shogird topilmadi</strong>{% endblocktranslate %}
+      <p>{% if request.GET.q or request.GET.group or request.GET.status %}{% translate "Filtrni o‘zgartirib ko‘ring." %}{% else %}{% translate "Birinchi shogirdni qo‘shing." %}{% endif %}</p>
     </div>
   {% endif %}
 </section>

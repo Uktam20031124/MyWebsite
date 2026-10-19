@@ -1,10 +1,10 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Mavzular importi · Minar Test{% endblock %}
-{% block kicker %}<a href="{% url 'topic_list' %}">Mavzular</a><span class="sep">/</span>Import{% endblock %}
-{% block heading %}Ommaviy import{% endblock %}
-{% block subheading %}<p class="page-sub">Matnni qo‘ying → ko‘rib chiqing → tasdiqlang. Qayta import xavfsiz: mavjud mavzular takrorlanmaydi.</p>{% endblock %}
-{% block actions %}<a class="btn ghost" href="{% url 'topic_list' %}">{% icon "left" 16 %} Katalogga qaytish</a>{% endblock %}
+{% load i18n ui %}
+{% block title %}{% translate "Mavzular importi · Minar Test" %}{% endblock %}
+{% block kicker %}<a href="{% url 'topic_list' %}">{% translate "Mavzular" %}</a><span class="sep">/</span>{% translate "Import" %}{% endblock %}
+{% block heading %}{% translate "Ommaviy import" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Matnni qo‘ying → ko‘rib chiqing → tasdiqlang. Qayta import xavfsiz: mavjud mavzular takrorlanmaydi." %}</p>{% endblock %}
+{% block actions %}<a class="btn ghost" href="{% url 'topic_list' %}">{% icon "left" 16 %} {% translate "Katalogga qaytish" %}</a>{% endblock %}
 
 {% block content %}
 <div class="split">
@@ -14,7 +14,7 @@
       {% if form.non_field_errors %}<div class="form-errors" role="alert">{% icon "alert" 18 %}{{ form.non_field_errors }}</div>{% endif %}
       <div class="field{% if form.text.errors %} has-error{% endif %}">
         {{ form.text.label_tag }}
-        <textarea class="input mono" name="{{ form.text.html_name }}" id="{{ form.text.id_for_label }}" rows="16" spellcheck="false" placeholder="# Bo‘lim nomi&#10;1. Mavzu — tavsif">{{ form.text.value|default:"" }}</textarea>
+        <textarea class="input mono" name="{{ form.text.html_name }}" id="{{ form.text.id_for_label }}" rows="16" spellcheck="false" placeholder="{% translate "# Bo‘lim nomi&#10;1. Mavzu — tavsif" %}">{{ form.text.value|default:"" }}</textarea>
         {{ form.text.errors }}
       </div>
       <div class="form-grid" style="margin-top:18px">
@@ -22,44 +22,44 @@
         <div class="field">
           <span class="label">{{ form.groups.label }}</span>
           <div class="chips">
-            {% for cb in form.groups %}<label>{{ cb.tag }} {{ cb.choice_label }}</label>{% empty %}<span class="meta">Faol guruh yo‘q.</span>{% endfor %}
+            {% for cb in form.groups %}<label>{{ cb.tag }} {{ cb.choice_label }}</label>{% empty %}<span class="meta">{% translate "Faol guruh yo‘q." %}</span>{% endfor %}
           </div>
         </div>
       </div>
 
       {% if preview %}
         <div class="card" style="margin-top:22px;box-shadow:none">
-          <div class="card-head" style="padding-bottom:12px"><h2>{% icon "check" 18 %} Ko‘rib chiqish</h2></div>
+          <div class="card-head" style="padding-bottom:12px"><h2>{% icon "check" 18 %} {% translate "Ko‘rib chiqish" %}</h2></div>
           <div class="preview" style="border-top:1px solid var(--border)">
             {% for m in preview %}
               <div class="preview-module">
-                <strong>{% if m.title %}{{ m.title }}{% else %}Bo‘limsiz{% endif %}</strong>
-                <span class="meta">· {{ m.topics|length }} mavzu</span>
+                <strong>{% if m.title %}{{ m.title }}{% else %}{% translate "Bo‘limsiz" %}{% endif %}</strong>
+                <span class="meta">{% blocktranslate with topics=m.topics|length trimmed %}· {{ topics }} mavzu{% endblocktranslate %}</span>
                 <ol>
                   {% for t in m.topics %}
-                    <li>{{ t.title }}{% if t.duration %} <span class="meta">({{ t.duration }} daq.)</span>{% endif %}{% if t.description %}<div class="meta">{{ t.description|linebreaksbr }}</div>{% endif %}</li>
+                    <li>{{ t.title }}{% if t.duration %} <span class="meta">{% blocktranslate with duration=t.duration trimmed %}({{ duration }} daq.){% endblocktranslate %}</span>{% endif %}{% if t.description %}<div class="meta">{{ t.description|linebreaksbr }}</div>{% endif %}</li>
                   {% endfor %}
                 </ol>
               </div>
             {% endfor %}
           </div>
         </div>
-        <p class="meta" style="margin-top:10px">Mavjud mavzular (bir xil bo‘lim va nom) takrorlanmaydi — faqat tavsifi yangilanadi.</p>
+        <p class="meta" style="margin-top:10px">{% translate "Mavjud mavzular (bir xil bo‘lim va nom) takrorlanmaydi — faqat tavsifi yangilanadi." %}</p>
         <div class="form-actions">
-          <button class="btn primary" type="submit" name="confirm" value="1">{% icon "check" 16 %} Tasdiqlash va import qilish</button>
-          <button class="btn soft" type="submit">Qayta ko‘rib chiqish</button>
+          <button class="btn primary" type="submit" name="confirm" value="1">{% icon "check" 16 %} {% translate "Tasdiqlash va import qilish" %}</button>
+          <button class="btn soft" type="submit">{% translate "Qayta ko‘rib chiqish" %}</button>
         </div>
       {% else %}
         <div class="form-actions">
-          <button class="btn primary" type="submit">Ko‘rib chiqish {% icon "right" 16 %}</button>
+          <button class="btn primary" type="submit">{% translate "Ko‘rib chiqish" %} {% icon "right" 16 %}</button>
         </div>
       {% endif %}
     </form>
   </section>
 
   <aside class="card pad">
-    <h2 style="font-size:16px;margin-bottom:10px">{% icon "file" 17 %} Format</h2>
-    <p class="meta">Matnni Word, Telegram yoki Excel’dan to‘g‘ridan-to‘g‘ri nusxalab qo‘yish mumkin.</p>
+    <h2 style="font-size:16px;margin-bottom:10px">{% icon "file" 17 %} {% translate "Format" %}</h2>
+    <p class="meta">{% translate "Matnni Word, Telegram yoki Excel’dan to‘g‘ridan-to‘g‘ri nusxalab qo‘yish mumkin." %}</p>
     <pre class="code">{% verbatim %}# Python asoslari
 1. Kirish va muhit — VS Code, terminal
 2. O'zgaruvchilar | int, str, bool | 90
@@ -71,10 +71,10 @@
 - Modellar va ORM
 - Formalar — ModelForm, validatsiya{% endverbatim %}</pre>
     <ul class="rules" style="margin-top:16px">
-      <li><code>#</code> bilan boshlangan qator — <strong>bo‘lim</strong>.</li>
-      <li>Qolgan qatorlar — <strong>mavzu</strong>. <code>1.</code>, <code>-</code>, <code>•</code> belgilari olib tashlanadi.</li>
-      <li>Tavsif: <code>Mavzu — tavsif</code> yoki <code>Mavzu | tavsif | daqiqa</code>.</li>
-      <li>Surilgan qator oldingi mavzu tavsifiga qo‘shiladi.</li>
+      <li><code>#</code> {% blocktranslate trimmed %}bilan boshlangan qator — <strong>bo‘lim</strong>.{% endblocktranslate %}</li>
+      <li>{% blocktranslate trimmed %}Qolgan qatorlar — <strong>mavzu</strong>.{% endblocktranslate %} <code>1.</code>, <code>-</code>, <code>•</code> {% translate "belgilari olib tashlanadi." %}</li>
+      <li>{% translate "Tavsif:" %} <code>Mavzu — tavsif</code> {% translate "yoki" %} <code>Mavzu | tavsif | daqiqa</code>.</li>
+      <li>{% translate "Surilgan qator oldingi mavzu tavsifiga qo‘shiladi." %}</li>
     </ul>
   </aside>
 </div>

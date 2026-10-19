@@ -7,6 +7,7 @@ import zlib
 from django import template
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
+from django.utils.translation import get_language, gettext
 
 from academy.models import WEEKDAYS
 
@@ -61,12 +62,12 @@ def quiz_tone(pct) -> str:
 
 @register.filter
 def weekday_short(day) -> str:
-    return _SHORT[day.weekday()]
+    return gettext(_SHORT[day.weekday()])
 
 
 @register.filter
 def weekday_full(day) -> str:
-    return _FULL[day.weekday()]
+    return gettext(_FULL[day.weekday()])
 
 
 @register.simple_tag
@@ -207,3 +208,9 @@ def study_md(text: str):
         html.append(f'<pre class="quiz-code study-code"><code>{escape(chr(10).join(code))}</code></pre>')
     flush()
     return mark_safe("".join(html))  # noqa: S308 — hamma matn escape qilingan
+
+
+@register.filter
+def topic_title(topic) -> str:
+    """Mavzu nomi joriy interfeys tilida (ruschasi bo'lmasa — o'zbekcha); mavzu yo'q — ""."""
+    return topic.title_in(get_language()) if topic else ""

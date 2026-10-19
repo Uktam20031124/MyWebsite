@@ -1,10 +1,10 @@
-{% load ui %}{% if is_paginated %}
-  <nav class="pager" aria-label="Sahifalar">
-    <span class="meta">{{ page_obj.start_index }}–{{ page_obj.end_index }} · jami {{ page_obj.paginator.count }}</span>
+{% load i18n ui %}{% if is_paginated %}
+  <nav class="pager" aria-label="{% translate "Sahifalar" %}">
+    <span class="meta">{% blocktranslate with start_index=page_obj.start_index end_index=page_obj.end_index v_count=page_obj.paginator.count trimmed %}{{ start_index }}–{{ end_index }} · jami {{ v_count }}{% endblocktranslate %}</span>
     <span class="actions">
-      {% if page_obj.has_previous %}<a class="btn sm soft" href="{% querystring page=page_obj.previous_page_number %}">{% icon "left" 15 %} Oldingi</a>{% endif %}
+      {% if page_obj.has_previous %}<a class="btn sm soft" href="{% querystring page=page_obj.previous_page_number %}">{% icon "left" 15 %} {% translate "Oldingi" %}</a>{% endif %}
       <span class="meta tabular">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-      {% if page_obj.has_next %}<a class="btn sm soft" href="{% querystring page=page_obj.next_page_number %}">Keyingi {% icon "right" 15 %}</a>{% endif %}
+      {% if page_obj.has_next %}<a class="btn sm soft" href="{% querystring page=page_obj.next_page_number %}">{% translate "Keyingi" %} {% icon "right" 15 %}</a>{% endif %}
     </span>
   </nav>
 {% endif %}

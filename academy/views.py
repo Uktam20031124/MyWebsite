@@ -20,6 +20,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import (
@@ -50,6 +51,7 @@ from .forms import (
     TopicForm,
     TopicImportForm,
 )
+from .middleware import activate_default_language
 from .models import (
     MAX_SCORE,
     Attendance,
@@ -228,7 +230,7 @@ def start_lesson(request, pk):
     lesson, created = start_session(group)
     if created:
         topic = lesson.topic.title if lesson.topic else "mavzusiz"
-        messages.success(request, f"Dars boshlandi: {topic}. Yo‘qlamani belgilang.")
+        messages.success(request, _("Dars boshlandi: {topic}. Yo‘qlamani belgilang.").format(topic=topic))
     return redirect("attendance", pk=lesson.pk)
 
 
@@ -412,15 +414,17 @@ def add_syllabus_item(request, pk):
     if module_id.isdigit():
         module = get_object_or_404(Module, pk=module_id)
         added = group.add_topics(module.topics.filter(is_active=True))
-        messages.success(request, f"“{module}” bo‘limidan {added} ta mavzu qo‘shildi.")
+        messages.success(
+            request, _("“{module}” bo‘limidan {added} ta mavzu qo‘shildi.").format(module=module, added=added)
+        )
     elif topic_id.isdigit():
         topic = get_object_or_404(Topic, pk=topic_id)
         if group.add_topics([topic]):
-            messages.success(request, "Mavzu guruh dasturiga qo‘shildi.")
+            messages.success(request, _("Mavzu guruh dasturiga qo‘shildi."))
         else:
-            messages.info(request, "Bu mavzu dasturda allaqachon bor.")
+            messages.info(request, _("Bu mavzu dasturda allaqachon bor."))
     else:
-        messages.error(request, "Mavzu yoki bo‘lim tanlang.")
+        messages.error(request, _("Mavzu yoki bo‘lim tanlang."))
     return redirect(group.get_absolute_url())
 
 
@@ -446,13 +450,13 @@ def toggle_syllabus(request, pk, item_id):
         return redirect(f"{group.get_absolute_url()}#syllabus-{item.pk}")
     elif action == "delete":
         item.delete()
-        messages.success(request, "Mavzu dasturdan olib tashlandi.")
+        messages.success(request, _("Mavzu dasturdan olib tashlandi."))
         return redirect(group.get_absolute_url())
     else:
-        messages.error(request, "Noma’lum amal.")
+        messages.error(request, _("Noma’lum amal."))
         return redirect(group.get_absolute_url())
     item.save(update_fields=["status", "taught_on"])
-    messages.success(request, "Dastur yangilandi.")
+    messages.success(request, _("Dastur yangilandi."))
     return redirect(f"{group.get_absolute_url()}#syllabus-{item.pk}")
 
 
@@ -723,7 +727,7 @@ class TopicImportView(AuthMixin, FormView):
             parts.append(f"{result.topics_updated} ta mavzu yangilandi")
         if result.added_to_groups:
             parts.append(f"guruh dasturlariga {result.added_to_groups} ta yozuv")
-        messages.success(self.request, "Import tayyor: " + ", ".join(parts) + ".")
+        messages.success(self.request, _("Import tayyor: ") + ", ".join(parts) + ".")
         return redirect("topic_list")
 
 
@@ -885,17 +889,17 @@ def attendance_sheet(request, pk):
         if bad_scores:
             messages.warning(
                 request,
-                f"Ball 0 dan {MAX_SCORE} gacha butun son bo‘lishi kerak — saqlanmadi: "
+                _("Ball 0 dan {MAX_SCORE} gacha butun son bo‘lishi kerak — saqlanmadi: ").format(MAX_SCORE=MAX_SCORE)
                 + ", ".join(bad_scores),
             )
         if request.POST.get("then") == "quiz":
             # Yo'qlama avval saqlanadi: jo'natishda darsga kelganlar belgilangan bo'ladi.
-            messages.success(request, "Yo‘qlama saqlandi. Endi test mavzusini tanlang.")
+            messages.success(request, _("Yo‘qlama saqlandi. Endi test mavzusini tanlang."))
             return redirect(_send_url(lesson=lesson.pk))
         if request.POST.get("complete") == "1":
-            messages.success(request, "Yo‘qlama saqlandi va dars o‘tildi deb belgilandi.")
+            messages.success(request, _("Yo‘qlama saqlandi va dars o‘tildi deb belgilandi."))
             return redirect(lesson.get_absolute_url())
-        messages.success(request, "Yo‘qlama saqlandi.")
+        messages.success(request, _("Yo‘qlama saqlandi."))
         return redirect("attendance", pk=lesson.pk)
 
     rows = []
@@ -954,7 +958,7 @@ def search(request):
             *(
                 hit(
                     "lesson",
-                    lesson.topic.title if lesson.topic else "Mavzusiz dars",
+                    str(lesson.topic) if lesson.topic else _("Mavzusiz dars"),
                     f"{lesson.group.code} · {lesson.held_on:%d.%m.%Y}",
                     lesson.get_absolute_url(),
                 )
@@ -986,7 +990,7 @@ def quiz_edit(request, pk):
     if request.method == "POST" and form.is_valid():
         form.save()
         ru = f", ruscha tarjimasi bor: {form.translated} ta" if form.translated else ""
-        messages.success(request, f"Test saqlandi: {len(form.parsed)} ta savol{ru}.")
+        messages.success(request, _("Test saqlandi: {n} ta savol{ru}.").format(n=len(form.parsed), ru=ru))
         return redirect(f"{topic.get_absolute_url()}#quiz")
     quality = question_quality(quiz) if quiz.pk else []
     return render(
@@ -1032,24 +1036,24 @@ def quiz_question_image(request, pk):
             question.image.delete(save=False)
             question.image = ""
             question.save(update_fields=["image"])
-            messages.info(request, "Rasm o‘chirildi.")
+            messages.info(request, _("Rasm o‘chirildi."))
         return redirect(back)
     upload = request.FILES.get("image")
     if upload is None:
-        messages.error(request, "Rasm faylini tanlang.")
+        messages.error(request, _("Rasm faylini tanlang."))
         return redirect(back)
     if upload.size > settings.QUIZ_IMAGE_MAX_BYTES:
-        messages.error(request, "Rasm 3 MB dan katta bo‘lmasin.")
+        messages.error(request, _("Rasm 3 MB dan katta bo‘lmasin."))
         return redirect(back)
     kind = image_kind(upload.read(16))
     upload.seek(0)
     if kind is None:
-        messages.error(request, "Faqat PNG, JPG, WEBP yoki GIF rasm yuklash mumkin.")
+        messages.error(request, _("Faqat PNG, JPG, WEBP yoki GIF rasm yuklash mumkin."))
         return redirect(back)
     if question.image:
         question.image.delete(save=False)
     question.image.save(f"rasm.{kind}", upload, save=True)
-    messages.success(request, "Rasm qo‘shildi — o‘quvchilar savol ostida ko‘radi.")
+    messages.success(request, _("Rasm qo‘shildi — o‘quvchilar savol ostida ko‘radi."))
     return redirect(back)
 
 
@@ -1094,22 +1098,27 @@ def attempts_with_links(request, qs) -> list[QuizAttempt]:
 def report_outcome(request, out: delivery.Outcome, names_of=lambda a: a.student.full_name) -> None:
     """Bitta kanal natijasini ustozga xabar qiladi."""
     if out.error:
-        messages.error(request, f"{out.label}: yuborilmadi — {out.error}")
+        messages.error(request, _("{label}: yuborilmadi — {error}").format(label=out.label, error=out.error))
         return
     if out.sent:
-        messages.success(request, f"{out.label} orqali {len(out.sent)} ta shogirdga yuborildi.")
+        messages.success(
+            request, _("{label} orqali {n} ta shogirdga yuborildi.").format(label=out.label, n=len(out.sent))
+        )
     if out.failed:
         messages.warning(
             request,
-            f"{out.label}: {len(out.failed)} ta shogirdga yuborilmadi: "
-            + ", ".join(names_of(a) for a, _ in out.failed)
-            + ". Sababi ro‘yxatda ko‘rsatilgan.",
+            _("{label}: {n} ta shogirdga yuborilmadi: ").format(label=out.label, n=len(out.failed))
+            + ", ".join(names_of(a) for a, _err in out.failed)
+            + _(". Sababi ro‘yxatda ko‘rsatilgan."),
         )
     if out.no_contact:
         names = ", ".join(names_of(a) for a in out.no_contact[:5])
-        more = f" va yana {len(out.no_contact) - 5} kishi" if len(out.no_contact) > 5 else ""
+        more = _(" va yana {n} kishi").format(n=len(out.no_contact) - 5) if len(out.no_contact) > 5 else ""
         messages.info(
-            request, f"Emaili kiritilmagan {len(out.no_contact)} ta shogird: {names}{more}."
+            request,
+            _("Emaili kiritilmagan {n} ta shogird: {names}{more}.").format(
+                n=len(out.no_contact), names=names, more=more
+            ),
         )
 
 
@@ -1122,7 +1131,7 @@ def ready_channels(request, channels) -> list[str]:
         else:
             messages.warning(
                 request,
-                f"{delivery.CHANNEL_LABELS[channel]} ulanmagan — yuborilmadi. "
+                _("{CHANNEL_LABELS} ulanmagan — yuborilmadi. ").format(CHANNEL_LABELS=delivery.CHANNEL_LABELS[channel])
                 + delivery.setup_hint(channel),
             )
     return ready
@@ -1221,7 +1230,7 @@ def quiz_send(request):
     topic = get_object_or_404(Topic.objects.select_related("module"), pk=topic_id)
     quiz = getattr(topic, "quiz", None)
     if quiz is None or not quiz.questions.exists():
-        messages.warning(request, "Bu mavzuda hali test savollari yo‘q — avval testni yarating.")
+        messages.warning(request, _("Bu mavzuda hali test savollari yo‘q — avval testni yarating."))
         return redirect("quiz_edit", pk=topic.pk)
 
     if group is None:
@@ -1229,7 +1238,7 @@ def quiz_send(request):
         in_syllabus = set(topic.syllabus_items.values_list("group_id", flat=True))
         group = next((g for g in groups if g.pk in in_syllabus), groups[0] if groups else None)
     if group is None:
-        messages.warning(request, "Faol guruh yo‘q — avval guruh va shogird qo‘shing.")
+        messages.warning(request, _("Faol guruh yo‘q — avval guruh va shogird qo‘shing."))
         return redirect("group_list")
 
     attendance = (
@@ -1252,8 +1261,11 @@ def quiz_send(request):
         )
         messages.success(
             request,
-            f"{len(form.cleaned_data['students'])} ta shogird uchun havola tayyor: "
-            f"{batch.question_count} ta savol, {batch.time_limit_minutes} daqiqa.",
+            _("{n} ta shogird uchun havola tayyor: {question_count} ta savol, {time_limit_minutes} daqiqa.").format(
+                n=len(form.cleaned_data["students"]),
+                question_count=batch.question_count,
+                time_limit_minutes=batch.time_limit_minutes,
+            ),
         )
         scheduled_at = form.cleaned_data.get("scheduled_at")
         channels = delivery.parse_channels(form.cleaned_data["channels"])
@@ -1264,8 +1276,9 @@ def quiz_send(request):
             labels = " va ".join(delivery.CHANNEL_LABELS[c] for c in channels)
             messages.info(
                 request,
-                f"Havolalar {timezone.localtime(scheduled_at):%d.%m %H:%M} da {labels} orqali "
-                "avtomatik yuboriladi.",
+                _("Havolalar {localtime:%d.%m %H:%M} da {labels} orqali avtomatik yuboriladi.").format(
+                    localtime=timezone.localtime(scheduled_at), labels=labels
+                ),
             )
         else:
             ready = ready_channels(request, channels)
@@ -1467,9 +1480,9 @@ def quiz_review_decide(request, pk):
     attempt.decide_reveal(approve)
     messages.success(
         request,
-        f"{attempt.student.full_name}: javoblarini ko‘rishga ruxsat berildi."
+        _("{full_name}: javoblarini ko‘rishga ruxsat berildi.").format(full_name=attempt.student.full_name)
         if approve
-        else f"{attempt.student.full_name}: javoblarini ko‘rish rad etildi.",
+        else _("{full_name}: javoblarini ko‘rish rad etildi.").format(full_name=attempt.student.full_name),
     )
     return redirect(_back(request, reverse("quiz_review_requests")))
 
@@ -1483,7 +1496,7 @@ def quiz_review_approve_all(request):
     if batch_id.isdigit():
         qs = qs.filter(batch_id=batch_id)
     n = qs.update(reveal=QuizAttempt.Reveal.APPROVED, reveal_decided_at=timezone.now())
-    messages.success(request, f"{n} ta so‘rovga ruxsat berildi." if n else "Kutilayotgan so‘rov yo‘q.")
+    messages.success(request, _("{n} ta so‘rovga ruxsat berildi.").format(n=n) if n else _("Kutilayotgan so‘rov yo‘q."))
     return redirect(_back(request, reverse("quiz_review_requests")))
 
 
@@ -1503,7 +1516,9 @@ def quiz_batch_retake(request, pk):
     ]
     weak = [a.student for a in weak_attempts]
     if not weak:
-        messages.info(request, f"{RETAKE_BELOW}% dan past natija olgan o‘quvchi yo‘q.")
+        messages.info(
+            request, _("{RETAKE_BELOW}% dan past natija olgan o‘quvchi yo‘q.").format(RETAKE_BELOW=RETAKE_BELOW)
+        )
         return redirect(batch)
     retake = create_quiz_batch(
         batch.quiz,
@@ -1515,7 +1530,7 @@ def quiz_batch_retake(request, pk):
     )
     QuizBatch.objects.filter(pk=retake.pk).update(retake_of=batch, channels=batch.channels)
     messages.success(
-        request, f"Qayta topshirish: {len(weak)} ta o‘quvchi uchun yangi havolalar tayyor."
+        request, _("Qayta topshirish: {n} ta o‘quvchi uchun yangi havolalar tayyor.").format(n=len(weak))
     )
     # Asl jo'natma qaysi kanallar orqali ketgan bo'lsa — qayta topshirish ham o'shalar orqali.
     ready = [c for c in delivery.parse_channels(batch.channels) if delivery.is_ready(c)]
@@ -1550,7 +1565,7 @@ def quiz_batch_send(request, pk):
     if attempts:
         send_quiz_links(request, attempts, [channel])
     else:
-        messages.info(request, "Yuboriladigan ochilmagan havola yo‘q.")
+        messages.info(request, _("Yuboriladigan ochilmagan havola yo‘q."))
     return redirect(batch)
 
 
@@ -1574,7 +1589,7 @@ def quiz_attempt_renew(request, pk):
     """Yakunlanmagan havolani yangisiga almashtiradi (eski havola ishlamay qoladi)."""
     attempt = get_object_or_404(QuizAttempt.objects.select_related("batch", "student"), pk=pk)
     if attempt.status == QuizAttempt.Status.FINISHED:
-        messages.error(request, "Test yakunlangan — natijani o‘chirib bo‘lmaydi.")
+        messages.error(request, _("Test yakunlangan — natijani o‘chirib bo‘lmaydi."))
     else:
         attempt.token = new_attempt_token()
         attempt.status = QuizAttempt.Status.PENDING
@@ -1585,7 +1600,7 @@ def quiz_attempt_renew(request, pk):
         attempt.sent_at, attempt.send_error = None, ""  # yangi havola hali yuborilmagan
         attempt.save()
         messages.success(
-            request, f"{attempt.student} uchun yangi havola yaratildi — uni qayta yuboring."
+            request, _("{student} uchun yangi havola yaratildi — uni qayta yuboring.").format(student=attempt.student)
         )
     return redirect(attempt.batch)
 
@@ -1609,7 +1624,7 @@ def _shuffled_questions(attempt: QuizAttempt) -> list:
     questions = list(attempt.questions().prefetch_related("choices"))
     rng.shuffle(questions)
     for q in questions:
-        q.shown_title, _, q.shown_code = q.text_in(lang).partition("\n")
+        q.shown_title, _sep, q.shown_code = q.text_in(lang).partition("\n")
         q.shuffled = list(q.choices.all())
         rng.shuffle(q.shuffled)
         for c in q.shuffled:
@@ -1685,7 +1700,15 @@ def quiz_take(request, token):
     if attempt.status == Status.FINISHED:
         if owner:
             items = _student_review(attempt) if attempt.can_see_answers else []
-            return _quiz_page(request, attempt, "result", items=items)
+            study_url = ""
+            if (
+                attempt.batch.from_profile
+                and attempt.percent is not None
+                and attempt.percent < profiles.PASS_PERCENT
+                and attempt.student.portal_token
+            ):
+                study_url = reverse("portal_study", args=[attempt.student.portal_token, attempt.quiz.topic_id])
+            return _quiz_page(request, attempt, "result", items=items, study_url=study_url)
         return _quiz_page(request, attempt, "used", status=410)
 
     if attempt.status == Status.ACTIVE:
@@ -1798,7 +1821,9 @@ def contacts_import(request):
         rows = preview_contacts(form.cleaned_data["text"], students)
         if request.POST.get("confirm") == "1":
             updated = apply_contacts(rows)
-            messages.success(request, f"{updated} ta o‘quvchining aloqa ma’lumotlari yangilandi.")
+            messages.success(
+                request, _("{updated} ta o‘quvchining aloqa ma’lumotlari yangilandi.").format(updated=updated)
+            )
             return redirect(f"{reverse('student_list')}?contact=missing")
     missing = Student.objects.filter(status=Student.Status.ACTIVE)
     return render(
@@ -1825,13 +1850,13 @@ def group_contact_link(request, pk):
     group = get_object_or_404(Group, pk=pk)
     if request.POST.get("action") == "off":
         group.contact_token = ""
-        messages.success(request, "Havola o‘chirildi — endi u ishlamaydi.")
+        messages.success(request, _("Havola o‘chirildi — endi u ishlamaydi."))
     else:
         renew = bool(group.contact_token)
         group.contact_token = secrets.token_urlsafe(12)
         messages.success(
             request,
-            "Yangi havola yaratildi (eskisi ishlamaydi)." if renew else "Havola yaratildi.",
+            _("Yangi havola yaratildi (eskisi ishlamaydi).") if renew else _("Havola yaratildi."),
         )
     group.save(update_fields=["contact_token"])
     return redirect(f"{group.get_absolute_url()}#contacts")
@@ -1894,7 +1919,9 @@ def registrations(request):
         link_form = RegistrationLinkForm(request.POST)
         if link_form.is_valid():
             link = link_form.save()
-            messages.success(request, f"“{link.title}” havolasi yaratildi — nusxalab guruhga tashlang.")
+            messages.success(
+                request, _("“{title}” havolasi yaratildi — nusxalab guruhga tashlang.").format(title=link.title)
+            )
             return redirect(f"{reverse('registrations')}#links")
     else:
         link_form = RegistrationLinkForm()
@@ -1960,21 +1987,26 @@ def registration_action(request, pk):
     action = request.POST.get("action")
     if action == "reject":
         reject(reg)
-        messages.info(request, f"{reg.full_name} — ariza rad etildi.")
+        messages.info(request, _("{full_name} — ariza rad etildi.").format(full_name=reg.full_name))
     elif action == "attach":
         student = Student.objects.filter(pk=request.POST.get("student") or 0).first()
         if student is None:
-            messages.error(request, "Biriktirish uchun o‘quvchini tanlang.")
+            messages.error(request, _("Biriktirish uchun o‘quvchini tanlang."))
         else:
             approve_existing(reg, student)
-            messages.success(request, f"{student.full_name}: telefon va Telegram yangilandi.")
+            messages.success(
+                request, _("{full_name}: telefon va Telegram yangilandi.").format(full_name=student.full_name)
+            )
     elif action == "create":
         group = Group.objects.filter(pk=request.POST.get("group") or 0).first()
         if group is None:
-            messages.error(request, "Yangi o‘quvchi uchun guruhni tanlang.")
+            messages.error(request, _("Yangi o‘quvchi uchun guruhni tanlang."))
         else:
             student = approve_new(reg, group)
-            messages.success(request, f"{student.full_name} — {group.name} guruhiga qo‘shildi.")
+            messages.success(
+                request,
+                _("{full_name} — {name} guruhiga qo‘shildi.").format(full_name=student.full_name, name=group.name),
+            )
     return redirect(reverse("registrations"))
 
 
@@ -1998,7 +2030,9 @@ def registration_approve_all(request):
             created += 1
     messages.success(
         request,
-        f"Tasdiqlandi: {attached} ta mavjud o‘quvchiga biriktirildi, {created} ta yangi qo‘shildi.",
+        _("Tasdiqlandi: {attached} ta mavjud o‘quvchiga biriktirildi, {created} ta yangi qo‘shildi.").format(
+            attached=attached, created=created
+        ),
     )
     return redirect(reverse("registrations"))
 
@@ -2010,12 +2044,17 @@ def registration_link_action(request, pk):
     action = request.POST.get("action")
     if action == "delete":
         link.delete()
-        messages.info(request, f"“{link.title}” havolasi o‘chirildi (arizalar saqlanadi).")
+        messages.info(request, _("“{title}” havolasi o‘chirildi (arizalar saqlanadi).").format(title=link.title))
     else:
         link.is_active = action == "on"
         link.save(update_fields=["is_active"])
-        state = "yoqildi" if link.is_active else "to‘xtatildi — endi ariza qabul qilmaydi"
-        messages.info(request, f"“{link.title}” havolasi {state}.")
+        if link.is_active:
+            messages.info(request, _("“{title}” havolasi yoqildi.").format(title=link.title))
+        else:
+            messages.info(
+                request,
+                _("“{title}” havolasi to‘xtatildi — endi ariza qabul qilmaydi.").format(title=link.title),
+            )
     return redirect(f"{reverse('registrations')}#links")
 
 
@@ -2031,7 +2070,7 @@ def registration_public(request, token):
             form.add_error(None, "Juda ko‘p urinish. Birozdan keyin qayta urinib ko‘ring.")
         elif form.is_valid():
             cache.set(key, cache.get(key, 0) + 1, 3600)
-            done, _ = submit(link, ip=client_ip(request) or None, **form.cleaned_data)
+            done, _created = submit(link, ip=client_ip(request) or None, **form.cleaned_data)
     response = render(
         request,
         "academy/registrations/public.html",
@@ -2052,6 +2091,7 @@ def student_portal(request, token):
     if not token:
         raise Http404
     student = get_object_or_404(Student.objects.select_related("group"), portal_token=token)
+    activate_default_language(request, student.quiz_language)
     if not profiles.is_open(student):
         response = render(request, "academy/portal/locked.html", {"student": student})
         response["X-Robots-Tag"] = "noindex, nofollow"
@@ -2168,17 +2208,20 @@ def _send_portal_links(request, students, channel=delivery.TELEGRAM) -> None:
                 )
             results = telegram_sender.send_messages(items)
     except (telegram_sender.TelegramError, mailer.MailError) as exc:
-        messages.error(request, f"Yuborilmadi: {exc}")
+        messages.error(request, _("Yuborilmadi: {exc}").format(exc=exc))
         return
     label = delivery.CHANNEL_LABELS[channel]
     ok = sum(r.ok for r in results)
     failed = [r for r in results if not r.ok]
     if ok:
-        messages.success(request, f"Shaxsiy sahifa havolasi {label} orqali {ok} ta o‘quvchiga yuborildi.")
+        messages.success(
+            request,
+            _("Shaxsiy sahifa havolasi {label} orqali {ok} ta o‘quvchiga yuborildi.").format(label=label, ok=ok),
+        )
     if failed:
         messages.warning(
             request,
-            f"{len(failed)} ta o‘quvchiga yuborilmadi: "
+            _("{n} ta o‘quvchiga yuborilmadi: ").format(n=len(failed))
             + "; ".join(f"{names[r.key]} — {r.error}" for r in failed[:5]),
         )
 
@@ -2195,7 +2238,7 @@ def student_portal_action(request, pk):
         student.portal_token = ""
         student.save(update_fields=["portal_token"])
         motivation.portal_url(student)
-        messages.success(request, "Yangi havola yaratildi — eskisi endi ishlamaydi.")
+        messages.success(request, _("Yangi havola yaratildi — eskisi endi ishlamaydi."))
     else:
         _send_portal_links(request, [student], _channel_param(request))
     return redirect(f"{student.get_absolute_url()}#portal")
@@ -2208,12 +2251,12 @@ def group_portal_send(request, pk):
     channel = _channel_param(request)
     if channel == delivery.EMAIL:
         students = [s for s in group.active_students if mailer.valid_email(s.email)]
-        missing = "emaili kiritilgan"
+        missing = _("Bu guruhda emaili kiritilgan faol o‘quvchi yo‘q.")
     else:
         students = [s for s in group.active_students if has_telegram(s)]
-        missing = "Telegram yoki telefoni bor"
+        missing = _("Bu guruhda Telegram yoki telefoni bor faol o‘quvchi yo‘q.")
     if not students:
-        messages.warning(request, f"Bu guruhda {missing} faol o‘quvchi yo‘q.")
+        messages.warning(request, missing)
     else:
         _send_portal_links(request, students, channel)
     return redirect(f"{group.get_absolute_url()}#motivation")
@@ -2253,9 +2296,11 @@ def student_certificate_send(request, pk):
                 attachments=[(filename, pdf, "application/pdf")],
             )
         except mailer.MailError as exc:
-            messages.error(request, f"Sertifikat yuborilmadi: {exc}")
+            messages.error(request, _("Sertifikat yuborilmadi: {exc}").format(exc=exc))
         else:
-            messages.success(request, f"Sertifikat {student.full_name}ga email orqali yuborildi.")
+            messages.success(
+                request, _("Sertifikat {full_name}ga email orqali yuborildi.").format(full_name=student.full_name)
+            )
         return redirect(f"{student.get_absolute_url()}#certificate")
     username, phone = telegram_sender.recipient_of(student)
     item = telegram_sender.Outgoing(student.pk, username, phone, student.full_name, "")
@@ -2267,9 +2312,11 @@ def student_certificate_send(request, pk):
                 item, path, caption=f"🎓 Tabriklaymiz, {student.full_name}! “{course}” kursi sertifikati."
             )
         except telegram_sender.TelegramError as exc:
-            messages.error(request, f"Sertifikat yuborilmadi: {exc}")
+            messages.error(request, _("Sertifikat yuborilmadi: {exc}").format(exc=exc))
         else:
-            messages.success(request, f"Sertifikat {student.full_name}ga Telegram orqali yuborildi.")
+            messages.success(
+                request, _("Sertifikat {full_name}ga Telegram orqali yuborildi.").format(full_name=student.full_name)
+            )
     return redirect(f"{student.get_absolute_url()}#certificate")
 
 
@@ -2279,16 +2326,16 @@ def group_leaderboard_send(request, pk):
     group = get_object_or_404(Group, pk=pk)
     text = motivation.leaderboard_text(group, motivation.weekly_leaderboard(group))
     if not group.telegram_chat:
-        messages.error(request, "Avval guruhning Telegram chatini tanlang.")
+        messages.error(request, _("Avval guruhning Telegram chatini tanlang."))
     elif not text:
-        messages.info(request, "Oxirgi 7 kunda bu guruhda test yechilmagan — yuboriladigan reyting yo‘q.")
+        messages.info(request, _("Oxirgi 7 kunda bu guruhda test yechilmagan — yuboriladigan reyting yo‘q."))
     else:
         try:
             telegram_sender.send_to_chat(group.telegram_chat, text)
         except telegram_sender.TelegramError as exc:
-            messages.error(request, f"Yuborilmadi: {exc}")
+            messages.error(request, _("Yuborilmadi: {exc}").format(exc=exc))
         else:
-            messages.success(request, "Haftalik reyting guruh chatiga yuborildi.")
+            messages.success(request, _("Haftalik reyting guruh chatiga yuborildi."))
     return redirect(f"{group.get_absolute_url()}#motivation")
 
 
@@ -2301,7 +2348,7 @@ def group_telegram_chat(request, pk):
         group.save(update_fields=["telegram_chat"])
         messages.success(
             request,
-            "Telegram chat saqlandi." if group.telegram_chat else "Telegram chat olib tashlandi.",
+            _("Telegram chat saqlandi.") if group.telegram_chat else _("Telegram chat olib tashlandi."),
         )
         return redirect(f"{group.get_absolute_url()}#motivation")
     chats, error = [], ""

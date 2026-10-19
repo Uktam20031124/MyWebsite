@@ -1,16 +1,16 @@
-{% load ui %}{% for b in batches %}
+{% load i18n ui %}{% for b in batches %}
   <a class="row" href="{{ b.get_absolute_url }}">
     <div class="grow truncate">
-      <div class="row-title truncate">{% if show_topic %}{{ b.quiz.topic.title }}{% else %}{% if b.lesson %}{{ b.lesson.group.name }} · {{ b.lesson.held_on|date:"d.m.Y" }} darsi{% elif b.group %}{{ b.group.name }}{% else %}Bir nechta guruh{% endif %}{% endif %}</div>
-      <div class="meta">{% if show_topic %}{% if b.group %}{{ b.group.name }} · {% endif %}{% endif %}{{ b.created_at|date:"d.m.Y H:i" }} · {{ b.question_count }} savol · {{ b.time_limit_minutes }} daq.{% if b.scheduled_at and not b.scheduled_sent_at %} · ⏰ {{ b.scheduled_at|date:"d.m H:i" }} da yuboriladi{% endif %}{% if b.retake_of_id %} · qayta topshirish{% endif %}</div>
+      <div class="row-title truncate">{% if show_topic %}{{ b.quiz.topic|topic_title }}{% else %}{% if b.lesson %}{% blocktranslate with name=b.lesson.group.name held_on=b.lesson.held_on|date:"d.m.Y" trimmed %}{{ name }} · {{ held_on }} darsi{% endblocktranslate %}{% elif b.group %}{{ b.group.name }}{% else %}{% translate "Bir nechta guruh" %}{% endif %}{% endif %}</div>
+      <div class="meta">{% if show_topic %}{% if b.group %}{{ b.group.name }} · {% endif %}{% endif %}{% blocktranslate with created_at=b.created_at|date:"d.m.Y H:i" question_count=b.question_count time_limit_minutes=b.time_limit_minutes trimmed %}{{ created_at }} · {{ question_count }} savol · {{ time_limit_minutes }} daq.{% endblocktranslate %}{% if b.scheduled_at and not b.scheduled_sent_at %} {% blocktranslate with scheduled_at=b.scheduled_at|date:"d.m H:i" trimmed %}· ⏰ {{ scheduled_at }} da yuboriladi{% endblocktranslate %}{% endif %}{% if b.retake_of_id %} {% translate "· qayta topshirish" %}{% endif %}</div>
     </div>
-    <span class="meta tabular nowrap" title="Yechganlar">{{ b.done_n }}/{{ b.sent_n }}</span>
+    <span class="meta tabular nowrap" title="{% translate "Yechganlar" %}">{{ b.done_n }}/{{ b.sent_n }}</span>
     {% if b.avg_percent is not None %}
       <span class="badge {% if b.avg_percent >= 80 %}ok{% elif b.avg_percent >= 50 %}warn{% else %}bad{% endif %}">{{ b.avg_percent }}%</span>
     {% else %}
-      <span class="badge plain">kutilmoqda</span>
+      <span class="badge plain">{% translate "kutilmoqda" %}</span>
     {% endif %}
   </a>
 {% empty %}
-  <div class="empty compact"><p>{{ empty_text|default:"Hali test jo‘natilmagan." }}</p></div>
+  <div class="empty compact"><p>{{ empty_text|default:_("Hali test jo‘natilmagan.") }}</p></div>
 {% endfor %}

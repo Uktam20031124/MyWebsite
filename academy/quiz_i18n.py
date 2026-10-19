@@ -40,6 +40,9 @@ _TEXTS = {
         "ko‘rinadi — sahifani keyinroq yangilang.",
         "review_rejected": "Ustozingiz hozircha javoblarni ko‘rsatmaslikka qaror qildi. Savollaringizni darsda bering.",
         "refresh": "Yangilash",
+        "study_offer": "Natija 70% dan past. Mavzuni mustahkamlab oling: tushuntirish va bajarilgan "
+        "misollar tayyor — 20 daqiqadan keyin testni qayta topshirasiz.",
+        "study_button": "Mavzuni mustahkamlash",
         "your_answers": "Javoblaringiz",
         "your_answer": "Javobingiz",
         "no_answer": "Javob berilmagan",
@@ -95,6 +98,9 @@ _TEXTS = {
         "странице — обновите её позже.",
         "review_rejected": "Учитель решил пока не показывать ответы. Задайте вопросы на уроке.",
         "refresh": "Обновить",
+        "study_offer": "Результат ниже 70%. Закрепите тему: объяснение и решённые примеры уже "
+        "готовы — через 20 минут сможете пересдать тест.",
+        "study_button": "Закрепить тему",
         "your_answers": "Ваши ответы",
         "your_answer": "Ваш ответ",
         "no_answer": "Нет ответа",

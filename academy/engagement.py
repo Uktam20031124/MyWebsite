@@ -14,6 +14,7 @@ from datetime import date, datetime, time, timedelta
 from django.db import transaction
 from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from . import coins
 from .models import (
@@ -101,7 +102,7 @@ def _count_correct(m: Mistake, now) -> bool:
 
 def record_activity(student: Student, when=None) -> None:
     day = today(when)
-    _, created = DailyActivity.objects.get_or_create(student=student, day=day)
+    _day, created = DailyActivity.objects.get_or_create(student=student, day=day)
     if not created:
         return
     n = streak(student, day)
@@ -198,10 +199,10 @@ def answer_mistake(student: Student, mistake_id: int, choice_id: int) -> Practic
             .first()
         )
         if m is None:
-            raise EngagementError("Bu savol allaqachon o‘zlashtirilgan yoki topilmadi.")
+            raise EngagementError(_("Bu savol allaqachon o‘zlashtirilgan yoki topilmadi."))
         choice = m.question.choices.filter(pk=choice_id).first()
         if choice is None:
-            raise EngagementError("Javobni tanlang.")
+            raise EngagementError(_("Javobni tanlang."))
         now = timezone.now()
         if choice.is_correct:
             fixed = _count_correct(m, now)
@@ -255,11 +256,15 @@ def buy(student: Student, reward_id: int) -> Purchase:
         Student.objects.select_for_update().filter(pk=student.pk).first()  # bir vaqtda ikki so'rov bo'lmasin
         reward = Reward.objects.filter(pk=reward_id, is_active=True).first()
         if reward is None:
-            raise EngagementError("Bu sovg'a hozir do‘konda yo‘q.")
+            raise EngagementError(_("Bu sovg'a hozir do‘konda yo‘q."))
         if student.purchases.filter(reward=reward, status=Purchase.Status.PENDING).exists():
-            raise EngagementError("Bu sovg'a uchun so‘rovingiz ustozda kutilmoqda.")
+            raise EngagementError(_("Bu sovg'a uchun so‘rovingiz ustozda kutilmoqda."))
         if available(student) < reward.cost:
-            raise EngagementError(f"Coin yetmaydi: kerak {reward.cost}, sizda {available(student)}.")
+            raise EngagementError(
+                _("Coin yetmaydi: kerak {cost}, sizda {available}.").format(
+                    cost=reward.cost, available=available(student)
+                )
+            )
         return Purchase.objects.create(student=student, reward=reward, title=reward.title, cost=reward.cost)
 
 

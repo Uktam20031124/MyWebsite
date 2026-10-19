@@ -1,21 +1,21 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}{{ topic.title }} · Test · Minar Test{% endblock %}
-{% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>{% if batch.lesson %}<a href="{{ batch.lesson.get_absolute_url }}">{{ batch.lesson.group.name }} · {{ batch.lesson.held_on|date:"d.m.Y" }}</a>{% elif batch.group %}<a href="{{ batch.group.get_absolute_url }}">{{ batch.group.name }}</a>{% else %}Bir nechta guruh{% endif %}<span class="sep">·</span>{{ batch.created_at|date:"d.m.Y H:i" }}{% endblock %}
-{% block heading %}{{ topic.title }}{% endblock %}
-{% block subheading %}<p class="page-sub">{% icon "target" 15 %} {{ batch.question_count }} ta savol · {% icon "clock" 15 %} {{ batch.time_limit_minutes }} daqiqa · har bir havola faqat bir marta ishlaydi{% if batch.retake_of %} · {% icon "undo" 15 %} <a href="{{ batch.retake_of.get_absolute_url }}">qayta topshirish</a>{% endif %}</p>{% endblock %}
+{% load i18n ui %}
+{% block title %}{% blocktranslate with title=topic|topic_title trimmed %}{{ title }} · Test · Minar Test{% endblocktranslate %}{% endblock %}
+{% block kicker %}<a href="{% url 'quiz_batches' %}">{% translate "Testlar" %}</a><span class="sep">/</span>{% if batch.lesson %}<a href="{{ batch.lesson.get_absolute_url }}">{{ batch.lesson.group.name }} · {{ batch.lesson.held_on|date:"d.m.Y" }}</a>{% elif batch.group %}<a href="{{ batch.group.get_absolute_url }}">{{ batch.group.name }}</a>{% else %}{% translate "Bir nechta guruh" %}{% endif %}<span class="sep">·</span>{{ batch.created_at|date:"d.m.Y H:i" }}{% endblock %}
+{% block heading %}{{ topic|topic_title }}{% endblock %}
+{% block subheading %}<p class="page-sub">{% icon "target" 15 %} {% blocktranslate with question_count=batch.question_count trimmed %}{{ question_count }} ta savol ·{% endblocktranslate %} {% icon "clock" 15 %} {% blocktranslate with time_limit_minutes=batch.time_limit_minutes trimmed %}{{ time_limit_minutes }} daqiqa · har bir havola faqat bir marta ishlaydi{% endblocktranslate %}{% if batch.retake_of %} · {% icon "undo" 15 %} <a href="{{ batch.retake_of.get_absolute_url }}">{% translate "qayta topshirish" %}</a>{% endif %}</p>{% endblock %}
 {% block actions %}
 {% if telegram_ready and unsent_n %}
   <form method="post" action="{% url 'quiz_batch_send' batch.pk %}">
     {% csrf_token %}
-    <button class="btn primary" type="submit">{% icon "send" 16 %} Telegramda yuborish ({{ unsent_n }})</button>
+    <button class="btn primary" type="submit">{% icon "send" 16 %} {% blocktranslate with unsent_n=unsent_n trimmed %}Telegramda yuborish ({{ unsent_n }}){% endblocktranslate %}</button>
   </form>
 {% endif %}
 {% if email_ready and email_unsent_n %}
   <form method="post" action="{% url 'quiz_batch_send' batch.pk %}">
     {% csrf_token %}
     <input type="hidden" name="channel" value="email">
-    <button class="btn {% if telegram_ready and unsent_n %}soft{% else %}primary{% endif %}" type="submit">{% icon "mail" 16 %} Emailga yuborish ({{ email_unsent_n }})</button>
+    <button class="btn {% if telegram_ready and unsent_n %}soft{% else %}primary{% endif %}" type="submit">{% icon "mail" 16 %} {% blocktranslate with email_unsent_n=email_unsent_n trimmed %}Emailga yuborish ({{ email_unsent_n }}){% endblocktranslate %}</button>
   </form>
 {% endif %}
 {% if review_requested_n %}
@@ -23,40 +23,40 @@
     {% csrf_token %}
     <input type="hidden" name="batch" value="{{ batch.pk }}">
     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-    <button class="btn soft" type="submit">🔓 So‘rovlarga ruxsat ({{ review_requested_n }})</button>
+    <button class="btn soft" type="submit">{% blocktranslate with review_requested_n=review_requested_n trimmed %}🔓 So‘rovlarga ruxsat ({{ review_requested_n }}){% endblocktranslate %}</button>
   </form>
 {% endif %}
 {% if retake_n %}
   <form method="post" action="{% url 'quiz_batch_retake' batch.pk %}">
     {% csrf_token %}
-    <button class="btn soft" type="submit" data-confirm="{{ retake_n }} ta o‘quvchiga ({{ retake_below }}% dan past) shu mavzu bo‘yicha yangi test jo‘natilsinmi? Savollar boshqacha tushadi.">{% icon "undo" 16 %} Qayta topshirish ({{ retake_n }})</button>
+    <button class="btn soft" type="submit" data-confirm="{% blocktranslate with retake_n=retake_n retake_below=retake_below trimmed %}{{ retake_n }} ta o‘quvchiga ({{ retake_below }}% dan past) shu mavzu bo‘yicha yangi test jo‘natilsinmi? Savollar boshqacha tushadi.{% endblocktranslate %}">{% icon "undo" 16 %} {% blocktranslate with retake_n=retake_n trimmed %}Qayta topshirish ({{ retake_n }}){% endblocktranslate %}</button>
   </form>
 {% endif %}
-<a class="btn {% if telegram_ready and unsent_n or email_ready and email_unsent_n %}soft{% else %}primary{% endif %}" href="{{ again_url }}">{% icon "plus" 16 %} Yana jo‘natish</a>
+<a class="btn {% if telegram_ready and unsent_n or email_ready and email_unsent_n %}soft{% else %}primary{% endif %}" href="{{ again_url }}">{% icon "plus" 16 %} {% translate "Yana jo‘natish" %}</a>
 {% endblock %}
 
 {% block content %}
 {% if batch.scheduled_at and not batch.scheduled_sent_at %}
 <div class="callout next" style="margin-bottom:16px">
   <span class="callout-icon">{% icon "clock" 18 %}</span>
-  <div class="grow"><strong>Havolalar {{ batch.scheduled_at|date:"d.m.Y H:i" }} da avtomatik yuboriladi.</strong><div class="meta">Kanal: {% if 'telegram' in batch.channels %}Telegram{% endif %}{% if 'telegram' in batch.channels and 'email' in batch.channels %} va {% endif %}{% if 'email' in batch.channels %}email{% endif %}. Hozir yubormoqchi bo‘lsangiz — yuqoridagi “yuborish” tugmasi.</div></div>
+  <div class="grow">{% blocktranslate with scheduled_at=batch.scheduled_at|date:"d.m.Y H:i" trimmed %}<strong>Havolalar {{ scheduled_at }} da avtomatik yuboriladi.</strong>{% endblocktranslate %}<div class="meta">{% translate "Kanal:" %} {% if 'telegram' in batch.channels %}{% translate "Telegram" %}{% endif %}{% if 'telegram' in batch.channels and 'email' in batch.channels %} {% translate "va" %} {% endif %}{% if 'email' in batch.channels %}{% translate "email" %}{% endif %}{% translate ". Hozir yubormoqchi bo‘lsangiz — yuqoridagi “yuborish” tugmasi." %}</div></div>
 </div>
 {% endif %}
 <section class="kpis">
   <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">Jo‘natildi</span><span class="kpi-icon info">{% icon "send" 17 %}</span></div>
+    <div class="kpi-top"><span class="kpi-label">{% translate "Jo‘natildi" %}</span><span class="kpi-icon info">{% icon "send" 17 %}</span></div>
     <div class="kpi-value">{{ attempts|length }}</div>
   </article>
   <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">Yechdi</span><span class="kpi-icon ok">{% icon "check" 17 %}</span></div>
+    <div class="kpi-top"><span class="kpi-label">{% translate "Yechdi" %}</span><span class="kpi-icon ok">{% icon "check" 17 %}</span></div>
     <div class="kpi-value">{{ finished_n }}</div>
   </article>
   <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">Ochilmagan</span><span class="kpi-icon gold">{% icon "clock" 17 %}</span></div>
+    <div class="kpi-top"><span class="kpi-label">{% translate "Ochilmagan" %}</span><span class="kpi-icon gold">{% icon "clock" 17 %}</span></div>
     <div class="kpi-value">{{ pending_n }}</div>
   </article>
   <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">O‘rtacha natija</span><span class="kpi-icon accent">{% icon "trophy" 17 %}</span></div>
+    <div class="kpi-top"><span class="kpi-label">{% translate "O‘rtacha natija" %}</span><span class="kpi-icon accent">{% icon "trophy" 17 %}</span></div>
     <div class="kpi-value">{% if avg is not None %}{{ avg }}%{% else %}—{% endif %}</div>
   </article>
 </section>
@@ -65,17 +65,17 @@
   <div class="callout warn" style="margin-bottom:18px">
     <span class="callout-icon">{% icon "alert" 18 %}</span>
     <div class="grow">
-      <strong>Telegram ulanmagan — havolalar yuborilmadi.</strong>
-      <div class="meta" style="margin-top:4px">Testlar faqat {{ sender_id }} akkauntidan yuboriladi. {{ telegram_hint }}</div>
-      {% if email_ready %}<div class="meta" style="margin-top:4px">Gmail ulangan — havolalarni email orqali yuborishingiz mumkin.</div>{% else %}<div class="meta" style="margin-top:4px">Yoki Gmail orqali: {{ email_hint }}</div>{% endif %}
+      {% blocktranslate trimmed %}<strong>Telegram ulanmagan — havolalar yuborilmadi.</strong>{% endblocktranslate %}
+      <div class="meta" style="margin-top:4px">{% blocktranslate with sender_id=sender_id telegram_hint=telegram_hint trimmed %}Testlar faqat {{ sender_id }} akkauntidan yuboriladi. {{ telegram_hint }}{% endblocktranslate %}</div>
+      {% if email_ready %}<div class="meta" style="margin-top:4px">{% translate "Gmail ulangan — havolalarni email orqali yuborishingiz mumkin." %}</div>{% else %}<div class="meta" style="margin-top:4px">{% blocktranslate with email_hint=email_hint trimmed %}Yoki Gmail orqali: {{ email_hint }}{% endblocktranslate %}</div>{% endif %}
     </div>
   </div>
 {% endif %}
 
 <section class="card quiz-card" id="quiz" aria-labelledby="links-h">
   <div class="card-head">
-    <h2 id="links-h">{% icon "users" 18 %} Havolalar va natijalar</h2>
-    <span class="meta">{% icon "send" 13 %} Telegram: faqat {{ sender_id }} akkauntidan{% if email_ready %} · {% icon "mail" 13 %} Email: {{ email_n }} kishida bor{% endif %}</span>
+    <h2 id="links-h">{% icon "users" 18 %} {% translate "Havolalar va natijalar" %}</h2>
+    <span class="meta">{% icon "send" 13 %} {% blocktranslate with sender_id=sender_id trimmed %}Telegram: faqat {{ sender_id }} akkauntidan{% endblocktranslate %}{% if email_ready %} · {% icon "mail" 13 %} {% blocktranslate with email_n=email_n trimmed %}Email: {{ email_n }} kishida bor{% endblocktranslate %}{% endif %}</span>
   </div>
   <div class="card-body flush">
     <div class="rows">
@@ -84,43 +84,43 @@
           <a class="person grow" href="{{ a.student.get_absolute_url }}">
             <span class="avatar sm" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
             <span class="truncate">
-              <span class="person-name block truncate">{{ a.student.full_name }}{% if a.language == "ru" %} <span class="badge plain" title="Test rus tilida">RU</span>{% endif %}</span>
-              <span class="person-meta">{% if a.username %}@{{ a.username }}{% elif a.phone %}{{ a.phone }}{% else %}Telegram username / telefon yo‘q{% endif %}{% if a.student.email %} · {{ a.student.email }}{% endif %}</span>
+              <span class="person-name block truncate">{{ a.student.full_name }}{% if a.language == "ru" %} <span class="badge plain" title="{% translate "Test rus tilida" %}">{% translate "RU" %}</span>{% endif %}</span>
+              <span class="person-meta">{% if a.username %}@{{ a.username }}{% elif a.phone %}{{ a.phone }}{% else %}{% translate "Telegram username / telefon yo‘q" %}{% endif %}{% if a.student.email %} · {{ a.student.email }}{% endif %}</span>
             </span>
           </a>
           <div class="quiz-actions">
             {% if a.status == 'finished' %}
-              {% if a.timed_out %}<span class="meta">vaqt tugadi</span>{% endif %}{% if a.leave_count %}<span class="badge warn" title="Test oynasidan chiqib ketgan: {{ a.leave_count }} marta, jami {{ a.away_seconds }} s">⚠️ {{ a.leave_count }}</span>{% endif %}
+              {% if a.timed_out %}<span class="meta">{% translate "vaqt tugadi" %}</span>{% endif %}{% if a.leave_count %}<span class="badge warn" title="{% blocktranslate with leave_count=a.leave_count away_seconds=a.away_seconds trimmed %}Test oynasidan chiqib ketgan: {{ leave_count }} marta, jami {{ away_seconds }} s{% endblocktranslate %}">⚠️ {{ a.leave_count }}</span>{% endif %}
               <span class="meta">{{ a.finished_at|date:"d.m H:i" }}</span>
               <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
-              <a class="btn xs soft" href="{% url 'quiz_attempt_review' a.pk %}" title="Qaysi savollarda xato qilgani (faqat siz ko‘rasiz)">{% icon "search" 13 %} Javoblar</a>
-              {% if a.reveal == "requested" %}<span class="badge warn" title="O‘quvchi javoblarini ko‘rish uchun ruxsat so‘radi">🔓 so‘rov</span>{% elif a.reveal == "approved" %}<span class="badge ok" title="O‘quvchi javoblarini (to‘g‘ri/xato) ko‘ra oladi">ko‘ra oladi</span>{% elif a.reveal == "rejected" %}<span class="badge plain">rad etilgan</span>{% endif %}
+              <a class="btn xs soft" href="{% url 'quiz_attempt_review' a.pk %}" title="{% translate "Qaysi savollarda xato qilgani (faqat siz ko‘rasiz)" %}">{% icon "search" 13 %} {% translate "Javoblar" %}</a>
+              {% if a.reveal == "requested" %}<span class="badge warn" title="{% translate "O‘quvchi javoblarini ko‘rish uchun ruxsat so‘radi" %}">{% translate "🔓 so‘rov" %}</span>{% elif a.reveal == "approved" %}<span class="badge ok" title="{% translate "O‘quvchi javoblarini (to‘g‘ri/xato) ko‘ra oladi" %}">{% translate "ko‘ra oladi" %}</span>{% elif a.reveal == "rejected" %}<span class="badge plain">{% translate "rad etilgan" %}</span>{% endif %}
               <form method="post" action="{% url 'quiz_review_decide' a.pk %}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
                 {% if a.reveal == "approved" %}
-                  <button class="btn xs ghost" type="submit" name="action" value="reject" title="Ruxsatni qaytarib olish">Yopish</button>
+                  <button class="btn xs ghost" type="submit" name="action" value="reject" title="{% translate "Ruxsatni qaytarib olish" %}">{% translate "Yopish" %}</button>
                 {% else %}
-                  <button class="btn xs {% if a.reveal == 'requested' %}primary{% else %}ghost{% endif %}" type="submit" name="action" value="approve" title="O‘quvchiga javoblarini (to‘g‘ri/xato) ko‘rsatish">Ruxsat</button>
-                  {% if a.reveal == "requested" %}<button class="btn xs ghost" type="submit" name="action" value="reject">Rad</button>{% endif %}
+                  <button class="btn xs {% if a.reveal == 'requested' %}primary{% else %}ghost{% endif %}" type="submit" name="action" value="approve" title="{% translate "O‘quvchiga javoblarini (to‘g‘ri/xato) ko‘rsatish" %}">{% translate "Ruxsat" %}</button>
+                  {% if a.reveal == "requested" %}<button class="btn xs ghost" type="submit" name="action" value="reject">{% translate "Rad" %}</button>{% endif %}
                 {% endif %}
               </form>
             {% else %}
               {% if a.status == 'active' %}
                 <span class="badge warn">{{ a.get_status_display }}</span>
               {% elif a.sent_at %}
-                <span class="badge info" title="Telegram orqali yuborilgan">Yuborildi · {{ a.sent_at|date:"d.m H:i" }}</span>{% if a.reminded_at %}<span class="meta" title="Avtomatik eslatma">eslatildi {{ a.reminded_at|date:"d.m H:i" }}</span>{% endif %}
+                <span class="badge info" title="{% translate "Telegram orqali yuborilgan" %}">{% blocktranslate with sent_at=a.sent_at|date:"d.m H:i" trimmed %}Yuborildi · {{ sent_at }}{% endblocktranslate %}</span>{% if a.reminded_at %}<span class="meta" title="{% translate "Avtomatik eslatma" %}">{% blocktranslate with reminded_at=a.reminded_at|date:"d.m H:i" trimmed %}eslatildi {{ reminded_at }}{% endblocktranslate %}</span>{% endif %}
               {% elif a.send_error %}
-                <span class="badge bad" title="{{ a.send_error }}">Yuborilmadi</span>
+                <span class="badge bad" title="{{ a.send_error }}">{% translate "Yuborilmadi" %}</span>
                 <span class="meta send-error">{{ a.send_error }}</span>
               {% elif not a.email_sent_at %}
-                <span class="badge">Yuborilmagan</span>
+                <span class="badge">{% translate "Yuborilmagan" %}</span>
               {% endif %}
               {% if a.status == 'pending' %}
                 {% if a.email_sent_at %}
-                  <span class="badge info" title="Email orqali yuborilgan">{% icon "mail" 12 %} {{ a.email_sent_at|date:"d.m H:i" }}</span>
+                  <span class="badge info" title="{% translate "Email orqali yuborilgan" %}">{% icon "mail" 12 %} {{ a.email_sent_at|date:"d.m H:i" }}</span>
                 {% elif a.email_error %}
-                  <span class="badge bad" title="{{ a.email_error }}">{% icon "mail" 12 %} xato</span>
+                  <span class="badge bad" title="{{ a.email_error }}">{% icon "mail" 12 %} {% translate "xato" %}</span>
                   <span class="meta send-error">{{ a.email_error }}</span>
                 {% endif %}
               {% endif %}
@@ -128,7 +128,7 @@
                 <form method="post" action="{% url 'quiz_batch_send' batch.pk %}">
                   {% csrf_token %}
                   <input type="hidden" name="attempt" value="{{ a.pk }}">
-                  <button class="btn xs {% if a.sent_at %}ghost{% else %}primary{% endif %}" type="submit" {% if not a.username and not a.phone %}disabled title="Shogird kartasiga Telegram username yoki telefon kiriting"{% endif %}>{% icon "send" 13 %} {% if a.sent_at or a.send_error %}Qayta yuborish{% else %}Yuborish{% endif %}</button>
+                  <button class="btn xs {% if a.sent_at %}ghost{% else %}primary{% endif %}" type="submit" {% if not a.username and not a.phone %}disabled title="{% translate "Shogird kartasiga Telegram username yoki telefon kiriting" %}"{% endif %}>{% icon "send" 13 %} {% if a.sent_at or a.send_error %}{% translate "Qayta yuborish" %}{% else %}{% translate "Yuborish" %}{% endif %}</button>
                 </form>
               {% endif %}
               {% if email_ready and a.status == 'pending' and a.student.email %}
@@ -136,18 +136,18 @@
                   {% csrf_token %}
                   <input type="hidden" name="attempt" value="{{ a.pk }}">
                   <input type="hidden" name="channel" value="email">
-                  <button class="btn xs {% if a.email_sent_at %}ghost{% else %}soft{% endif %}" type="submit" title="Email: {{ a.student.email }}">{% icon "mail" 13 %} {% if a.email_sent_at or a.email_error %}Qayta{% else %}Email{% endif %}</button>
+                  <button class="btn xs {% if a.email_sent_at %}ghost{% else %}soft{% endif %}" type="submit" title="{% blocktranslate with email=a.student.email trimmed %}Email: {{ email }}{% endblocktranslate %}">{% icon "mail" 13 %} {% if a.email_sent_at or a.email_error %}{% translate "Qayta" %}{% else %}{% translate "Email" %}{% endif %}</button>
                 </form>
               {% endif %}
               <form method="post" action="{% url 'quiz_attempt_renew' a.pk %}">
                 {% csrf_token %}
-                <button class="btn xs ghost square" type="submit" data-confirm="Eski havola ishlamay qoladi. Yangi havola yaratilsinmi?" title="Yangi havola" aria-label="Yangi havola">{% icon "undo" 13 %}</button>
+                <button class="btn xs ghost square" type="submit" data-confirm="{% translate "Eski havola ishlamay qoladi. Yangi havola yaratilsinmi?" %}" title="{% translate "Yangi havola" %}" aria-label="{% translate "Yangi havola" %}">{% icon "undo" 13 %}</button>
               </form>
             {% endif %}
           </div>
         </div>
       {% empty %}
-        <div class="empty compact"><p>Bu jo‘natmada havola yo‘q.</p></div>
+        <div class="empty compact"><p>{% translate "Bu jo‘natmada havola yo‘q." %}</p></div>
       {% endfor %}
     </div>
   </div>
@@ -156,21 +156,21 @@
 {% if hardest %}
 <section class="card" style="margin-top:18px" aria-labelledby="hard-h">
   <div class="card-head">
-    <h2 id="hard-h">{% icon "alert" 18 %} Eng ko‘p xato qilingan savollar</h2>
-    <span class="meta">Shu mavzuning qaysi joyini qayta tushuntirish kerakligini ko‘rsatadi</span>
+    <h2 id="hard-h">{% icon "alert" 18 %} {% translate "Eng ko‘p xato qilingan savollar" %}</h2>
+    <span class="meta">{% translate "Shu mavzuning qaysi joyini qayta tushuntirish kerakligini ko‘rsatadi" %}</span>
   </div>
   <div class="card-body flush">
     <div class="rows">
       {% for q in hardest %}
         <div class="row hard-row">
-          <span class="hard-pct {% if q.pct_wrong >= 50 %}bad{% else %}warn{% endif %}" title="Xato qilganlar ulushi">{{ q.pct_wrong }}%</span>
+          <span class="hard-pct {% if q.pct_wrong >= 50 %}bad{% else %}warn{% endif %}" title="{% translate "Xato qilganlar ulushi" %}">{{ q.pct_wrong }}%</span>
           <div class="grow">
             <div class="row-title">{{ q.title }}</div>
             {% if q.code %}<pre class="quiz-code">{{ q.code }}</pre>{% endif %}
             <div class="meta">
-              {{ q.asked }} kishidan {{ q.wrong }} tasi xato{% if q.unanswered %} ({{ q.unanswered }} tasi javobsiz){% endif %}
-              · <span class="review-tag ok">to‘g‘ri: {{ q.correct_text }}</span>
-              {% if q.top_wrong_n %}· ko‘p tanlangan xato: «{{ q.top_wrong }}» ({{ q.top_wrong_n }}){% endif %}
+              {% blocktranslate with asked=q.asked wrong=q.wrong trimmed %}{{ asked }} kishidan {{ wrong }} tasi xato{% endblocktranslate %}{% if q.unanswered %} {% blocktranslate with unanswered=q.unanswered trimmed %}({{ unanswered }} tasi javobsiz){% endblocktranslate %}{% endif %}
+              · <span class="review-tag ok">{% blocktranslate with correct_text=q.correct_text trimmed %}to‘g‘ri: {{ correct_text }}{% endblocktranslate %}</span>
+              {% if q.top_wrong_n %}{% blocktranslate with top_wrong=q.top_wrong top_wrong_n=q.top_wrong_n trimmed %}· ko‘p tanlangan xato: «{{ top_wrong }}» ({{ top_wrong_n }}){% endblocktranslate %}{% endif %}
             </div>
           </div>
         </div>
@@ -180,5 +180,5 @@
 </section>
 {% endif %}
 
-<a class="btn danger-ghost sm" href="{% url 'quiz_batch_delete' batch.pk %}" style="margin-top:18px">{% icon "trash" 15 %} Jo‘natmani o‘chirish</a>
+<a class="btn danger-ghost sm" href="{% url 'quiz_batch_delete' batch.pk %}" style="margin-top:18px">{% icon "trash" 15 %} {% translate "Jo‘natmani o‘chirish" %}</a>
 {% endblock %}

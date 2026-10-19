@@ -1,48 +1,49 @@
-<!doctype html>
-<html lang="uz" data-theme="light">
+{% load i18n %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#15251e">
   <meta name="color-scheme" content="light dark">
-  <title>Ro‘yxatdan o‘tish · {{ link.title }}</title>
+  <title>{% blocktranslate with title=link.title trimmed %}Ro‘yxatdan o‘tish · {{ title }}{% endblocktranslate %}</title>
   <meta property="og:title" content="Ro‘yxatdan o‘tish: {{ link.title }}">
   <meta property="og:description" content="F.I.Sh., telefon va Telegram username’ingizni yuboring">
   {% include "academy/includes/head.html" %}
 </head>
 <body class="quiz-body">
+  <div class="portal-top page-lang">{% include "academy/includes/lang_switch.html" %}</div>
   <main class="quiz-shell">
     <div class="card pad quiz-panel">
-      <p class="kicker">Minar Test · {{ link.title }}</p>
+      <p class="kicker">{% blocktranslate with title=link.title trimmed %}Minar Test · {{ title }}{% endblocktranslate %}</p>
       {% if done %}
-        <h1>Rahmat, {{ done.full_name }}!</h1>
-        <p class="muted">Ma’lumotingiz ustozga yuborildi. Tekshirilgach, testlar sizga Telegram (@{{ done.telegram }}) {% if done.email %} yoki emailingizga ({{ done.email }}){% endif %} orqali keladi.</p>
+        <h1>{% blocktranslate with full_name=done.full_name trimmed %}Rahmat, {{ full_name }}!{% endblocktranslate %}</h1>
+        <p class="muted">{% blocktranslate with telegram=done.telegram trimmed %}Ma’lumotingiz ustozga yuborildi. Tekshirilgach, testlar sizga Telegram (@{{ telegram }}){% endblocktranslate %} {% if done.email %} {% blocktranslate with email=done.email trimmed %}yoki emailingizga ({{ email }}){% endblocktranslate %}{% endif %} {% translate "orqali keladi." %}</p>
         <ul class="rules" style="margin-top:14px">
-          <li>Telefon: {{ done.phone }}</li>
-          <li>Telegram: @{{ done.telegram }}</li>
-          {% if done.email %}<li>Email: {{ done.email }}</li>{% endif %}
+          <li>{% blocktranslate with phone=done.phone trimmed %}Telefon: {{ phone }}{% endblocktranslate %}</li>
+          <li>{% blocktranslate with telegram=done.telegram trimmed %}Telegram: @{{ telegram }}{% endblocktranslate %}</li>
+          {% if done.email %}<li>{% blocktranslate with email=done.email trimmed %}Email: {{ email }}{% endblocktranslate %}</li>{% endif %}
         </ul>
-        <p class="meta" style="margin-top:12px">Xato yozgan bo‘lsangiz — sahifani qayta ochib, xuddi shu telefon raqami bilan qayta yuboring: ma’lumot yangilanadi.</p>
+        <p class="meta" style="margin-top:12px">{% translate "Xato yozgan bo‘lsangiz — sahifani qayta ochib, xuddi shu telefon raqami bilan qayta yuboring: ma’lumot yangilanadi." %}</p>
       {% elif not link.is_active %}
-        <h1>Ro‘yxat yopilgan</h1>
-        <p class="muted">Bu havola endi ariza qabul qilmaydi. Ustozingizga murojaat qiling.</p>
+        <h1>{% translate "Ro‘yxat yopilgan" %}</h1>
+        <p class="muted">{% translate "Bu havola endi ariza qabul qilmaydi. Ustozingizga murojaat qiling." %}</p>
       {% else %}
-        <h1>Ro‘yxatdan o‘tish</h1>
-        <p class="muted">Ustozingiz testlar va xabarlarni Telegram orqali yuboradi. Ma’lumotlaringizni to‘g‘ri kiriting.</p>
+        <h1>{% translate "Ro‘yxatdan o‘tish" %}</h1>
+        <p class="muted">{% translate "Ustozingiz testlar va xabarlarni Telegram orqali yuboradi. Ma’lumotlaringizni to‘g‘ri kiriting." %}</p>
         <form method="post" novalidate class="contact-self">
           {% csrf_token %}
           {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
           {% for field in form %}
             <div class="field{% if field.errors %} has-error{% endif %}">
               {{ field.label_tag }}{{ field }}
-              {% if field.name == 'telegram' %}<div class="hint">Telegram → Sozlamalar → “Username”. Yo‘q bo‘lsa — o‘sha yerda yarating (masalan, @ali_2010).</div>{% endif %}
+              {% if field.name == 'telegram' %}<div class="hint">{% translate "Telegram → Sozlamalar → “Username”. Yo‘q bo‘lsa — o‘sha yerda yarating (masalan, @ali_2010)." %}</div>{% endif %}
               {{ field.errors }}
             </div>
           {% endfor %}
-          <button class="btn primary block" type="submit">Yuborish</button>
+          <button class="btn primary block" type="submit">{% translate "Yuborish" %}</button>
         </form>
-        <p class="meta" style="margin-top:14px">Ma’lumotlaringiz faqat ustozingizga ko‘rinadi.</p>
+        <p class="meta" style="margin-top:14px">{% translate "Ma’lumotlaringiz faqat ustozingizga ko‘rinadi." %}</p>
       {% endif %}
     </div>
   </main>

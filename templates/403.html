@@ -1,4 +1,5 @@
 {% extends "error_base.html" %}
+{% load i18n %}
 {% block code %}403{% endblock %}
-{% block title %}Ruxsat yo‘q{% endblock %}
-{% block message %}Bu amalga ruxsat yo‘q. Sahifani yangilab, qayta urinib ko‘ring.{% endblock %}
+{% block title %}{% translate "Ruxsat yo‘q" %}{% endblock %}
+{% block message %}{% translate "Bu amalga ruxsat yo‘q. Sahifani yangilab, qayta urinib ko‘ring." %}{% endblock %}

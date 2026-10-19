@@ -9,6 +9,14 @@
   <p>{{ t.score }}</p>
 </div>
 <p class="muted">{% if attempt.percent >= 80 %}{{ t.verdict_high }}{% elif attempt.percent >= 50 %}{{ t.verdict_mid }}{% else %}{{ t.verdict_low }}{% endif %}</p>
+{% if study_url %}
+  <div class="callout next review-ask">
+    <div class="grow">
+      <p style="margin:0 0 10px">{{ t.study_offer }}</p>
+      <a class="btn primary block" href="{{ study_url }}">📘 {{ t.study_button }}</a>
+    </div>
+  </div>
+{% endif %}
 
 {% if attempt.reveal == "" %}
   <div class="callout next review-ask">
