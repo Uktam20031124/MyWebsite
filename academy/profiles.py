@@ -4,12 +4,11 @@ Oqim:
 1. Ustoz profil havolasini yuboradi (``/men/<kalit>/``). O'quvchi ism-familiyasini va
    "kirishga ruxsat so'rash" tugmasini ko'radi.
 2. Ustoz 2 / 3 / 4 soatga ruxsat beradi — shu vaqt ichida profil ochiq.
-3. Profilda ustoz ruxsat etgan mavzular va guruhdagi navbatdagi yangi mavzu. O'quvchi
+3. Profilda ustoz ruxsat etgan mavzular. O'quvchi
    testni o'zi boshlaydi (10/12 savol, 5/10 daqiqa) — ustoz ruxsati shart emas.
    Bir mavzu bo'yicha kuniga ko'pi bilan ``TestRequest.DAILY_LIMIT`` ta.
 4. Natija 60% dan past bo'lsa — "Darsni qayta mustahkamlash" o'zi ochiladi; material
-   ochilgandan 20 daqiqa o'tib qayta topshirish mumkin. Yangi mavzu testi — 30 daqiqa
-   tayyorlanishdan keyin.
+   ochilgandan 20 daqiqa o'tib qayta topshirish mumkin.
 5. Har bir yakunlangan test uchun coinlar (``academy.coins``).
 """
 
@@ -80,22 +79,6 @@ def taught_topic_ids(student: Student) -> set[int]:
     )
 
 
-def next_topic(student: Student) -> Topic | None:
-    """Guruh dasturida oxirgi o'tilgan mavzudan keyingi (hali o'tilmagan) mavzu."""
-    items = list(
-        SyllabusItem.objects.filter(group_id=student.group_id)
-        .select_related("topic")
-        .order_by("order", "id")
-    )
-    last_taught = max(
-        (i for i, item in enumerate(items) if item.status == SyllabusItem.Status.TAUGHT), default=-1
-    )
-    return next(
-        (item.topic for item in items[last_taught + 1 :] if item.status == SyllabusItem.Status.PLANNED),
-        None,
-    )
-
-
 def day_start(now=None):
     tz = timezone.get_current_timezone()
     today = timezone.localtime(now or timezone.now(), tz).date()
@@ -118,7 +101,6 @@ class TopicRow:
     last: QuizAttempt | None  # oxirgi yakunlangan test
     request: TestRequest | None  # boshlangan, lekin hali test yaratilmagan
     used: int  # bugun
-    preview: bool  # guruhdagi navbatdagi (yangi) mavzu
     session: StudySession | None  # tegishli mustahkamlash/tayyorlanish
     now: datetime
 
@@ -132,12 +114,8 @@ class TopicRow:
 
     @property
     def gate(self) -> str:
-        """Test oldidan majburiy o'qish: "review" (past natija), "preview" (yangi mavzu) yoki ""."""
-        if self.needs_review:
-            return StudySession.Kind.REVIEW
-        if self.preview and self.last is None:
-            return StudySession.Kind.PREVIEW
-        return ""
+        """Test oldidan majburiy o'qish: "review" (past natija bo'lsa) yoki ""."""
+        return StudySession.Kind.REVIEW if self.needs_review else ""
 
     @property
     def unlocks_at(self):
@@ -159,16 +137,13 @@ class TopicRow:
 
 
 def topic_rows(student: Student, now=None) -> list[TopicRow]:
-    """Ustoz ruxsat bergan mavzular + navbatdagi yangi mavzu (oldindan tayyorlanish)."""
+    """Ustoz ruxsat bergan mavzular."""
     now = now or timezone.now()
     topics = list(
         student.allowed_topics.select_related("module", "quiz").order_by(
             "module__order", "module__title", "order", "title"
         )
     )
-    upcoming = next_topic(student)
-    if upcoming and upcoming.pk not in {t.pk for t in topics}:
-        topics.append(upcoming)
     ids = [t.pk for t in topics]
     open_requests = {
         r.topic_id: r
@@ -202,14 +177,13 @@ def topic_rows(student: Student, now=None) -> list[TopicRow]:
             last=last.get(t.pk),
             request=open_requests.get(t.pk),
             used=used.get(t.pk, 0),
-            preview=bool(upcoming and t.pk == upcoming.pk),
             session=None,
             now=now,
         )
         if row.gate:
             s = sessions.get((t.pk, row.gate))
             # Mustahkamlash — faqat oxirgi past natijadan keyin boshlangani hisoblanadi.
-            if s and (row.gate != StudySession.Kind.REVIEW or s.started_at >= row.last.finished_at):
+            if s and s.started_at >= row.last.finished_at:
                 row.session = s
         rows.append(row)
     return rows
@@ -220,7 +194,7 @@ def row_for(student: Student, topic: Topic) -> TopicRow | None:
 
 
 def open_study(student: Student, topic: Topic) -> TopicRow | None:
-    """Material sahifasi ochilganda: kerak bo'lsa mustahkamlash/tayyorlanish vaqtini boshlaydi."""
+    """Material sahifasi ochilganda: past natija bo'lsa mustahkamlash vaqtini boshlaydi."""
     row = row_for(student, topic)
     if row and row.gate and row.session is None and is_open(student):
         StudySession.objects.create(student=student, topic=topic, kind=row.gate)
@@ -246,18 +220,11 @@ def begin_test(student: Student, topic: Topic) -> TestRequest:
                 f"Bugun bu mavzudan {TestRequest.DAILY_LIMIT} ta test topshirdingiz — ertaga qayta urinib ko‘ring."
             )
         if row.locked:
-            what = "Mustahkamlash" if row.gate == StudySession.Kind.REVIEW else "Yangi mavzuga tayyorlanish"
             if row.session is None:
-                raise ProfileError(f"Avval materialni oching: {what.lower()} vaqti shundan boshlanadi.")
+                raise ProfileError("Avval materialni oching: mustahkamlash vaqti shundan boshlanadi.")
             at = timezone.localtime(row.unlocks_at)
-            raise ProfileError(f"{what} {at:%H:%M} da tugaydi — keyin test ochiladi.")
-        kind = (
-            TestRequest.Kind.RETAKE
-            if row.gate == StudySession.Kind.REVIEW
-            else TestRequest.Kind.PREVIEW
-            if row.gate == StudySession.Kind.PREVIEW
-            else TestRequest.Kind.FIRST
-        )
+            raise ProfileError(f"Mustahkamlash {at:%H:%M} da tugaydi — keyin test ochiladi.")
+        kind = TestRequest.Kind.RETAKE if row.gate else TestRequest.Kind.FIRST
         return TestRequest.objects.create(
             student=student,
             topic=topic,

@@ -115,7 +115,7 @@
         {% if profile_open %}<span class="badge ok">ochiq · {{ student.profile_until|date:"H:i" }} gacha</span>{% elif student.profile_requested_at %}<span class="badge warn">🔑 kirish so‘ralgan</span>{% else %}<span class="badge plain">yopiq</span>{% endif %}
       </div>
       <div class="card-body">
-        <p class="meta" style="margin:0 0 10px">O‘quvchi profil havolasini ochib, kirishga ruxsat so‘raydi. Siz 2–4 soatga ochasiz; shu vaqtda u quyida belgilangan mavzulardan va guruhdagi navbatdagi yangi mavzudan testni o‘zi boshlaydi (kuniga mavzu boshiga 2 tagacha). 60% dan past natijada — 20 daqiqalik mustahkamlash, yangi mavzuda — 30 daqiqalik tayyorlanish, keyin test.</p>
+        <p class="meta" style="margin:0 0 10px">O‘quvchi profil havolasini ochib, kirishga ruxsat so‘raydi. Siz 2–4 soatga ochasiz; shu vaqtda u quyida belgilangan mavzulardan testni o‘zi boshlaydi (kuniga mavzu boshiga 2 tagacha). 60% dan past natijada — 20 daqiqalik mustahkamlash, keyin qayta test.</p>
         <form method="post" action="{% url 'student_profile_access' student.pk %}" class="contact-link-actions">
           {% csrf_token %}
           {% for h in access_hours %}<button class="btn sm {% if student.profile_requested_at %}primary{% else %}soft{% endif %}" type="submit" name="action" value="{{ h }}">{{ h }} soatga ochish</button>{% endfor %}

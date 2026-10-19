@@ -167,26 +167,19 @@ class ProfileFlowTests(TestCase):
         self.assertContains(self.client.get(self.portal), "oxirgi natija: <strong>100%</strong>")
         self.assertNotEqual(first.pk, retake.pk)
 
-    def test_next_topic_preview_after_30_minutes(self, notify):
+    def test_only_allowed_topics_no_preview(self, notify):
         SyllabusItem.objects.create(group=self.group, topic=self.topic, order=1, status=SyllabusItem.Status.TAUGHT)
         SyllabusItem.objects.create(group=self.group, topic=self.other, order=2)
         self.grant()
-        self.allow(self.topic)  # yangi mavzu ruxsatsiz ham ko'rinadi
+        self.allow(self.topic)
         page = self.client.get(self.portal)
-        self.assertContains(page, "✨ yangi mavzu")
-        self.assertContains(page, "Funksiyalar")
-        self.assertContains(self.ask(self.other), "Avval materialni oching")
-        study_url = reverse("portal_study", args=[self.token, self.other.pk])
-        self.assertContains(self.client.get(study_url), "Tayyorlanish vaqti: 30 daqiqa")
-        StudySession.objects.update(started_at=timezone.now() - timedelta(minutes=29))
-        self.assertContains(self.ask(self.other), "da tugaydi")
-        StudySession.objects.update(started_at=timezone.now() - timedelta(minutes=31))
-        attempt = self.solve(self.start(self.other))
-        self.assertEqual(attempt.test_request.kind, TestRequest.Kind.PREVIEW)
-        self.assertEqual(coins.balance(self.ali), 10 + 5)
-        card = self.teacher.get(self.ali.get_absolute_url())
-        self.assertContains(card, "Coinlar: 15")
-        self.assertContains(card, "Yangi mavzuni oldindan o‘zlashtirdi")
+        self.assertNotContains(page, "yangi mavzu")
+        self.assertNotContains(page, "Funksiyalar")  # navbatdagi mavzu ruxsatsiz ko'rinmaydi
+        self.assertContains(self.ask(self.other), "ruxsat berilmagan")
+        attempt = self.solve(self.start(self.topic))
+        self.assertEqual(coins.balance(self.ali), 10)
+        self.assertContains(self.teacher.get(self.ali.get_absolute_url()), "Coinlar: 10")
+        self.assertEqual(attempt.test_request.kind, TestRequest.Kind.FIRST)
 
     def test_russian_material(self, notify):
         self.ali.quiz_language = "ru"
