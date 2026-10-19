@@ -28,6 +28,12 @@
         <div class="prose">{{ topic.homework|linebreaks }}</div>
       </div>
     {% endif %}
+    {% if topic.study %}
+      <details class="prose-block">
+        <summary><h3 style="display:inline">{% icon "book" 15 %} Mustahkamlash materiali</h3> <span class="meta">— past natija olgan o‘quvchi profilida ko‘radi</span></summary>
+        <div class="study">{{ topic.study|study_md }}</div>
+      </details>
+    {% endif %}
     {% with resources=topic.resource_list %}
       {% if resources %}
         <div class="prose-block">

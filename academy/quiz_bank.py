@@ -32,6 +32,13 @@ def bank_texts_ru() -> dict[str, str]:
     return {**STARTER, **PYTHON}
 
 
+def bank_study() -> dict[str, str]:
+    from .school_data.study_python import STUDY as PYTHON
+    from .school_data.study_starter import STUDY as STARTER
+
+    return {**STARTER, **PYTHON}
+
+
 def bank_titles_ru() -> dict[str, str]:
     from .school_data.titles_ru import TITLES
 
@@ -77,6 +84,7 @@ def validate_bank() -> list[str]:
             original = parse_quiz(bank_texts()[key])[0]
             errors += [f"Ruscha bank, {key}: {e}" for e in translation_errors(original, translated)]
     errors += [f"Ruscha nom: noma'lum mavzu kaliti {k}" for k in set(bank_titles_ru()) - keys]
+    errors += [f"Mustahkamlash materiali: noma'lum mavzu kaliti {k}" for k in set(bank_study()) - keys]
     return errors
 
 
@@ -161,3 +169,18 @@ def seed_translations(Topic, Question, Choice) -> tuple[int, int]:
                 c.save(update_fields=["text_ru"])
         questions += bool(q.text_ru)
     return topics, questions
+
+
+def seed_study(Topic) -> int:
+    """"Darsni qayta mustahkamlash" materialini mavzularga yozadi — faqat bo'shlariga
+    (ustoz yozgan yoki tahrirlagan materialga tegilmaydi). Yozilgan mavzular soni."""
+    texts = bank_study()
+    filled = 0
+    for module in all_modules():
+        for t in module.topics:
+            text = texts.get(t.key)
+            if text:
+                filled += Topic.objects.filter(
+                    module__title__iexact=module.title, title__iexact=t.title, study=""
+                ).update(study=text.strip())
+    return filled

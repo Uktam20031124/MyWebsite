@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import views
+from . import profile_views, views
 
 urlpatterns = [
     path("kirish/", views.ThrottledLoginView.as_view(), name="login"),
@@ -41,6 +41,13 @@ urlpatterns = [
     # O'quvchining shaxsiy sahifasi (login talab qilinmaydi, maxfiy havola)
     path("men/<str:token>/", views.student_portal, name="student_portal"),
     path("men/<str:token>/sorov/<int:pk>/", views.portal_review_request, name="portal_review_request"),
+    path("men/<str:token>/kirish/", profile_views.portal_access_request, name="portal_access_request"),
+    path("men/<str:token>/test/<int:topic_id>/", profile_views.portal_test_request, name="portal_test_request"),
+    path("men/<str:token>/boshlash/<int:pk>/", profile_views.portal_test_start, name="portal_test_start"),
+    path("men/<str:token>/mavzu/<int:topic_id>/", profile_views.portal_study, name="portal_study"),
+    path("shogirdlar/<int:pk>/profil/", profile_views.student_profile_access, name="student_profile_access"),
+    path("shogirdlar/<int:pk>/mavzular/", profile_views.student_allowed_topics, name="student_allowed_topics"),
+    path("testlar/sorov/<int:pk>/", profile_views.test_request_decide, name="test_request_decide"),
     # Ro'yxatdan o'tish arizalari
     path("arizalar/", views.registrations, name="registrations"),
     path("arizalar/tasdiqlash/", views.registration_approve_all, name="registration_approve_all"),

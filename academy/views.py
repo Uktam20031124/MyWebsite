@@ -32,7 +32,7 @@ from django.views.generic import (
 )
 from django.views.static import serve as static_serve
 
-from . import delivery, mailer, motivation, review_access, telegram_sender
+from . import delivery, mailer, motivation, profiles, review_access, telegram_sender
 from .contacts import apply_contacts, has_contact, has_telegram, preview_contacts
 from .delivery import quiz_message  # noqa: F401 — eski import yo'llari uchun
 from .forms import (
@@ -65,9 +65,11 @@ from .models import (
     RegistrationLink,
     Student,
     SyllabusItem,
+    TestRequest,
     Topic,
     new_attempt_token,
 )
+from .profile_views import profile_context
 from .quiz_i18n import attempt_texts
 from .registrations import approve_existing, approve_new, reject, submit, suggestions
 from .services import (
@@ -556,6 +558,7 @@ class StudentDetailView(AuthMixin, DetailView):
         ctx["course"] = motivation.default_course(student)
         ctx["can_telegram"] = telegram_sender.is_configured() and has_telegram(student)
         ctx["can_email"] = mailer.is_configured() and bool(student.email)
+        ctx.update(profile_context(student))
         ctx["history"] = history
         ctx["timeline"] = history[:24][::-1]  # baho diagrammasi: eskisidan yangisiga
         ctx["quiz_attempts"] = self.object.quiz_attempts.select_related(
@@ -1433,7 +1436,13 @@ def quiz_review_requests(request):
     return render(
         request,
         "academy/quiz/review_requests.html",
-        {"pending": list(review_access.pending_requests()), "decided": decided},
+        {
+            "pending": list(review_access.pending_requests()),
+            "decided": decided,
+            "access_requests": list(profiles.pending_access()),
+            "test_requests": list(profiles.pending_tests()),
+            "access_hours": profiles.ACCESS_HOURS,
+        },
     )
 
 
@@ -2040,6 +2049,10 @@ def student_portal(request, token):
     if not token:
         raise Http404
     student = get_object_or_404(Student.objects.select_related("group"), portal_token=token)
+    if not profiles.is_open(student):
+        response = render(request, "academy/portal/locked.html", {"student": student})
+        response["X-Robots-Tag"] = "noindex, nofollow"
+        return response
     finished = list(
         student.quiz_attempts.filter(status=QuizAttempt.Status.FINISHED, total__gt=0)
         .select_related("quiz__topic", "batch")
@@ -2065,6 +2078,8 @@ def student_portal(request, token):
             "finished": finished,
             "pending": pending,
             "attendance": student_attendance_rate(student),
+            "topic_rows": profiles.topic_rows(student),
+            "daily_limit": TestRequest.DAILY_LIMIT,
         },
     )
     response["X-Robots-Tag"] = "noindex, nofollow"

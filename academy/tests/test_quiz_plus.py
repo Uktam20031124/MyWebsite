@@ -280,8 +280,13 @@ class PortalTests(Base):
         self.assertTrue(self.ali.portal_token)
         url = reverse("student_portal", args=[self.ali.portal_token])
         self.assertContains(detail, url)
-        page = self.client_class().get(url)  # login'siz
-        self.assertContains(page, "Ali Valiyev")
+        locked = self.client_class().get(url)  # login'siz: avval faqat ism va so'rov tugmasi
+        self.assertContains(locked, "Ali Valiyev")
+        self.assertNotContains(locked, "67%")
+        from academy import profiles
+
+        profiles.grant_access(self.ali, 2)
+        page = self.client_class().get(url)
         self.assertContains(page, "67%")  # 4/6
         self.assertContains(page, "2<small>/2</small>")  # guruhda 2-o'rin
         self.assertContains(page, "Yechilmagan testlar")

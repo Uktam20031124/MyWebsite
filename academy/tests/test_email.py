@@ -203,8 +203,9 @@ class EmailAutomationTests(Base):
     def test_reminder_goes_to_email_channel(self):
         b = self.batch()
         ali = b.attempts.get(student=self.ali)
-        type(ali).objects.filter(pk=ali.pk).update(email_sent_at=timezone.now() - timedelta(hours=5))
-        noon = timezone.localtime().replace(hour=13)
+        # Vaqtlar bitta nuqtadan: test kunning istalgan soatida bir xil ishlasin.
+        noon = timezone.localtime().replace(hour=13, minute=0, second=0, microsecond=0)
+        type(ali).objects.filter(pk=ali.pk).update(email_sent_at=noon - timedelta(hours=5))
         sender = mock.Mock(side_effect=ok_results)
         result = send_reminders(now=noon, sender=sender)
         self.assertEqual(result.sent, 1)
@@ -216,8 +217,9 @@ class EmailAutomationTests(Base):
     def test_reminder_channel_down_is_not_marked(self):
         b = self.batch([self.ali])
         ali = b.attempts.get()
-        type(ali).objects.filter(pk=ali.pk).update(email_sent_at=timezone.now() - timedelta(hours=5))
-        noon = timezone.localtime().replace(hour=13)
+        # Vaqtlar bitta nuqtadan: test kunning istalgan soatida bir xil ishlasin.
+        noon = timezone.localtime().replace(hour=13, minute=0, second=0, microsecond=0)
+        type(ali).objects.filter(pk=ali.pk).update(email_sent_at=noon - timedelta(hours=5))
         result = send_reminders(now=noon, mail_sender=mock.Mock(side_effect=mailer.MailError("x")))
         self.assertEqual(result.errors, ["Email: x"])
         ali.refresh_from_db()

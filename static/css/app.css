@@ -1577,3 +1577,30 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* --- O'quvchi profili ------------------------------------------------------ */
+.portal-messages { display: grid; gap: 8px; margin-bottom: 14px; }
+.portal-lock { max-width: 520px; margin: 8vh auto 0; display: grid; gap: 14px; }
+.portal-lock h1 { margin: 0; }
+.portal-topic { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.portal-topic:first-of-type { border-top: 0; }
+.portal-topic.weak strong { color: var(--bad); }
+.portal-topic-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.start-form { display: grid; gap: 4px; }
+.study { line-height: 1.65; }
+.study h3 { margin: 22px 0 8px; font-size: 18px; }
+.study h3:first-child { margin-top: 0; }
+.study h4 { margin: 16px 0 6px; font-size: 15px; }
+.study p, .study ul, .study ol { margin: 0 0 10px; }
+.study ul, .study ol { padding-left: 22px; }
+.study code { background: var(--surface-3); padding: 1px 5px; border-radius: 5px; font-size: 0.92em; }
+.study pre code { background: none; padding: 0; }
+.study-code { margin: 8px 0 14px; }
+.study-note { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 12px; border-radius: 8px; margin: 10px 0; }
+.topic-picks { display: grid; gap: 12px; max-height: 420px; overflow: auto; padding: 4px 2px; }
+.topic-pick-group { display: grid; gap: 4px; }
+.topic-pick { display: flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
+.profile-topics summary { cursor: pointer; }
+.study { overflow-wrap: anywhere; min-width: 0; }
+.study pre { max-width: 100%; overflow-x: auto; }
+.portal .btn.block { white-space: normal; height: auto; min-height: 44px; padding-block: 10px; line-height: 1.3; }

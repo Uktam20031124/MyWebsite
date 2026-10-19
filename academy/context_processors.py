@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from .models import Group, Lesson, QuizAttempt, Registration, Student, Topic
+from .models import Group, Lesson, QuizAttempt, Registration, Student, TestRequest, Topic
 
 
 def nav_counts(request):
@@ -20,9 +20,10 @@ def nav_counts(request):
         "nav_quiz_open": QuizAttempt.objects.exclude(
             status=QuizAttempt.Status.FINISHED
         ).count(),
-        "nav_review_requests": QuizAttempt.objects.filter(
-            reveal=QuizAttempt.Reveal.REQUESTED
-        ).count(),
+        # Javoblarni ko'rish + profilga kirish + test so'rovlari.
+        "nav_review_requests": QuizAttempt.objects.filter(reveal=QuizAttempt.Reveal.REQUESTED).count()
+        + Student.objects.filter(profile_requested_at__isnull=False).count()
+        + TestRequest.objects.filter(status=TestRequest.Status.PENDING).count(),
         "nav_registrations": Registration.objects.filter(
             status=Registration.Status.PENDING
         ).count(),

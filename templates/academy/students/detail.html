@@ -109,6 +109,67 @@
       </div>
     </section>
 
+    <section class="card" id="profile" aria-labelledby="profile-h">
+      <div class="card-head">
+        <h2 id="profile-h">{% icon "shield" 18 %} Profil: kirish va testlar</h2>
+        {% if profile_open %}<span class="badge ok">ochiq · {{ student.profile_until|date:"H:i" }} gacha</span>{% elif student.profile_requested_at %}<span class="badge warn">🔑 kirish so‘ralgan</span>{% else %}<span class="badge plain">yopiq</span>{% endif %}
+      </div>
+      <div class="card-body">
+        <p class="meta" style="margin:0 0 10px">O‘quvchi profil havolasini ochib, kirishga ruxsat so‘raydi. Siz 2–4 soatga ochasiz; shu vaqtda u quyida belgilangan mavzulardan test so‘ray oladi (har biriga sizning ruxsatingiz bilan, kuniga 2 tagacha).</p>
+        <form method="post" action="{% url 'student_profile_access' student.pk %}" class="contact-link-actions">
+          {% csrf_token %}
+          {% for h in access_hours %}<button class="btn sm {% if student.profile_requested_at %}primary{% else %}soft{% endif %}" type="submit" name="action" value="{{ h }}">{{ h }} soatga ochish</button>{% endfor %}
+          {% if profile_open or student.profile_requested_at %}<button class="btn sm ghost" type="submit" name="action" value="close">{% if profile_open %}Yopish{% else %}Rad etish{% endif %}</button>{% endif %}
+        </form>
+
+        <details class="profile-topics" style="margin-top:16px"{% if not allowed_n %} open{% endif %}>
+          <summary><strong>Test uchun mavzular: {{ allowed_n }} ta</strong>{% if taught_missing %} <span class="meta">· o‘tilgan {{ taught_missing }} ta mavzu belgilanmagan</span>{% endif %}</summary>
+          {% if taught_missing %}
+            <form method="post" action="{% url 'student_allowed_topics' student.pk %}" style="margin:10px 0">
+              {% csrf_token %}
+              <button class="btn sm soft" type="submit" name="action" value="taught">{% icon "check" 14 %} O‘tilgan mavzularni qo‘shish ({{ taught_missing }})</button>
+            </form>
+          {% endif %}
+          <form method="post" action="{% url 'student_allowed_topics' student.pk %}">
+            {% csrf_token %}
+            <div class="topic-picks">
+              {% regroup profile_topics by topic.module as modules %}
+              {% for m in modules %}
+                <div class="topic-pick-group">
+                  <div class="meta strong">{{ m.grouper.title|default:"Bo‘limsiz" }}</div>
+                  {% for row in m.list %}
+                    <label class="topic-pick"><input type="checkbox" name="topics" value="{{ row.topic.pk }}"{% if row.allowed %} checked{% endif %}> {{ row.topic.title }}{% if row.taught %} <span class="badge plain">o‘tildi</span>{% endif %}</label>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+            </div>
+            <button class="btn sm primary" type="submit" style="margin-top:10px">{% icon "check" 14 %} Saqlash</button>
+          </form>
+        </details>
+
+        {% if profile_requests %}
+          <div class="rows" style="margin-top:14px">
+            {% for r in profile_requests %}
+              <div class="row quiz-row">
+                <span class="grow truncate"><span class="person-name block truncate">{{ r.topic.title }}{% if r.kind == "retake" %} <span class="badge plain">qayta</span>{% endif %}</span><span class="person-meta">{{ r.created_at|date:"d.m H:i" }} · {{ r.get_status_display }}</span></span>
+                <div class="quiz-actions">
+                  {% if r.status == "pending" %}
+                    <form method="post" action="{% url 'test_request_decide' r.pk %}">
+                      {% csrf_token %}
+                      <button class="btn xs primary" type="submit" name="action" value="approve">Ruxsat</button>
+                      <button class="btn xs ghost" type="submit" name="action" value="reject">Rad</button>
+                    </form>
+                  {% elif r.attempt and r.attempt.status == "finished" %}
+                    <a class="badge {% if r.attempt.percent >= 80 %}ok{% elif r.attempt.percent >= 50 %}warn{% else %}bad{% endif %}" href="{% url 'quiz_attempt_review' r.attempt.pk %}">{{ r.attempt.correct }}/{{ r.attempt.total }} · {{ r.attempt.percent }}%</a>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
     <section class="card" id="certificate" aria-labelledby="cert-h">
       <div class="card-head"><h2 id="cert-h">{% icon "trophy" 18 %} Sertifikat</h2></div>
       <form class="card-body" method="post" action="{% url 'student_certificate' student.pk %}" target="_blank" data-turbo="false">

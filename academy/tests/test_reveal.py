@@ -71,6 +71,9 @@ class RevealFlowTests(TestCase):
     def test_portal_request_and_approve_all(self):
         self.teacher.get(self.ali.get_absolute_url())  # portal kaliti yaratiladi
         self.ali.refresh_from_db()
+        from academy import profiles
+
+        profiles.grant_access(self.ali, 2)
         portal = reverse("student_portal", args=[self.ali.portal_token])
         with mock.patch("academy.review_access.notify_teacher"):
             self.client_class().post(
