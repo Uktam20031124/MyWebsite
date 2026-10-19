@@ -128,7 +128,7 @@ def daily_report(day=None) -> str:
             status=QuizAttempt.Status.FINISHED, finished_at__gte=start, finished_at__lt=end
         ).select_related("student__group", "quiz__topic")
     )
-    lines = [f"📊 Darsxona · {day:%d.%m.%Y} kun yakuni"]
+    lines = [f"📊 Minar Test · {day:%d.%m.%Y} kun yakuni"]
     if finished:
         avg = percent(sum(a.correct for a in finished), sum(a.total for a in finished))
         timed_out = sum(a.timed_out for a in finished)

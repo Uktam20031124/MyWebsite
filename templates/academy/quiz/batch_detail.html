@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}{{ topic.title }} · Test · Darsxona{% endblock %}
+{% block title %}{{ topic.title }} · Test · Minar Test{% endblock %}
 {% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>{% if batch.lesson %}<a href="{{ batch.lesson.get_absolute_url }}">{{ batch.lesson.group.name }} · {{ batch.lesson.held_on|date:"d.m.Y" }}</a>{% elif batch.group %}<a href="{{ batch.group.get_absolute_url }}">{{ batch.group.name }}</a>{% else %}Bir nechta guruh{% endif %}<span class="sep">·</span>{{ batch.created_at|date:"d.m.Y H:i" }}{% endblock %}
 {% block heading %}{{ topic.title }}{% endblock %}
 {% block subheading %}<p class="page-sub">{% icon "target" 15 %} {{ batch.question_count }} ta savol · {% icon "clock" 15 %} {{ batch.time_limit_minutes }} daqiqa · har bir havola faqat bir marta ishlaydi{% if batch.retake_of %} · {% icon "undo" 15 %} <a href="{{ batch.retake_of.get_absolute_url }}">qayta topshirish</a>{% endif %}</p>{% endblock %}

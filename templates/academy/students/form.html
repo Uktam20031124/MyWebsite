@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}{% if form.instance.pk %}Tahrir{% else %}Yangi shogird{% endif %} · Darsxona{% endblock %}
+{% block title %}{% if form.instance.pk %}Tahrir{% else %}Yangi shogird{% endif %} · Minar Test{% endblock %}
 {% block kicker %}<a href="{% url 'student_list' %}">Shogirdlar</a><span class="sep">/</span>{% if form.instance.pk %}Tahrir{% else %}Yangi{% endif %}{% endblock %}
 {% block heading %}{% if form.instance.pk %}{{ form.instance.full_name }}{% else %}Yangi shogird{% endif %}{% endblock %}
 {% block content %}

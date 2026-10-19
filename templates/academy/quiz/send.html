@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}Test jo‘natish · {{ topic.title }} · Darsxona{% endblock %}
+{% block title %}Test jo‘natish · {{ topic.title }} · Minar Test{% endblock %}
 {% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>{% if lesson %}<a href="{{ lesson.get_absolute_url }}">{{ lesson.group.name }} · {{ lesson.held_on|date:"d.m.Y" }}</a><span class="sep">/</span>{% endif %}2-qadam: kimga va qanday{% endblock %}
 {% block heading %}Test jo‘natish{% endblock %}
 {% block subheading %}<p class="page-sub">{% icon "book" 15 %} {{ topic.title }}</p>{% endblock %}

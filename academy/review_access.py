@@ -33,7 +33,7 @@ def notify_teacher(attempt: QuizAttempt) -> None:
     text = (
         f"🔓 {attempt.student.full_name} “{attempt.quiz.topic.title}” testidagi javoblarini "
         f"ko‘rmoqchi ({attempt.correct}/{attempt.total} · {attempt.percent}%).\n"
-        + (url or "Darsxona → Testlar → So‘rovlar")
+        + (url or "Minar Test → Testlar → So‘rovlar")
     )
 
     def run():

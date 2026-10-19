@@ -1,4 +1,4 @@
-// Darsxona — progressive enhancement. Barcha sahifalar JS'siz ham to'liq ishlaydi.
+// Minar Test — progressive enhancement. Barcha sahifalar JS'siz ham to'liq ishlaydi.
 //
 // Turbo bilan sahifalar to'liq qayta yuklanmaydi: <body> almashtiriladi, bu skript esa
 // bir marta ishlaydi. Shuning uchun:

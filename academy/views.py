@@ -2098,7 +2098,7 @@ def _portal_mail(student, url) -> mailer.Mail:
     return mailer.Mail(
         key=student.pk,
         to=student.email,
-        subject="Shaxsiy sahifangiz — Darsxona",
+        subject="Shaxsiy sahifangiz — Minar Test",
         text=_portal_message(student, url),
         html=mailer.button_html(
             "Shaxsiy sahifangiz",

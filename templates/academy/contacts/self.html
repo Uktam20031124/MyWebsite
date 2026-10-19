@@ -8,13 +8,13 @@
   <meta name="color-scheme" content="light dark">
   <title>Telegram ma’lumotingiz · {{ group.name }}</title>
   <meta property="og:title" content="{{ group.name }}: Telegram ma’lumotingizni kiriting">
-  <meta property="og:description" content="Darsxona · test havolalari Telegram orqali yuboriladi">
+  <meta property="og:description" content="Minar Test · test havolalari Telegram orqali yuboriladi">
   {% include "academy/includes/head.html" %}
 </head>
 <body class="quiz-body">
   <main class="quiz-shell">
     <div class="card pad quiz-panel">
-      <p class="kicker">Darsxona · {{ group.name }}</p>
+      <p class="kicker">Minar Test · {{ group.name }}</p>
       {% if saved %}
         {% if saved.fields %}
           <h1>Rahmat, {{ saved.student.full_name }}!</h1>

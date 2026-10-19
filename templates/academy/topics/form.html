@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}Mavzu · Darsxona{% endblock %}
+{% block title %}Mavzu · Minar Test{% endblock %}
 {% block kicker %}<a href="{% url 'topic_list' %}">Mavzular</a><span class="sep">/</span>{% if form.instance.pk %}Tahrir{% else %}Yangi{% endif %}{% endblock %}
 {% block heading %}{% if form.instance.pk %}{{ form.instance.title }}{% else %}Yangi mavzu{% endif %}{% endblock %}
 {% block content %}

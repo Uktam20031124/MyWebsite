@@ -92,7 +92,7 @@ def notify_teacher(reg: Registration) -> None:
         f"📝 Yangi ariza ({where}):\n{reg.full_name}\n{reg.phone} · @{reg.telegram}"
         + (f" · {reg.email}" if reg.email else "")
         + "\n"
-        "Darsxona → Arizalar bo'limida tekshiring."
+        "Minar Test → Arizalar bo'limida tekshiring."
     )
 
     def run():

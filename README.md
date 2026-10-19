@@ -1,4 +1,4 @@
-# Darsxona
+# Minar Test
 
 O‘qituvchi uchun shaxsiy CRM: guruhlar, shogirdlar, bo‘limlarga ajratilgan mavzular katalogi,
 guruh dasturi, darslar va yo‘qlama.

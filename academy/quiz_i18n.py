@@ -9,7 +9,7 @@ UZ, RU = QuizLanguage.UZ, QuizLanguage.RU
 
 _TEXTS = {
     UZ: {
-        "kicker": "Darsxona · test",
+        "kicker": "Minar Test · test",
         "hello": "Salom",
         "rule_questions": "{n} ta savol, har birida bitta to‘g‘ri javob.",
         "rule_time": "Vaqt: <strong>{m} daqiqa</strong>. Vaqt tugasa test avtomatik yakunlanadi.",
@@ -64,7 +64,7 @@ _TEXTS = {
         "rem_title": "Test hali ochilmagan",
     },
     RU: {
-        "kicker": "Darsxona · тест",
+        "kicker": "Minar Test · тест",
         "hello": "Здравствуйте",
         "rule_questions": "Вопросов: {n}, в каждом один правильный ответ.",
         "rule_time": "Время: <strong>{m} мин</strong>. Когда время закончится, тест завершится "
