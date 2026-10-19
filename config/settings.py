@@ -43,6 +43,8 @@ MIDDLEWARE = [
     # Production'da statikani gunicorn'ning o'zi (nginx'siz ham) beradi.
     *([] if DEBUG else ["whitenoise.middleware.WhiteNoiseMiddleware"]),
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # Til: cookie bo'yicha (brauzer tiliga qaralmaydi), aks holda o'zbekcha.
+    "academy.middleware.LanguageMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -62,6 +64,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
+                "django.template.context_processors.i18n",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "academy.context_processors.nav_counts",
@@ -98,6 +101,10 @@ if len(sys.argv) > 1 and sys.argv[1] == "test":
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 LANGUAGE_CODE = "uz"
+# Interfeys ikki tilda: o'zbekcha (standart) va ruscha. Tanlov cookie'da saqlanadi.
+LANGUAGES = [("uz", "O‘zbekcha"), ("ru", "Русский")]
+LOCALE_PATHS = [BASE_DIR / "locale"]
+LANGUAGE_COOKIE_AGE = 60 * 60 * 24 * 365
 TIME_ZONE = "Asia/Tashkent"
 USE_I18N = True
 USE_TZ = True

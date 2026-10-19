@@ -1,36 +1,36 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Coin do‘koni · Minar Test{% endblock %}
-{% block kicker %}{% icon "trophy" 15 %} Motivatsiya{% endblock %}
-{% block heading %}Coin do‘koni{% endblock %}
-{% block subheading %}<p class="page-sub">O‘quvchilar coin yig‘ib, shu sovg‘alarni so‘raydi. So‘rov “So‘rovlar” bo‘limiga keladi; siz tasdiqlasangiz — coin yechiladi.</p>{% endblock %}
-{% block actions %}<a class="btn soft" href="{% url 'quiz_review_requests' %}">{% icon "shield" 16 %} So‘rovlar</a>{% endblock %}
+{% load i18n ui %}
+{% block title %}{% translate "Coin do‘koni · Minar Test" %}{% endblock %}
+{% block kicker %}{% icon "trophy" 15 %} {% translate "Motivatsiya" %}{% endblock %}
+{% block heading %}{% translate "Coin do‘koni" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "O‘quvchilar coin yig‘ib, shu sovg‘alarni so‘raydi. So‘rov “So‘rovlar” bo‘limiga keladi; siz tasdiqlasangiz — coin yechiladi." %}</p>{% endblock %}
+{% block actions %}<a class="btn soft" href="{% url 'quiz_review_requests' %}">{% icon "shield" 16 %} {% translate "So‘rovlar" %}</a>{% endblock %}
 
 {% block content %}
 <div class="split">
   <section class="card">
-    <div class="card-head"><h2>{% icon "trophy" 18 %} Sovg‘alar</h2><span class="meta">{{ rewards|length }} ta</span></div>
+    <div class="card-head"><h2>{% icon "trophy" 18 %} {% translate "Sovg‘alar" %}</h2><span class="meta">{% blocktranslate with rewards=rewards|length trimmed %}{{ rewards }} ta{% endblocktranslate %}</span></div>
     <div class="card-body flush">
       <div class="rows">
         {% for r in rewards %}
           <a class="row" href="{% url 'reward_edit' r.pk %}">
-            <span class="grow truncate"><span class="person-name block truncate">{{ r.title }}{% if not r.is_active %} <span class="badge plain">yashirin</span>{% endif %}</span><span class="person-meta">{{ r.description|default:"—" }} · berilgan: {{ r.given }}{% if r.waiting %} · kutilmoqda: {{ r.waiting }}{% endif %}</span></span>
+            <span class="grow truncate"><span class="person-name block truncate">{{ r.title }}{% if not r.is_active %} <span class="badge plain">{% translate "yashirin" %}</span>{% endif %}</span><span class="person-meta">{% blocktranslate with description=r.description|default:"—" given=r.given trimmed %}{{ description }} · berilgan: {{ given }}{% endblocktranslate %}{% if r.waiting %} {% blocktranslate with waiting=r.waiting trimmed %}· kutilmoqda: {{ waiting }}{% endblocktranslate %}{% endif %}</span></span>
             <strong>{{ r.cost }} 🪙</strong>
           </a>
         {% empty %}
-          <div class="empty compact"><p>Sovg‘a yo‘q — o‘ngdagi formadan qo‘shing.</p></div>
+          <div class="empty compact"><p>{% translate "Sovg‘a yo‘q — o‘ngdagi formadan qo‘shing." %}</p></div>
         {% endfor %}
       </div>
     </div>
   </section>
   <section class="card pad">
-    <h2 style="margin-top:0">{% if editing %}Tahrirlash: {{ editing.title }}{% else %}Yangi sovg‘a{% endif %}</h2>
+    <h2 style="margin-top:0">{% if editing %}{% blocktranslate with title=editing.title trimmed %}Tahrirlash: {{ title }}{% endblocktranslate %}{% else %}{% translate "Yangi sovg‘a" %}{% endif %}</h2>
     <form method="post" novalidate>
       {% csrf_token %}
       {% include "academy/includes/form_fields.html" with wide="title,description" %}
       <div class="form-actions">
-        <button class="btn primary" type="submit">{% icon "check" 16 %} Saqlash</button>
-        {% if editing %}<a class="btn ghost" href="{% url 'rewards' %}">Bekor</a>{% endif %}
+        <button class="btn primary" type="submit">{% icon "check" 16 %} {% translate "Saqlash" %}</button>
+        {% if editing %}<a class="btn ghost" href="{% url 'rewards' %}">{% translate "Bekor" %}</a>{% endif %}
       </div>
     </form>
   </section>
@@ -38,7 +38,7 @@
 
 {% if recent %}
 <section class="card" style="margin-top:18px">
-  <div class="card-head"><h2>{% icon "clock" 18 %} Oxirgi so‘rovlar</h2></div>
+  <div class="card-head"><h2>{% icon "clock" 18 %} {% translate "Oxirgi so‘rovlar" %}</h2></div>
   <div class="card-body flush"><div class="rows">
     {% for p in recent %}
       <div class="row"><span class="grow truncate"><span class="person-name block truncate">{{ p.student.full_name }} — {{ p.title }}</span><span class="person-meta">{{ p.created_at|date:"d.m H:i" }} · {{ p.cost }} 🪙</span></span><span class="badge {% if p.status == 'approved' %}ok{% elif p.status == 'rejected' %}plain{% else %}warn{% endif %}">{{ p.get_status_display }}</span></div>

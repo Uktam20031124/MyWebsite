@@ -1,4 +1,5 @@
 import random
+import re
 import secrets
 from datetime import date, time, timedelta
 
@@ -9,26 +10,29 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import get_language, gettext, gettext_noop
+from django.utils.translation import gettext_lazy as _
 
 MAX_SCORE = 100
 
 # Hafta kunlari: date.weekday() bilan bir xil (0 — dushanba).
 WEEKDAYS = [
-    (0, "Dushanba", "Du"),
-    (1, "Seshanba", "Se"),
-    (2, "Chorshanba", "Chor"),
-    (3, "Payshanba", "Pay"),
-    (4, "Juma", "Ju"),
-    (5, "Shanba", "Sha"),
-    (6, "Yakshanba", "Ya"),
+    (0, gettext_noop("Dushanba"), gettext_noop("Du")),
+    (1, gettext_noop("Seshanba"), gettext_noop("Se")),
+    (2, gettext_noop("Chorshanba"), gettext_noop("Chor")),
+    (3, gettext_noop("Payshanba"), gettext_noop("Pay")),
+    (4, gettext_noop("Juma"), gettext_noop("Ju")),
+    (5, gettext_noop("Shanba"), gettext_noop("Sha")),
+    (6, gettext_noop("Yakshanba"), gettext_noop("Ya")),
 ]
-WEEKDAY_CHOICES = [(n, full) for n, full, _ in WEEKDAYS]
-WEEKDAY_SHORT = {n: short for n, _, short in WEEKDAYS}
+# Formadagi tanlovlar — so'rov paytida tarjima qilinadi.
+WEEKDAY_CHOICES = [(n, _(full)) for n, full, _short in WEEKDAYS]
+WEEKDAY_SHORT = {n: short for n, _full, short in WEEKDAYS}
 
 
 def format_schedule(days: list[int], starts: time | None, ends: time | None) -> str:
     """[1, 4, 5], 14:00, 15:00 -> "Se / Ju / Sha 14:00–15:00"."""
-    text = " / ".join(WEEKDAY_SHORT[d] for d in sorted(days))
+    text = " / ".join(gettext(WEEKDAY_SHORT[d]) for d in sorted(days))
     if starts:
         text += f" {starts:%H:%M}" + (f"–{ends:%H:%M}" if ends else "")
     return text.strip()
@@ -36,51 +40,51 @@ def format_schedule(days: list[int], starts: time | None, ends: time | None) -> 
 
 class Group(models.Model):
     class Status(models.TextChoices):
-        ACTIVE = "active", "Faol"
-        PAUSED = "paused", "To'xtatilgan"
-        ARCHIVED = "archived", "Arxiv"
+        ACTIVE = "active", _("Faol")
+        PAUSED = "paused", _("To'xtatilgan")
+        ARCHIVED = "archived", _("Arxiv")
 
-    name = models.CharField("Nomi", max_length=120)
-    code = models.CharField("Kod", max_length=32, unique=True)
+    name = models.CharField(_("Nomi"), max_length=120)
+    code = models.CharField(_("Kod"), max_length=32, unique=True)
     schedule = models.CharField(
-        "Jadval",
+        _("Jadval"),
         max_length=200,
         blank=True,
-        help_text="Dars kunlari va vaqti tanlansa, avtomatik to'ldiriladi.",
+        help_text=_("Dars kunlari va vaqti tanlansa, avtomatik to'ldiriladi."),
     )
     days = models.CharField(
-        "Dars kunlari",
+        _("Dars kunlari"),
         max_length=20,
         blank=True,
-        help_text="Hafta kunlari raqamlari (0 — dushanba), vergul bilan: 1,4,5",
+        help_text=_("Hafta kunlari raqamlari (0 — dushanba), vergul bilan: 1,4,5"),
     )
-    starts_at = models.TimeField("Boshlanish vaqti", null=True, blank=True)
-    ends_at = models.TimeField("Tugash vaqti", null=True, blank=True)
-    room = models.CharField("Xona", max_length=80, blank=True)
-    start_date = models.DateField("Boshlanish", null=True, blank=True)
+    starts_at = models.TimeField(_("Boshlanish vaqti"), null=True, blank=True)
+    ends_at = models.TimeField(_("Tugash vaqti"), null=True, blank=True)
+    room = models.CharField(_("Xona"), max_length=80, blank=True)
+    start_date = models.DateField(_("Boshlanish"), null=True, blank=True)
     status = models.CharField(
-        "Holat",
+        _("Holat"),
         max_length=16,
         choices=Status.choices,
         default=Status.ACTIVE,
         db_index=True,
     )
-    notes = models.TextField("Izoh", blank=True)
+    notes = models.TextField(_("Izoh"), blank=True)
     # O'quvchilar o'z Telegram/telefonini kiritadigan ochiq havola kaliti (bo'sh — o'chiq).
     contact_token = models.CharField(max_length=32, blank=True, editable=False, db_index=True)
     # Guruhning Telegram chati (@username yoki raqamli ID) — haftalik reyting uchun.
     telegram_chat = models.CharField(
-        "Telegram guruh chati",
+        _("Telegram guruh chati"),
         max_length=100,
         blank=True,
-        help_text="@guruh_nomi, t.me/guruh_nomi yoki raqamli ID (manage.py telegram_chats).",
+        help_text=_("@guruh_nomi, t.me/guruh_nomi yoki raqamli ID (manage.py telegram_chats)."),
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["name"]
-        verbose_name = "Guruh"
-        verbose_name_plural = "Guruhlar"
+        verbose_name = _("Guruh")
+        verbose_name_plural = _("Guruhlar")
 
     def __str__(self) -> str:
         return self.name
@@ -136,55 +140,55 @@ class Group(models.Model):
 class QuizLanguage(models.TextChoices):
     """Test qaysi tilda yechiladi (savollar, sahifa matnlari, xabar)."""
 
-    UZ = "uz", "O‘zbekcha"
-    RU = "ru", "Русский"
+    UZ = "uz", _("O‘zbekcha")
+    RU = "ru", _("Русский")
 
 
 class Student(models.Model):
     class Status(models.TextChoices):
-        ACTIVE = "active", "Faol"
-        PAUSED = "paused", "Tanaffus"
-        GRADUATED = "graduated", "Bitirgan"
-        DROPPED = "dropped", "Ketgan"
+        ACTIVE = "active", _("Faol")
+        PAUSED = "paused", _("Tanaffus")
+        GRADUATED = "graduated", _("Bitirgan")
+        DROPPED = "dropped", _("Ketgan")
 
     group = models.ForeignKey(
         Group,
         on_delete=models.CASCADE,
         related_name="students",
-        verbose_name="Guruh",
+        verbose_name=_("Guruh"),
     )
-    full_name = models.CharField("F.I.Sh.", max_length=160)
-    phone = models.CharField("Telefon", max_length=40, blank=True)
-    telegram = models.CharField("Telegram", max_length=80, blank=True)
-    email = models.EmailField("Email", blank=True)
+    full_name = models.CharField(_("F.I.Sh."), max_length=160)
+    phone = models.CharField(_("Telefon"), max_length=40, blank=True)
+    telegram = models.CharField(_("Telegram"), max_length=80, blank=True)
+    email = models.EmailField(_("Email"), blank=True)
     # Test jo'natishda shu til oldindan tanlanadi (har safar o'zgartirish mumkin).
     quiz_language = models.CharField(
-        "Test tili", max_length=2, choices=QuizLanguage.choices, default=QuizLanguage.UZ
+        _("Test tili"), max_length=2, choices=QuizLanguage.choices, default=QuizLanguage.UZ
     )
     # Profil (shaxsiy sahifa): o'quvchi kirishga so'rov yuboradi, ustoz vaqt bilan ruxsat beradi.
-    profile_requested_at = models.DateTimeField("Profilga kirish so'ralgan", null=True, blank=True)
-    profile_until = models.DateTimeField("Profil ochiq (gacha)", null=True, blank=True)
+    profile_requested_at = models.DateTimeField(_("Profilga kirish so'ralgan"), null=True, blank=True)
+    profile_until = models.DateTimeField(_("Profil ochiq (gacha)"), null=True, blank=True)
     # O'quvchi o'zi test so'ray oladigan mavzular (ustoz belgilaydi).
     allowed_topics = models.ManyToManyField(
-        "Topic", blank=True, related_name="allowed_students", verbose_name="Test uchun ruxsat etilgan mavzular"
+        "Topic", blank=True, related_name="allowed_students", verbose_name=_("Test uchun ruxsat etilgan mavzular")
     )
     status = models.CharField(
-        "Holat",
+        _("Holat"),
         max_length=16,
         choices=Status.choices,
         default=Status.ACTIVE,
         db_index=True,
     )
-    joined_at = models.DateField("Qo'shilgan", default=timezone.localdate)
-    notes = models.TextField("Izoh", blank=True)
+    joined_at = models.DateField(_("Qo'shilgan"), default=timezone.localdate)
+    notes = models.TextField(_("Izoh"), blank=True)
     # O'quvchining shaxsiy natijalar sahifasi kaliti (/men/<kalit>/); bo'sh — hali yaratilmagan.
     portal_token = models.CharField(max_length=32, blank=True, editable=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["full_name"]
-        verbose_name = "Shogird"
-        verbose_name_plural = "Shogirdlar"
+        verbose_name = _("Shogird")
+        verbose_name_plural = _("Shogirdlar")
         indexes = [
             models.Index(fields=["group", "status"]),
         ]
@@ -211,15 +215,15 @@ class Student(models.Model):
 class Module(models.Model):
     """Mavzular bo'limi (kurs qismi): masalan, "Python asoslari"."""
 
-    title = models.CharField("Bo'lim", max_length=160, unique=True)
-    description = models.TextField("Tavsif", blank=True)
-    order = models.PositiveIntegerField("Tartib", default=0, db_index=True)
+    title = models.CharField(_("Bo'lim"), max_length=160, unique=True)
+    description = models.TextField(_("Tavsif"), blank=True)
+    order = models.PositiveIntegerField(_("Tartib"), default=0, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["order", "title"]
-        verbose_name = "Bo'lim"
-        verbose_name_plural = "Bo'limlar"
+        verbose_name = _("Bo'lim")
+        verbose_name_plural = _("Bo'limlar")
 
     def __str__(self) -> str:
         return self.title
@@ -233,45 +237,47 @@ class Topic(models.Model):
         Module,
         on_delete=models.SET_NULL,
         related_name="topics",
-        verbose_name="Bo'lim",
+        verbose_name=_("Bo'lim"),
         null=True,
         blank=True,
     )
-    title = models.CharField("Mavzu", max_length=200)
+    title = models.CharField(_("Mavzu"), max_length=200)
     title_ru = models.CharField(
-        "Mavzu (ruscha)", max_length=200, blank=True, help_text="Ruscha testlarda ko'rsatiladi."
+        _("Mavzu (ruscha)"), max_length=200, blank=True, help_text=_("Ruscha testlarda ko'rsatiladi.")
     )
-    description = models.TextField("Tavsif", blank=True)
+    description = models.TextField(_("Tavsif"), blank=True)
     homework = models.TextField(
-        "Uyga vazifa (shablon)",
+        _("Uyga vazifa (shablon)"),
         blank=True,
-        help_text="Shu mavzuda dars yaratilganda avtomatik qo'yiladi.",
+        help_text=_("Shu mavzuda dars yaratilganda avtomatik qo'yiladi."),
     )
     resources = models.TextField(
-        "Materiallar",
+        _("Materiallar"),
         blank=True,
-        help_text="Har qatorda bitta havola yoki manba.",
+        help_text=_("Har qatorda bitta havola yoki manba."),
     )
     study = models.TextField(
-        "Mustahkamlash materiali",
+        _("Mustahkamlash materiali"),
         blank=True,
-        help_text="O'quvchi testdan past natija olsa, profilida ko'rinadi: tushuntirish, "
-        "bajarilgan misollar. Format: ## sarlavha, - ro'yxat, ``` kod ```, **qalin**, `kod`.",
+        help_text=_(
+            "O'quvchi testdan past natija olsa, profilida ko'rinadi: tushuntirish, bajarilgan misollar. "
+            "Format: ## sarlavha, - ro'yxat, ``` kod ```, **qalin**, `kod`."
+        ),
     )
     study_ru = models.TextField(
-        "Mustahkamlash materiali (ruscha)",
+        _("Mustahkamlash materiali (ruscha)"),
         blank=True,
-        help_text="Ruscha test tanlagan o'quvchilarga ko'rsatiladi (bo'sh — o'zbekchasi).",
+        help_text=_("Ruscha test tanlagan o'quvchilarga ko'rsatiladi (bo'sh — o'zbekchasi)."),
     )
-    duration_minutes = models.PositiveIntegerField("Davomiyligi (daq.)", default=90)
-    order = models.PositiveIntegerField("Tartib", default=0, db_index=True)
-    is_active = models.BooleanField("Faol", default=True)
+    duration_minutes = models.PositiveIntegerField(_("Davomiyligi (daq.)"), default=90)
+    order = models.PositiveIntegerField(_("Tartib"), default=0, db_index=True)
+    is_active = models.BooleanField(_("Faol"), default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["module__order", "module__title", "order", "title"]
-        verbose_name = "Mavzu"
-        verbose_name_plural = "Mavzular"
+        verbose_name = _("Mavzu")
+        verbose_name_plural = _("Mavzular")
         constraints = [
             models.UniqueConstraint(
                 fields=["module", "title"], name="uniq_topic_title_per_module"
@@ -279,7 +285,7 @@ class Topic(models.Model):
         ]
 
     def __str__(self) -> str:
-        return self.title
+        return self.title_in(get_language())
 
     def get_absolute_url(self):
         return reverse("topic_detail", args=[self.pk])
@@ -303,36 +309,36 @@ class Topic(models.Model):
 
 class SyllabusItem(models.Model):
     class Status(models.TextChoices):
-        PLANNED = "planned", "Rejada"
-        TAUGHT = "taught", "O'tildi"
-        SKIPPED = "skipped", "O'tkazib yuborildi"
+        PLANNED = "planned", _("Rejada")
+        TAUGHT = "taught", _("O'tildi")
+        SKIPPED = "skipped", _("O'tkazib yuborildi")
 
     group = models.ForeignKey(
         Group,
         on_delete=models.CASCADE,
         related_name="syllabus",
-        verbose_name="Guruh",
+        verbose_name=_("Guruh"),
     )
     topic = models.ForeignKey(
         Topic,
         on_delete=models.CASCADE,
         related_name="syllabus_items",
-        verbose_name="Mavzu",
+        verbose_name=_("Mavzu"),
     )
-    order = models.PositiveIntegerField("Tartib", default=0)
+    order = models.PositiveIntegerField(_("Tartib"), default=0)
     status = models.CharField(
-        "Holat",
+        _("Holat"),
         max_length=16,
         choices=Status.choices,
         default=Status.PLANNED,
         db_index=True,
     )
-    taught_on = models.DateField("O'tilgan sana", null=True, blank=True)
+    taught_on = models.DateField(_("O'tilgan sana"), null=True, blank=True)
 
     class Meta:
         ordering = ["order", "id"]
-        verbose_name = "Guruh mavzusi"
-        verbose_name_plural = "Guruh mavzulari"
+        verbose_name = _("Guruh mavzusi")
+        verbose_name_plural = _("Guruh mavzulari")
         constraints = [
             models.UniqueConstraint(
                 fields=["group", "topic"], name="uniq_syllabus_group_topic"
@@ -360,47 +366,47 @@ class SyllabusItem(models.Model):
 
 class Lesson(models.Model):
     class Status(models.TextChoices):
-        PLANNED = "planned", "Rejada"
-        COMPLETED = "completed", "O'tildi"
-        CANCELLED = "cancelled", "Bekor"
+        PLANNED = "planned", _("Rejada")
+        COMPLETED = "completed", _("O'tildi")
+        CANCELLED = "cancelled", _("Bekor")
 
     group = models.ForeignKey(
         Group,
         on_delete=models.CASCADE,
         related_name="lessons",
-        verbose_name="Guruh",
+        verbose_name=_("Guruh"),
     )
     topic = models.ForeignKey(
         Topic,
         on_delete=models.SET_NULL,
         related_name="lessons",
-        verbose_name="Mavzu",
+        verbose_name=_("Mavzu"),
         null=True,
         blank=True,
     )
-    held_on = models.DateField("Sana", db_index=True)
-    starts_at = models.TimeField("Boshlanish", null=True, blank=True)
+    held_on = models.DateField(_("Sana"), db_index=True)
+    starts_at = models.TimeField(_("Boshlanish"), null=True, blank=True)
     status = models.CharField(
-        "Holat",
+        _("Holat"),
         max_length=16,
         choices=Status.choices,
         default=Status.PLANNED,
         db_index=True,
     )
-    homework = models.TextField("Uyga vazifa", blank=True)
-    notes = models.TextField("Dars izohi", blank=True)
+    homework = models.TextField(_("Uyga vazifa"), blank=True)
+    notes = models.TextField(_("Dars izohi"), blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-held_on", "-starts_at"]
-        verbose_name = "Dars"
-        verbose_name_plural = "Darslar"
+        verbose_name = _("Dars")
+        verbose_name_plural = _("Darslar")
         indexes = [
             models.Index(fields=["group", "held_on"]),
         ]
 
     def __str__(self) -> str:
-        title = self.topic.title if self.topic else "Mavzusiz dars"
+        title = self.topic.title_in(get_language()) if self.topic else gettext("Mavzusiz dars")
         return f"{self.group.code} · {self.held_on:%d.%m.%Y} · {title}"
 
     def get_absolute_url(self):
@@ -431,10 +437,10 @@ class Lesson(models.Model):
 
 class Attendance(models.Model):
     class Status(models.TextChoices):
-        PRESENT = "present", "Keldi"
-        ABSENT = "absent", "Kelmadi"
-        LATE = "late", "Kechikdi"
-        EXCUSED = "excused", "Sababli"
+        PRESENT = "present", _("Keldi")
+        ABSENT = "absent", _("Kelmadi")
+        LATE = "late", _("Kechikdi")
+        EXCUSED = "excused", _("Sababli")
 
     # Davomat foizida "keldi" deb hisoblanadigan holatlar.
     ATTENDED = (Status.PRESENT, Status.LATE)
@@ -443,32 +449,32 @@ class Attendance(models.Model):
         Lesson,
         on_delete=models.CASCADE,
         related_name="attendances",
-        verbose_name="Dars",
+        verbose_name=_("Dars"),
     )
     student = models.ForeignKey(
         Student,
         on_delete=models.CASCADE,
         related_name="attendances",
-        verbose_name="Shogird",
+        verbose_name=_("Shogird"),
     )
     status = models.CharField(
-        "Holat",
+        _("Holat"),
         max_length=16,
         choices=Status.choices,
         default=Status.PRESENT,
     )
-    note = models.CharField("Izoh", max_length=200, blank=True)
+    note = models.CharField(_("Izoh"), max_length=200, blank=True)
     score = models.PositiveSmallIntegerField(
-        "Ball (0–100)",
+        _("Ball (0–100)"),
         null=True,
         blank=True,
         validators=[MaxValueValidator(MAX_SCORE)],
-        help_text="Darsdagi faollik va uy vazifasi uchun baho. Bo'sh — baholanmagan.",
+        help_text=_("Darsdagi faollik va uy vazifasi uchun baho. Bo'sh — baholanmagan."),
     )
 
     class Meta:
-        verbose_name = "Yo'qlama"
-        verbose_name_plural = "Yo'qlamalar"
+        verbose_name = _("Yo'qlama")
+        verbose_name_plural = _("Yo'qlamalar")
         constraints = [
             models.UniqueConstraint(
                 fields=["lesson", "student"], name="uniq_attendance_lesson_student"
@@ -516,19 +522,19 @@ class Quiz(models.Model):
         Topic,
         on_delete=models.CASCADE,
         related_name="quiz",
-        verbose_name="Mavzu",
+        verbose_name=_("Mavzu"),
     )
     time_limit_minutes = models.PositiveSmallIntegerField(
-        "Vaqt (daq.)",
+        _("Vaqt (daq.)"),
         default=10,
         validators=[MinValueValidator(1), MaxValueValidator(180)],
-        help_text="Jo'natishda taklif qilinadigan vaqt. Har bir jo'natmada o'zgartirish mumkin.",
+        help_text=_("Jo'natishda taklif qilinadigan vaqt. Har bir jo'natmada o'zgartirish mumkin."),
     )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Test"
-        verbose_name_plural = "Testlar"
+        verbose_name = _("Test")
+        verbose_name_plural = _("Testlar")
 
     def __str__(self) -> str:
         return f"Test: {self.topic.title}"
@@ -618,18 +624,18 @@ def question_image_path(instance, filename: str) -> str:
 
 class Question(models.Model):
     quiz = models.ForeignKey(
-        Quiz, on_delete=models.CASCADE, related_name="questions", verbose_name="Test"
+        Quiz, on_delete=models.CASCADE, related_name="questions", verbose_name=_("Test")
     )
-    text = models.TextField("Savol")
+    text = models.TextField(_("Savol"))
     # Ruscha tarjima (bo'sh — tarjima qilinmagan, o'zbekchasi ko'rsatiladi).
-    text_ru = models.TextField("Savol (ruscha)", blank=True)
-    order = models.PositiveIntegerField("Tartib", default=0)
-    image = models.FileField("Rasm", upload_to=question_image_path, blank=True)
+    text_ru = models.TextField(_("Savol (ruscha)"), blank=True)
+    order = models.PositiveIntegerField(_("Tartib"), default=0)
+    image = models.FileField(_("Rasm"), upload_to=question_image_path, blank=True)
 
     class Meta:
         ordering = ["order", "id"]
-        verbose_name = "Savol"
-        verbose_name_plural = "Savollar"
+        verbose_name = _("Savol")
+        verbose_name_plural = _("Savollar")
 
     def __str__(self) -> str:
         return self.text[:80]
@@ -654,17 +660,17 @@ class Question(models.Model):
 
 class Choice(models.Model):
     question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, related_name="choices", verbose_name="Savol"
+        Question, on_delete=models.CASCADE, related_name="choices", verbose_name=_("Savol")
     )
-    text = models.CharField("Javob", max_length=500)
-    text_ru = models.CharField("Javob (ruscha)", max_length=500, blank=True)
-    is_correct = models.BooleanField("To'g'ri", default=False)
-    order = models.PositiveIntegerField("Tartib", default=0)
+    text = models.CharField(_("Javob"), max_length=500)
+    text_ru = models.CharField(_("Javob (ruscha)"), max_length=500, blank=True)
+    is_correct = models.BooleanField(_("To'g'ri"), default=False)
+    order = models.PositiveIntegerField(_("Tartib"), default=0)
 
     class Meta:
         ordering = ["order", "id"]
-        verbose_name = "Javob varianti"
-        verbose_name_plural = "Javob variantlari"
+        verbose_name = _("Javob varianti")
+        verbose_name_plural = _("Javob variantlari")
 
     def __str__(self) -> str:
         return self.text
@@ -679,7 +685,7 @@ class QuizBatch(models.Model):
     MAX_TIME_LIMIT = 180
 
     quiz = models.ForeignKey(
-        Quiz, on_delete=models.CASCADE, related_name="batches", verbose_name="Test"
+        Quiz, on_delete=models.CASCADE, related_name="batches", verbose_name=_("Test")
     )
     # Dars o'chirilsa ham natijalar saqlanib qoladi.
     lesson = models.ForeignKey(
@@ -688,7 +694,7 @@ class QuizBatch(models.Model):
         null=True,
         blank=True,
         related_name="quiz_batches",
-        verbose_name="Dars",
+        verbose_name=_("Dars"),
     )
     group = models.ForeignKey(
         Group,
@@ -696,35 +702,35 @@ class QuizBatch(models.Model):
         null=True,
         blank=True,
         related_name="quiz_batches",
-        verbose_name="Guruh",
+        verbose_name=_("Guruh"),
     )
     question_count = models.PositiveSmallIntegerField(
-        "Savollar soni", validators=[MinValueValidator(1)]
+        _("Savollar soni"), validators=[MinValueValidator(1)]
     )
     time_limit_minutes = models.PositiveSmallIntegerField(
-        "Vaqt (daq.)", validators=[MinValueValidator(1), MaxValueValidator(MAX_TIME_LIMIT)]
+        _("Vaqt (daq.)"), validators=[MinValueValidator(1), MaxValueValidator(MAX_TIME_LIMIT)]
     )
-    created_at = models.DateTimeField("Jo'natilgan", auto_now_add=True)
+    created_at = models.DateTimeField(_("Jo'natilgan"), auto_now_add=True)
     # Belgilangan vaqtda yuborish (manage.py send_scheduled); bo'sh — darhol.
-    scheduled_at = models.DateTimeField("Yuborish vaqti", null=True, blank=True)
-    scheduled_sent_at = models.DateTimeField("Rejali yuborilgan", null=True, blank=True)
+    scheduled_at = models.DateTimeField(_("Yuborish vaqti"), null=True, blank=True)
+    scheduled_sent_at = models.DateTimeField(_("Rejali yuborilgan"), null=True, blank=True)
     # Havolalar qaysi kanallar orqali yuboriladi (rejalashtirilgan yuborish uchun): "telegram,email".
-    channels = models.CharField("Kanallar", max_length=32, default="telegram", blank=True)
+    channels = models.CharField(_("Kanallar"), max_length=32, default="telegram", blank=True)
     # O'quvchi profilidan (ustoz ruxsati bilan) o'zi boshlagan test.
-    from_profile = models.BooleanField("Profildan", default=False)
+    from_profile = models.BooleanField(_("Profildan"), default=False)
     retake_of = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="retakes",
-        verbose_name="Qayta topshirish (asosiy jo'natma)",
+        verbose_name=_("Qayta topshirish (asosiy jo'natma)"),
     )
 
     class Meta:
         ordering = ["-created_at", "-pk"]
-        verbose_name = "Test jo'natmasi"
-        verbose_name_plural = "Test jo'natmalari"
+        verbose_name = _("Test jo'natmasi")
+        verbose_name_plural = _("Test jo'natmalari")
 
     def __str__(self) -> str:
         return f"{self.quiz.topic.title} · {self.created_at:%d.%m.%Y %H:%M}"
@@ -752,74 +758,74 @@ class QuizAttempt(models.Model):
     """Bitta o'quvchi uchun bir martalik test havolasi."""
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Ochilmagan"
-        ACTIVE = "active", "Yechilmoqda"
-        FINISHED = "finished", "Tugatgan"
+        PENDING = "pending", _("Ochilmagan")
+        ACTIVE = "active", _("Yechilmoqda")
+        FINISHED = "finished", _("Tugatgan")
 
     class Reveal(models.TextChoices):
         """O'quvchi o'z javoblarini (to'g'ri/xato) ko'rishi — faqat ustoz ruxsati bilan."""
 
-        NONE = "", "So‘ralmagan"
-        REQUESTED = "requested", "So‘ralgan"
-        APPROVED = "approved", "Ruxsat berilgan"
-        REJECTED = "rejected", "Rad etilgan"
+        NONE = "", _("So‘ralmagan")
+        REQUESTED = "requested", _("So‘ralgan")
+        APPROVED = "approved", _("Ruxsat berilgan")
+        REJECTED = "rejected", _("Rad etilgan")
 
     # Vaqt tugash paytida yuborilgan javoblar tarmoq kechikishi bilan kelsa ham qabul qilinadi.
     GRACE_SECONDS = 15
 
     batch = models.ForeignKey(
-        QuizBatch, on_delete=models.CASCADE, related_name="attempts", verbose_name="Jo'natma"
+        QuizBatch, on_delete=models.CASCADE, related_name="attempts", verbose_name=_("Jo'natma")
     )
     quiz = models.ForeignKey(
-        Quiz, on_delete=models.CASCADE, related_name="attempts", verbose_name="Test"
+        Quiz, on_delete=models.CASCADE, related_name="attempts", verbose_name=_("Test")
     )
     student = models.ForeignKey(
-        Student, on_delete=models.CASCADE, related_name="quiz_attempts", verbose_name="Shogird"
+        Student, on_delete=models.CASCADE, related_name="quiz_attempts", verbose_name=_("Shogird")
     )
     token = models.CharField(max_length=32, unique=True, default=new_attempt_token, editable=False)
     status = models.CharField(
-        "Holat", max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
+        _("Holat"), max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
     )
     language = models.CharField(
-        "Til", max_length=2, choices=QuizLanguage.choices, default=QuizLanguage.UZ
+        _("Til"), max_length=2, choices=QuizLanguage.choices, default=QuizLanguage.UZ
     )
     # Testni boshlagan brauzer kaliti (cookie): havola boshqa joyda qayta ochilmaydi.
     owner_key = models.CharField(max_length=64, blank=True, editable=False)
     # Boshlanganda bankdan tasodifiy tanlangan savollar (har bir o'quvchida o'zicha).
-    question_ids = models.JSONField("Savollar", default=list, blank=True, editable=False)
+    question_ids = models.JSONField(_("Savollar"), default=list, blank=True, editable=False)
     # Test paytida boshqa oyna/ilovaga o'tishlar (ko'chirishga qarshi qayd) — faqat ustozga.
-    leave_count = models.PositiveSmallIntegerField("Chiqib ketishlar", default=0)
-    away_seconds = models.PositiveIntegerField("Tashqarida (s)", default=0)
-    answers = models.JSONField("Javoblar", default=dict, blank=True)
+    leave_count = models.PositiveSmallIntegerField(_("Chiqib ketishlar"), default=0)
+    away_seconds = models.PositiveIntegerField(_("Tashqarida (s)"), default=0)
+    answers = models.JSONField(_("Javoblar"), default=dict, blank=True)
     # Yakunlanganda: savollar, variantlar, tanlangani va to'g'ri javob nusxasi — faqat
     # ustoz ko'radi; test keyinchalik tahrirlansa ham natija tahlili o'zgarmaydi.
-    snapshot = models.JSONField("Javoblar tahlili", default=list, blank=True, editable=False)
-    started_at = models.DateTimeField("Boshlangan", null=True, blank=True)
-    deadline = models.DateTimeField("Tugash vaqti", null=True, blank=True)
-    finished_at = models.DateTimeField("Tugagan", null=True, blank=True)
-    timed_out = models.BooleanField("Vaqt tugadi", default=False)
-    correct = models.PositiveSmallIntegerField("To'g'ri javoblar", null=True, blank=True)
-    total = models.PositiveSmallIntegerField("Savollar soni", null=True, blank=True)
+    snapshot = models.JSONField(_("Javoblar tahlili"), default=list, blank=True, editable=False)
+    started_at = models.DateTimeField(_("Boshlangan"), null=True, blank=True)
+    deadline = models.DateTimeField(_("Tugash vaqti"), null=True, blank=True)
+    finished_at = models.DateTimeField(_("Tugagan"), null=True, blank=True)
+    timed_out = models.BooleanField(_("Vaqt tugadi"), default=False)
+    correct = models.PositiveSmallIntegerField(_("To'g'ri javoblar"), null=True, blank=True)
+    total = models.PositiveSmallIntegerField(_("Savollar soni"), null=True, blank=True)
     # Ustozning Telegram akkauntidan yuborilgan payt va oxirgi xato (bo'lsa).
-    sent_at = models.DateTimeField("Telegramda yuborilgan", null=True, blank=True)
+    sent_at = models.DateTimeField(_("Telegramda yuborilgan"), null=True, blank=True)
     # Ochilmagan test haqida bitta avtomatik eslatma (manage.py quiz_reminders).
-    reminded_at = models.DateTimeField("Eslatma yuborilgan", null=True, blank=True)
+    reminded_at = models.DateTimeField(_("Eslatma yuborilgan"), null=True, blank=True)
     # Email (Gmail) orqali yuborilgan payt va oxirgi xato (bo'lsa).
-    email_sent_at = models.DateTimeField("Emailga yuborilgan", null=True, blank=True)
-    email_error = models.CharField("Email xatosi", max_length=255, blank=True)
+    email_sent_at = models.DateTimeField(_("Emailga yuborilgan"), null=True, blank=True)
+    email_error = models.CharField(_("Email xatosi"), max_length=255, blank=True)
     reveal = models.CharField(
-        "Javoblarni ko'rish", max_length=12, choices=Reveal.choices, default=Reveal.NONE,
+        _("Javoblarni ko'rish"), max_length=12, choices=Reveal.choices, default=Reveal.NONE,
         blank=True, db_index=True,
     )
-    reveal_requested_at = models.DateTimeField("Ko'rish so'ralgan", null=True, blank=True)
-    reveal_decided_at = models.DateTimeField("Ustoz qarori", null=True, blank=True)
-    send_error = models.CharField("Yuborish xatosi", max_length=255, blank=True)
+    reveal_requested_at = models.DateTimeField(_("Ko'rish so'ralgan"), null=True, blank=True)
+    reveal_decided_at = models.DateTimeField(_("Ustoz qarori"), null=True, blank=True)
+    send_error = models.CharField(_("Yuborish xatosi"), max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["student__full_name"]
-        verbose_name = "Test havolasi"
-        verbose_name_plural = "Test havolalari"
+        verbose_name = _("Test havolasi")
+        verbose_name_plural = _("Test havolalari")
         constraints = [
             models.UniqueConstraint(
                 fields=["batch", "student"], name="uniq_quiz_attempt_batch_student"
@@ -942,7 +948,7 @@ class QuizAttempt(models.Model):
         # Nusxa: ko'rsatish uchun qo'shilgan maydonlar bazadagi snapshot'ga tushmasin.
         items = [dict(item) for item in (self.snapshot or self.build_review())]
         for item in items:
-            title, _, code = (pick(item) if item["text"] else "").partition("\n")
+            title, _sep, code = (pick(item) if item["text"] else "").partition("\n")
             item["title"], item["code"] = title, code
             item["answered"] = item["picked"] is not None
             item["correct_text"] = next((pick(c) for c in item["choices"] if c["correct"]), "")
@@ -1008,24 +1014,24 @@ def new_registration_token() -> str:
 class RegistrationLink(models.Model):
     """Ochiq ro'yxatdan o'tish havolasi (Telegram guruhlariga tashlanadi)."""
 
-    title = models.CharField("Nomi", max_length=120, help_text="Masalan: S-009 Telegram guruhi")
+    title = models.CharField(_("Nomi"), max_length=120, help_text=_("Masalan: S-009 Telegram guruhi"))
     group = models.ForeignKey(
         Group,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="registration_links",
-        verbose_name="Guruh",
-        help_text="Arizalar shu guruhga taklif qilinadi (bo'sh — tasdiqlashda tanlaysiz).",
+        verbose_name=_("Guruh"),
+        help_text=_("Arizalar shu guruhga taklif qilinadi (bo'sh — tasdiqlashda tanlaysiz)."),
     )
     token = models.CharField(max_length=24, unique=True, default=new_registration_token, editable=False)
-    is_active = models.BooleanField("Faol", default=True)
+    is_active = models.BooleanField(_("Faol"), default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name = "Ro'yxat havolasi"
-        verbose_name_plural = "Ro'yxat havolalari"
+        verbose_name = _("Ro'yxat havolasi")
+        verbose_name_plural = _("Ro'yxat havolalari")
 
     def __str__(self) -> str:
         return self.title
@@ -1038,9 +1044,9 @@ class Registration(models.Model):
     """O'quvchi to'ldirgan ariza: ustoz tekshirib, bazaga qo'shadi yoki rad etadi."""
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Kutilmoqda"
-        APPROVED = "approved", "Qabul qilingan"
-        REJECTED = "rejected", "Rad etilgan"
+        PENDING = "pending", _("Kutilmoqda")
+        APPROVED = "approved", _("Qabul qilingan")
+        REJECTED = "rejected", _("Rad etilgan")
 
     link = models.ForeignKey(
         RegistrationLink,
@@ -1048,14 +1054,14 @@ class Registration(models.Model):
         null=True,
         blank=True,
         related_name="registrations",
-        verbose_name="Havola",
+        verbose_name=_("Havola"),
     )
-    full_name = models.CharField("F.I.Sh.", max_length=160)
-    phone = models.CharField("Telefon", max_length=40)
-    telegram = models.CharField("Telegram", max_length=80)
-    email = models.EmailField("Email", blank=True)
+    full_name = models.CharField(_("F.I.Sh."), max_length=160)
+    phone = models.CharField(_("Telefon"), max_length=40)
+    telegram = models.CharField(_("Telegram"), max_length=80)
+    email = models.EmailField(_("Email"), blank=True)
     status = models.CharField(
-        "Holat", max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
+        _("Holat"), max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
     )
     student = models.ForeignKey(
         Student,
@@ -1063,16 +1069,16 @@ class Registration(models.Model):
         null=True,
         blank=True,
         related_name="registrations",
-        verbose_name="O'quvchi",
+        verbose_name=_("O'quvchi"),
     )
     ip = models.GenericIPAddressField(null=True, blank=True, editable=False)
-    created_at = models.DateTimeField("Yuborilgan", auto_now_add=True)
-    reviewed_at = models.DateTimeField("Ko'rib chiqilgan", null=True, blank=True)
+    created_at = models.DateTimeField(_("Yuborilgan"), auto_now_add=True)
+    reviewed_at = models.DateTimeField(_("Ko'rib chiqilgan"), null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name = "Ariza"
-        verbose_name_plural = "Arizalar"
+        verbose_name = _("Ariza")
+        verbose_name_plural = _("Arizalar")
 
     def __str__(self) -> str:
         return f"{self.full_name} ({self.get_status_display()})"
@@ -1090,41 +1096,41 @@ class TestRequest(models.Model):
     MINUTE_CHOICES = (5, 10)
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Kutilmoqda"
-        APPROVED = "approved", "Ruxsat berilgan"
-        REJECTED = "rejected", "Rad etilgan"
-        USED = "used", "Boshlangan"
+        PENDING = "pending", _("Kutilmoqda")
+        APPROVED = "approved", _("Ruxsat berilgan")
+        REJECTED = "rejected", _("Rad etilgan")
+        USED = "used", _("Boshlangan")
 
     class Kind(models.TextChoices):
-        FIRST = "first", "Test"
-        RETAKE = "retake", "Qayta topshirish"
-        PREVIEW = "preview", "Yangi mavzu (oldindan)"
+        FIRST = "first", _("Test")
+        RETAKE = "retake", _("Qayta topshirish")
+        PREVIEW = "preview", _("Yangi mavzu (oldindan)")
 
     student = models.ForeignKey(
-        Student, on_delete=models.CASCADE, related_name="test_requests", verbose_name="O'quvchi"
+        Student, on_delete=models.CASCADE, related_name="test_requests", verbose_name=_("O'quvchi")
     )
     topic = models.ForeignKey(
-        Topic, on_delete=models.CASCADE, related_name="test_requests", verbose_name="Mavzu"
+        Topic, on_delete=models.CASCADE, related_name="test_requests", verbose_name=_("Mavzu")
     )
-    kind = models.CharField("Turi", max_length=8, choices=Kind.choices, default=Kind.FIRST)
+    kind = models.CharField(_("Turi"), max_length=8, choices=Kind.choices, default=Kind.FIRST)
     status = models.CharField(
-        "Holat", max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
+        _("Holat"), max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
     )
-    created_at = models.DateTimeField("So'ralgan", auto_now_add=True)
-    decided_at = models.DateTimeField("Ustoz qarori", null=True, blank=True)
+    created_at = models.DateTimeField(_("So'ralgan"), auto_now_add=True)
+    decided_at = models.DateTimeField(_("Ustoz qarori"), null=True, blank=True)
     attempt = models.OneToOneField(
         QuizAttempt,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="test_request",
-        verbose_name="Test",
+        verbose_name=_("Test"),
     )
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name = "Test so'rovi"
-        verbose_name_plural = "Test so'rovlari"
+        verbose_name = _("Test so'rovi")
+        verbose_name_plural = _("Test so'rovlari")
 
     def __str__(self) -> str:
         return f"{self.student} — {self.topic} ({self.get_status_display()})"
@@ -1137,24 +1143,24 @@ class StudySession(models.Model):
     """
 
     class Kind(models.TextChoices):
-        REVIEW = "review", "Mustahkamlash"
-        PREVIEW = "preview", "Yangi mavzuga tayyorlanish"
+        REVIEW = "review", _("Mustahkamlash")
+        PREVIEW = "preview", _("Yangi mavzuga tayyorlanish")
 
     MIN_MINUTES = {Kind.REVIEW: 20, Kind.PREVIEW: 30}
 
     student = models.ForeignKey(
-        Student, on_delete=models.CASCADE, related_name="study_sessions", verbose_name="O'quvchi"
+        Student, on_delete=models.CASCADE, related_name="study_sessions", verbose_name=_("O'quvchi")
     )
     topic = models.ForeignKey(
-        Topic, on_delete=models.CASCADE, related_name="study_sessions", verbose_name="Mavzu"
+        Topic, on_delete=models.CASCADE, related_name="study_sessions", verbose_name=_("Mavzu")
     )
-    kind = models.CharField("Turi", max_length=8, choices=Kind.choices)
-    started_at = models.DateTimeField("Boshlangan", default=timezone.now)
+    kind = models.CharField(_("Turi"), max_length=8, choices=Kind.choices)
+    started_at = models.DateTimeField(_("Boshlangan"), default=timezone.now)
 
     class Meta:
         ordering = ["-started_at"]
-        verbose_name = "Mustahkamlash"
-        verbose_name_plural = "Mustahkamlashlar"
+        verbose_name = _("Mustahkamlash")
+        verbose_name_plural = _("Mustahkamlashlar")
 
     def __str__(self) -> str:
         return f"{self.student} — {self.topic} ({self.get_kind_display()})"
@@ -1168,30 +1174,48 @@ class CoinTransaction(models.Model):
     """Coin harakati (balans — yig'indi). Test uchun coin bir marta beriladi."""
 
     student = models.ForeignKey(
-        Student, on_delete=models.CASCADE, related_name="coins", verbose_name="O'quvchi"
+        Student, on_delete=models.CASCADE, related_name="coins", verbose_name=_("O'quvchi")
     )
-    amount = models.IntegerField("Coin")
-    reason = models.CharField("Sabab", max_length=120)
+    amount = models.IntegerField(_("Coin"))
+    reason = models.CharField(_("Sabab"), max_length=120)
     attempt = models.ForeignKey(
         QuizAttempt,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="coins",
-        verbose_name="Test",
+        verbose_name=_("Test"),
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at", "-pk"]
-        verbose_name = "Coin"
-        verbose_name_plural = "Coinlar"
+        verbose_name = _("Coin")
+        verbose_name_plural = _("Coinlar")
         constraints = [
             models.UniqueConstraint(fields=["attempt", "reason"], name="uniq_coin_per_attempt_reason"),
         ]
 
     def __str__(self) -> str:
         return f"{self.student}: {self.amount:+d} ({self.reason})"
+
+    # Bazadagi sabab matnlari (o'zbekcha) — interfeys tilida ko'rsatish uchun andozalar.
+    REASON_PATTERNS = [
+        (re.compile(r"^Test: (?P<p>\d+)%$"), gettext_noop("Test: {p}%")),
+        (re.compile(r"^Mustahkamlab, qayta topshirdi$"), gettext_noop("Mustahkamlab, qayta topshirdi")),
+        (re.compile(r"^Yangi mavzuni oldindan o‘zlashtirdi$"), gettext_noop("Yangi mavzuni oldindan o‘zlashtirdi")),
+        (re.compile(r"^Xato tuzatildi: (?P<t>.+)$"), gettext_noop("Xato tuzatildi: {t}")),
+        (re.compile(r"^🔥 (?P<n>\d+) kun ketma-ket faol$"), gettext_noop("🔥 {n} kun ketma-ket faol")),
+        (re.compile(r"^Do‘kon: (?P<t>.+)$"), gettext_noop("Do‘kon: {t}")),
+    ]
+
+    @property
+    def display_reason(self) -> str:
+        for pattern, template in self.REASON_PATTERNS:
+            m = pattern.match(self.reason)
+            if m:
+                return gettext(template).format(**m.groupdict())
+        return self.reason
 
 
 class Mistake(models.Model):
@@ -1204,20 +1228,20 @@ class Mistake(models.Model):
     RESOLVE_AFTER = 3
 
     student = models.ForeignKey(
-        Student, on_delete=models.CASCADE, related_name="mistakes", verbose_name="O'quvchi"
+        Student, on_delete=models.CASCADE, related_name="mistakes", verbose_name=_("O'quvchi")
     )
     question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, related_name="mistakes", verbose_name="Savol"
+        Question, on_delete=models.CASCADE, related_name="mistakes", verbose_name=_("Savol")
     )
-    streak = models.PositiveSmallIntegerField("Ketma-ket to'g'ri", default=0)
-    wrong_count = models.PositiveSmallIntegerField("Xato soni", default=1)
-    last_wrong_at = models.DateTimeField("Oxirgi xato", default=timezone.now)
-    last_practiced_at = models.DateTimeField("Oxirgi mashq", null=True, blank=True)
-    resolved_at = models.DateTimeField("O'zlashtirildi", null=True, blank=True)
+    streak = models.PositiveSmallIntegerField(_("Ketma-ket to'g'ri"), default=0)
+    wrong_count = models.PositiveSmallIntegerField(_("Xato soni"), default=1)
+    last_wrong_at = models.DateTimeField(_("Oxirgi xato"), default=timezone.now)
+    last_practiced_at = models.DateTimeField(_("Oxirgi mashq"), null=True, blank=True)
+    resolved_at = models.DateTimeField(_("O'zlashtirildi"), null=True, blank=True)
 
     class Meta:
-        verbose_name = "Xato savol"
-        verbose_name_plural = "Xato savollar"
+        verbose_name = _("Xato savol")
+        verbose_name_plural = _("Xato savollar")
         constraints = [
             models.UniqueConstraint(fields=["student", "question"], name="uniq_mistake_student_question"),
         ]
@@ -1230,14 +1254,14 @@ class DailyActivity(models.Model):
     """O'quvchi faol bo'lgan kun (test yoki mashq) — streak uchun."""
 
     student = models.ForeignKey(
-        Student, on_delete=models.CASCADE, related_name="activity_days", verbose_name="O'quvchi"
+        Student, on_delete=models.CASCADE, related_name="activity_days", verbose_name=_("O'quvchi")
     )
-    day = models.DateField("Kun")
+    day = models.DateField(_("Kun"))
 
     class Meta:
         ordering = ["-day"]
-        verbose_name = "Faol kun"
-        verbose_name_plural = "Faol kunlar"
+        verbose_name = _("Faol kun")
+        verbose_name_plural = _("Faol kunlar")
         constraints = [
             models.UniqueConstraint(fields=["student", "day"], name="uniq_activity_student_day"),
         ]
@@ -1249,16 +1273,16 @@ class DailyActivity(models.Model):
 class Reward(models.Model):
     """Coin do'konidagi sovg'a (ustoz qo'shadi)."""
 
-    title = models.CharField("Sovg'a", max_length=120)
-    description = models.CharField("Izoh", max_length=255, blank=True)
-    cost = models.PositiveIntegerField("Narxi (coin)", validators=[MinValueValidator(1)])
-    is_active = models.BooleanField("Do'konda ko'rinadi", default=True)
-    order = models.PositiveIntegerField("Tartib", default=0)
+    title = models.CharField(_("Sovg'a"), max_length=120)
+    description = models.CharField(_("Izoh"), max_length=255, blank=True)
+    cost = models.PositiveIntegerField(_("Narxi (coin)"), validators=[MinValueValidator(1)])
+    is_active = models.BooleanField(_("Do'konda ko'rinadi"), default=True)
+    order = models.PositiveIntegerField(_("Tartib"), default=0)
 
     class Meta:
         ordering = ["order", "cost", "id"]
-        verbose_name = "Sovg'a"
-        verbose_name_plural = "Sovg'alar"
+        verbose_name = _("Sovg'a")
+        verbose_name_plural = _("Sovg'alar")
 
     def __str__(self) -> str:
         return f"{self.title} ({self.cost} coin)"
@@ -1268,31 +1292,31 @@ class Purchase(models.Model):
     """O'quvchining sovg'a so'rovi: ustoz tasdiqlasa — coin yechiladi."""
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Kutilmoqda"
-        APPROVED = "approved", "Berildi"
-        REJECTED = "rejected", "Rad etildi"
+        PENDING = "pending", _("Kutilmoqda")
+        APPROVED = "approved", _("Berildi")
+        REJECTED = "rejected", _("Rad etildi")
 
     student = models.ForeignKey(
-        Student, on_delete=models.CASCADE, related_name="purchases", verbose_name="O'quvchi"
+        Student, on_delete=models.CASCADE, related_name="purchases", verbose_name=_("O'quvchi")
     )
     reward = models.ForeignKey(
-        Reward, on_delete=models.SET_NULL, null=True, blank=True, related_name="purchases", verbose_name="Sovg'a"
+        Reward, on_delete=models.SET_NULL, null=True, blank=True, related_name="purchases", verbose_name=_("Sovg'a")
     )
-    title = models.CharField("Sovg'a", max_length=120)  # sovg'a keyin o'zgarsa ham tarix saqlanadi
-    cost = models.PositiveIntegerField("Narxi (coin)")
+    title = models.CharField(_("Sovg'a"), max_length=120)  # sovg'a keyin o'zgarsa ham tarix saqlanadi
+    cost = models.PositiveIntegerField(_("Narxi (coin)"))
     status = models.CharField(
-        "Holat", max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
+        _("Holat"), max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
     )
-    created_at = models.DateTimeField("So'ralgan", auto_now_add=True)
-    decided_at = models.DateTimeField("Ustoz qarori", null=True, blank=True)
+    created_at = models.DateTimeField(_("So'ralgan"), auto_now_add=True)
+    decided_at = models.DateTimeField(_("Ustoz qarori"), null=True, blank=True)
     transaction = models.OneToOneField(
         CoinTransaction, on_delete=models.SET_NULL, null=True, blank=True, related_name="purchase"
     )
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name = "Sovg'a so'rovi"
-        verbose_name_plural = "Sovg'a so'rovlari"
+        verbose_name = _("Sovg'a so'rovi")
+        verbose_name_plural = _("Sovg'a so'rovlari")
 
     def __str__(self) -> str:
         return f"{self.student} — {self.title} ({self.get_status_display()})"

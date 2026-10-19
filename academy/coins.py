@@ -6,23 +6,26 @@ Har bir yakunlangan test uchun natijaga qarab coin (bir marta), qo'shimcha:
 
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
+from django.utils.translation import gettext_lazy as _
 
 from .models import CoinTransaction, QuizAttempt, Student
 
-PASS_PERCENT = 60
+PASS_PERCENT = 70  # bundan past natijada mustahkamlash taklif qilinadi
 # (natija chegarasi, coin) — kattasidan boshlab birinchi mos keladigani.
 SCORE_COINS = ((90, 10), (75, 7), (60, 5), (0, 1))
 PREVIEW_BONUS = 5
 RETAKE_BONUS = 3
 
 RULES = [
-    "90% va undan yuqori — 10 coin",
-    "75–89% — 7 coin",
-    "60–74% — 5 coin",
-    "60% dan past — 1 coin (urinish uchun)",
-    f"Mustahkamlab, qayta topshirib o‘tsangiz (60%+) — yana +{RETAKE_BONUS}",
-    "Xatolar mashqida savolni 3 marta ketma-ket to‘g‘ri yechsangiz — +2",
-    "Har 7 kun ketma-ket faol bo‘lsangiz (🔥 streak) — +10",
+    _("90% va undan yuqori — 10 coin"),
+    _("75–89% — 7 coin"),
+    _("60–74% — 5 coin"),
+    _("60% dan past — 1 coin (urinish uchun)"),
+    _("Mustahkamlab, qayta topshirib o‘tsangiz ({PASS_PERCENT}%+) — yana +{RETAKE_BONUS}").format(
+        PASS_PERCENT=PASS_PERCENT, RETAKE_BONUS=RETAKE_BONUS
+    ),
+    _("Xatolar mashqida savolni 3 marta ketma-ket to‘g‘ri yechsangiz — +2"),
+    _("Har 7 kun ketma-ket faol bo‘lsangiz (🔥 streak) — +10"),
 ]
 
 

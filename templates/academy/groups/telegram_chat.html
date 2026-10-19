@@ -1,36 +1,36 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Telegram chat · {{ group.name }} · Minar Test{% endblock %}
-{% block kicker %}<a href="{% url 'group_list' %}">Guruhlar</a><span class="sep">/</span><a href="{{ group.get_absolute_url }}">{{ group.name }}</a><span class="sep">/</span>Telegram chat{% endblock %}
-{% block heading %}Guruhning Telegram chati{% endblock %}
-{% block subheading %}<p class="page-sub">Haftalik reyting shu chatga sizning akkauntingizdan yuboriladi. Akkauntingiz a’zo bo‘lgan guruhlardan tanlang.</p>{% endblock %}
-{% block actions %}<a class="btn ghost" href="{{ group.get_absolute_url }}#motivation">{% icon "left" 16 %} Guruhga qaytish</a>{% endblock %}
+{% load i18n ui %}
+{% block title %}{% blocktranslate with name=group.name trimmed %}Telegram chat · {{ name }} · Minar Test{% endblocktranslate %}{% endblock %}
+{% block kicker %}<a href="{% url 'group_list' %}">{% translate "Guruhlar" %}</a><span class="sep">/</span><a href="{{ group.get_absolute_url }}">{{ group.name }}</a><span class="sep">/</span>{% translate "Telegram chat" %}{% endblock %}
+{% block heading %}{% translate "Guruhning Telegram chati" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Haftalik reyting shu chatga sizning akkauntingizdan yuboriladi. Akkauntingiz a’zo bo‘lgan guruhlardan tanlang." %}</p>{% endblock %}
+{% block actions %}<a class="btn ghost" href="{{ group.get_absolute_url }}#motivation">{% icon "left" 16 %} {% translate "Guruhga qaytish" %}</a>{% endblock %}
 
 {% block content %}
 {% if error %}
   <div class="callout warn" style="margin-bottom:16px"><span class="callout-icon">{% icon "alert" 18 %}</span><div class="grow">{{ error }}</div></div>
 {% endif %}
 <section class="card">
-  <div class="card-head"><h2>{% icon "send" 18 %} Chatlaringiz</h2>{% if group.telegram_chat %}<span class="meta">Hozir: {{ group.telegram_chat }}</span>{% endif %}</div>
+  <div class="card-head"><h2>{% icon "send" 18 %} {% translate "Chatlaringiz" %}</h2>{% if group.telegram_chat %}<span class="meta">{% blocktranslate with telegram_chat=group.telegram_chat trimmed %}Hozir: {{ telegram_chat }}{% endblocktranslate %}</span>{% endif %}</div>
   <div class="card-body flush">
     <div class="rows">
       {% for c in chats %}
         <form method="post" class="row">
           {% csrf_token %}
           <input type="hidden" name="chat" value="{% if c.username %}@{{ c.username }}{% else %}{{ c.id }}{% endif %}">
-          <div class="grow"><div class="row-title">{{ c.title }}</div><div class="meta">{% if c.username %}@{{ c.username }}{% else %}ID {{ c.id }}{% endif %}</div></div>
-          <button class="btn sm soft" type="submit">Tanlash</button>
+          <div class="grow"><div class="row-title">{{ c.title }}</div><div class="meta">{% if c.username %}@{{ c.username }}{% else %}{% blocktranslate with id=c.id trimmed %}ID {{ id }}{% endblocktranslate %}{% endif %}</div></div>
+          <button class="btn sm soft" type="submit">{% translate "Tanlash" %}</button>
         </form>
       {% empty %}
-        {% if not error %}<div class="empty compact"><p>Akkauntingiz hech qaysi guruhda a’zo emas.</p></div>{% endif %}
+        {% if not error %}<div class="empty compact"><p>{% translate "Akkauntingiz hech qaysi guruhda a’zo emas." %}</p></div>{% endif %}
       {% endfor %}
     </div>
   </div>
   <form method="post" class="card-foot reg-link-form">
     {% csrf_token %}
-    <div class="field"><label for="chat-manual">Yoki qo‘lda kiriting</label><input class="input" id="chat-manual" name="chat" value="{{ group.telegram_chat }}" placeholder="@guruh_nomi yoki -100…"></div>
+    <div class="field"><label for="chat-manual">{% translate "Yoki qo‘lda kiriting" %}</label><input class="input" id="chat-manual" name="chat" value="{{ group.telegram_chat }}" placeholder="{% translate "@guruh_nomi yoki -100…" %}"></div>
     <div></div>
-    <button class="btn soft" type="submit">Saqlash</button>
+    <button class="btn soft" type="submit">{% translate "Saqlash" %}</button>
   </form>
 </section>
 {% endblock %}

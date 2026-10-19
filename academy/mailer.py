@@ -13,6 +13,8 @@ from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from .telegram_sender import Result
 
@@ -38,7 +40,7 @@ def is_configured() -> bool:
 
 
 def setup_hint() -> str:
-    return (
+    return gettext(
         ".env faylga DARSXONA_GMAIL_USER (Gmail manzil) va DARSXONA_GMAIL_APP_PASSWORD "
         "(Google → Xavfsizlik → App passwords, 16 belgi) yozing."
     )
@@ -87,7 +89,7 @@ def _error_text(exc: Exception) -> str:
 def send_mails(mails: list[Mail]) -> list[Result]:
     """Xatlarni yuboradi. Kanal umuman ishlamasa — MailError (hech biri yuborilmagan)."""
     if not is_configured():
-        raise MailError("Gmail ulanmagan. " + setup_hint())
+        raise MailError(_("Gmail ulanmagan. ") + setup_hint())
     results = []
     try:
         with mail.get_connection(fail_silently=False) as connection:
@@ -109,10 +111,10 @@ def send_mails(mails: list[Mail]) -> list[Result]:
                     results.append(Result(m.key, False, _error_text(exc)))
     except smtplib.SMTPAuthenticationError as exc:
         raise MailError(
-            "Gmail login yoki App Password noto‘g‘ri (oddiy parol ishlamaydi). " + setup_hint()
+            _("Gmail login yoki App Password noto‘g‘ri (oddiy parol ishlamaydi). ") + setup_hint()
         ) from exc
     except (smtplib.SMTPException, OSError) as exc:
-        raise MailError(f"Gmail serveriga ulanib bo‘lmadi: {type(exc).__name__}") from exc
+        raise MailError(_("Gmail serveriga ulanib bo‘lmadi: {name}").format(name=type(exc).__name__)) from exc
     return results
 
 

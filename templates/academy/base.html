@@ -1,11 +1,11 @@
-{% load static ui %}{% with url_name=request.resolver_match.url_name %}<!doctype html>
-<html lang="uz" data-theme="light">
+{% load i18n static ui %}{% with url_name=request.resolver_match.url_name %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#15251e">
   <meta name="color-scheme" content="light dark">
-  <title>{% block title %}Minar Test{% endblock %}</title>
+  <title>{% block title %}{% translate "Minar Test" %}{% endblock %}</title>
   {% include "academy/includes/head.html" %}
   {# Turbo: havola va formalar sahifani to'liq qayta yuklamasdan ochiladi (faqat <body> almashadi). #}
   <script src="{% static 'vendor/turbo-8.0.12.umd.js' %}" defer data-turbo-track="reload"></script>
@@ -13,78 +13,79 @@
 </head>
 <body>
 {% include "academy/includes/icons.html" %}
-<a class="skip-link" href="#content">Asosiy qismga o‘tish</a>
+<a class="skip-link" href="#content">{% translate "Asosiy qismga o‘tish" %}</a>
 <div class="app">
-  <aside class="sidebar" id="sidebar" aria-label="Yon menyu">
+  <aside class="sidebar" id="sidebar" aria-label="{% translate "Yon menyu" %}">
     <a class="brand" href="{% url 'dashboard' %}">
       <span class="brand-mark" aria-hidden="true">MT</span>
       <span>
-        <span class="brand-name">Minar Test</span>
-        <span class="brand-sub block">Ustoz CRM</span>
+        <span class="brand-name">{% translate "Minar Test" %}</span>
+        <span class="brand-sub block">{% translate "Ustoz CRM" %}</span>
       </span>
     </a>
 
-    <nav aria-label="Asosiy menyu">
-      <div class="nav-label">Bugun</div>
+    <nav aria-label="{% translate "Asosiy menyu" %}">
+      <div class="nav-label">{% translate "Bugun" %}</div>
       <div class="nav">
         <a href="{% url 'dashboard' %}" {% if url_name == 'dashboard' %}aria-current="page"{% endif %}>
-          {% icon "home" %} Bosh sahifa
-          {% if nav_today %}<span class="count hot" title="Bugungi jadvaldagi darslar">{{ nav_today }}</span>{% endif %}
+          {% icon "home" %} {% translate "Bosh sahifa" %}
+          {% if nav_today %}<span class="count hot" title="{% translate "Bugungi jadvaldagi darslar" %}">{{ nav_today }}</span>{% endif %}
         </a>
         <a href="{% url 'timetable' %}" {% if url_name == 'timetable' %}aria-current="page"{% endif %}>
-          {% icon "calendar" %} Dars jadvali
+          {% icon "calendar" %} {% translate "Dars jadvali" %}
         </a>
       </div>
-      <div class="nav-label">O‘quv markazi</div>
+      <div class="nav-label">{% translate "O‘quv markazi" %}</div>
       <div class="nav">
         <a href="{% url 'group_list' %}" {% if 'group' in url_name or 'syllabus' in url_name or url_name == 'start_lesson' %}aria-current="page"{% endif %}>
-          {% icon "layers" %} Guruhlar <span class="count">{{ nav_groups }}</span>
+          {% icon "layers" %} {% translate "Guruhlar" %} <span class="count">{{ nav_groups }}</span>
         </a>
         <a href="{% url 'student_list' %}" {% if 'student' in url_name %}aria-current="page"{% endif %}>
-          {% icon "users" %} Shogirdlar <span class="count">{{ nav_students }}</span>
+          {% icon "users" %} {% translate "Shogirdlar" %} <span class="count">{{ nav_students }}</span>
         </a>
         <a href="{% url 'registrations' %}" {% if 'registration' in url_name %}aria-current="page"{% endif %}>
-          {% icon "user" %} Arizalar
-          {% if nav_registrations %}<span class="count hot" title="Tekshirilishi kutilayotgan arizalar">{{ nav_registrations }}</span>{% endif %}
+          {% icon "user" %} {% translate "Arizalar" %}
+          {% if nav_registrations %}<span class="count hot" title="{% translate "Tekshirilishi kutilayotgan arizalar" %}">{{ nav_registrations }}</span>{% endif %}
         </a>
         <a href="{% url 'lesson_list' %}" {% if 'lesson' in url_name or url_name == 'attendance' %}aria-current="page"{% endif %}>
-          {% icon "lesson" %} Darslar <span class="count">{{ nav_lessons }}</span>
+          {% icon "lesson" %} {% translate "Darslar" %} <span class="count">{{ nav_lessons }}</span>
         </a>
         <a href="{% url 'topic_list' %}" {% if 'topic' in url_name or 'module' in url_name %}aria-current="page"{% endif %}>
-          {% icon "book" %} Mavzular <span class="count">{{ nav_topics }}</span>
+          {% icon "book" %} {% translate "Mavzular" %} <span class="count">{{ nav_topics }}</span>
         </a>
         <a href="{% url 'quiz_batches' %}" {% if url_name == 'quiz_send' or 'quiz_batch' in url_name %}aria-current="page"{% endif %}>
-          {% icon "target" %} Testlar
-          {% if nav_quiz_open %}<span class="count" title="Hali yechilmagan test havolalari">{{ nav_quiz_open }}</span>{% endif %}
+          {% icon "target" %} {% translate "Testlar" %}
+          {% if nav_quiz_open %}<span class="count" title="{% translate "Hali yechilmagan test havolalari" %}">{{ nav_quiz_open }}</span>{% endif %}
         </a>
         <a href="{% url 'rewards' %}" {% if url_name == 'rewards' or url_name == 'reward_edit' %}aria-current="page"{% endif %}>
-          {% icon "trophy" %} Coin do‘koni
+          {% icon "trophy" %} {% translate "Coin do‘koni" %}
         </a>
         <a href="{% url 'quiz_review_requests' %}" {% if url_name == 'quiz_review_requests' %}aria-current="page"{% endif %}>
-          {% icon "shield" %} So‘rovlar
-          {% if nav_review_requests %}<span class="count hot" title="Javoblarini ko‘rish uchun ruxsat so‘ragan o‘quvchilar">{{ nav_review_requests }}</span>{% endif %}
+          {% icon "shield" %} {% translate "So‘rovlar" %}
+          {% if nav_review_requests %}<span class="count hot" title="{% translate "Javoblarini ko‘rish uchun ruxsat so‘ragan o‘quvchilar" %}">{{ nav_review_requests }}</span>{% endif %}
         </a>
       </div>
     </nav>
 
     <div class="sidebar-foot">
+      {% include "academy/includes/lang_switch.html" %}
       <div class="me">
         {% with me=request.user.get_full_name|default:request.user.username %}
           <span class="avatar sm" style="--h: {{ me|hue }}" aria-hidden="true">{{ me|slice:":1"|upper }}</span>
           <span class="truncate">
             <span class="me-name block truncate">{{ me }}</span>
-            <span class="me-role">Ustoz</span>
+            <span class="me-role">{% translate "Ustoz" %}</span>
           </span>
         {% endwith %}
       </div>
       <button class="side-btn" type="button" data-theme-toggle>
         <span data-theme-icon="light">{% icon "moon" %}</span><span data-theme-icon="dark" hidden>{% icon "sun" %}</span>
-        <span data-theme-label>Tungi rejim</span>
+        <span data-theme-label>{% translate "Tungi rejim" %}</span>
       </button>
-      {% if request.user.is_staff %}<a class="side-btn" href="{% url 'admin:index' %}" data-turbo="false">{% icon "shield" %} Admin panel</a>{% endif %}
+      {% if request.user.is_staff %}<a class="side-btn" href="{% url 'admin:index' %}" data-turbo="false">{% icon "shield" %} {% translate "Admin panel" %}</a>{% endif %}
       <form method="post" action="{% url 'logout' %}" data-turbo="false">
         {% csrf_token %}
-        <button class="side-btn" type="submit">{% icon "logout" %} Chiqish</button>
+        <button class="side-btn" type="submit">{% icon "logout" %} {% translate "Chiqish" %}</button>
       </form>
     </div>
   </aside>
@@ -93,11 +94,11 @@
   <main class="main" id="content" tabindex="-1">
     <div class="page">
       <div class="topbar">
-        <button class="btn soft square mobile-menu" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Menyu" data-nav-toggle>{% icon "menu" %}</button>
+        <button class="btn soft square mobile-menu" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="{% translate "Menyu" %}" data-nav-toggle>{% icon "menu" %}</button>
         <button class="cmd-trigger" type="button" data-palette-open aria-haspopup="dialog">
           {% icon "search" 17 %}
-          <span>Qidirish yoki buyruq…</span>
-          <kbd data-mod-key>Ctrl</kbd><kbd>K</kbd>
+          <span>{% translate "Qidirish yoki buyruq…" %}</span>
+          <kbd data-mod-key>{% blocktranslate trimmed %}Ctrl</kbd><kbd>K</kbd>{% endblocktranslate %}
         </button>
         <span class="spacer"></span>
         {% block topbar_extra %}{% endblock %}
@@ -105,7 +106,7 @@
 
       <header class="page-head">
         <div>
-          <p class="kicker">{% block kicker %}Shaxsiy o‘quv CRM{% endblock %}</p>
+          <p class="kicker">{% block kicker %}{% translate "Shaxsiy o‘quv CRM" %}{% endblock %}</p>
           <h1>{% block heading %}{% endblock %}</h1>
           {% block subheading %}{% endblock %}
         </div>
@@ -123,23 +124,23 @@
     <div class="toast {{ m.tags }}" data-toast>
       <span class="toast-icon">{% if m.level_tag == 'error' or m.level_tag == 'warning' %}{% icon "alert" 13 %}{% else %}{% icon "check" 13 %}{% endif %}</span>
       <span class="grow">{{ m }}</span>
-      <button type="button" aria-label="Yopish" data-toast-close>{% icon "x" 14 %}</button>
+      <button type="button" aria-label="{% translate "Yopish" %}" data-toast-close>{% icon "x" 14 %}</button>
     </div>
   {% endfor %}
 </div>
 {% endif %}
 
-<dialog class="palette" id="palette" aria-label="Buyruqlar paneli" data-search-url="{% url 'search' %}">
+<dialog class="palette" id="palette" aria-label="{% translate "Buyruqlar paneli" %}" data-search-url="{% url 'search' %}">
   <div class="palette-input">
     {% icon "search" 20 %}
-    <input type="text" placeholder="Shogird, guruh, mavzu yoki sahifa…" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list" data-palette-input>
-    <kbd>Esc</kbd>
+    <input type="text" placeholder="{% translate "Shogird, guruh, mavzu yoki sahifa…" %}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list" data-palette-input>
+    {% blocktranslate trimmed %}<kbd>Esc</kbd>{% endblocktranslate %}
   </div>
   <ul class="palette-list" id="palette-list" role="listbox" data-palette-list></ul>
   <div class="palette-foot">
-    <span><kbd>↑</kbd><kbd>↓</kbd> tanlash</span>
-    <span><kbd>Enter</kbd> ochish</span>
-    <span><kbd>/</kbd> yoki <kbd data-mod-key>Ctrl</kbd><kbd>K</kbd> chaqirish</span>
+    <span>{% blocktranslate trimmed %}<kbd>↑</kbd><kbd>↓</kbd> tanlash{% endblocktranslate %}</span>
+    <span>{% blocktranslate trimmed %}<kbd>Enter</kbd> ochish{% endblocktranslate %}</span>
+    <span>{% blocktranslate trimmed %}<kbd>/</kbd> yoki{% endblocktranslate %} <kbd data-mod-key>{% blocktranslate trimmed %}Ctrl</kbd><kbd>K</kbd> chaqirish{% endblocktranslate %}</span>
   </div>
   <script type="application/json" id="palette-commands">
     [

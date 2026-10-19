@@ -5,6 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.validators import MaxValueValidator
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from .models import (
     WEEKDAY_CHOICES,
@@ -28,10 +29,10 @@ class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["username"].widget.attrs.update(
-            {"class": "input", "placeholder": "Login", "autofocus": True}
+            {"class": "input", "placeholder": _("Login"), "autofocus": True}
         )
         self.fields["password"].widget.attrs.update(
-            {"class": "input", "placeholder": "Parol"}
+            {"class": "input", "placeholder": _("Parol")}
         )
         self.fields["username"].label = "Login"
         self.fields["password"].label = "Parol"
@@ -55,7 +56,7 @@ class StyledFormMixin:
 
 class GroupForm(StyledFormMixin, forms.ModelForm):
     days = forms.TypedMultipleChoiceField(
-        label="Dars kunlari",
+        label=_("Dars kunlari"),
         choices=WEEKDAY_CHOICES,
         coerce=int,
         widget=forms.CheckboxSelectMultiple(attrs={"class": "check"}),
@@ -130,7 +131,7 @@ class StudentForm(StyledFormMixin, forms.ModelForm):
             "joined_at": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "phone": forms.TextInput(attrs={"type": "tel", "placeholder": "+998 90 123 45 67"}),
             "telegram": forms.TextInput(attrs={"placeholder": "username"}),
-            "email": forms.EmailInput(attrs={"placeholder": "ali@gmail.com", "autocapitalize": "off"}),
+            "email": forms.EmailInput(attrs={"placeholder": _("ali@gmail.com"), "autocapitalize": "off"}),
             "notes": forms.Textarea(),
         }
 
@@ -152,7 +153,7 @@ class StudentForm(StyledFormMixin, forms.ModelForm):
         phone = self.cleaned_data["phone"].strip()
         digits = [c for c in phone if c.isdigit()]
         if phone and not 7 <= len(digits) <= 15:
-            raise forms.ValidationError("Telefon raqami noto‘g‘ri.")
+            raise forms.ValidationError(_("Telefon raqami noto‘g‘ri."))
         return phone
 
 
@@ -258,41 +259,43 @@ class LessonForm(StyledFormMixin, forms.ModelForm):
 
 class TopicImportForm(StyledFormMixin, forms.Form):
     text = forms.CharField(
-        label="Mavzular matni",
+        label=_("Mavzular matni"),
         widget=forms.Textarea(attrs={"rows": 16, "spellcheck": "false"}),
     )
     groups = forms.ModelMultipleChoiceField(
-        label="Guruh dasturiga ham qo‘shish",
+        label=_("Guruh dasturiga ham qo‘shish"),
         queryset=Group.objects.filter(status=Group.Status.ACTIVE),
         widget=forms.CheckboxSelectMultiple,
         required=False,
     )
     default_duration = forms.IntegerField(
-        label="Standart davomiylik (daq.)", min_value=10, max_value=600, initial=90
+        label=_("Standart davomiylik (daq.)"), min_value=10, max_value=600, initial=90
     )
 
     def clean_text(self):
         parsed = parse_topics(self.cleaned_data["text"])
         if not any(m.topics for m in parsed):
-            raise forms.ValidationError("Matndan birorta ham mavzu topilmadi.")
+            raise forms.ValidationError(_("Matndan birorta ham mavzu topilmadi."))
         self.parsed = parsed
         return self.cleaned_data["text"]
 
 
 class QuizForm(StyledFormMixin, forms.ModelForm):
     text = forms.CharField(
-        label="Savollar",
+        label=_("Savollar"),
         widget=forms.Textarea(attrs={"rows": 18, "spellcheck": "false"}),
-        help_text="“?” — savol, “+” — to‘g‘ri javob, “-” — noto‘g‘ri javob. "
-        "Savollar orasida bo‘sh qator qoldirish mumkin.",
+        help_text=_(
+            "“?” — savol, “+” — to‘g‘ri javob, “-” — noto‘g‘ri javob. Savollar orasida bo‘sh qator qoldirish mumkin."
+        ),
     )
     text_ru = forms.CharField(
-        label="Ruscha tarjima (ixtiyoriy)",
+        label=_("Ruscha tarjima (ixtiyoriy)"),
         required=False,
         widget=forms.Textarea(attrs={"rows": 18, "spellcheck": "false"}),
-        help_text="Xuddi o‘sha savollar xuddi o‘sha tartibda, to‘g‘ri javob (“+”) xuddi o‘sha "
-        "o‘rinda. Tarjima qilinmagan savolni o‘zbekcha qoldiring. Bo‘sh — testni faqat "
-        "o‘zbekcha yechish mumkin.",
+        help_text=_(
+            "Xuddi o‘sha savollar xuddi o‘sha tartibda, to‘g‘ri javob (“+”) xuddi o‘sha o‘rinda. "
+            "Tarjima qilinmagan savolni o‘zbekcha qoldiring. Bo‘sh — testni faqat o‘zbekcha yechish mumkin."
+        ),
     )
 
     class Meta:
@@ -314,7 +317,7 @@ class QuizForm(StyledFormMixin, forms.ModelForm):
         if errors:
             raise forms.ValidationError(errors)
         if not parsed:
-            raise forms.ValidationError("Kamida bitta savol yozing.")
+            raise forms.ValidationError(_("Kamida bitta savol yozing."))
         self.parsed = parsed
         return self.cleaned_data["text"]
 
@@ -345,35 +348,35 @@ class QuizForm(StyledFormMixin, forms.ModelForm):
         return quiz
 
 
-CHANNEL_CHOICES = [("telegram", "Telegram"), ("email", "Email (Gmail)")]
+CHANNEL_CHOICES = [("telegram", _("Telegram")), ("email", _("Email (Gmail)"))]
 
 
 class QuizSendForm(StyledFormMixin, forms.Form):
     """Test jo'natish: kimga, nechta savol va qancha vaqt."""
 
     students = forms.ModelMultipleChoiceField(
-        label="Shogirdlar",
+        label=_("Shogirdlar"),
         queryset=Student.objects.none(),
         widget=forms.CheckboxSelectMultiple,
-        error_messages={"required": "Kamida bitta shogirdni tanlang."},
+        error_messages={"required": _("Kamida bitta shogirdni tanlang.")},
     )
-    question_count = forms.IntegerField(label="Savollar soni", min_value=1)
+    question_count = forms.IntegerField(label=_("Savollar soni"), min_value=1)
     time_limit_minutes = forms.IntegerField(
-        label="Vaqt (daqiqa)", min_value=1, max_value=QuizBatch.MAX_TIME_LIMIT
+        label=_("Vaqt (daqiqa)"), min_value=1, max_value=QuizBatch.MAX_TIME_LIMIT
     )
     scheduled_at = forms.DateTimeField(
-        label="Qachon yuborilsin?",
+        label=_("Qachon yuborilsin?"),
         required=False,
         input_formats=["%Y-%m-%dT%H:%M"],
         widget=forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
-        help_text="Bo‘sh — darhol. Vaqt ko‘rsatilsa, havolalar o‘sha paytda avtomatik yuboriladi.",
+        help_text=_("Bo‘sh — darhol. Vaqt ko‘rsatilsa, havolalar o‘sha paytda avtomatik yuboriladi."),
     )
     channels = forms.MultipleChoiceField(
-        label="Qayerga yuborilsin?",
+        label=_("Qayerga yuborilsin?"),
         choices=CHANNEL_CHOICES,
         required=False,
         widget=forms.CheckboxSelectMultiple,
-        help_text="Hech biri tanlanmasa — havolalar faqat yaratiladi, o‘zingiz tarqatasiz.",
+        help_text=_("Hech biri tanlanmasa — havolalar faqat yaratiladi, o‘zingiz tarqatasiz."),
     )
 
     SCHEDULE_MAX_DAYS = 30
@@ -382,9 +385,11 @@ class QuizSendForm(StyledFormMixin, forms.Form):
         value = self.cleaned_data["scheduled_at"]
         now = timezone.now()
         if value and value <= now + timedelta(minutes=1):
-            raise forms.ValidationError("Kelajakdagi vaqtni tanlang (yoki bo‘sh qoldiring — darhol).")
+            raise forms.ValidationError(_("Kelajakdagi vaqtni tanlang (yoki bo‘sh qoldiring — darhol)."))
         if value and value > now + timedelta(days=self.SCHEDULE_MAX_DAYS):
-            raise forms.ValidationError(f"Ko‘pi bilan {self.SCHEDULE_MAX_DAYS} kun oldinga.")
+            raise forms.ValidationError(
+                _("Ko‘pi bilan {SCHEDULE_MAX_DAYS} kun oldinga.").format(SCHEDULE_MAX_DAYS=self.SCHEDULE_MAX_DAYS)
+            )
         return value
 
     def clean(self):
@@ -416,15 +421,15 @@ class ContactImportForm(StyledFormMixin, forms.Form):
     """Telegram/telefonlarni ro'yxatdan ommaviy kiritish (ko'rib chiqish → tasdiqlash)."""
 
     text = forms.CharField(
-        label="Ro‘yxat",
+        label=_("Ro‘yxat"),
         widget=forms.Textarea(attrs={"rows": 14, "spellcheck": "false"}),
     )
     group = forms.ModelChoiceField(
-        label="Guruh",
+        label=_("Guruh"),
         queryset=Group.objects.order_by("name"),
         required=False,
-        empty_label="Barcha guruhlar",
-        help_text="Bir xil ismli o‘quvchilar boshqa guruhda bo‘lsa, guruhni tanlang.",
+        empty_label=_("Barcha guruhlar"),
+        help_text=_("Bir xil ismli o‘quvchilar boshqa guruhda bo‘lsa, guruhni tanlang."),
     )
 
 
@@ -432,11 +437,11 @@ class ContactSelfForm(forms.Form):
     """O'quvchining o'zi to'ldiradigan ochiq forma (guruh havolasi orqali)."""
 
     student = forms.ModelChoiceField(
-        label="Ismingiz", queryset=Student.objects.none(), empty_label="— ismingizni tanlang —"
+        label=_("Ismingiz"), queryset=Student.objects.none(), empty_label=_("— ismingizni tanlang —")
     )
-    telegram = forms.CharField(label="Telegram username", max_length=80, required=False)
-    phone = forms.CharField(label="Telefon raqami", max_length=40, required=False)
-    email = forms.EmailField(label="Email", required=False)
+    telegram = forms.CharField(label=_("Telegram username"), max_length=80, required=False)
+    phone = forms.CharField(label=_("Telefon raqami"), max_length=40, required=False)
+    email = forms.EmailField(label=_("Email"), required=False)
 
     def __init__(self, *args, students, **kwargs):
         kwargs.setdefault("label_suffix", "")
@@ -459,7 +464,7 @@ class ContactSelfForm(forms.Form):
         value = normalize_username(raw)
         if raw and not value:
             raise forms.ValidationError(
-                "Username noto‘g‘ri: 5–32 ta lotin harf, raqam yoki “_” (masalan, @ali_2010)."
+                _("Username noto‘g‘ri: 5–32 ta lotin harf, raqam yoki “_” (masalan, @ali_2010).")
             )
         return value
 
@@ -467,7 +472,7 @@ class ContactSelfForm(forms.Form):
         raw = self.cleaned_data["phone"].strip()
         value = normalize_phone(raw)
         if raw and not value:
-            raise forms.ValidationError("Telefon raqami noto‘g‘ri (masalan, +998 90 123 45 67).")
+            raise forms.ValidationError(_("Telefon raqami noto‘g‘ri (masalan, +998 90 123 45 67)."))
         return value
 
     def clean(self):
@@ -475,26 +480,26 @@ class ContactSelfForm(forms.Form):
         if data.get("email"):
             data["email"] = data["email"].strip().lower()
         if not self.errors and not (data.get("telegram") or data.get("phone") or data.get("email")):
-            raise forms.ValidationError("Telegram username, telefon yoki emailni kiriting.")
+            raise forms.ValidationError(_("Telegram username, telefon yoki emailni kiriting."))
         return data
 
 
 class RegistrationForm(forms.Form):
     """Ochiq ro'yxatdan o'tish formasi (o'quvchi to'ldiradi)."""
 
-    full_name = forms.CharField(label="Familiya, ism, otasining ismi", max_length=160)
-    phone = forms.CharField(label="Telefon raqami", max_length=40)
-    telegram = forms.CharField(label="Telegram username", max_length=80)
-    email = forms.EmailField(label="Email (ixtiyoriy)", required=False)
+    full_name = forms.CharField(label=_("Familiya, ism, otasining ismi"), max_length=160)
+    phone = forms.CharField(label=_("Telefon raqami"), max_length=40)
+    telegram = forms.CharField(label=_("Telegram username"), max_length=80)
+    email = forms.EmailField(label=_("Email (ixtiyoriy)"), required=False)
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("label_suffix", "")
         super().__init__(*args, **kwargs)
         attrs = {
-            "full_name": {"placeholder": "Aliyev Sardor Akmalovich", "autocomplete": "name"},
+            "full_name": {"placeholder": _("Aliyev Sardor Akmalovich"), "autocomplete": "name"},
             "phone": {"placeholder": "+998 90 123 45 67", "inputmode": "tel", "autocomplete": "tel"},
-            "telegram": {"placeholder": "@username", "autocomplete": "off", "autocapitalize": "off"},
-            "email": {"placeholder": "ali@gmail.com", "autocomplete": "email", "autocapitalize": "off"},
+            "telegram": {"placeholder": _("@username"), "autocomplete": "off", "autocapitalize": "off"},
+            "email": {"placeholder": _("ali@gmail.com"), "autocomplete": "email", "autocapitalize": "off"},
         }
         for name, field in self.fields.items():
             field.widget.attrs.update(attrs[name], **{"class": "input"})
@@ -502,21 +507,21 @@ class RegistrationForm(forms.Form):
     def clean_full_name(self):
         name = " ".join(self.cleaned_data["full_name"].split())
         if len(name.split()) < 2:
-            raise forms.ValidationError("Familiya va ismingizni to‘liq yozing.")
+            raise forms.ValidationError(_("Familiya va ismingizni to‘liq yozing."))
         # Hammasi kichik yoki katta harfda yozilgan bo'lsa — "Aliyev Sardor" ko'rinishiga.
         return name.title() if name.islower() or name.isupper() else name
 
     def clean_phone(self):
         value = normalize_phone(self.cleaned_data["phone"])
         if not value:
-            raise forms.ValidationError("Telefon raqami noto‘g‘ri (masalan, +998 90 123 45 67).")
+            raise forms.ValidationError(_("Telefon raqami noto‘g‘ri (masalan, +998 90 123 45 67)."))
         return value
 
     def clean_telegram(self):
         value = normalize_username(self.cleaned_data["telegram"])
         if not value:
             raise forms.ValidationError(
-                "Username noto‘g‘ri: 5–32 ta lotin harf, raqam yoki “_” (masalan, @ali_2010)."
+                _("Username noto‘g‘ri: 5–32 ta lotin harf, raqam yoki “_” (masalan, @ali_2010).")
             )
         return value
 

@@ -1,10 +1,10 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Aloqa ma’lumotlari · Minar Test{% endblock %}
-{% block kicker %}<a href="{% url 'student_list' %}">Shogirdlar</a><span class="sep">/</span>Telegram, telefon, email{% endblock %}
-{% block heading %}Telegram / telefon / emaillarni kiritish{% endblock %}
-{% block subheading %}<p class="page-sub">Ro‘yxatni qo‘ying → ko‘rib chiqing → tasdiqlang. {% if missing_n %}Hozir <strong>{{ missing_n }}</strong> ta faol o‘quvchida Telegram, telefon va email yo‘q — ularga test yuborib bo‘lmaydi.{% else %}Barcha faol o‘quvchilarda aloqa ma’lumoti bor.{% endif %}</p>{% endblock %}
-{% block actions %}<a class="btn ghost" href="{% url 'student_list' %}?contact=missing">{% icon "users" 16 %} Kimlarda yo‘q</a>{% endblock %}
+{% load i18n ui %}
+{% block title %}{% translate "Aloqa ma’lumotlari · Minar Test" %}{% endblock %}
+{% block kicker %}<a href="{% url 'student_list' %}">{% translate "Shogirdlar" %}</a><span class="sep">/</span>{% translate "Telegram, telefon, email" %}{% endblock %}
+{% block heading %}{% translate "Telegram / telefon / emaillarni kiritish" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Ro‘yxatni qo‘ying → ko‘rib chiqing → tasdiqlang." %} {% if missing_n %}{% blocktranslate with missing_n=missing_n trimmed %}Hozir <strong>{{ missing_n }}</strong> ta faol o‘quvchida Telegram, telefon va email yo‘q — ularga test yuborib bo‘lmaydi.{% endblocktranslate %}{% else %}{% translate "Barcha faol o‘quvchilarda aloqa ma’lumoti bor." %}{% endif %}</p>{% endblock %}
+{% block actions %}<a class="btn ghost" href="{% url 'student_list' %}?contact=missing">{% icon "users" 16 %} {% translate "Kimlarda yo‘q" %}</a>{% endblock %}
 
 {% block content %}
 <div class="split">
@@ -14,7 +14,7 @@
       {% if form.non_field_errors %}<div class="form-errors" role="alert">{% icon "alert" 18 %}{{ form.non_field_errors }}</div>{% endif %}
       <div class="field{% if form.text.errors %} has-error{% endif %}">
         {{ form.text.label_tag }}
-        <textarea class="input mono" name="{{ form.text.html_name }}" id="{{ form.text.id_for_label }}" rows="14" spellcheck="false" placeholder="Aliyev Sardor — @sardor_a — +998 90 123 45 67&#10;Karimova Nigina @nigina nigina@gmail.com">{{ form.text.value|default:"" }}</textarea>
+        <textarea class="input mono" name="{{ form.text.html_name }}" id="{{ form.text.id_for_label }}" rows="14" spellcheck="false" placeholder="{% translate "Aliyev Sardor — @sardor_a — +998 90 123 45 67&#10;Karimova Nigina @nigina nigina@gmail.com" %}">{{ form.text.value|default:"" }}</textarea>
         {{ form.text.errors }}
       </div>
       <div class="field" style="margin-top:16px;max-width:360px">
@@ -25,27 +25,27 @@
       {% if rows is not None %}
         <div class="card" style="margin-top:22px;box-shadow:none">
           <div class="card-head" style="padding-bottom:12px">
-            <h2>{% icon "check" 18 %} Ko‘rib chiqish</h2>
-            <span class="meta">{{ update_n }} ta yangilanadi{% if error_n %} · {{ error_n }} ta qatorda muammo{% endif %}</span>
+            <h2>{% icon "check" 18 %} {% translate "Ko‘rib chiqish" %}</h2>
+            <span class="meta">{% blocktranslate with update_n=update_n trimmed %}{{ update_n }} ta yangilanadi{% endblocktranslate %}{% if error_n %} {% blocktranslate with error_n=error_n trimmed %}· {{ error_n }} ta qatorda muammo{% endblocktranslate %}{% endif %}</span>
           </div>
           <div class="table-wrap">
             <table class="table contact-preview">
-              <thead><tr><th>#</th><th>O‘quvchi</th><th>Telegram</th><th>Telefon</th><th>Email</th><th>Holat</th></tr></thead>
+              <thead><tr><th>#</th><th>{% translate "O‘quvchi" %}</th><th>{% translate "Telegram" %}</th><th>{% translate "Telefon" %}</th><th>{% translate "Email" %}</th><th>{% translate "Holat" %}</th></tr></thead>
               <tbody>
                 {% for r in rows %}
                   <tr class="{{ r.status }}">
                     <td class="meta tabular">{{ r.line_no }}</td>
                     <td>
                       {% if r.student %}<a class="strong" href="{{ r.student.get_absolute_url }}">{{ r.student.full_name }}</a><div class="meta">{{ r.student.group.name }}</div>{% else %}<span class="strong">{{ r.name|default:"—" }}</span>{% endif %}
-                      {% if r.candidates %}<div class="meta">Mos: {% for c in r.candidates %}{{ c.full_name }} ({{ c.group.code }}){% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+                      {% if r.candidates %}<div class="meta">{% translate "Mos:" %} {% for c in r.candidates %}{{ c.full_name }} ({{ c.group.code }}){% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
                     </td>
-                    <td>{% if r.username %}@{{ r.username }}{% if r.changes.telegram and r.changes.telegram.0 %}<div class="meta">edi: {{ r.changes.telegram.0 }}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>
-                    <td class="nowrap">{% if r.phone %}{{ r.phone }}{% if r.changes.phone and r.changes.phone.0 %}<div class="meta">edi: {{ r.changes.phone.0 }}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>
-                    <td>{% if r.email %}{{ r.email }}{% if r.changes.email and r.changes.email.0 %}<div class="meta">edi: {{ r.changes.email.0 }}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>
+                    <td>{% if r.username %}@{{ r.username }}{% if r.changes.telegram and r.changes.telegram.0 %}<div class="meta">{% blocktranslate with v_0=r.changes.telegram.0 trimmed %}edi: {{ v_0 }}{% endblocktranslate %}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>
+                    <td class="nowrap">{% if r.phone %}{{ r.phone }}{% if r.changes.phone and r.changes.phone.0 %}<div class="meta">{% blocktranslate with v_0=r.changes.phone.0 trimmed %}edi: {{ v_0 }}{% endblocktranslate %}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>
+                    <td>{% if r.email %}{{ r.email }}{% if r.changes.email and r.changes.email.0 %}<div class="meta">{% blocktranslate with v_0=r.changes.email.0 trimmed %}edi: {{ v_0 }}{% endblocktranslate %}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>
                     <td>
-                      {% if r.status == 'update' %}<span class="badge ok">Yangilanadi</span>
-                      {% elif r.status == 'same' %}<span class="badge plain">O‘zgarishsiz</span>
-                      {% else %}<span class="badge bad">O‘tkaziladi</span><div class="meta">{{ r.error }}</div>{% endif %}
+                      {% if r.status == 'update' %}<span class="badge ok">{% translate "Yangilanadi" %}</span>
+                      {% elif r.status == 'same' %}<span class="badge plain">{% translate "O‘zgarishsiz" %}</span>
+                      {% else %}<span class="badge bad">{% translate "O‘tkaziladi" %}</span><div class="meta">{{ r.error }}</div>{% endif %}
                     </td>
                   </tr>
                 {% endfor %}
@@ -54,30 +54,30 @@
           </div>
         </div>
         <div class="form-actions">
-          {% if update_n %}<button class="btn primary" type="submit" name="confirm" value="1">{% icon "check" 16 %} Tasdiqlash: {{ update_n }} ta o‘quvchini yangilash</button>{% endif %}
-          <button class="btn soft" type="submit">Qayta ko‘rib chiqish</button>
+          {% if update_n %}<button class="btn primary" type="submit" name="confirm" value="1">{% icon "check" 16 %} {% blocktranslate with update_n=update_n trimmed %}Tasdiqlash: {{ update_n }} ta o‘quvchini yangilash{% endblocktranslate %}</button>{% endif %}
+          <button class="btn soft" type="submit">{% translate "Qayta ko‘rib chiqish" %}</button>
         </div>
       {% else %}
         <div class="form-actions">
-          <button class="btn primary" type="submit">Ko‘rib chiqish {% icon "right" 16 %}</button>
+          <button class="btn primary" type="submit">{% translate "Ko‘rib chiqish" %} {% icon "right" 16 %}</button>
         </div>
       {% endif %}
     </form>
   </section>
 
   <aside class="card pad">
-    <h2 style="font-size:16px;margin-bottom:10px">{% icon "file" 17 %} Format</h2>
-    <p class="meta">Har qatorda bitta o‘quvchi. Excel, Telegram yoki Word’dan to‘g‘ridan-to‘g‘ri nusxalab qo‘yish mumkin.</p>
+    <h2 style="font-size:16px;margin-bottom:10px">{% icon "file" 17 %} {% translate "Format" %}</h2>
+    <p class="meta">{% translate "Har qatorda bitta o‘quvchi. Excel, Telegram yoki Word’dan to‘g‘ridan-to‘g‘ri nusxalab qo‘yish mumkin." %}</p>
     <pre class="code">{% verbatim %}Aliyev Sardor — @sardor_a — +998 90 123 45 67
 2) Karimova Nigina, t.me/nigina
 Valiyev Ali	901234567
 Sardor Aliyev | @sardor_a{% endverbatim %}</pre>
     <ul class="rules" style="margin-top:16px">
-      <li>Ism-familiya tartibi muhim emas; qisqartirilgan ism ham topiladi.</li>
-      <li>Telegram: <code>@username</code> yoki <code>t.me/username</code>.</li>
-      <li>Telefon: istalgan ko‘rinishda — <code>+998…</code> ga keltiriladi.</li>
-      <li>Yozilgan qiymat eskisini almashtiradi; yozilmagani o‘zgarmaydi.</li>
-      <li>Saqlashdan oldin har bir qator ko‘rsatiladi — hech narsa tasdiqsiz o‘zgarmaydi.</li>
+      <li>{% translate "Ism-familiya tartibi muhim emas; qisqartirilgan ism ham topiladi." %}</li>
+      <li>{% translate "Telegram:" %} <code>@username</code> {% translate "yoki" %} <code>t.me/username</code>.</li>
+      <li>{% translate "Telefon: istalgan ko‘rinishda —" %} <code>+998…</code> {% translate "ga keltiriladi." %}</li>
+      <li>{% translate "Yozilgan qiymat eskisini almashtiradi; yozilmagani o‘zgarmaydi." %}</li>
+      <li>{% translate "Saqlashdan oldin har bir qator ko‘rsatiladi — hech narsa tasdiqsiz o‘zgarmaydi." %}</li>
     </ul>
   </aside>
 </div>

@@ -1,22 +1,22 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}O‘chirish · Minar Test{% endblock %}
-{% block kicker %}{% icon "alert" 15 %} Qaytarib bo‘lmaydigan amal{% endblock %}
-{% block heading %}O‘chirishni tasdiqlaysizmi?{% endblock %}
+{% load i18n ui %}
+{% block title %}{% translate "O‘chirish · Minar Test" %}{% endblock %}
+{% block kicker %}{% icon "alert" 15 %} {% translate "Qaytarib bo‘lmaydigan amal" %}{% endblock %}
+{% block heading %}{% translate "O‘chirishni tasdiqlaysizmi?" %}{% endblock %}
 {% block content %}
 <section class="card pad form-card">
   <div class="callout warn" style="background:var(--bad-soft)">
     <span class="callout-icon" style="color:var(--bad)">{% icon "trash" 18 %}</span>
     <div class="grow">
-      <strong>{{ object }}</strong> o‘chiriladi. Bu amalni qaytarib bo‘lmaydi.
-      {% if object.students %}<div class="meta" style="margin-top:4px">Guruhdagi barcha shogirdlar, darslar va yo‘qlamalar ham o‘chadi.</div>{% endif %}
+      {% blocktranslate with object=object trimmed %}<strong>{{ object }}</strong> o‘chiriladi. Bu amalni qaytarib bo‘lmaydi.{% endblocktranslate %}
+      {% if object.students %}<div class="meta" style="margin-top:4px">{% translate "Guruhdagi barcha shogirdlar, darslar va yo‘qlamalar ham o‘chadi." %}</div>{% endif %}
     </div>
   </div>
   <form method="post">
     {% csrf_token %}
     <div class="form-actions">
-      <button class="btn danger" type="submit">{% icon "trash" 15 %} Ha, o‘chirish</button>
-      <a class="btn ghost" href="{% if object.get_absolute_url %}{{ object.get_absolute_url }}{% else %}{% url 'dashboard' %}{% endif %}">Bekor</a>
+      <button class="btn danger" type="submit">{% icon "trash" 15 %} {% translate "Ha, o‘chirish" %}</button>
+      <a class="btn ghost" href="{% if object.get_absolute_url %}{{ object.get_absolute_url }}{% else %}{% url 'dashboard' %}{% endif %}">{% translate "Bekor" %}</a>
     </div>
   </form>
 </section>

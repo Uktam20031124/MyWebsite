@@ -1,4 +1,5 @@
 {% extends "error_base.html" %}
+{% load i18n %}
 {% block code %}500{% endblock %}
-{% block title %}Server xatoligi{% endblock %}
-{% block message %}Serverda xatolik yuz berdi. Birozdan so‘ng qayta urinib ko‘ring.{% endblock %}
+{% block title %}{% translate "Server xatoligi" %}{% endblock %}
+{% block message %}{% translate "Serverda xatolik yuz berdi. Birozdan so‘ng qayta urinib ko‘ring." %}{% endblock %}

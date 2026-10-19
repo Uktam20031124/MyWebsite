@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from django.conf import settings
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 # Ketma-ket xabarlar orasidagi pauza: Telegram spam-filtrini qo'zg'atmaslik uchun.
 SEND_DELAY_SECONDS = 1.0
@@ -71,11 +73,11 @@ def is_configured() -> bool:
 
 def setup_hint() -> str:
     if not (settings.TELEGRAM_API_ID and settings.TELEGRAM_API_HASH):
-        return (
+        return gettext(
             ".env faylga TELEGRAM_API_ID va TELEGRAM_API_HASH yozing (my.telegram.org → "
             "API development tools), so‘ng `python manage.py telegram_login`."
         )
-    return "`python manage.py telegram_login` buyrug‘i bilan akkauntga ulaning."
+    return gettext("`python manage.py telegram_login` buyrug‘i bilan akkauntga ulaning.")
 
 
 def normalize_username(value: str) -> str:
@@ -121,12 +123,13 @@ async def connected(client):
 async def check_account(client) -> object:
     """Ulangan akkaunt aynan ruxsat etilgan akkauntmi — aks holda TelegramError."""
     if not await client.is_user_authorized():
-        raise TelegramError("Telegram sessiyasi eskirgan. " + setup_hint())
+        raise TelegramError(_("Telegram sessiyasi eskirgan. ") + setup_hint())
     me = await client.get_me()
     if me.id != sender_id():
         raise TelegramError(
-            f"Ulangan akkaunt ({me.id}) ruxsat etilganidan ({sender_id()}) farq qiladi — "
-            "xabar yuborilmadi."
+            _("Ulangan akkaunt ({id}) ruxsat etilganidan ({sender_id}) farq qiladi — xabar yuborilmadi.").format(
+                id=me.id, sender_id=sender_id()
+            )
         )
     return me
 
@@ -144,7 +147,7 @@ async def _resolve(client, item: Outgoing):
         )
     )
     if not result.users:
-        raise TelegramError("bu raqamda Telegram yo‘q yoki raqam yashirilgan")
+        raise TelegramError(_("bu raqamda Telegram yo‘q yoki raqam yashirilgan"))
     return result.users[0]
 
 
@@ -237,10 +240,9 @@ async def _chat_entity(client, chat: str):
             return await client.get_input_entity(ref)
     except (ValueError, TypeError) as exc:
         raise TelegramError(
-            "Telegram chat topilmadi — akkauntingiz shu guruhda a’zo ekanini va nom/ID to‘g‘riligini "
-            "tekshiring."
+            _("Telegram chat topilmadi — akkauntingiz shu guruhda a’zo ekanini va nom/ID to‘g‘riligini tekshiring.")
         ) from exc
-    raise TelegramError("Guruhning Telegram chati ko‘rsatilmagan.")
+    raise TelegramError(_("Guruhning Telegram chati ko‘rsatilmagan."))
 
 
 def send_to_chat(chat: str, text: str, client_factory=None) -> None:
@@ -257,7 +259,7 @@ def send_file_to(item: Outgoing, path, caption: str = "", client_factory=None) -
 
     async def action(client):
         if not (item.username or item.phone):
-            raise TelegramError("O‘quvchida Telegram username ham, telefon ham yo‘q.")
+            raise TelegramError(_("O‘quvchida Telegram username ham, telefon ham yo‘q."))
         try:
             entity = await _resolve(client, item)
             await client.send_file(entity, str(path), caption=caption, force_document=True)
@@ -286,7 +288,7 @@ def list_chats(client_factory=None) -> list[dict]:
 def _run_on_self(action, client_factory=None):
     if client_factory is None:
         if not is_configured():
-            raise TelegramError("Telegram ulanmagan. " + setup_hint())
+            raise TelegramError(_("Telegram ulanmagan. ") + setup_hint())
         session = load_session()
 
         def client_factory():
@@ -302,7 +304,7 @@ def _run_on_self(action, client_factory=None):
     except TelegramError:
         raise
     except (OSError, ConnectionError) as exc:
-        raise TelegramError("Telegram serveriga ulanib bo‘lmadi — internetni tekshiring.") from exc
+        raise TelegramError(_("Telegram serveriga ulanib bo‘lmadi — internetni tekshiring.")) from exc
 
 
 def send_messages(
@@ -311,7 +313,7 @@ def send_messages(
     """Xabarlarni ruxsat etilgan akkauntdan yuboradi. Sozlanmagan bo'lsa — TelegramError."""
     if client_factory is None:
         if not is_configured():
-            raise TelegramError("Telegram ulanmagan. " + setup_hint())
+            raise TelegramError(_("Telegram ulanmagan. ") + setup_hint())
         session = load_session()
 
         def client_factory():
@@ -328,4 +330,4 @@ def send_messages(
     except TelegramError:
         raise
     except (OSError, ConnectionError) as exc:
-        raise TelegramError("Telegram serveriga ulanib bo‘lmadi — internetni tekshiring.") from exc
+        raise TelegramError(_("Telegram serveriga ulanib bo‘lmadi — internetni tekshiring.")) from exc

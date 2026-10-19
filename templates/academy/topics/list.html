@@ -1,49 +1,49 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Mavzular · Minar Test{% endblock %}
-{% block kicker %}{% icon "book" 15 %} O‘quv markazi{% endblock %}
-{% block heading %}Mavzular katalogi{% endblock %}
-{% block subheading %}<p class="page-sub">{{ topics|length }} mavzu, {{ modules|length }} bo‘lim. Har bir mavzuda dars rejasi, uy vazifasi shabloni va materiallar.</p>{% endblock %}
+{% load i18n ui %}
+{% block title %}{% translate "Mavzular · Minar Test" %}{% endblock %}
+{% block kicker %}{% icon "book" 15 %} {% translate "O‘quv markazi" %}{% endblock %}
+{% block heading %}{% translate "Mavzular katalogi" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% blocktranslate with topics=topics|length modules=modules|length trimmed %}{{ topics }} mavzu, {{ modules }} bo‘lim. Har bir mavzuda dars rejasi, uy vazifasi shabloni va materiallar.{% endblocktranslate %}</p>{% endblock %}
 {% block actions %}
-<a class="btn ghost" data-turbo="false" href="{% url 'topic_export' %}">{% icon "download" 16 %} Eksport</a>
-<a class="btn soft" href="{% url 'topic_import' %}">{% icon "upload" 16 %} Import</a>
-<a class="btn soft" href="{% url 'quiz_send' %}">{% icon "send" 16 %} Test jo‘natish</a>
-<a class="btn primary" href="{% url 'topic_create' %}{% if request.GET.module and request.GET.module != 'none' %}?module={{ request.GET.module }}{% endif %}">{% icon "plus" 16 %} Yangi mavzu</a>
+<a class="btn ghost" data-turbo="false" href="{% url 'topic_export' %}">{% icon "download" 16 %} {% translate "Eksport" %}</a>
+<a class="btn soft" href="{% url 'topic_import' %}">{% icon "upload" 16 %} {% translate "Import" %}</a>
+<a class="btn soft" href="{% url 'quiz_send' %}">{% icon "send" 16 %} {% translate "Test jo‘natish" %}</a>
+<a class="btn primary" href="{% url 'topic_create' %}{% if request.GET.module and request.GET.module != 'none' %}?module={{ request.GET.module }}{% endif %}">{% icon "plus" 16 %} {% translate "Yangi mavzu" %}</a>
 {% endblock %}
 
 {% block content %}
 <form class="toolbar" method="get" role="search">
   <label class="search-field">
-    <span class="sr-only">Mavzu qidirish</span>
+    <span class="sr-only">{% translate "Mavzu qidirish" %}</span>
     {% icon "search" 16 %}
-    <input class="input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Mavzu nomi yoki tavsifi">
+    <input class="input" type="search" name="q" value="{{ request.GET.q }}" placeholder="{% translate "Mavzu nomi yoki tavsifi" %}">
   </label>
-  <select class="input" name="module" data-autosubmit aria-label="Bo‘lim">
-    <option value="">Barcha bo‘limlar</option>
+  <select class="input" name="module" data-autosubmit aria-label="{% translate "Bo‘lim" %}">
+    <option value="">{% translate "Barcha bo‘limlar" %}</option>
     {% for m in modules %}
       <option value="{{ m.pk }}" {% if request.GET.module == m.pk|stringformat:"s" %}selected{% endif %}>{{ m.title }} ({{ m.topic_n }})</option>
     {% endfor %}
-    <option value="none" {% if request.GET.module == 'none' %}selected{% endif %}>Bo‘limsiz</option>
+    <option value="none" {% if request.GET.module == 'none' %}selected{% endif %}>{% translate "Bo‘limsiz" %}</option>
   </select>
   {% if hidden_n %}
-    <label class="check-field" style="margin:0 6px"><input type="checkbox" name="hidden" value="1" data-autosubmit {% if request.GET.hidden == '1' %}checked{% endif %}> <span class="meta">Yashirinlar ({{ hidden_n }})</span></label>
+    <label class="check-field" style="margin:0 6px"><input type="checkbox" name="hidden" value="1" data-autosubmit {% if request.GET.hidden == '1' %}checked{% endif %}> <span class="meta">{% blocktranslate with hidden_n=hidden_n trimmed %}Yashirinlar ({{ hidden_n }}){% endblocktranslate %}</span></label>
   {% endif %}
-  <button class="btn soft" type="submit">Qidirish</button>
+  <button class="btn soft" type="submit">{% translate "Qidirish" %}</button>
   <span class="spacer"></span>
-  <a class="btn ghost" href="{% url 'module_create' %}">{% icon "folder" 16 %} Bo‘lim qo‘shish</a>
+  <a class="btn ghost" href="{% url 'module_create' %}">{% icon "folder" 16 %} {% translate "Bo‘lim qo‘shish" %}</a>
 </form>
 
 {% for module, items in sections %}
   <section class="card module-card">
     <div class="card-head" style="padding-bottom:14px">
       <div class="truncate">
-        <h2>{% icon "folder" 18 %} {% if module %}{{ module.title }}{% else %}Bo‘limsiz mavzular{% endif %} <span class="badge plain">{{ items|length }}</span></h2>
+        <h2>{% icon "folder" 18 %} {% if module %}{{ module.title }}{% else %}{% translate "Bo‘limsiz mavzular" %}{% endif %} <span class="badge plain">{{ items|length }}</span></h2>
         {% if module.description %}<p class="meta" style="margin:6px 0 0">{{ module.description }}</p>{% endif %}
       </div>
       {% if module %}
         <div class="actions">
-          <a class="btn xs soft" href="{% url 'topic_create' %}?module={{ module.pk }}">{% icon "plus" 14 %} Mavzu</a>
-          <a class="btn xs ghost square" href="{% url 'module_update' module.pk %}" title="Bo‘limni tahrirlash" aria-label="Bo‘limni tahrirlash">{% icon "edit" 14 %}</a>
+          <a class="btn xs soft" href="{% url 'topic_create' %}?module={{ module.pk }}">{% icon "plus" 14 %} {% translate "Mavzu" %}</a>
+          <a class="btn xs ghost square" href="{% url 'module_update' module.pk %}" title="{% translate "Bo‘limni tahrirlash" %}" aria-label="{% translate "Bo‘limni tahrirlash" %}">{% icon "edit" 14 %}</a>
         </div>
       {% endif %}
     </div>
@@ -53,18 +53,18 @@
           <span class="topic-n">{{ forloop.counter }}</span>
           <div class="truncate">
             <a class="strong" href="{{ t.get_absolute_url }}">{{ t.title }}</a>
-            {% if not t.is_active %}<span class="badge plain">Yashirin</span>{% endif %}
+            {% if not t.is_active %}<span class="badge plain">{% translate "Yashirin" %}</span>{% endif %}
             <div class="meta truncate">
-              {% icon "clock" 13 %} {{ t.duration_minutes }} daq. · {{ t.group_n }} guruh dasturida · {{ t.lesson_n }} dars{% if t.question_n %} · {% icon "target" 13 %} {{ t.question_n }} savol{% endif %}{% if t.description %} · {{ t.description|truncatechars:110 }}{% endif %}
+              {% icon "clock" 13 %} {% blocktranslate with duration_minutes=t.duration_minutes group_n=t.group_n lesson_n=t.lesson_n trimmed %}{{ duration_minutes }} daq. · {{ group_n }} guruh dasturida · {{ lesson_n }} dars{% endblocktranslate %}{% if t.question_n %} · {% icon "target" 13 %} {% blocktranslate with question_n=t.question_n trimmed %}{{ question_n }} savol{% endblocktranslate %}{% endif %}{% if t.description %} · {{ t.description|truncatechars:110 }}{% endif %}
             </div>
           </div>
           <div class="topic-tail">
             <div class="topic-actions">
-              {% if t.question_n %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}" title="Test savollarini tahrirlash">{% icon "edit" 13 %} Test</a>{% else %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}">{% icon "plus" 13 %} Test</a>{% endif %}
-              <a class="btn xs ghost" href="{% url 'lesson_create' %}?topic={{ t.pk }}">{% icon "plus" 13 %} Dars</a>
-              <a class="btn xs ghost square" href="{% url 'topic_update' t.pk %}" title="Tahrirlash" aria-label="Tahrirlash">{% icon "edit" 13 %}</a>
+              {% if t.question_n %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}" title="{% translate "Test savollarini tahrirlash" %}">{% icon "edit" 13 %} {% translate "Test" %}</a>{% else %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}">{% icon "plus" 13 %} {% translate "Test" %}</a>{% endif %}
+              <a class="btn xs ghost" href="{% url 'lesson_create' %}?topic={{ t.pk }}">{% icon "plus" 13 %} {% translate "Dars" %}</a>
+              <a class="btn xs ghost square" href="{% url 'topic_update' t.pk %}" title="{% translate "Tahrirlash" %}" aria-label="{% translate "Tahrirlash" %}">{% icon "edit" 13 %}</a>
             </div>
-            {% if t.question_n %}<a class="btn xs soft" href="{% url 'quiz_send' %}?topic={{ t.pk }}" title="Shu mavzu bo‘yicha test jo‘natish">{% icon "send" 13 %} Test jo‘natish</a>{% endif %}
+            {% if t.question_n %}<a class="btn xs soft" href="{% url 'quiz_send' %}?topic={{ t.pk }}" title="{% translate "Shu mavzu bo‘yicha test jo‘natish" %}">{% icon "send" 13 %} {% translate "Test jo‘natish" %}</a>{% endif %}
           </div>
         </li>
       {% endfor %}
@@ -75,12 +75,12 @@
     <div class="empty">
       <span class="empty-icon">{% icon "book" 24 %}</span>
       {% if request.GET.q or request.GET.module %}
-        <strong>Hech narsa topilmadi</strong>
-        <a class="btn sm soft" href="{% url 'topic_list' %}">Filtrni tozalash</a>
+        {% blocktranslate trimmed %}<strong>Hech narsa topilmadi</strong>{% endblocktranslate %}
+        <a class="btn sm soft" href="{% url 'topic_list' %}">{% translate "Filtrni tozalash" %}</a>
       {% else %}
-        <strong>Katalog bo‘sh</strong>
-        <p>Mavzularni Word yoki Telegram’dan nusxa olib, bir yo‘la import qiling.</p>
-        <a class="btn sm primary" href="{% url 'topic_import' %}">{% icon "upload" 15 %} Import qilish</a>
+        {% blocktranslate trimmed %}<strong>Katalog bo‘sh</strong>{% endblocktranslate %}
+        <p>{% translate "Mavzularni Word yoki Telegram’dan nusxa olib, bir yo‘la import qiling." %}</p>
+        <a class="btn sm primary" href="{% url 'topic_import' %}">{% icon "upload" 15 %} {% translate "Import qilish" %}</a>
       {% endif %}
     </div>
   </div>

@@ -1,24 +1,24 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Qidiruv · Minar Test{% endblock %}
-{% block kicker %}{% icon "search" 15 %} Qidiruv{% endblock %}
-{% block heading %}{% if q %}“{{ q }}”{% else %}Qidiruv{% endif %}{% endblock %}
+{% load i18n ui %}
+{% block title %}{% translate "Qidiruv · Minar Test" %}{% endblock %}
+{% block kicker %}{% icon "search" 15 %} {% translate "Qidiruv" %}{% endblock %}
+{% block heading %}{% if q %}“{{ q }}”{% else %}{% translate "Qidiruv" %}{% endif %}{% endblock %}
 {% block content %}
 <form class="toolbar" action="{% url 'search' %}" method="get" role="search">
   <label class="search-field" style="flex:1;max-width:520px">
-    <span class="sr-only">Qidiruv</span>
+    <span class="sr-only">{% translate "Qidiruv" %}</span>
     {% icon "search" 16 %}
-    <input class="input" type="search" name="q" value="{{ q }}" placeholder="Ism, telefon, guruh yoki mavzu" autofocus>
+    <input class="input" type="search" name="q" value="{{ q }}" placeholder="{% translate "Ism, telefon, guruh yoki mavzu" %}" autofocus>
   </label>
-  <button class="btn primary" type="submit">Qidirish</button>
-  <span class="meta">Tezkor: <kbd data-mod-key>Ctrl</kbd> <kbd>K</kbd></span>
+  <button class="btn primary" type="submit">{% translate "Qidirish" %}</button>
+  <span class="meta">{% translate "Tezkor:" %} <kbd data-mod-key>{% blocktranslate trimmed %}Ctrl</kbd> <kbd>K</kbd>{% endblocktranslate %}</span>
 </form>
 
 {% if q %}
 <div class="split even">
   <div class="stack">
     <section class="card">
-      <div class="card-head"><h2>{% icon "users" 18 %} Shogirdlar</h2><span class="meta">{{ students|length }}</span></div>
+      <div class="card-head"><h2>{% icon "users" 18 %} {% translate "Shogirdlar" %}</h2><span class="meta">{{ students|length }}</span></div>
       <div class="card-body flush"><div class="rows">
         {% for s in students %}
           <a class="row" href="{{ s.get_absolute_url }}">
@@ -26,33 +26,33 @@
             <div class="grow"><div class="row-title truncate">{{ s.full_name }}</div><div class="meta">{{ s.phone|default:"" }}</div></div>
             <span class="tag">{{ s.group.code }}</span>
           </a>
-        {% empty %}<div class="empty compact"><p>Topilmadi.</p></div>{% endfor %}
+        {% empty %}<div class="empty compact"><p>{% translate "Topilmadi." %}</p></div>{% endfor %}
       </div></div>
     </section>
     <section class="card">
-      <div class="card-head"><h2>{% icon "lesson" 18 %} Darslar</h2><span class="meta">{{ lessons|length }}</span></div>
+      <div class="card-head"><h2>{% icon "lesson" 18 %} {% translate "Darslar" %}</h2><span class="meta">{{ lessons|length }}</span></div>
       <div class="card-body flush"><div class="rows">
         {% for l in lessons %}
-          <a class="row" href="{{ l.get_absolute_url }}"><div class="grow"><div class="row-title truncate">{{ l.topic.title|default:"Mavzusiz dars" }}</div><div class="meta">{{ l.group.code }} · {{ l.held_on|date:"d.m.Y" }}</div></div></a>
-        {% empty %}<div class="empty compact"><p>Topilmadi.</p></div>{% endfor %}
+          <a class="row" href="{{ l.get_absolute_url }}"><div class="grow"><div class="row-title truncate">{{ l.topic|topic_title|default:_("Mavzusiz dars") }}</div><div class="meta">{{ l.group.code }} · {{ l.held_on|date:"d.m.Y" }}</div></div></a>
+        {% empty %}<div class="empty compact"><p>{% translate "Topilmadi." %}</p></div>{% endfor %}
       </div></div>
     </section>
   </div>
   <div class="stack">
     <section class="card">
-      <div class="card-head"><h2>{% icon "layers" 18 %} Guruhlar</h2><span class="meta">{{ groups|length }}</span></div>
+      <div class="card-head"><h2>{% icon "layers" 18 %} {% translate "Guruhlar" %}</h2><span class="meta">{{ groups|length }}</span></div>
       <div class="card-body flush"><div class="rows">
         {% for g in groups %}
           <a class="row" href="{{ g.get_absolute_url }}"><div class="grow"><div class="row-title truncate">{{ g.name }}</div><div class="meta">{{ g.schedule|default:"" }}</div></div><span class="tag">{{ g.code }}</span></a>
-        {% empty %}<div class="empty compact"><p>Topilmadi.</p></div>{% endfor %}
+        {% empty %}<div class="empty compact"><p>{% translate "Topilmadi." %}</p></div>{% endfor %}
       </div></div>
     </section>
     <section class="card">
-      <div class="card-head"><h2>{% icon "book" 18 %} Mavzular</h2><span class="meta">{{ topics|length }}</span></div>
+      <div class="card-head"><h2>{% icon "book" 18 %} {% translate "Mavzular" %}</h2><span class="meta">{{ topics|length }}</span></div>
       <div class="card-body flush"><div class="rows">
         {% for t in topics %}
           <a class="row" href="{{ t.get_absolute_url }}"><div class="grow"><div class="row-title truncate">{{ t.title }}</div><div class="meta">{{ t.module.title|default:"" }}</div></div></a>
-        {% empty %}<div class="empty compact"><p>Topilmadi.</p></div>{% endfor %}
+        {% empty %}<div class="empty compact"><p>{% translate "Topilmadi." %}</p></div>{% endfor %}
       </div></div>
     </section>
   </div>
@@ -61,8 +61,8 @@
   <div class="card">
     <div class="empty">
       <span class="empty-icon">{% icon "search" 24 %}</span>
-      <strong>Nimani qidiramiz?</strong>
-      <p>Ism, telefon, @telegram, guruh kodi yoki mavzu nomini yozing.</p>
+      {% blocktranslate trimmed %}<strong>Nimani qidiramiz?</strong>{% endblocktranslate %}
+      <p>{% translate "Ism, telefon, @telegram, guruh kodi yoki mavzu nomini yozing." %}</p>
     </div>
   </div>
 {% endif %}

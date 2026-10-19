@@ -1,18 +1,18 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Testlar · Minar Test{% endblock %}
-{% block kicker %}{% icon "target" 15 %} Mavzu testlari{% endblock %}
-{% block heading %}Testlar{% endblock %}
-{% block subheading %}<p class="page-sub">Jo‘natilgan testlar va natijalar. Har bir jo‘natmada shogirdlar, savollar soni va vaqt alohida belgilanadi.</p>{% endblock %}
+{% load i18n ui %}
+{% block title %}{% translate "Testlar · Minar Test" %}{% endblock %}
+{% block kicker %}{% icon "target" 15 %} {% translate "Mavzu testlari" %}{% endblock %}
+{% block heading %}{% translate "Testlar" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Jo‘natilgan testlar va natijalar. Har bir jo‘natmada shogirdlar, savollar soni va vaqt alohida belgilanadi." %}</p>{% endblock %}
 {% block actions %}
-<a class="btn primary" href="{% url 'quiz_send' %}">{% icon "send" 16 %} Test jo‘natish</a>
+<a class="btn primary" href="{% url 'quiz_send' %}">{% icon "send" 16 %} {% translate "Test jo‘natish" %}</a>
 {% endblock %}
 
 {% block content %}
 {% if groups %}
   <div class="toolbar">
-    <nav class="seg-tabs" aria-label="Guruh bo‘yicha">
-      <a href="{% url 'quiz_batches' %}" {% if not request.GET.group %}aria-current="true"{% endif %}>Hammasi</a>
+    <nav class="seg-tabs" aria-label="{% translate "Guruh bo‘yicha" %}">
+      <a href="{% url 'quiz_batches' %}" {% if not request.GET.group %}aria-current="true"{% endif %}>{% translate "Hammasi" %}</a>
       {% for g in groups %}<a href="?group={{ g.pk }}" {% if request.GET.group == g.pk|stringformat:"s" %}aria-current="true"{% endif %}>{{ g.name }}</a>{% endfor %}
     </nav>
   </div>
@@ -20,7 +20,7 @@
 <section class="card">
   <div class="card-body flush">
     <div class="rows">
-      {% include "academy/quiz/_batch_rows.html" with show_topic=True empty_text="Hali test jo‘natilmagan. “Test jo‘natish” tugmasidan boshlang." %}
+      {% include "academy/quiz/_batch_rows.html" with show_topic=True empty_text=_("Hali test jo‘natilmagan. “Test jo‘natish” tugmasidan boshlang.") %}
     </div>
   </div>
   {% include "academy/includes/pager.html" %}

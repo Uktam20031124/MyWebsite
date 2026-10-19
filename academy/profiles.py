@@ -21,6 +21,7 @@ from django.conf import settings
 from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from . import telegram_sender as tg
 from .coins import PASS_PERCENT
@@ -207,24 +208,26 @@ def begin_test(student: Student, topic: Topic) -> TestRequest:
     """O'quvchi testni o'zi boshlaydi (ustoz ruxsati shart emas). Sabab bilan rad etilsa —
     ProfileError. Qaytgan so'rov bo'yicha o'quvchi savollar soni va vaqtni tanlaydi."""
     if not is_open(student):
-        raise ProfileError("Profilga kirish vaqti tugagan — ustozdan qayta ruxsat so‘rang.")
+        raise ProfileError(_("Profilga kirish vaqti tugagan — ustozdan qayta ruxsat so‘rang."))
     with transaction.atomic():
         row = row_for(student, topic)
         if row is None:
-            raise ProfileError("Bu mavzudan test topshirishga ruxsat berilmagan.")
+            raise ProfileError(_("Bu mavzudan test topshirishga ruxsat berilmagan."))
         if row.request is not None:
             return row.request  # boshlangan, lekin hali tanlanmagan — o'shani davom ettiramiz
         if not row.bank:
-            raise ProfileError("Bu mavzuda hali test savollari yo‘q.")
+            raise ProfileError(_("Bu mavzuda hali test savollari yo‘q."))
         if not row.left_today:
             raise ProfileError(
-                f"Bugun bu mavzudan {TestRequest.DAILY_LIMIT} ta test topshirdingiz — ertaga qayta urinib ko‘ring."
+                _("Bugun bu mavzudan {DAILY_LIMIT} ta test topshirdingiz — ertaga qayta urinib ko‘ring.").format(
+                    DAILY_LIMIT=TestRequest.DAILY_LIMIT
+                )
             )
         if row.locked:
             if row.session is None:
-                raise ProfileError("Avval materialni oching: mustahkamlash vaqti shundan boshlanadi.")
+                raise ProfileError(_("Avval materialni oching: mustahkamlash vaqti shundan boshlanadi."))
             at = timezone.localtime(row.unlocks_at)
-            raise ProfileError(f"Mustahkamlash {at:%H:%M} da tugaydi — keyin test ochiladi.")
+            raise ProfileError(_("Mustahkamlash {at:%H:%M} da tugaydi — keyin test ochiladi.").format(at=at))
         kind = TestRequest.Kind.RETAKE if row.gate else TestRequest.Kind.FIRST
         return TestRequest.objects.create(
             student=student,
@@ -246,13 +249,13 @@ def decide_test(req: TestRequest, approve: bool) -> None:
 def start_test(req: TestRequest, questions: int, minutes: int) -> QuizAttempt:
     """Ruxsat berilgan so'rovdan testni yaratadi; o'quvchi keyin boshlash sahifasiga o'tadi."""
     if questions not in TestRequest.QUESTION_CHOICES or minutes not in TestRequest.MINUTE_CHOICES:
-        raise ProfileError("Savollar soni 10 yoki 12, vaqt 5 yoki 10 daqiqa bo‘lishi kerak.")
+        raise ProfileError(_("Savollar soni 10 yoki 12, vaqt 5 yoki 10 daqiqa bo‘lishi kerak."))
     if not is_open(req.student):
-        raise ProfileError("Profilga kirish vaqti tugagan — ustozdan qayta ruxsat so‘rang.")
+        raise ProfileError(_("Profilga kirish vaqti tugagan — ustozdan qayta ruxsat so‘rang."))
     with transaction.atomic():
         req = TestRequest.objects.select_for_update().get(pk=req.pk)
         if req.status != TestRequest.Status.APPROVED:
-            raise ProfileError("Bu so‘rovga ruxsat berilmagan yoki u allaqachon ishlatilgan.")
+            raise ProfileError(_("Bu so‘rovga ruxsat berilmagan yoki u allaqachon ishlatilgan."))
         batch = create_quiz_batch(req.topic.quiz, [req.student], questions, minutes)
         QuizBatch.objects.filter(pk=batch.pk).update(from_profile=True, channels="")
         attempt = batch.attempts.get()

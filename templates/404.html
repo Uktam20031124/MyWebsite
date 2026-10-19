@@ -1,4 +1,5 @@
 {% extends "error_base.html" %}
+{% load i18n %}
 {% block code %}404{% endblock %}
-{% block title %}Sahifa topilmadi{% endblock %}
-{% block message %}Sahifa topilmadi. U o‘chirilgan yoki manzil noto‘g‘ri bo‘lishi mumkin.{% endblock %}
+{% block title %}{% translate "Sahifa topilmadi" %}{% endblock %}
+{% block message %}{% translate "Sahifa topilmadi. U o‘chirilgan yoki manzil noto‘g‘ri bo‘lishi mumkin." %}{% endblock %}

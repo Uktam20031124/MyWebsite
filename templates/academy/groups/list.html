@@ -1,16 +1,16 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Guruhlar · Minar Test{% endblock %}
-{% block kicker %}{% icon "layers" 15 %} O‘quv markazi{% endblock %}
-{% block heading %}Guruhlar{% endblock %}
+{% load i18n ui %}
+{% block title %}{% translate "Guruhlar · Minar Test" %}{% endblock %}
+{% block kicker %}{% icon "layers" 15 %} {% translate "O‘quv markazi" %}{% endblock %}
+{% block heading %}{% translate "Guruhlar" %}{% endblock %}
 {% block actions %}
-<a class="btn soft" href="{% url 'timetable' %}">{% icon "calendar" 16 %} Jadval</a>
-<a class="btn primary" href="{% url 'group_create' %}">{% icon "plus" 16 %} Yangi guruh</a>
+<a class="btn soft" href="{% url 'timetable' %}">{% icon "calendar" 16 %} {% translate "Jadval" %}</a>
+<a class="btn primary" href="{% url 'group_create' %}">{% icon "plus" 16 %} {% translate "Yangi guruh" %}</a>
 {% endblock %}
 
 {% block content %}
 <form class="toolbar" method="get" role="search">
-  <div class="seg-tabs" role="group" aria-label="Holat">
+  <div class="seg-tabs" role="group" aria-label="{% translate "Holat" %}">
     {% for value, label in status_tabs %}
       <a href="?status={{ value }}{% if request.GET.q %}&amp;q={{ request.GET.q|urlencode }}{% endif %}" {% if request.GET.status|default:'' == value %}aria-current="true"{% endif %}>{{ label }}</a>
     {% endfor %}
@@ -18,9 +18,9 @@
   <span class="spacer"></span>
   <input type="hidden" name="status" value="{{ request.GET.status }}">
   <label class="search-field">
-    <span class="sr-only">Guruh qidirish</span>
+    <span class="sr-only">{% translate "Guruh qidirish" %}</span>
     {% icon "search" 16 %}
-    <input class="input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Nomi yoki kod">
+    <input class="input" type="search" name="q" value="{{ request.GET.q }}" placeholder="{% translate "Nomi yoki kod" %}">
   </label>
 </form>
 
@@ -32,24 +32,24 @@
         <div>
           <h3><a href="{{ g.get_absolute_url }}">{{ g.name }}</a></h3>
           <div class="meta" style="margin-top:4px">
-            {% if g.status == 'active' %}<span class="badge ok">Faol</span>{% elif g.status == 'paused' %}<span class="badge warn">{{ g.get_status_display }}</span>{% else %}<span class="badge">{{ g.get_status_display }}</span>{% endif %}
+            {% if g.status == 'active' %}<span class="badge ok">{% translate "Faol" %}</span>{% elif g.status == 'paused' %}<span class="badge warn">{{ g.get_status_display }}</span>{% else %}<span class="badge">{{ g.get_status_display }}</span>{% endif %}
           </div>
         </div>
         <span class="group-code">{{ g.code }}</span>
       </div>
       <div class="group-facts">
-        <span>{% icon "users" 15 %} {{ g.student_n }} shogird</span>
-        <span>{% icon "clock" 15 %} {{ g.schedule|default:"jadval yo‘q" }}</span>
+        <span>{% icon "users" 15 %} {% blocktranslate with student_n=g.student_n trimmed %}{{ student_n }} shogird{% endblocktranslate %}</span>
+        <span>{% icon "clock" 15 %} {{ g.schedule|default:_("jadval yo‘q") }}</span>
         {% if g.room %}<span>{% icon "pin" 15 %} {{ g.room }}</span>{% endif %}
       </div>
       <div class="group-progress">
-        <div class="top"><span>Dastur</span><span class="tabular"><strong>{{ g.progress_pct }}%</strong> · {{ g.syllabus_taught }}/{{ g.syllabus_total }}</span></div>
-        <div class="bar" role="progressbar" aria-label="{{ g.name }} dasturi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ g.progress_pct }}"><span style="width:{{ g.progress_pct }}%"></span></div>
+        <div class="top"><span>{% translate "Dastur" %}</span><span class="tabular"><strong>{{ g.progress_pct }}%</strong> · {{ g.syllabus_taught }}/{{ g.syllabus_total }}</span></div>
+        <div class="bar" role="progressbar" aria-label="{% blocktranslate with name=g.name trimmed %}{{ name }} dasturi{% endblocktranslate %}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ g.progress_pct }}"><span style="width:{{ g.progress_pct }}%"></span></div>
       </div>
       {% if g.next_session %}
         <div class="group-next">
-          {% if g.next_session.state == 'live' %}<span class="badge live">Hozir</span>{% else %}Navbatdagi dars: <strong>{% if g.next_session.is_today %}bugun{% else %}{{ g.next_session.day|weekday_full|lower }}{% endif %}, {{ g.next_session.starts_at|time:"H:i" }}</strong>{% endif %}
-          {% if g.next_session.topic %}<div class="truncate" style="margin-top:2px">{% icon "book" 14 %} {{ g.next_session.topic.title }}</div>{% endif %}
+          {% if g.next_session.state == 'live' %}<span class="badge live">{% translate "Hozir" %}</span>{% else %}{% blocktranslate trimmed %}Navbatdagi dars: <strong>{% endblocktranslate %}{% if g.next_session.is_today %}{% translate "bugun" %}{% else %}{{ g.next_session.day|weekday_full|lower }}{% endif %}, {{ g.next_session.starts_at|time:"H:i" }}</strong>{% endif %}
+          {% if g.next_session.topic %}<div class="truncate" style="margin-top:2px">{% icon "book" 14 %} {{ g.next_session.topic|topic_title }}</div>{% endif %}
         </div>
       {% endif %}
     </article>
@@ -60,13 +60,13 @@
     <div class="empty">
       <span class="empty-icon">{% icon "layers" 24 %}</span>
       {% if request.GET.q or request.GET.status %}
-        <strong>Hech narsa topilmadi</strong>
-        <p>Filtrni o‘zgartirib ko‘ring.</p>
-        <a class="btn sm soft" href="{% url 'group_list' %}">Filtrni tozalash</a>
+        {% blocktranslate trimmed %}<strong>Hech narsa topilmadi</strong>{% endblocktranslate %}
+        <p>{% translate "Filtrni o‘zgartirib ko‘ring." %}</p>
+        <a class="btn sm soft" href="{% url 'group_list' %}">{% translate "Filtrni tozalash" %}</a>
       {% else %}
-        <strong>Hali guruh yo‘q</strong>
-        <p>Birinchi guruhni yarating: nomi, kodi, dars kunlari va vaqti.</p>
-        <a class="btn sm primary" href="{% url 'group_create' %}">{% icon "plus" 15 %} Guruh yaratish</a>
+        {% blocktranslate trimmed %}<strong>Hali guruh yo‘q</strong>{% endblocktranslate %}
+        <p>{% translate "Birinchi guruhni yarating: nomi, kodi, dars kunlari va vaqti." %}</p>
+        <a class="btn sm primary" href="{% url 'group_create' %}">{% icon "plus" 15 %} {% translate "Guruh yaratish" %}</a>
       {% endif %}
     </div>
   </div>

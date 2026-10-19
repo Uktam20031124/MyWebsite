@@ -1,18 +1,19 @@
 {% extends "academy/portal/_base.html" %}
+{% load i18n %}
 {% block main %}
 <section class="card pad portal-lock">
-  <p class="kicker">Minar Test · {{ student.group.name }}</p>
+  <p class="kicker">{% blocktranslate with name=student.group.name trimmed %}Minar Test · {{ name }}{% endblocktranslate %}</p>
   <h1>{{ student.full_name }}</h1>
   {% if student.profile_requested_at %}
-    <p class="muted">⏳ So‘rov ustozingizga yuborildi ({{ student.profile_requested_at|date:"H:i" }}). Ruxsat berilgach, profilingiz shu sahifada ochiladi.</p>
-    <a class="btn soft block" href="{% url 'student_portal' student.portal_token %}">Sahifani yangilash</a>
+    <p class="muted">{% blocktranslate with profile_requested_at=student.profile_requested_at|date:"H:i" trimmed %}⏳ So‘rov ustozingizga yuborildi ({{ profile_requested_at }}). Ruxsat berilgach, profilingiz shu sahifada ochiladi.{% endblocktranslate %}</p>
+    <a class="btn soft block" href="{% url 'student_portal' student.portal_token %}">{% translate "Sahifani yangilash" %}</a>
   {% else %}
-    <p class="muted">Profilingizga kirish uchun ustozingizdan ruxsat so‘rang. Ustoz ruxsatni ma’lum vaqtga (2–4 soat) beradi.</p>
+    <p class="muted">{% translate "Profilingizga kirish uchun ustozingizdan ruxsat so‘rang. Ustoz ruxsatni ma’lum vaqtga (2–4 soat) beradi." %}</p>
     <form method="post" action="{% url 'portal_access_request' student.portal_token %}">
       {% csrf_token %}
-      <button class="btn primary block" type="submit">Profilga kirish uchun ruxsat so‘rash</button>
+      <button class="btn primary block" type="submit">{% translate "Profilga kirish uchun ruxsat so‘rash" %}</button>
     </form>
   {% endif %}
-  <p class="meta portal-foot">Bu havola faqat sizniki — boshqalarga bermang.</p>
+  <p class="meta portal-foot">{% translate "Bu havola faqat sizniki — boshqalarga bermang." %}</p>
 </section>
 {% endblock %}

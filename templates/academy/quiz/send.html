@@ -1,11 +1,11 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Test jo‘natish · {{ topic.title }} · Minar Test{% endblock %}
-{% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>{% if lesson %}<a href="{{ lesson.get_absolute_url }}">{{ lesson.group.name }} · {{ lesson.held_on|date:"d.m.Y" }}</a><span class="sep">/</span>{% endif %}2-qadam: kimga va qanday{% endblock %}
-{% block heading %}Test jo‘natish{% endblock %}
-{% block subheading %}<p class="page-sub">{% icon "book" 15 %} {{ topic.title }}</p>{% endblock %}
+{% load i18n ui %}
+{% block title %}{% blocktranslate with title=topic|topic_title trimmed %}Test jo‘natish · {{ title }} · Minar Test{% endblocktranslate %}{% endblock %}
+{% block kicker %}<a href="{% url 'quiz_batches' %}">{% translate "Testlar" %}</a><span class="sep">/</span>{% if lesson %}<a href="{{ lesson.get_absolute_url }}">{{ lesson.group.name }} · {{ lesson.held_on|date:"d.m.Y" }}</a><span class="sep">/</span>{% endif %}{% translate "2-qadam: kimga va qanday" %}{% endblock %}
+{% block heading %}{% translate "Test jo‘natish" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% icon "book" 15 %} {{ topic|topic_title }}</p>{% endblock %}
 {% block actions %}
-<a class="btn ghost" href="{{ change_topic_url }}">{% icon "left" 16 %} Mavzuni almashtirish</a>
+<a class="btn ghost" href="{{ change_topic_url }}">{% icon "left" 16 %} {% translate "Mavzuni almashtirish" %}</a>
 {% endblock %}
 
 {% block content %}
@@ -16,26 +16,26 @@
     <section class="card" aria-labelledby="students-h">
       <div class="card-head">
         <div>
-          <h2 id="students-h">{% icon "users" 18 %} Kimga jo‘natamiz?</h2>
-          <div class="meta">{% if lesson %}{{ group.name }} · {{ lesson.held_on|date:"d.m.Y" }} darsi{% if has_attendance %} · yo‘qlama bo‘yicha darsga kelganlar belgilangan{% endif %}{% else %}Guruhni tanlang va shogirdlarni belgilang{% endif %}</div>
+          <h2 id="students-h">{% icon "users" 18 %} {% translate "Kimga jo‘natamiz?" %}</h2>
+          <div class="meta">{% if lesson %}{% blocktranslate with name=group.name held_on=lesson.held_on|date:"d.m.Y" trimmed %}{{ name }} · {{ held_on }} darsi{% endblocktranslate %}{% if has_attendance %} {% translate "· yo‘qlama bo‘yicha darsga kelganlar belgilangan" %}{% endif %}{% else %}{% translate "Guruhni tanlang va shogirdlarni belgilang" %}{% endif %}</div>
         </div>
       </div>
       {% if not lesson and groups|length > 1 %}
         <div class="send-groups">
-          <nav class="seg-tabs" aria-label="Guruh">
+          <nav class="seg-tabs" aria-label="{% translate "Guruh" %}">
             {% for g, url in groups %}<a href="{{ url }}" {% if g.pk == group.pk %}aria-current="true"{% endif %}>{{ g.name }}</a>{% endfor %}
           </nav>
         </div>
       {% endif %}
       {% if rows %}
         <div class="att-toolbar">
-          <button type="button" class="btn sm soft" data-check-all="students" data-check-value="all">{% icon "check" 15 %} Hammasi</button>
-          {% if has_attendance %}<button type="button" class="btn sm ghost" data-check-all="students" data-check-value="came">Darsga kelganlar</button>{% endif %}
-          <button type="button" class="btn sm ghost" data-check-all="students" data-check-value="none">Hech kim</button>
+          <button type="button" class="btn sm soft" data-check-all="students" data-check-value="all">{% icon "check" 15 %} {% translate "Hammasi" %}</button>
+          {% if has_attendance %}<button type="button" class="btn sm ghost" data-check-all="students" data-check-value="came">{% translate "Darsga kelganlar" %}</button>{% endif %}
+          <button type="button" class="btn sm ghost" data-check-all="students" data-check-value="none">{% translate "Hech kim" %}</button>
           <span class="spacer"></span>
-          <span class="meta">Til — hammasi:</span>
-          <button type="button" class="btn sm ghost" data-lang-all="uz">UZ</button>
-          <button type="button" class="btn sm ghost" data-lang-all="ru">RU</button>
+          <span class="meta">{% translate "Til — hammasi:" %}</span>
+          <button type="button" class="btn sm ghost" data-lang-all="uz">{% translate "UZ" %}</button>
+          <button type="button" class="btn sm ghost" data-lang-all="ru">{% translate "RU" %}</button>
           <span class="att-counts" data-check-count="students" aria-live="polite"></span>
         </div>
       {% endif %}
@@ -47,20 +47,20 @@
             <span class="avatar sm" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
             <span class="grow truncate">
               <span class="person-name block truncate">{{ row.student.full_name }}</span>
-              <span class="person-meta">{% if row.student.telegram %}@{{ row.student.telegram|cut:"@" }}{% elif row.student.phone %}{{ row.student.phone }}{% elif not row.student.email %}<span class="send-error">Telegram / telefon / email yo‘q — yuborib bo‘lmaydi</span>{% endif %}{% if row.student.email %}{% if row.student.telegram or row.student.phone %} · {% endif %}{{ row.student.email }}{% endif %}</span>
+              <span class="person-meta">{% if row.student.telegram %}@{{ row.student.telegram|cut:"@" }}{% elif row.student.phone %}{{ row.student.phone }}{% elif not row.student.email %}<span class="send-error">{% translate "Telegram / telefon / email yo‘q — yuborib bo‘lmaydi" %}</span>{% endif %}{% if row.student.email %}{% if row.student.telegram or row.student.phone %} · {% endif %}{{ row.student.email }}{% endif %}</span>
             </span>
             {% if row.attendance %}<span class="badge {% if row.attendance == 'present' %}ok{% elif row.attendance == 'absent' %}bad{% elif row.attendance == 'late' %}warn{% else %}info{% endif %}">{{ row.attendance_label }}</span>{% endif %}
             {% if row.student.status != 'active' %}<span class="badge plain">{{ row.student.get_status_display }}</span>{% endif %}
            </label>
-            <div class="seg xs" role="radiogroup" aria-label="{{ row.student.full_name }}: test tili">
+            <div class="seg xs" role="radiogroup" aria-label="{% blocktranslate with full_name=row.student.full_name trimmed %}{{ full_name }}: test tili{% endblocktranslate %}">
               {% for value, label in languages %}<label title="{{ label }}"><input type="radio" name="lang_{{ row.student.pk }}" value="{{ value }}"{% if row.language == value %} checked{% endif %}>{{ value|upper }}</label>{% endfor %}
             </div>
           </div>
         {% empty %}
           <div class="empty compact">
             <span class="empty-icon">{% icon "users" 22 %}</span>
-            <p>Bu guruhda faol shogird yo‘q.</p>
-            <a class="btn sm primary" href="{% url 'student_create' %}?group={{ group.pk }}">{% icon "plus" 14 %} Shogird qo‘shish</a>
+            <p>{% translate "Bu guruhda faol shogird yo‘q." %}</p>
+            <a class="btn sm primary" href="{% url 'student_create' %}?group={{ group.pk }}">{% icon "plus" 14 %} {% translate "Shogird qo‘shish" %}</a>
           </div>
         {% endfor %}
       </div>
@@ -70,32 +70,32 @@
     <aside class="stack">
       <section class="card pad send-settings" aria-labelledby="settings-h">
         <div class="prose-block">
-          <h3 id="settings-h">{% icon "target" 15 %} Test</h3>
-          <a class="strong" href="{{ topic.get_absolute_url }}#quiz">{{ topic.title }}</a>
-          <div class="meta">{% if topic.module %}{{ topic.module.title }} · {% endif %}bankda {{ form.bank_size }} ta savol</div>
+          <h3 id="settings-h">{% icon "target" 15 %} {% translate "Test" %}</h3>
+          <a class="strong" href="{{ topic.get_absolute_url }}#quiz">{{ topic|topic_title }}</a>
+          <div class="meta">{% if topic.module %}{{ topic.module.title }} · {% endif %}{% blocktranslate with bank_size=form.bank_size trimmed %}bankda {{ bank_size }} ta savol{% endblocktranslate %}</div>
         </div>
 
         <div class="prose-block">
           <div class="field{% if form.question_count.errors %} has-error{% endif %}">
-            <label for="{{ form.question_count.id_for_label }}">Har bir shogirdga nechta savol?</label>
+            <label for="{{ form.question_count.id_for_label }}">{% translate "Har bir shogirdga nechta savol?" %}</label>
             {{ form.question_count }}
-            <div class="preset-chips" role="group" aria-label="Tez tanlash">
+            <div class="preset-chips" role="group" aria-label="{% translate "Tez tanlash" %}">
               {% for n in count_presets %}<button type="button" class="btn xs soft" data-preset="{{ form.question_count.id_for_label }}" data-value="{{ n }}">{{ n }}</button>{% endfor %}
-              <button type="button" class="btn xs soft" data-preset="{{ form.question_count.id_for_label }}" data-value="{{ form.bank_size }}">Hammasi ({{ form.bank_size }})</button>
+              <button type="button" class="btn xs soft" data-preset="{{ form.question_count.id_for_label }}" data-value="{{ form.bank_size }}">{% blocktranslate with bank_size=form.bank_size trimmed %}Hammasi ({{ bank_size }}){% endblocktranslate %}</button>
             </div>
             {{ form.question_count.errors }}
           </div>
           <div class="field{% if form.time_limit_minutes.errors %} has-error{% endif %}" style="margin-top:16px">
-            <label for="{{ form.time_limit_minutes.id_for_label }}">Qancha vaqtga? (daqiqa)</label>
+            <label for="{{ form.time_limit_minutes.id_for_label }}">{% translate "Qancha vaqtga? (daqiqa)" %}</label>
             {{ form.time_limit_minutes }}
-            <div class="preset-chips" role="group" aria-label="Tez tanlash">
-              {% for n in time_presets %}<button type="button" class="btn xs soft" data-preset="{{ form.time_limit_minutes.id_for_label }}" data-value="{{ n }}">{{ n }} daq.</button>{% endfor %}
+            <div class="preset-chips" role="group" aria-label="{% translate "Tez tanlash" %}">
+              {% for n in time_presets %}<button type="button" class="btn xs soft" data-preset="{{ form.time_limit_minutes.id_for_label }}" data-value="{{ n }}">{% blocktranslate with n=n trimmed %}{{ n }} daq.{% endblocktranslate %}</button>{% endfor %}
             </div>
             {{ form.time_limit_minutes.errors }}
           </div>
           <p class="meta send-pace" data-quiz-pace data-count="{{ form.question_count.id_for_label }}" data-time="{{ form.time_limit_minutes.id_for_label }}" aria-live="polite"></p>
           <div class="field{% if form.scheduled_at.errors %} has-error{% endif %}" style="margin-top:16px">
-            <label for="{{ form.scheduled_at.id_for_label }}">{{ form.scheduled_at.label }} <span class="meta">(ixtiyoriy)</span></label>
+            <label for="{{ form.scheduled_at.id_for_label }}">{{ form.scheduled_at.label }} <span class="meta">{% translate "(ixtiyoriy)" %}</span></label>
             {{ form.scheduled_at }}
             <div class="hint">{{ form.scheduled_at.help_text }}</div>
             {{ form.scheduled_at.errors }}
@@ -107,7 +107,7 @@
                 <label class="channel-pick">
                   <input type="checkbox" name="{{ form.channels.html_name }}" value="{{ value }}" {% if value in form.channels.value %}checked{% endif %}>
                   {% if value == 'email' %}{% icon "mail" 15 %}{% else %}{% icon "send" 15 %}{% endif %} {{ label }}
-                  {% if value == 'telegram' and not telegram_ready or value == 'email' and not email_ready %}<span class="meta">· ulanmagan</span>{% endif %}
+                  {% if value == 'telegram' and not telegram_ready or value == 'email' and not email_ready %}<span class="meta">{% translate "· ulanmagan" %}</span>{% endif %}
                 </label>
               {% endfor %}
             </div>
@@ -118,14 +118,14 @@
 
         <div class="prose-block">
           <ul class="rules">
-            <li><strong>Til</strong> har bir o‘quvchiga alohida tanlanadi (UZ / RU) va keyingi safar uchun eslab qolinadi. Ruscha tarjimasi bor savollar: <strong>{{ translated_n }} / {{ form.bank_size }}</strong>{% if translated_n < form.bank_size %} — tarjimasi yo‘q savollar o‘zbekcha ko‘rinadi{% if translated_n == 0 %} (<a href="{% url 'quiz_edit' topic.pk %}">tarjima qo‘shish</a>){% endif %}{% endif %}.</li>
-            <li>Har bir shogird bankdan <strong>tasodifiy</strong> savollar oladi — savollar va javoblar tartibi ham har xil.</li>
-            <li>Havola <strong>bir martalik</strong>: boshqa qurilmada ochilmaydi, vaqt tugasa test o‘zi yakunlanadi.</li>
-            <li>Telegram: havolalar <strong>faqat {{ sender_id }}</strong> akkauntidan yuboriladi (@username yoki telefon orqali). Email: Gmail orqali, shogird kartasidagi manzilga.</li>
+            <li>{% blocktranslate with translated_n=translated_n bank_size=form.bank_size trimmed %}<strong>Til</strong> har bir o‘quvchiga alohida tanlanadi (UZ / RU) va keyingi safar uchun eslab qolinadi. Ruscha tarjimasi bor savollar: <strong>{{ translated_n }} / {{ bank_size }}</strong>{% endblocktranslate %}{% if translated_n < form.bank_size %} {% translate "— tarjimasi yo‘q savollar o‘zbekcha ko‘rinadi" %}{% if translated_n == 0 %} (<a href="{% url 'quiz_edit' topic.pk %}">{% translate "tarjima qo‘shish" %}</a>){% endif %}{% endif %}.</li>
+            <li>{% blocktranslate trimmed %}Har bir shogird bankdan <strong>tasodifiy</strong> savollar oladi — savollar va javoblar tartibi ham har xil.{% endblocktranslate %}</li>
+            <li>{% blocktranslate trimmed %}Havola <strong>bir martalik</strong>: boshqa qurilmada ochilmaydi, vaqt tugasa test o‘zi yakunlanadi.{% endblocktranslate %}</li>
+            <li>{% blocktranslate with sender_id=sender_id trimmed %}Telegram: havolalar <strong>faqat {{ sender_id }}</strong> akkauntidan yuboriladi (@username yoki telefon orqali). Email: Gmail orqali, shogird kartasidagi manzilga.{% endblocktranslate %}</li>
           </ul>
         </div>
 
-        <button class="btn primary block" type="submit">{% icon "send" 16 %} Havolalarni yaratish</button>
+        <button class="btn primary block" type="submit">{% icon "send" 16 %} {% translate "Havolalarni yaratish" %}</button>
       </section>
     </aside>
   </div>

@@ -1,29 +1,29 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}{{ group.name }} · Minar Test{% endblock %}
-{% block kicker %}<a href="{% url 'group_list' %}">Guruhlar</a><span class="sep">/</span>{{ group.code }}{% endblock %}
+{% load i18n ui %}
+{% block title %}{% blocktranslate with name=group.name trimmed %}{{ name }} · Minar Test{% endblocktranslate %}{% endblock %}
+{% block kicker %}<a href="{% url 'group_list' %}">{% translate "Guruhlar" %}</a><span class="sep">/</span>{{ group.code }}{% endblock %}
 {% block heading %}{{ group.name }}{% endblock %}
 {% block actions %}
-<a class="btn soft" href="{% url 'group_journal' group.pk %}">{% icon "journal" 16 %} Jurnal</a>
-<a class="btn soft" href="{% url 'student_create' %}?group={{ group.pk }}">{% icon "plus" 16 %} Shogird</a>
-<a class="btn ghost square" href="{% url 'group_update' group.pk %}" title="Tahrirlash" aria-label="Tahrirlash">{% icon "edit" 17 %}</a>
+<a class="btn soft" href="{% url 'group_journal' group.pk %}">{% icon "journal" 16 %} {% translate "Jurnal" %}</a>
+<a class="btn soft" href="{% url 'student_create' %}?group={{ group.pk }}">{% icon "plus" 16 %} {% translate "Shogird" %}</a>
+<a class="btn ghost square" href="{% url 'group_update' group.pk %}" title="{% translate "Tahrirlash" %}" aria-label="{% translate "Tahrirlash" %}">{% icon "edit" 17 %}</a>
 {% endblock %}
 
 {% block content %}
 <section class="hero" style="--h: {{ group|hue }}">
   {% ring progress.percent 76 7 %}
   <div>
-    <div class="strong" style="font-size:17px">Dastur {{ progress.percent }}% bajarildi</div>
+    <div class="strong" style="font-size:17px">{% blocktranslate with percent=progress.percent trimmed %}Dastur {{ percent }}% bajarildi{% endblocktranslate %}</div>
     <div class="meta" style="margin-top:4px">
-      {{ progress.taught }} / {{ progress.total }} mavzu
+      {% blocktranslate with taught=progress.taught total=progress.total trimmed %}{{ taught }} / {{ total }} mavzu{% endblocktranslate %}
       {% if group.schedule %} · {% icon "clock" 14 %} {{ group.schedule }}{% endif %}
       {% if group.room %} · {% icon "pin" 14 %} {{ group.room }}{% endif %}
     </div>
   </div>
   <div class="hero-stats">
-    <div class="hero-stat"><div class="v">{{ students|length }}</div><div class="l">shogird</div></div>
-    <div class="hero-stat"><div class="v">{{ lessons|length }}</div><div class="l">so‘nggi darslar</div></div>
-    <div class="hero-stat"><div class="v">{{ group.get_status_display }}</div><div class="l">holat</div></div>
+    <div class="hero-stat"><div class="v">{{ students|length }}</div><div class="l">{% translate "shogird" %}</div></div>
+    <div class="hero-stat"><div class="v">{{ lessons|length }}</div><div class="l">{% translate "so‘nggi darslar" %}</div></div>
+    <div class="hero-stat"><div class="v">{{ group.get_status_display }}</div><div class="l">{% translate "holat" %}</div></div>
   </div>
 </section>
 
@@ -31,82 +31,82 @@
 <div class="callout next" style="margin-bottom:18px">
   <span class="callout-icon">{% icon "target" 18 %}</span>
   <div class="grow">
-    <div class="meta">Navbatdagi mavzu</div>
-    <a class="strong" href="{{ next_item.topic.get_absolute_url }}">{{ next_item.topic.title }}</a>
+    <div class="meta">{% translate "Navbatdagi mavzu" %}</div>
+    <a class="strong" href="{{ next_item.topic.get_absolute_url }}">{{ next_item.topic|topic_title }}</a>
   </div>
   <form method="post" action="{% url 'start_lesson' group.pk %}">
     {% csrf_token %}
-    <button class="btn primary sm" type="submit" title="Bugungi sana bilan dars ochiladi va yo‘qlamaga o‘tasiz">{% icon "play" 13 %} Darsni boshlash</button>
+    <button class="btn primary sm" type="submit" title="{% translate "Bugungi sana bilan dars ochiladi va yo‘qlamaga o‘tasiz" %}">{% icon "play" 13 %} {% translate "Darsni boshlash" %}</button>
   </form>
-  <a class="btn soft sm" href="{% url 'lesson_create' %}?group={{ group.pk }}&amp;topic={{ next_item.topic_id }}">Rejalash</a>
+  <a class="btn soft sm" href="{% url 'lesson_create' %}?group={{ group.pk }}&amp;topic={{ next_item.topic_id }}">{% translate "Rejalash" %}</a>
 </div>
 {% endif %}
 
 <div class="split">
   <section class="card" aria-labelledby="syl-h">
     <div class="card-head">
-      <h2 id="syl-h">{% icon "book" 18 %} O‘quv dasturi</h2>
-      <span class="meta">{{ progress.taught }} o‘tildi · {{ progress.total }} jami</span>
+      <h2 id="syl-h">{% icon "book" 18 %} {% translate "O‘quv dasturi" %}</h2>
+      <span class="meta">{% blocktranslate with taught=progress.taught total=progress.total trimmed %}{{ taught }} o‘tildi · {{ total }} jami{% endblocktranslate %}</span>
     </div>
     <div class="card-body flush">
       <div class="add-panel">
         <form method="post" action="{% url 'syllabus_add' group.pk %}">
           {% csrf_token %}
-          <select class="input" name="topic" required aria-label="Katalogdan mavzu">
-            <option value="">Katalogdan mavzu qo‘shish…</option>
+          <select class="input" name="topic" required aria-label="{% translate "Katalogdan mavzu" %}">
+            <option value="">{% translate "Katalogdan mavzu qo‘shish…" %}</option>
             {% regroup all_topics by module as by_module %}
             {% for m in by_module %}
-              <optgroup label="{{ m.grouper|default:'Bo‘limsiz' }}">
+              <optgroup label="{{ m.grouper|default:_('Bo‘limsiz') }}">
                 {% for t in m.list %}<option value="{{ t.pk }}">{{ t.title }}</option>{% endfor %}
               </optgroup>
             {% endfor %}
           </select>
-          <button class="btn sm dark" type="submit">{% icon "plus" 15 %} Qo‘shish</button>
+          <button class="btn sm dark" type="submit">{% icon "plus" 15 %} {% translate "Qo‘shish" %}</button>
         </form>
         {% if modules %}
         <form method="post" action="{% url 'syllabus_add' group.pk %}">
           {% csrf_token %}
-          <select class="input" name="module" required aria-label="Butun bo‘lim">
-            <option value="">Butun bo‘limni qo‘shish…</option>
+          <select class="input" name="module" required aria-label="{% translate "Butun bo‘lim" %}">
+            <option value="">{% translate "Butun bo‘limni qo‘shish…" %}</option>
             {% for m in modules %}<option value="{{ m.pk }}">{{ m.title }} (+{{ m.free }})</option>{% endfor %}
           </select>
-          <button class="btn sm soft" type="submit">Bo‘lim</button>
+          <button class="btn sm soft" type="submit">{% translate "Bo‘lim" %}</button>
         </form>
         {% endif %}
       </div>
 
       <ol class="syllabus">
         {% for item in syllabus %}
-          {% ifchanged item.topic.module_id %}<li class="syl-section" aria-hidden="true">{{ item.topic.module.title|default:"Bo‘limsiz" }}</li>{% endifchanged %}
+          {% ifchanged item.topic.module_id %}<li class="syl-section" aria-hidden="true">{{ item.topic.module.title|default:_("Bo‘limsiz") }}</li>{% endifchanged %}
           <li class="syl {{ item.status }}{% if next_item and item.pk == next_item.pk %} next{% endif %}" id="syllabus-{{ item.pk }}">
             <span class="syl-n">{% if item.status == 'taught' %}{% icon "check" 14 %}{% else %}{{ forloop.counter }}{% endif %}</span>
             <div class="truncate">
-              <a class="syl-title" href="{{ item.topic.get_absolute_url }}">{{ item.topic.title }}</a>
+              <a class="syl-title" href="{{ item.topic.get_absolute_url }}">{{ item.topic|topic_title }}</a>
               <div class="syl-meta">
-                {% if item.status == 'taught' %}O‘tildi{% if item.taught_on %} · {{ item.taught_on|date:"d.m.Y" }}{% endif %}
-                {% elif item.status == 'skipped' %}O‘tkazib yuborildi
-                {% elif next_item and item.pk == next_item.pk %}<span style="color:var(--accent);font-weight:600">Navbatdagi</span>
-                {% else %}Rejada{% endif %} · {{ item.topic.duration_minutes }} daq.
+                {% if item.status == 'taught' %}{% translate "O‘tildi" %}{% if item.taught_on %} · {{ item.taught_on|date:"d.m.Y" }}{% endif %}
+                {% elif item.status == 'skipped' %}{% translate "O‘tkazib yuborildi" %}
+                {% elif next_item and item.pk == next_item.pk %}<span style="color:var(--accent);font-weight:600">{% translate "Navbatdagi" %}</span>
+                {% else %}{% translate "Rejada" %}{% endif %} {% blocktranslate with duration_minutes=item.topic.duration_minutes trimmed %}· {{ duration_minutes }} daq.{% endblocktranslate %}
               </div>
             </div>
             <form method="post" action="{% url 'syllabus_toggle' group.pk item.pk %}" class="syl-actions">
               {% csrf_token %}
-              <button class="btn xs ghost square" name="action" value="up" title="Yuqoriga" aria-label="Yuqoriga" {% if forloop.first %}disabled{% endif %}>{% icon "up" 14 %}</button>
-              <button class="btn xs ghost square" name="action" value="down" title="Pastga" aria-label="Pastga" {% if forloop.last %}disabled{% endif %}>{% icon "down" 14 %}</button>
+              <button class="btn xs ghost square" name="action" value="up" title="{% translate "Yuqoriga" %}" aria-label="{% translate "Yuqoriga" %}" {% if forloop.first %}disabled{% endif %}>{% icon "up" 14 %}</button>
+              <button class="btn xs ghost square" name="action" value="down" title="{% translate "Pastga" %}" aria-label="{% translate "Pastga" %}" {% if forloop.last %}disabled{% endif %}>{% icon "down" 14 %}</button>
               {% if item.status != 'taught' %}
-                <button class="btn xs ghost" name="action" value="taught" title="O‘tildi deb belgilash">{% icon "check" 14 %} O‘tildi</button>
+                <button class="btn xs ghost" name="action" value="taught" title="{% translate "O‘tildi deb belgilash" %}">{% icon "check" 14 %} {% translate "O‘tildi" %}</button>
               {% else %}
-                <button class="btn xs ghost" name="action" value="planned" title="Rejaga qaytarish">{% icon "undo" 14 %} Rejaga</button>
+                <button class="btn xs ghost" name="action" value="planned" title="{% translate "Rejaga qaytarish" %}">{% icon "undo" 14 %} {% translate "Rejaga" %}</button>
               {% endif %}
-              {% if item.status != 'skipped' %}<button class="btn xs ghost square" name="action" value="skip" title="O‘tkazib yuborish" aria-label="O‘tkazib yuborish">{% icon "skip" 14 %}</button>{% endif %}
-              <button class="btn xs danger-ghost square" name="action" value="delete" title="Dasturdan olib tashlash" aria-label="Dasturdan olib tashlash" data-confirm="“{{ item.topic.title }}” dasturdan olib tashlansinmi?">{% icon "trash" 14 %}</button>
+              {% if item.status != 'skipped' %}<button class="btn xs ghost square" name="action" value="skip" title="{% translate "O‘tkazib yuborish" %}" aria-label="{% translate "O‘tkazib yuborish" %}">{% icon "skip" 14 %}</button>{% endif %}
+              <button class="btn xs danger-ghost square" name="action" value="delete" title="{% translate "Dasturdan olib tashlash" %}" aria-label="{% translate "Dasturdan olib tashlash" %}" data-confirm="{% blocktranslate with title=item.topic|topic_title trimmed %}“{{ title }}” dasturdan olib tashlansinmi?{% endblocktranslate %}">{% icon "trash" 14 %}</button>
             </form>
           </li>
         {% empty %}
           <li class="empty">
             <span class="empty-icon">{% icon "book" 22 %}</span>
-            <strong>Dastur bo‘sh</strong>
-            <p>Yuqoridan mavzu yoki butun bo‘limni qo‘shing.</p>
+            {% blocktranslate trimmed %}<strong>Dastur bo‘sh</strong>{% endblocktranslate %}
+            <p>{% translate "Yuqoridan mavzu yoki butun bo‘limni qo‘shing." %}</p>
           </li>
         {% endfor %}
       </ol>
@@ -116,7 +116,7 @@
   <aside class="stack">
     {% if sessions %}
     <section class="card" aria-labelledby="ses-h">
-      <div class="card-head"><h2 id="ses-h">{% icon "calendar" 18 %} Yaqin darslar</h2></div>
+      <div class="card-head"><h2 id="ses-h">{% icon "calendar" 18 %} {% translate "Yaqin darslar" %}</h2></div>
       <div class="card-body flush">
         <div class="rows">
           {% for s in sessions %}
@@ -126,10 +126,10 @@
                 <div class="strong" style="font:600 19px/1.1 var(--font-display)">{{ s.day|date:"j" }}</div>
               </div>
               <div class="grow">
-                <div class="row-title truncate">{% if s.topic %}{{ s.topic.title }}{% else %}Mavzu yo‘q{% endif %}</div>
-                <div class="meta">{{ s.starts_at|time:"H:i" }}{% if s.ends_at %}–{{ s.ends_at|time:"H:i" }}{% endif %}{% if s.is_today %} · bugun{% endif %}</div>
+                <div class="row-title truncate">{% if s.topic %}{{ s.topic|topic_title }}{% else %}{% translate "Mavzu yo‘q" %}{% endif %}</div>
+                <div class="meta">{{ s.starts_at|time:"H:i" }}{% if s.ends_at %}–{{ s.ends_at|time:"H:i" }}{% endif %}{% if s.is_today %} {% translate "· bugun" %}{% endif %}</div>
               </div>
-              {% if s.state == 'live' %}<span class="badge live">Hozir</span>{% elif s.state == 'done' %}<span class="badge ok">O‘tildi</span>{% elif s.lesson %}<a class="btn xs soft" href="{{ s.lesson.get_absolute_url }}">Dars</a>{% endif %}
+              {% if s.state == 'live' %}<span class="badge live">{% translate "Hozir" %}</span>{% elif s.state == 'done' %}<span class="badge ok">{% translate "O‘tildi" %}</span>{% elif s.lesson %}<a class="btn xs soft" href="{{ s.lesson.get_absolute_url }}">{% translate "Dars" %}</a>{% endif %}
             </div>
           {% endfor %}
         </div>
@@ -139,8 +139,8 @@
 
     <section class="card" aria-labelledby="st-h">
       <div class="card-head">
-        <h2 id="st-h">{% icon "users" 18 %} Shogirdlar</h2>
-        <a class="btn xs ghost" href="{% url 'student_list' %}?group={{ group.pk }}">Ro‘yxat</a>
+        <h2 id="st-h">{% icon "users" 18 %} {% translate "Shogirdlar" %}</h2>
+        <a class="btn xs ghost" href="{% url 'student_list' %}?group={{ group.pk }}">{% translate "Ro‘yxat" %}</a>
       </div>
       <div class="card-body flush">
         <div class="rows">
@@ -151,15 +151,15 @@
                 <div class="row-title truncate">{{ s.full_name }}</div>
                 <div class="meta">
                   {% if s.status != 'active' %}{{ s.get_status_display }} · {% endif %}
-                  {% if s.att_total %}{{ s.att_present }}/{{ s.att_total }} dars{% if s.score_avg is not None %} · ball {{ s.score_avg }}{% endif %}{% else %}hali yo‘qlama yo‘q{% endif %}
+                  {% if s.att_total %}{% blocktranslate with att_present=s.att_present att_total=s.att_total trimmed %}{{ att_present }}/{{ att_total }} dars{% endblocktranslate %}{% if s.score_avg is not None %} {% blocktranslate with score_avg=s.score_avg trimmed %}· ball {{ score_avg }}{% endblocktranslate %}{% endif %}{% else %}{% translate "hali yo‘qlama yo‘q" %}{% endif %}
                 </div>
               </div>
               {% if s.att_total %}<span class="badge {{ s.att_pct|tone }}">{{ s.att_pct }}%</span>{% endif %}
             </a>
           {% empty %}
             <div class="empty compact">
-              <p>Hali shogird yo‘q.</p>
-              <a class="btn sm soft" href="{% url 'student_create' %}?group={{ group.pk }}">{% icon "plus" 14 %} Qo‘shish</a>
+              <p>{% translate "Hali shogird yo‘q." %}</p>
+              <a class="btn sm soft" href="{% url 'student_create' %}?group={{ group.pk }}">{% icon "plus" 14 %} {% translate "Qo‘shish" %}</a>
             </div>
           {% endfor %}
         </div>
@@ -167,48 +167,48 @@
     </section>
 
     <section class="card" id="coin-board" aria-labelledby="coin-h">
-      <div class="card-head"><h2 id="coin-h">🏆 Haftaning eng faollari</h2><span class="meta">coin · dushanbadan</span></div>
+      <div class="card-head"><h2 id="coin-h">{% translate "🏆 Haftaning eng faollari" %}</h2><span class="meta">{% translate "coin · dushanbadan" %}</span></div>
       <div class="card-body">
         <ol class="board">
-          {% for r in coin_board %}<li><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><a class="grow" href="{{ r.student.get_absolute_url }}">{{ r.student.full_name }}</a><strong>{{ r.coins }} 🪙</strong></li>{% empty %}<li class="meta">Faol o‘quvchi yo‘q.</li>{% endfor %}
+          {% for r in coin_board %}<li><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><a class="grow" href="{{ r.student.get_absolute_url }}">{{ r.student.full_name }}</a><strong>{{ r.coins }} 🪙</strong></li>{% empty %}<li class="meta">{% translate "Faol o‘quvchi yo‘q." %}</li>{% endfor %}
         </ol>
       </div>
     </section>
 
     <section class="card" id="motivation" aria-labelledby="mot-h">
       <div class="card-head">
-        <h2 id="mot-h">{% icon "trophy" 18 %} Haftalik reyting</h2>
-        <span class="meta">oxirgi 7 kun · testlar</span>
+        <h2 id="mot-h">{% icon "trophy" 18 %} {% translate "Haftalik reyting" %}</h2>
+        <span class="meta">{% translate "oxirgi 7 kun · testlar" %}</span>
       </div>
       <div class="card-body">
         {% if board.rows %}
           <ol class="leader-list">
-            {% for row in board.rows|slice:":3" %}<li><span class="strong">{{ row.student.full_name }}</span> <span class="meta">— {{ row.pct }}% ({{ row.n }} ta test)</span></li>{% endfor %}
+            {% for row in board.rows|slice:":3" %}<li><span class="strong">{{ row.student.full_name }}</span> <span class="meta">{% blocktranslate with pct=row.pct n=row.n trimmed %}— {{ pct }}% ({{ n }} ta test){% endblocktranslate %}</span></li>{% endfor %}
           </ol>
-          <p class="meta" style="margin:8px 0 12px">Guruh: {{ board.tests_n }} ta test, o‘rtacha {{ board.avg }}%.</p>
+          <p class="meta" style="margin:8px 0 12px">{% blocktranslate with tests_n=board.tests_n avg=board.avg trimmed %}Guruh: {{ tests_n }} ta test, o‘rtacha {{ avg }}%.{% endblocktranslate %}</p>
         {% else %}
-          <p class="meta" style="margin:0 0 12px">Oxirgi 7 kunda test yechilmagan.</p>
+          <p class="meta" style="margin:0 0 12px">{% translate "Oxirgi 7 kunda test yechilmagan." %}</p>
         {% endif %}
-        <p class="meta" style="margin:0 0 10px">Telegram chat: {% if group.telegram_chat %}<strong>{{ group.telegram_chat }}</strong>{% else %}tanlanmagan{% endif %} · har yakshanba 18:00 da avtomatik yuboriladi.</p>
+        <p class="meta" style="margin:0 0 10px">{% translate "Telegram chat:" %} {% if group.telegram_chat %}<strong>{{ group.telegram_chat }}</strong>{% else %}{% translate "tanlanmagan" %}{% endif %} {% translate "· har yakshanba 18:00 da avtomatik yuboriladi." %}</p>
         <div class="contact-link-actions">
-          <a class="btn sm soft" href="{% url 'group_telegram_chat' group.pk %}">{% icon "send" 14 %} Chatni tanlash</a>
+          <a class="btn sm soft" href="{% url 'group_telegram_chat' group.pk %}">{% icon "send" 14 %} {% translate "Chatni tanlash" %}</a>
           {% if telegram_ready and group.telegram_chat and board_text %}
             <form method="post" action="{% url 'group_leaderboard_send' group.pk %}">
               {% csrf_token %}
-              <button class="btn sm primary" type="submit" data-confirm="Haftalik reyting guruh chatiga hozir yuborilsinmi?">{% icon "trophy" 14 %} Hozir yuborish</button>
+              <button class="btn sm primary" type="submit" data-confirm="{% translate "Haftalik reyting guruh chatiga hozir yuborilsinmi?" %}">{% icon "trophy" 14 %} {% translate "Hozir yuborish" %}</button>
             </form>
           {% endif %}
           {% if telegram_ready %}
             <form method="post" action="{% url 'group_portal_send' group.pk %}">
               {% csrf_token %}
-              <button class="btn sm ghost" type="submit" data-confirm="Har bir o‘quvchiga shaxsiy sahifa havolasi Telegram orqali yuborilsinmi?">{% icon "user" 14 %} Shaxsiy sahifalarni yuborish</button>
+              <button class="btn sm ghost" type="submit" data-confirm="{% translate "Har bir o‘quvchiga shaxsiy sahifa havolasi Telegram orqali yuborilsinmi?" %}">{% icon "user" 14 %} {% translate "Shaxsiy sahifalarni yuborish" %}</button>
             </form>
           {% endif %}
           {% if email_ready %}
             <form method="post" action="{% url 'group_portal_send' group.pk %}">
               {% csrf_token %}
               <input type="hidden" name="channel" value="email">
-              <button class="btn sm ghost" type="submit" data-confirm="Emaili bor har bir o‘quvchiga shaxsiy sahifa havolasi email orqali yuborilsinmi?">{% icon "mail" 14 %} Shaxsiy sahifalar — email</button>
+              <button class="btn sm ghost" type="submit" data-confirm="{% translate "Emaili bor har bir o‘quvchiga shaxsiy sahifa havolasi email orqali yuborilsinmi?" %}">{% icon "mail" 14 %} {% translate "Shaxsiy sahifalar — email" %}</button>
             </form>
           {% endif %}
         </div>
@@ -217,70 +217,70 @@
 
     <section class="card" id="contacts" aria-labelledby="ct-h">
       <div class="card-head">
-        <h2 id="ct-h">{% icon "send" 18 %} Telegram ma’lumotlari</h2>
-        <span class="badge {% if contact_missing %}warn{% else %}ok{% endif %}" title="Telegram yoki telefoni bor / faol o‘quvchilar">{{ contact_have }} / {{ contact_total }}</span>
+        <h2 id="ct-h">{% icon "send" 18 %} {% translate "Telegram ma’lumotlari" %}</h2>
+        <span class="badge {% if contact_missing %}warn{% else %}ok{% endif %}" title="{% translate "Telegram yoki telefoni bor / faol o‘quvchilar" %}">{{ contact_have }} / {{ contact_total }}</span>
       </div>
       <div class="card-body">
         {% if contact_missing %}
-          <p class="meta" style="margin:0 0 10px">Test havolalari faqat Telegram username yoki telefoni bor o‘quvchilarga yuboriladi. Yo‘qlar:</p>
+          <p class="meta" style="margin:0 0 10px">{% translate "Test havolalari faqat Telegram username yoki telefoni bor o‘quvchilarga yuboriladi. Yo‘qlar:" %}</p>
           <div class="chips" style="margin-bottom:14px">
             {% for s in contact_missing %}<a class="tag" href="{% url 'student_update' s.pk %}">{{ s.full_name }}</a>{% endfor %}
           </div>
         {% else %}
-          <p class="meta" style="margin:0 0 14px">Barcha faol o‘quvchilarga test yuborish mumkin.</p>
+          <p class="meta" style="margin:0 0 14px">{% translate "Barcha faol o‘quvchilarga test yuborish mumkin." %}</p>
         {% endif %}
 
         <div class="prose-block" style="padding-top:0;border-top:0">
-          <h3>{% icon "link" 15 %} O‘quvchilar o‘zi to‘ldiradigan havola</h3>
+          <h3>{% icon "link" 15 %} {% translate "O‘quvchilar o‘zi to‘ldiradigan havola" %}</h3>
           {% if contact_link %}
             <div class="contact-link">
-              <input class="input mono" value="{{ contact_link }}" readonly aria-label="Havola">
-              <button class="btn sm soft" type="button" data-copy="{{ contact_link }}">{% icon "link" 14 %} Nusxa</button>
+              <input class="input mono" value="{{ contact_link }}" readonly aria-label="{% translate "Havola" %}">
+              <button class="btn sm soft" type="button" data-copy="{{ contact_link }}">{% icon "link" 14 %} {% translate "Nusxa" %}</button>
             </div>
-            <p class="meta" style="margin:8px 0 10px">Guruh chatiga tashlang: har bir o‘quvchi ismini tanlab, username yoki telefonini kiritadi. Mavjud ma’lumot ustidan yozilmaydi.</p>
+            <p class="meta" style="margin:8px 0 10px">{% translate "Guruh chatiga tashlang: har bir o‘quvchi ismini tanlab, username yoki telefonini kiritadi. Mavjud ma’lumot ustidan yozilmaydi." %}</p>
             <form method="post" action="{% url 'group_contact_link' group.pk %}" class="contact-link-actions">
               {% csrf_token %}
-              <button class="btn xs ghost" type="submit" data-confirm="Eski havola ishlamay qoladi. Yangisi yaratilsinmi?">{% icon "undo" 13 %} Yangilash</button>
-              <button class="btn xs danger-ghost" type="submit" name="action" value="off">{% icon "x" 13 %} O‘chirish</button>
+              <button class="btn xs ghost" type="submit" data-confirm="{% translate "Eski havola ishlamay qoladi. Yangisi yaratilsinmi?" %}">{% icon "undo" 13 %} {% translate "Yangilash" %}</button>
+              <button class="btn xs danger-ghost" type="submit" name="action" value="off">{% icon "x" 13 %} {% translate "O‘chirish" %}</button>
             </form>
           {% else %}
-            <p class="meta" style="margin:0 0 10px">Havolani guruh chatiga tashlasangiz, o‘quvchilar o‘z Telegram username yoki telefonini o‘zlari kiritadi.</p>
+            <p class="meta" style="margin:0 0 10px">{% translate "Havolani guruh chatiga tashlasangiz, o‘quvchilar o‘z Telegram username yoki telefonini o‘zlari kiritadi." %}</p>
             <form method="post" action="{% url 'group_contact_link' group.pk %}">
               {% csrf_token %}
-              <button class="btn sm primary" type="submit">{% icon "plus" 14 %} Havola yaratish</button>
+              <button class="btn sm primary" type="submit">{% icon "plus" 14 %} {% translate "Havola yaratish" %}</button>
             </form>
           {% endif %}
         </div>
-        <a class="btn sm soft" href="{% url 'contacts_import' %}?group={{ group.pk }}" style="margin-top:12px">{% icon "upload" 14 %} Ro‘yxatdan ommaviy kiritish</a>
+        <a class="btn sm soft" href="{% url 'contacts_import' %}?group={{ group.pk }}" style="margin-top:12px">{% icon "upload" 14 %} {% translate "Ro‘yxatdan ommaviy kiritish" %}</a>
       </div>
     </section>
 
     <section class="card" aria-labelledby="ls-h">
       <div class="card-head">
-        <h2 id="ls-h">{% icon "lesson" 18 %} So‘nggi darslar</h2>
-        <a class="btn xs ghost" href="{% url 'lesson_list' %}?group={{ group.pk }}">Barchasi</a>
+        <h2 id="ls-h">{% icon "lesson" 18 %} {% translate "So‘nggi darslar" %}</h2>
+        <a class="btn xs ghost" href="{% url 'lesson_list' %}?group={{ group.pk }}">{% translate "Barchasi" %}</a>
       </div>
       <div class="card-body flush">
         <div class="rows">
           {% for lesson in lessons|slice:":8" %}
             <a class="row" href="{{ lesson.get_absolute_url }}">
               <div class="grow">
-                <div class="row-title truncate">{{ lesson.topic.title|default:"Mavzusiz" }}</div>
+                <div class="row-title truncate">{{ lesson.topic|topic_title|default:_("Mavzusiz") }}</div>
                 <div class="meta">{{ lesson.held_on|date:"d.m.Y" }}</div>
               </div>
               <span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}info{% endif %}">{{ lesson.get_status_display }}</span>
             </a>
           {% empty %}
-            <div class="empty compact"><p>Dars yozilmagan.</p></div>
+            <div class="empty compact"><p>{% translate "Dars yozilmagan." %}</p></div>
           {% endfor %}
         </div>
       </div>
     </section>
 
     {% if group.notes %}
-      <section class="card pad"><h2 style="font-size:16px;margin-bottom:10px">Izoh</h2><div class="prose meta">{{ group.notes|linebreaks }}</div></section>
+      <section class="card pad"><h2 style="font-size:16px;margin-bottom:10px">{% translate "Izoh" %}</h2><div class="prose meta">{{ group.notes|linebreaks }}</div></section>
     {% endif %}
-    <a class="btn danger-ghost sm" href="{% url 'group_delete' group.pk %}" style="align-self:flex-start">{% icon "trash" 15 %} Guruhni o‘chirish</a>
+    <a class="btn danger-ghost sm" href="{% url 'group_delete' group.pk %}" style="align-self:flex-start">{% icon "trash" 15 %} {% translate "Guruhni o‘chirish" %}</a>
   </aside>
 </div>
 {% endblock %}

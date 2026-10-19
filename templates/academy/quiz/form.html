@@ -1,8 +1,8 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}Test · {{ topic.title }} · Minar Test{% endblock %}
-{% block kicker %}<a href="{% url 'topic_list' %}">Mavzular</a><span class="sep">/</span><a href="{{ topic.get_absolute_url }}">{{ topic.title }}</a><span class="sep">/</span>Test{% endblock %}
-{% block heading %}{% if form.instance.pk %}Testni tahrirlash{% else %}Yangi test{% endif %}{% endblock %}
+{% load i18n ui %}
+{% block title %}{% blocktranslate with title=topic|topic_title trimmed %}Test · {{ title }} · Minar Test{% endblocktranslate %}{% endblock %}
+{% block kicker %}<a href="{% url 'topic_list' %}">{% translate "Mavzular" %}</a><span class="sep">/</span><a href="{{ topic.get_absolute_url }}">{{ topic|topic_title }}</a><span class="sep">/</span>{% translate "Test" %}{% endblock %}
+{% block heading %}{% if form.instance.pk %}{% translate "Testni tahrirlash" %}{% else %}{% translate "Yangi test" %}{% endif %}{% endblock %}
 {% block content %}
 <div class="split">
   <section class="card pad">
@@ -10,28 +10,28 @@
       {% csrf_token %}
       {% include "academy/includes/form_fields.html" with wide="text text_ru" %}
       <div class="form-actions">
-        <button class="btn primary" type="submit">{% icon "check" 16 %} Saqlash</button>
-        <a class="btn ghost" href="{{ topic.get_absolute_url }}">Bekor</a>
+        <button class="btn primary" type="submit">{% icon "check" 16 %} {% translate "Saqlash" %}</button>
+        <a class="btn ghost" href="{{ topic.get_absolute_url }}">{% translate "Bekor" %}</a>
         <span class="spacer"></span>
-        {% if form.instance.pk %}<a class="btn danger-ghost" href="{% url 'quiz_delete' topic.pk %}">{% icon "trash" 15 %} Testni o‘chirish</a>{% endif %}
+        {% if form.instance.pk %}<a class="btn danger-ghost" href="{% url 'quiz_delete' topic.pk %}">{% icon "trash" 15 %} {% translate "Testni o‘chirish" %}</a>{% endif %}
       </div>
     </form>
   </section>
   <aside class="card pad">
     <div class="prose-block">
-      <h3>{% icon "file" 15 %} Yozish qoidasi</h3>
+      <h3>{% icon "file" 15 %} {% translate "Yozish qoidasi" %}</h3>
       <ul class="rules">
-        <li><code>?</code> bilan boshlangan qator — savol.</li>
-        <li><code>+</code> — to‘g‘ri javob (har savolda aynan bitta).</li>
-        <li><code>-</code> — noto‘g‘ri javob (kamida bitta).</li>
-        <li>Savol va birinchi javob orasidagi qatorlar — kod: o‘quvchiga alohida blokda, chekinishlari bilan ko‘rsatiladi.</li>
-        <li>Bu — savollar banki: jo‘natishda har bir o‘quvchiga undan tasodifiy N ta savol tushadi, variantlar ham aralashadi.</li>
-        <li>Vaqt — jo‘natishda taklif qilinadigan qiymat; har bir jo‘natmada o‘zgartirsa bo‘ladi.</li>
-        <li><strong>Ruscha tarjima</strong> — xuddi shu savollar shu tartibda. Jo‘natishda har bir o‘quvchiga til tanlanadi; ruscha tanlanganlar savollarni ruscha ko‘radi (tarjimasi yo‘q savol — o‘zbekcha).</li>
+        <li><code>?</code> {% translate "bilan boshlangan qator — savol." %}</li>
+        <li><code>+</code> {% translate "— to‘g‘ri javob (har savolda aynan bitta)." %}</li>
+        <li><code>-</code> {% translate "— noto‘g‘ri javob (kamida bitta)." %}</li>
+        <li>{% translate "Savol va birinchi javob orasidagi qatorlar — kod: o‘quvchiga alohida blokda, chekinishlari bilan ko‘rsatiladi." %}</li>
+        <li>{% translate "Bu — savollar banki: jo‘natishda har bir o‘quvchiga undan tasodifiy N ta savol tushadi, variantlar ham aralashadi." %}</li>
+        <li>{% translate "Vaqt — jo‘natishda taklif qilinadigan qiymat; har bir jo‘natmada o‘zgartirsa bo‘ladi." %}</li>
+        <li>{% blocktranslate trimmed %}<strong>Ruscha tarjima</strong> — xuddi shu savollar shu tartibda. Jo‘natishda har bir o‘quvchiga til tanlanadi; ruscha tanlanganlar savollarni ruscha ko‘radi (tarjimasi yo‘q savol — o‘zbekcha).{% endblocktranslate %}</li>
       </ul>
     </div>
     <div class="prose-block">
-      <h3>{% icon "edit" 15 %} Namuna</h3>
+      <h3>{% icon "edit" 15 %} {% translate "Namuna" %}</h3>
       <pre class="code">? Python'da ro'yxat qaysi qavs bilan yoziladi?
 + [ ]
 - ( )
@@ -41,7 +41,7 @@
 - 4
 + 5
 - 6</pre>
-      {% if form.instance.pk %}<p class="meta" style="margin-top:10px">Savollarni o‘zgartirish avval yakunlangan natijalarga ta’sir qilmaydi.</p>{% endif %}
+      {% if form.instance.pk %}<p class="meta" style="margin-top:10px">{% translate "Savollarni o‘zgartirish avval yakunlangan natijalarga ta’sir qilmaydi." %}</p>{% endif %}
     </div>
   </aside>
 </div>
@@ -50,8 +50,8 @@
 <section class="card" style="margin-top:18px" id="savollar" aria-labelledby="quality-h">
   <div class="card-head">
     <div>
-      <h2 id="quality-h">{% icon "target" 18 %} Savollar: statistika va rasmlar</h2>
-      <div class="meta">Necha foizi to‘g‘ri yechgani (kamida {{ min_answers }} ta javobdan keyin baholanadi){% if hard_n or easy_n %} · {% if hard_n %}<strong class="q-hard-text">{{ hard_n }} ta juda qiyin</strong>{% endif %}{% if hard_n and easy_n %}, {% endif %}{% if easy_n %}{{ easy_n }} ta juda oson{% endif %}{% endif %}</div>
+      <h2 id="quality-h">{% icon "target" 18 %} {% translate "Savollar: statistika va rasmlar" %}</h2>
+      <div class="meta">{% blocktranslate with min_answers=min_answers trimmed %}Necha foizi to‘g‘ri yechgani (kamida {{ min_answers }} ta javobdan keyin baholanadi){% endblocktranslate %}{% if hard_n or easy_n %} · {% if hard_n %}<strong class="q-hard-text">{% blocktranslate with hard_n=hard_n trimmed %}{{ hard_n }} ta juda qiyin</strong>{% endblocktranslate %}{% endif %}{% if hard_n and easy_n %}, {% endif %}{% if easy_n %}{% blocktranslate with easy_n=easy_n trimmed %}{{ easy_n }} ta juda oson{% endblocktranslate %}{% endif %}{% endif %}</div>
     </div>
   </div>
   <div class="card-body flush">
@@ -63,17 +63,17 @@
             <div class="row-title">{{ r.question.title }}</div>
             {% if r.question.code %}<pre class="quiz-code">{{ r.question.code }}</pre>{% endif %}
             <div class="meta">
-              {% if r.asked %}{{ r.asked }} marta tushgan · <strong>{{ r.pct }}%</strong> to‘g‘ri{% else %}hali hech kimga tushmagan{% endif %}
-              {% if r.flag == 'hard' %} · <span class="badge bad">Juda qiyin — matnini tekshiring</span>{% elif r.flag == 'easy' %} · <span class="badge info">Juda oson</span>{% endif %}
+              {% if r.asked %}{% blocktranslate with asked=r.asked pct=r.pct trimmed %}{{ asked }} marta tushgan · <strong>{{ pct }}%</strong> to‘g‘ri{% endblocktranslate %}{% else %}{% translate "hali hech kimga tushmagan" %}{% endif %}
+              {% if r.flag == 'hard' %} · <span class="badge bad">{% translate "Juda qiyin — matnini tekshiring" %}</span>{% elif r.flag == 'easy' %} · <span class="badge info">{% translate "Juda oson" %}</span>{% endif %}
             </div>
-            {% if r.question.image %}<img class="quiz-image" src="{{ r.question.image.url }}" alt="{{ forloop.counter }}-savol rasmi" loading="lazy">{% endif %}
+            {% if r.question.image %}<img class="quiz-image" src="{{ r.question.image.url }}" alt="{% blocktranslate with counter=forloop.counter trimmed %}{{ counter }}-savol rasmi{% endblocktranslate %}" loading="lazy">{% endif %}
           </div>
           <form class="q-image-form" method="post" enctype="multipart/form-data" action="{% url 'quiz_question_image' r.question.pk %}" data-turbo="false">
             {% csrf_token %}
             {% if r.question.image %}
-              <button class="btn xs danger-ghost" type="submit" name="action" value="remove" data-confirm="Rasm o‘chirilsinmi?">{% icon "trash" 13 %} Rasmni o‘chirish</button>
+              <button class="btn xs danger-ghost" type="submit" name="action" value="remove" data-confirm="{% translate "Rasm o‘chirilsinmi?" %}">{% icon "trash" 13 %} {% translate "Rasmni o‘chirish" %}</button>
             {% else %}
-              <label class="btn xs soft q-file">{% icon "upload" 13 %} Rasm qo‘shish<input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif" data-autosubmit-file></label>
+              <label class="btn xs soft q-file">{% icon "upload" 13 %} {% translate "Rasm qo‘shish" %}<input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif" data-autosubmit-file></label>
             {% endif %}
           </form>
         </div>

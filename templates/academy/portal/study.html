@@ -1,20 +1,20 @@
 {% extends "academy/portal/_base.html" %}
-{% load ui %}
-{% block title %}Mustahkamlash · {{ topic.title }}{% endblock %}
+{% load i18n ui %}
+{% block title %}{% blocktranslate with title=topic|topic_title trimmed %}Mustahkamlash · {{ title }}{% endblocktranslate %}{% endblock %}
 {% block main %}
 <header class="portal-head">
-  <p class="kicker"><a href="{% url 'student_portal' student.portal_token %}#t{{ topic.pk }}">← Profilga qaytish</a></p>
-  <h1>{{ topic.title }}</h1>
-  <p class="muted">{% if row.gate == "review" %}Darsni qayta mustahkamlash · oxirgi natija: <strong>{{ row.last.percent }}%</strong>{% else %}Mavzu materiali{% if row.last %} · oxirgi natija: <strong>{{ row.last.percent }}%</strong>{% endif %}{% endif %}</p>
+  <p class="kicker"><a href="{% url 'student_portal' student.portal_token %}#t{{ topic.pk }}">{% translate "← Profilga qaytish" %}</a></p>
+  <h1>{{ topic|topic_title }}</h1>
+  <p class="muted">{% if row.gate == "review" %}{% blocktranslate with percent=row.last.percent trimmed %}Darsni qayta mustahkamlash · oxirgi natija: <strong>{{ percent }}%</strong>{% endblocktranslate %}{% else %}{% translate "Mavzu materiali" %}{% if row.last %} {% blocktranslate with percent=row.last.percent trimmed %}· oxirgi natija: <strong>{{ percent }}%</strong>{% endblocktranslate %}{% endif %}{% endif %}</p>
 </header>
 
 {% if row.gate %}
   <section class="card pad study-timer" role="status">
     {% if row.locked %}
-      <strong>Mustahkamlash vaqti: 20 daqiqa</strong>
-      <p class="muted">Materialni diqqat bilan o‘qing va misollarni o‘zingiz qaytadan yechib ko‘ring. Test <strong data-countdown="{{ row.seconds_left }}"></strong> dan keyin ochiladi.</p>
+      {% blocktranslate trimmed %}<strong>Mustahkamlash vaqti: 20 daqiqa</strong>{% endblocktranslate %}
+      <p class="muted">{% blocktranslate with seconds=row.seconds_left trimmed %}Materialni diqqat bilan o‘qing va misollarni o‘zingiz qaytadan yechib ko‘ring. Test <strong data-countdown="{{ seconds }}"></strong> dan keyin ochiladi.{% endblocktranslate %}</p>
     {% else %}
-      <strong>✅ Vaqt tugadi — testni topshirishingiz mumkin.</strong>
+      {% blocktranslate trimmed %}<strong>✅ Vaqt tugadi — testni topshirishingiz mumkin.</strong>{% endblocktranslate %}
     {% endif %}
   </section>
 {% endif %}
@@ -23,32 +23,32 @@
   {% if material %}
     {{ material|study_md }}
   {% else %}
-    <p class="muted">Bu mavzu uchun material hali yozilmagan — ustozingizdan so‘rang.</p>
+    <p class="muted">{% translate "Bu mavzu uchun material hali yozilmagan — ustozingizdan so‘rang." %}</p>
   {% endif %}
   {% with resources=topic.resource_list %}
     {% if resources %}
-      <h3>Qo‘shimcha manbalar</h3>
+      <h3>{% translate "Qo‘shimcha manbalar" %}</h3>
       <ul>{% for r in resources %}<li>{% if r.url %}<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.text }}</a>{% else %}{{ r.text }}{% endif %}</li>{% endfor %}</ul>
     {% endif %}
   {% endwith %}
 </article>
 
 <section class="card pad" id="retake">
-  <h2>{% if row.gate == "review" %}Testni qayta topshirish{% else %}Test{% endif %}</h2>
+  <h2>{% if row.gate == "review" %}{% translate "Testni qayta topshirish" %}{% else %}{% translate "Test" %}{% endif %}</h2>
   {% if not row.bank %}
-    <p class="muted">Bu mavzuda hali test savollari yo‘q.</p>
+    <p class="muted">{% translate "Bu mavzuda hali test savollari yo‘q." %}</p>
   {% elif row.request %}
-    <a class="btn primary block" href="{% url 'portal_test_start' student.portal_token row.request.pk %}">Davom etish</a>
+    <a class="btn primary block" href="{% url 'portal_test_start' student.portal_token row.request.pk %}">{% translate "Davom etish" %}</a>
   {% elif not row.left_today %}
-    <p class="muted">Bugun bu mavzudan {{ row.used }} ta test topshirdingiz. Ertaga qayta urinib ko‘ring — bugun materialni yaxshilab takrorlang.</p>
+    <p class="muted">{% blocktranslate with used=row.used trimmed %}Bugun bu mavzudan {{ used }} ta test topshirdingiz. Ertaga qayta urinib ko‘ring — bugun materialni yaxshilab takrorlang.{% endblocktranslate %}</p>
   {% elif row.locked %}
-    <p class="muted">Test <strong data-countdown="{{ row.seconds_left }}"></strong> dan keyin ochiladi.</p>
-    <button class="btn block" type="button" disabled>🔒 Hali yopiq</button>
+    <p class="muted">{% blocktranslate with seconds=row.seconds_left trimmed %}Test <strong data-countdown="{{ seconds }}"></strong> dan keyin ochiladi.{% endblocktranslate %}</p>
+    <button class="btn block" type="button" disabled>{% translate "🔒 Hali yopiq" %}</button>
   {% else %}
-    <p class="muted">Bugun yana {{ row.left_today }} ta urinish bor.</p>
+    <p class="muted">{% blocktranslate with left_today=row.left_today trimmed %}Bugun yana {{ left_today }} ta urinish bor.{% endblocktranslate %}</p>
     <form method="post" action="{% url 'portal_test_request' student.portal_token topic.pk %}">
       {% csrf_token %}
-      <button class="btn primary block" type="submit">{% if row.gate == "review" %}Qayta topshirish{% else %}Testni boshlash{% endif %}</button>
+      <button class="btn primary block" type="submit">{% if row.gate == "review" %}{% translate "Qayta topshirish" %}{% else %}{% translate "Testni boshlash" %}{% endif %}</button>
     </form>
   {% endif %}
 </section>

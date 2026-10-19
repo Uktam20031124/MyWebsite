@@ -1,14 +1,14 @@
 {% extends "academy/base.html" %}
-{% load ui %}
-{% block title %}So‘rovlar · Testlar{% endblock %}
-{% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>So‘rovlar{% endblock %}
-{% block heading %}So‘rovlar{% endblock %}
-{% block subheading %}<p class="page-sub">Profilga kirish, sovg‘alar, test topshirish va javoblarni ko‘rish so‘rovlari. O‘quvchi testni tugatgach faqat ballini ko‘radi. Qaysi savolda to‘g‘ri, qaysida xato qilganini — faqat siz ruxsat bergandan keyin (to‘g‘ri variantlar baribir ko‘rsatilmaydi).</p>{% endblock %}
+{% load i18n ui %}
+{% block title %}{% translate "So‘rovlar · Testlar" %}{% endblock %}
+{% block kicker %}<a href="{% url 'quiz_batches' %}">{% translate "Testlar" %}</a><span class="sep">/</span>{% translate "So‘rovlar" %}{% endblock %}
+{% block heading %}{% translate "So‘rovlar" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Profilga kirish, sovg‘alar, test topshirish va javoblarni ko‘rish so‘rovlari. O‘quvchi testni tugatgach faqat ballini ko‘radi. Qaysi savolda to‘g‘ri, qaysida xato qilganini — faqat siz ruxsat bergandan keyin (to‘g‘ri variantlar baribir ko‘rsatilmaydi)." %}</p>{% endblock %}
 {% block actions %}
 {% if pending %}
   <form method="post" action="{% url 'quiz_review_approve_all' %}">
     {% csrf_token %}
-    <button class="btn primary" type="submit" data-confirm="{{ pending|length }} ta so‘rovning hammasiga ruxsat berilsinmi?">{% icon "check" 16 %} Hammasiga ruxsat ({{ pending|length }})</button>
+    <button class="btn primary" type="submit" data-confirm="{% blocktranslate with pending=pending|length trimmed %}{{ pending }} ta so‘rovning hammasiga ruxsat berilsinmi?{% endblocktranslate %}">{% icon "check" 16 %} {% blocktranslate with pending=pending|length trimmed %}Hammasiga ruxsat ({{ pending }}){% endblocktranslate %}</button>
   </form>
 {% endif %}
 {% endblock %}
@@ -16,20 +16,20 @@
 {% block content %}
 {% if access_requests %}
 <section class="card" style="margin-bottom:18px" aria-labelledby="acc-h">
-  <div class="card-head"><h2 id="acc-h">🔑 Profilga kirish so‘rovlari</h2><span class="meta">{{ access_requests|length }} ta</span></div>
+  <div class="card-head"><h2 id="acc-h">{% translate "🔑 Profilga kirish so‘rovlari" %}</h2><span class="meta">{% blocktranslate with access_requests=access_requests|length trimmed %}{{ access_requests }} ta{% endblocktranslate %}</span></div>
   <div class="card-body flush">
     <div class="rows">
       {% for s in access_requests %}
         <div class="row quiz-row">
           <a class="person grow" href="{{ s.get_absolute_url }}#profile">
             <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
-            <span class="truncate"><span class="person-name block truncate">{{ s.full_name }}</span><span class="person-meta">{{ s.group.code }} · so‘radi {{ s.profile_requested_at|date:"d.m H:i" }}</span></span>
+            <span class="truncate"><span class="person-name block truncate">{{ s.full_name }}</span><span class="person-meta">{% blocktranslate with code=s.group.code profile_requested_at=s.profile_requested_at|date:"d.m H:i" trimmed %}{{ code }} · so‘radi {{ profile_requested_at }}{% endblocktranslate %}</span></span>
           </a>
           <form method="post" action="{% url 'student_profile_access' s.pk %}" class="quiz-actions">
             {% csrf_token %}
             <input type="hidden" name="next" value="requests">
-            {% for h in access_hours %}<button class="btn xs {% if forloop.first %}primary{% else %}soft{% endif %}" type="submit" name="action" value="{{ h }}">{{ h }} soat</button>{% endfor %}
-            <button class="btn xs ghost" type="submit" name="action" value="close">Rad</button>
+            {% for h in access_hours %}<button class="btn xs {% if forloop.first %}primary{% else %}soft{% endif %}" type="submit" name="action" value="{{ h }}">{% blocktranslate with h=h trimmed %}{{ h }} soat{% endblocktranslate %}</button>{% endfor %}
+            <button class="btn xs ghost" type="submit" name="action" value="close">{% translate "Rad" %}</button>
           </form>
         </div>
       {% endfor %}
@@ -40,7 +40,7 @@
 
 {% if purchase_requests %}
 <section class="card" style="margin-bottom:18px" aria-labelledby="buy-h">
-  <div class="card-head"><h2 id="buy-h">🛍 Coin do‘koni so‘rovlari</h2><a class="meta" href="{% url 'rewards' %}">Do‘konni boshqarish →</a></div>
+  <div class="card-head"><h2 id="buy-h">{% translate "🛍 Coin do‘koni so‘rovlari" %}</h2><a class="meta" href="{% url 'rewards' %}">{% translate "Do‘konni boshqarish →" %}</a></div>
   <div class="card-body flush">
     <div class="rows">
       {% for p in purchase_requests %}
@@ -52,8 +52,8 @@
           <form method="post" action="{% url 'purchase_decide' p.pk %}" class="quiz-actions">
             {% csrf_token %}
             <input type="hidden" name="next" value="requests">
-            <button class="btn xs primary" type="submit" name="action" value="approve">{% icon "check" 13 %} Berish</button>
-            <button class="btn xs ghost" type="submit" name="action" value="reject">Rad etish</button>
+            <button class="btn xs primary" type="submit" name="action" value="approve">{% icon "check" 13 %} {% translate "Berish" %}</button>
+            <button class="btn xs ghost" type="submit" name="action" value="reject">{% translate "Rad etish" %}</button>
           </form>
         </div>
       {% endfor %}
@@ -64,20 +64,20 @@
 
 {% if test_requests %}
 <section class="card" style="margin-bottom:18px" aria-labelledby="tr-h">
-  <div class="card-head"><h2 id="tr-h">📝 Test topshirish so‘rovlari</h2><span class="meta">{{ test_requests|length }} ta</span></div>
+  <div class="card-head"><h2 id="tr-h">{% translate "📝 Test topshirish so‘rovlari" %}</h2><span class="meta">{% blocktranslate with test_requests=test_requests|length trimmed %}{{ test_requests }} ta{% endblocktranslate %}</span></div>
   <div class="card-body flush">
     <div class="rows">
       {% for r in test_requests %}
         <div class="row quiz-row">
           <a class="person grow" href="{{ r.student.get_absolute_url }}#profile">
             <span class="avatar sm" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span>
-            <span class="truncate"><span class="person-name block truncate">{{ r.student.full_name }}{% if r.kind == "retake" %} <span class="badge plain">qayta topshirish</span>{% endif %}</span><span class="person-meta">{{ r.topic.title }} · {{ r.student.group.code }} · {{ r.created_at|date:"d.m H:i" }}</span></span>
+            <span class="truncate"><span class="person-name block truncate">{{ r.student.full_name }}{% if r.kind == "retake" %} <span class="badge plain">{% translate "qayta topshirish" %}</span>{% endif %}</span><span class="person-meta">{{ r.topic|topic_title }} · {{ r.student.group.code }} · {{ r.created_at|date:"d.m H:i" }}</span></span>
           </a>
           <form method="post" action="{% url 'test_request_decide' r.pk %}" class="quiz-actions">
             {% csrf_token %}
             <input type="hidden" name="next" value="requests">
-            <button class="btn xs primary" type="submit" name="action" value="approve">{% icon "check" 13 %} Ruxsat</button>
-            <button class="btn xs ghost" type="submit" name="action" value="reject">Rad etish</button>
+            <button class="btn xs primary" type="submit" name="action" value="approve">{% icon "check" 13 %} {% translate "Ruxsat" %}</button>
+            <button class="btn xs ghost" type="submit" name="action" value="reject">{% translate "Rad etish" %}</button>
           </form>
         </div>
       {% endfor %}
@@ -87,29 +87,29 @@
 {% endif %}
 
 <section class="card" aria-labelledby="pending-h">
-  <div class="card-head"><h2 id="pending-h">{% icon "shield" 18 %} Javoblarni ko‘rish so‘rovlari</h2><span class="meta">{{ pending|length }} ta</span></div>
+  <div class="card-head"><h2 id="pending-h">{% icon "shield" 18 %} {% translate "Javoblarni ko‘rish so‘rovlari" %}</h2><span class="meta">{% blocktranslate with pending=pending|length trimmed %}{{ pending }} ta{% endblocktranslate %}</span></div>
   <div class="card-body flush">
     <div class="rows">
       {% for a in pending %}
         <div class="row quiz-row">
-          <a class="person grow" href="{% url 'quiz_attempt_review' a.pk %}" title="Javoblarini ko‘rish (faqat siz)">
+          <a class="person grow" href="{% url 'quiz_attempt_review' a.pk %}" title="{% translate "Javoblarini ko‘rish (faqat siz)" %}">
             <span class="avatar sm" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
             <span class="truncate">
-              <span class="person-name block truncate">{{ a.student.full_name }}{% if a.language == "ru" %} <span class="badge plain">RU</span>{% endif %}</span>
-              <span class="person-meta">{{ a.quiz.topic.title }} · {{ a.student.group.code }} · so‘radi {{ a.reveal_requested_at|date:"d.m H:i" }}</span>
+              <span class="person-name block truncate">{{ a.student.full_name }}{% if a.language == "ru" %} <span class="badge plain">{% translate "RU" %}</span>{% endif %}</span>
+              <span class="person-meta">{% blocktranslate with title=a.quiz.topic|topic_title code=a.student.group.code reveal_requested_at=a.reveal_requested_at|date:"d.m H:i" trimmed %}{{ title }} · {{ code }} · so‘radi {{ reveal_requested_at }}{% endblocktranslate %}</span>
             </span>
           </a>
           <div class="quiz-actions">
             <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
             <form method="post" action="{% url 'quiz_review_decide' a.pk %}">
               {% csrf_token %}
-              <button class="btn xs primary" type="submit" name="action" value="approve">{% icon "check" 13 %} Ruxsat</button>
-              <button class="btn xs ghost" type="submit" name="action" value="reject">Rad etish</button>
+              <button class="btn xs primary" type="submit" name="action" value="approve">{% icon "check" 13 %} {% translate "Ruxsat" %}</button>
+              <button class="btn xs ghost" type="submit" name="action" value="reject">{% translate "Rad etish" %}</button>
             </form>
           </div>
         </div>
       {% empty %}
-        <div class="empty compact"><p>Hozircha javoblarni ko‘rish so‘rovi yo‘q.</p></div>
+        <div class="empty compact"><p>{% translate "Hozircha javoblarni ko‘rish so‘rovi yo‘q." %}</p></div>
       {% endfor %}
     </div>
   </div>
@@ -117,17 +117,17 @@
 
 {% if decided %}
 <section class="card" style="margin-top:18px" aria-labelledby="decided-h">
-  <div class="card-head"><h2 id="decided-h">{% icon "clock" 18 %} Oxirgi qarorlar</h2></div>
+  <div class="card-head"><h2 id="decided-h">{% icon "clock" 18 %} {% translate "Oxirgi qarorlar" %}</h2></div>
   <div class="card-body flush">
     <div class="rows">
       {% for a in decided %}
         <div class="row quiz-row">
-          <span class="grow truncate"><span class="person-name block truncate">{{ a.student.full_name }}</span><span class="person-meta">{{ a.quiz.topic.title }} · {{ a.reveal_decided_at|date:"d.m H:i" }}</span></span>
+          <span class="grow truncate"><span class="person-name block truncate">{{ a.student.full_name }}</span><span class="person-meta">{{ a.quiz.topic|topic_title }} · {{ a.reveal_decided_at|date:"d.m H:i" }}</span></span>
           <div class="quiz-actions">
-            {% if a.reveal == "approved" %}<span class="badge ok">ruxsat berilgan</span>{% else %}<span class="badge plain">rad etilgan</span>{% endif %}
+            {% if a.reveal == "approved" %}<span class="badge ok">{% translate "ruxsat berilgan" %}</span>{% else %}<span class="badge plain">{% translate "rad etilgan" %}</span>{% endif %}
             <form method="post" action="{% url 'quiz_review_decide' a.pk %}">
               {% csrf_token %}
-              {% if a.reveal == "approved" %}<button class="btn xs ghost" type="submit" name="action" value="reject">Yopish</button>{% else %}<button class="btn xs ghost" type="submit" name="action" value="approve">Ruxsat berish</button>{% endif %}
+              {% if a.reveal == "approved" %}<button class="btn xs ghost" type="submit" name="action" value="reject">{% translate "Yopish" %}</button>{% else %}<button class="btn xs ghost" type="submit" name="action" value="approve">{% translate "Ruxsat berish" %}</button>{% endif %}
             </form>
           </div>
         </div>
