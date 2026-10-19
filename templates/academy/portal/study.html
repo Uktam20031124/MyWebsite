@@ -1,16 +1,27 @@
 {% extends "academy/portal/_base.html" %}
 {% load ui %}
-{% block title %}Mustahkamlash · {{ topic.title }}{% endblock %}
+{% block title %}{% if row.gate == "preview" %}Tayyorlanish{% else %}Mustahkamlash{% endif %} · {{ topic.title }}{% endblock %}
 {% block main %}
 <header class="portal-head">
   <p class="kicker"><a href="{% url 'student_portal' student.portal_token %}#t{{ topic.pk }}">← Profilga qaytish</a></p>
   <h1>{{ topic.title }}</h1>
-  <p class="muted">Darsni qayta mustahkamlash{% if row.last %} · oxirgi natija: <strong>{{ row.last.percent }}%</strong>{% endif %}</p>
+  <p class="muted">{% if row.gate == "review" %}Darsni qayta mustahkamlash · oxirgi natija: <strong>{{ row.last.percent }}%</strong>{% elif row.gate == "preview" %}✨ Yangi mavzuga oldindan tayyorlanish{% else %}Mavzu materiali{% if row.last %} · oxirgi natija: <strong>{{ row.last.percent }}%</strong>{% endif %}{% endif %}</p>
 </header>
 
+{% if row.gate %}
+  <section class="card pad study-timer" role="status">
+    {% if row.locked %}
+      <strong>{% if row.gate == "review" %}Mustahkamlash vaqti: 20 daqiqa{% else %}Tayyorlanish vaqti: 30 daqiqa{% endif %}</strong>
+      <p class="muted">Materialni diqqat bilan o‘qing va misollarni o‘zingiz qaytadan yechib ko‘ring. Test <strong data-countdown="{{ row.seconds_left }}"></strong> dan keyin ochiladi.</p>
+    {% else %}
+      <strong>✅ Vaqt tugadi — testni topshirishingiz mumkin.</strong>
+    {% endif %}
+  </section>
+{% endif %}
+
 <article class="card pad study">
-  {% if topic.study %}
-    {{ topic.study|study_md }}
+  {% if material %}
+    {{ material|study_md }}
   {% else %}
     <p class="muted">Bu mavzu uchun material hali yozilmagan — ustozingizdan so‘rang.</p>
   {% endif %}
@@ -23,21 +34,22 @@
 </article>
 
 <section class="card pad" id="retake">
-  <h2>Testni qayta topshirish</h2>
-  {% if row.request and row.request.status == "approved" %}
-    <p class="muted">Ustozingiz ruxsat berdi.</p>
-    <a class="btn primary block" href="{% url 'portal_test_start' student.portal_token row.request.pk %}">Testni boshlash</a>
+  <h2>{% if row.gate == "review" %}Testni qayta topshirish{% else %}Test{% endif %}</h2>
+  {% if not row.bank %}
+    <p class="muted">Bu mavzuda hali test savollari yo‘q.</p>
   {% elif row.request %}
-    <p class="muted">⏳ So‘rov ustozingizga yuborilgan — ruxsat berilgach, “Boshlash” chiqadi.</p>
-  {% elif row.can_request %}
-    <p class="muted">Materialni o‘qib, misollarni o‘zingiz qaytadan yechib chiqdingizmi? Unda qayta topshirish uchun so‘rov yuboring (bugun yana {{ row.left_today }} ta urinish).</p>
+    <a class="btn primary block" href="{% url 'portal_test_start' student.portal_token row.request.pk %}">Davom etish</a>
+  {% elif not row.left_today %}
+    <p class="muted">Bugun bu mavzudan {{ row.used }} ta test topshirdingiz. Ertaga qayta urinib ko‘ring — bugun materialni yaxshilab takrorlang.</p>
+  {% elif row.locked %}
+    <p class="muted">Test <strong data-countdown="{{ row.seconds_left }}"></strong> dan keyin ochiladi.</p>
+    <button class="btn block" type="button" disabled>🔒 Hali yopiq</button>
+  {% else %}
+    <p class="muted">Bugun yana {{ row.left_today }} ta urinish bor.</p>
     <form method="post" action="{% url 'portal_test_request' student.portal_token topic.pk %}">
       {% csrf_token %}
-      <input type="hidden" name="kind" value="retake">
-      <button class="btn primary block" type="submit">Mustahkamladim — qayta topshirishga so‘rov</button>
+      <button class="btn primary block" type="submit">{% if row.gate == "review" %}Qayta topshirish{% else %}Testni boshlash{% endif %}</button>
     </form>
-  {% elif not row.left_today %}
-    <p class="muted">Bugun bu mavzudan 2 ta test topshirdingiz. Ertaga qayta urinib ko‘ring — bugun materialni yaxshilab takrorlang.</p>
   {% endif %}
 </section>
 {% endblock %}

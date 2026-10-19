@@ -115,7 +115,7 @@
         {% if profile_open %}<span class="badge ok">ochiq · {{ student.profile_until|date:"H:i" }} gacha</span>{% elif student.profile_requested_at %}<span class="badge warn">🔑 kirish so‘ralgan</span>{% else %}<span class="badge plain">yopiq</span>{% endif %}
       </div>
       <div class="card-body">
-        <p class="meta" style="margin:0 0 10px">O‘quvchi profil havolasini ochib, kirishga ruxsat so‘raydi. Siz 2–4 soatga ochasiz; shu vaqtda u quyida belgilangan mavzulardan test so‘ray oladi (har biriga sizning ruxsatingiz bilan, kuniga 2 tagacha).</p>
+        <p class="meta" style="margin:0 0 10px">O‘quvchi profil havolasini ochib, kirishga ruxsat so‘raydi. Siz 2–4 soatga ochasiz; shu vaqtda u quyida belgilangan mavzulardan va guruhdagi navbatdagi yangi mavzudan testni o‘zi boshlaydi (kuniga mavzu boshiga 2 tagacha). 60% dan past natijada — 20 daqiqalik mustahkamlash, yangi mavzuda — 30 daqiqalik tayyorlanish, keyin test.</p>
         <form method="post" action="{% url 'student_profile_access' student.pk %}" class="contact-link-actions">
           {% csrf_token %}
           {% for h in access_hours %}<button class="btn sm {% if student.profile_requested_at %}primary{% else %}soft{% endif %}" type="submit" name="action" value="{{ h }}">{{ h }} soatga ochish</button>{% endfor %}
@@ -146,6 +146,15 @@
             <button class="btn sm primary" type="submit" style="margin-top:10px">{% icon "check" 14 %} Saqlash</button>
           </form>
         </details>
+
+        <div class="profile-coins" style="margin-top:14px">
+          <strong>🪙 Coinlar: {{ coin_balance }}</strong>
+          {% if coin_history %}
+            <ul class="coin-history">
+              {% for c in coin_history %}<li><span class="coin-amount {% if c.amount < 0 %}neg{% endif %}">{{ c.amount|stringformat:"+d" }}</span> <span class="grow">{{ c.reason }}{% if c.attempt %} · {{ c.attempt.quiz.topic.title }}{% endif %}</span> <span class="meta">{{ c.created_at|date:"d.m H:i" }}</span></li>{% endfor %}
+            </ul>
+          {% else %}<p class="meta" style="margin:4px 0 0">Hali coin yo‘q — test yechgach beriladi.</p>{% endif %}
+        </div>
 
         {% if profile_requests %}
           <div class="rows" style="margin-top:14px">

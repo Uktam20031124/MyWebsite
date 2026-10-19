@@ -1,4 +1,4 @@
-<!doctype html>
+{% load static %}<!doctype html>
 <html lang="uz" data-theme="light">
 <head>
   <meta charset="utf-8">
@@ -14,5 +14,6 @@
   {% if messages %}<div class="portal-messages">{% for m in messages %}<div class="callout {% if m.level_tag == 'error' %}warn{% else %}next{% endif %}" role="status"><div class="grow">{{ m }}</div></div>{% endfor %}</div>{% endif %}
   {% block main %}{% endblock %}
 </main>
+<script src="{% static 'js/portal.js' %}" defer></script>
 </body>
 </html>

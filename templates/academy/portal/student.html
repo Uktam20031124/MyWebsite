@@ -7,31 +7,45 @@
     <p class="muted">Profil ochiq: <strong>{{ student.profile_until|date:"H:i" }}</strong> gacha. Natijalaringiz, o‘sishingiz va testlar.</p>
   </header>
 
+  <section class="card pad portal-coins" id="coins">
+    <div class="portal-coin-head">
+      <div><span class="meta">Coinlaringiz</span><strong class="portal-big">🪙 {{ coin_balance }}</strong></div>
+      <details class="coin-rules"><summary class="meta">Coin qanday beriladi?</summary><ul>{% for r in coin_rules %}<li>{{ r }}</li>{% endfor %}</ul></details>
+    </div>
+    {% if coin_history %}
+      <ul class="coin-history">
+        {% for c in coin_history %}<li><span class="coin-amount {% if c.amount < 0 %}neg{% endif %}">{{ c.amount|stringformat:"+d" }}</span> <span class="grow">{{ c.reason }}{% if c.attempt %} · {{ c.attempt.quiz.topic.title }}{% endif %}</span> <span class="meta">{{ c.created_at|date:"d.m H:i" }}</span></li>{% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+
   <section class="card pad" id="topics">
     <h2>Test topshirish</h2>
-    <p class="meta">Ustozingiz ruxsat bergan mavzular. So‘rov yuboring → ustoz ruxsat bersa, savollar soni (10/12) va vaqtni (5/10 daq.) tanlab boshlaysiz. Bir mavzudan kuniga ko‘pi bilan {{ daily_limit }} ta test.</p>
+    <p class="meta">“Testni boshlash” → savollar soni (10/12) va vaqtni (5/10 daq.) tanlaysiz. Natija {{ pass_percent }}% dan past bo‘lsa — mustahkamlash o‘zi ochiladi, 20 daqiqadan keyin qayta topshirasiz. Bir mavzudan kuniga ko‘pi bilan {{ daily_limit }} ta test.</p>
     {% for r in topic_rows %}
-      <div class="portal-topic{% if r.needs_review %} weak{% endif %}" id="t{{ r.topic.pk }}">
+      <div class="portal-topic{% if r.needs_review %} weak{% endif %}{% if r.preview %} new{% endif %}" id="t{{ r.topic.pk }}">
         <div class="grow">
+          {% if r.preview %}<span class="badge info">✨ yangi mavzu</span>{% endif %}
           <strong>{{ r.topic.title }}</strong>
-          <span class="meta block">{% if r.last %}oxirgi natija: {{ r.last.percent }}%{% else %}hali topshirilmagan{% endif %} · bugun {{ r.used }}/{{ daily_limit }}</span>
+          <span class="meta block">{% if r.last %}oxirgi natija: <strong>{{ r.last.percent }}%</strong> ({{ r.last.correct }}/{{ r.last.total }}){% else %}hali topshirilmagan{% endif %} · bugun {{ r.used }}/{{ daily_limit }}</span>
+          {% if r.gate == "review" %}
+            <span class="meta block">📘 Natija {{ pass_percent }}% dan past — mustahkamlang.{% if r.locked and r.session %} Qayta topshirish <span data-countdown="{{ r.seconds_left }}"></span> dan keyin.{% elif not r.session %} Material ochilgach 20 daqiqadan keyin qayta topshirasiz.{% endif %}</span>
+          {% elif r.gate == "preview" %}
+            <span class="meta block">Oldindan tayyorlaning: material ochilgach 30 daqiqadan keyin test ochiladi.{% if r.locked and r.session %} Qoldi: <span data-countdown="{{ r.seconds_left }}"></span>{% endif %}</span>
+          {% endif %}
         </div>
         <div class="portal-topic-actions">
-          {% if r.needs_review %}<a class="btn sm soft" href="{% url 'portal_study' student.portal_token r.topic.pk %}">📘 Darsni mustahkamlash</a>{% endif %}
-          {% if r.request and r.request.status == "approved" %}
-            <a class="btn sm primary" href="{% url 'portal_test_start' student.portal_token r.request.pk %}">Boshlash</a>
-          {% elif r.request %}
-            <span class="badge warn">⏳ so‘rov yuborilgan</span>
-          {% elif not r.bank %}
+          {% if r.gate %}<a class="btn sm soft" href="{% url 'portal_study' student.portal_token r.topic.pk %}">{% if r.gate == "review" %}📘 Mustahkamlash{% else %}✨ Tayyorlanish{% endif %}</a>{% elif r.topic.study %}<a class="btn sm ghost" href="{% url 'portal_study' student.portal_token r.topic.pk %}">Material</a>{% endif %}
+          {% if not r.bank %}
             <span class="meta">savollar yo‘q</span>
+          {% elif r.request %}
+            <a class="btn sm primary" href="{% url 'portal_test_start' student.portal_token r.request.pk %}">Davom etish</a>
           {% elif not r.left_today %}
             <span class="badge plain">bugungi limit tugadi</span>
-          {% elif r.needs_review %}
-            <span class="meta">avval mavzuni takrorlang</span>
-          {% else %}
+          {% elif r.can_start %}
             <form method="post" action="{% url 'portal_test_request' student.portal_token r.topic.pk %}">
               {% csrf_token %}
-              <button class="btn sm primary" type="submit">Test so‘rash</button>
+              <button class="btn sm primary" type="submit">{% if r.gate == "review" %}Qayta topshirish{% else %}Testni boshlash{% endif %}</button>
             </form>
           {% endif %}
         </div>

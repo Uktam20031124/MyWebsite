@@ -4,11 +4,13 @@ Oqim:
 1. Ustoz profil havolasini yuboradi (``/men/<kalit>/``). O'quvchi ism-familiyasini va
    "kirishga ruxsat so'rash" tugmasini ko'radi.
 2. Ustoz 2 / 3 / 4 soatga ruxsat beradi — shu vaqt ichida profil ochiq.
-3. Profilda faqat ustoz shu o'quvchiga ruxsat etgan mavzular. O'quvchi test so'raydi,
-   ustoz ruxsat bergach, o'zi 10/12 savol va 5/10 daqiqani tanlab, testni boshlaydi.
+3. Profilda ustoz ruxsat etgan mavzular va guruhdagi navbatdagi yangi mavzu. O'quvchi
+   testni o'zi boshlaydi (10/12 savol, 5/10 daqiqa) — ustoz ruxsati shart emas.
    Bir mavzu bo'yicha kuniga ko'pi bilan ``TestRequest.DAILY_LIMIT`` ta.
-4. Natija past bo'lsa — "Darsni qayta mustahkamlash" (mavzu materiali, bajarilgan
-   misollar), so'ng qayta topshirish so'rovi.
+4. Natija 60% dan past bo'lsa — "Darsni qayta mustahkamlash" o'zi ochiladi; material
+   ochilgandan 20 daqiqa o'tib qayta topshirish mumkin. Yangi mavzu testi — 30 daqiqa
+   tayyorlanishdan keyin.
+5. Har bir yakunlangan test uchun coinlar (``academy.coins``).
 """
 
 import logging
@@ -22,13 +24,13 @@ from django.urls import reverse
 from django.utils import timezone
 
 from . import telegram_sender as tg
-from .models import QuizAttempt, QuizBatch, Student, SyllabusItem, TestRequest, Topic
+from .coins import PASS_PERCENT
+from .models import QuizAttempt, QuizBatch, Student, StudySession, SyllabusItem, TestRequest, Topic
 from .services import create_quiz_batch
 
 log = logging.getLogger(__name__)
 
 ACCESS_HOURS = (2, 3, 4)
-PASS_PERCENT = 50  # bundan past natija — mustahkamlash tavsiya etiladi
 
 
 class ProfileError(Exception):
@@ -67,7 +69,7 @@ def close_access(student: Student) -> None:
     student.save(update_fields=["profile_until", "profile_requested_at"])
 
 
-# --- Mavzular va so'rovlar -------------------------------------------------------
+# --- Mavzular va testlar ---------------------------------------------------------
 
 
 def taught_topic_ids(student: Student) -> set[int]:
@@ -78,6 +80,22 @@ def taught_topic_ids(student: Student) -> set[int]:
     )
 
 
+def next_topic(student: Student) -> Topic | None:
+    """Guruh dasturida oxirgi o'tilgan mavzudan keyingi (hali o'tilmagan) mavzu."""
+    items = list(
+        SyllabusItem.objects.filter(group_id=student.group_id)
+        .select_related("topic")
+        .order_by("order", "id")
+    )
+    last_taught = max(
+        (i for i, item in enumerate(items) if item.status == SyllabusItem.Status.TAUGHT), default=-1
+    )
+    return next(
+        (item.topic for item in items[last_taught + 1 :] if item.status == SyllabusItem.Status.PLANNED),
+        None,
+    )
+
+
 def day_start(now=None):
     tz = timezone.get_current_timezone()
     today = timezone.localtime(now or timezone.now(), tz).date()
@@ -85,7 +103,7 @@ def day_start(now=None):
 
 
 def used_today(student: Student, topic: Topic, now=None) -> int:
-    """Bugun shu mavzu bo'yicha so'rovlar (rad etilganlar hisoblanmaydi)."""
+    """Bugun shu mavzu bo'yicha boshlangan testlar (rad etilganlar hisoblanmaydi)."""
     return (
         TestRequest.objects.filter(student=student, topic=topic, created_at__gte=day_start(now))
         .exclude(status=TestRequest.Status.REJECTED)
@@ -98,8 +116,11 @@ class TopicRow:
     topic: Topic
     bank: int  # savollar banki hajmi
     last: QuizAttempt | None  # oxirgi yakunlangan test
-    request: TestRequest | None  # kutilayotgan yoki ruxsat berilgan so'rov
+    request: TestRequest | None  # boshlangan, lekin hali test yaratilmagan
     used: int  # bugun
+    preview: bool  # guruhdagi navbatdagi (yangi) mavzu
+    session: StudySession | None  # tegishli mustahkamlash/tayyorlanish
+    now: datetime
 
     @property
     def left_today(self) -> int:
@@ -110,76 +131,140 @@ class TopicRow:
         return bool(self.last and self.last.percent is not None and self.last.percent < PASS_PERCENT)
 
     @property
-    def can_request(self) -> bool:
-        return self.bank > 0 and self.request is None and self.left_today > 0
+    def gate(self) -> str:
+        """Test oldidan majburiy o'qish: "review" (past natija), "preview" (yangi mavzu) yoki ""."""
+        if self.needs_review:
+            return StudySession.Kind.REVIEW
+        if self.preview and self.last is None:
+            return StudySession.Kind.PREVIEW
+        return ""
+
+    @property
+    def unlocks_at(self):
+        return self.session.unlocks_at if self.session else None
+
+    @property
+    def locked(self) -> bool:
+        return bool(self.gate) and (self.session is None or self.now < self.session.unlocks_at)
+
+    @property
+    def seconds_left(self) -> int:
+        if not self.locked or self.session is None:
+            return 0
+        return max(0, int((self.session.unlocks_at - self.now).total_seconds()))
+
+    @property
+    def can_start(self) -> bool:
+        return self.bank > 0 and self.left_today > 0 and not self.locked
 
 
 def topic_rows(student: Student, now=None) -> list[TopicRow]:
-    topics = list(student.allowed_topics.select_related("module", "quiz").order_by(
-        "module__order", "module__title", "order", "title"
-    ))
+    """Ustoz ruxsat bergan mavzular + navbatdagi yangi mavzu (oldindan tayyorlanish)."""
+    now = now or timezone.now()
+    topics = list(
+        student.allowed_topics.select_related("module", "quiz").order_by(
+            "module__order", "module__title", "order", "title"
+        )
+    )
+    upcoming = next_topic(student)
+    if upcoming and upcoming.pk not in {t.pk for t in topics}:
+        topics.append(upcoming)
+    ids = [t.pk for t in topics]
     open_requests = {
         r.topic_id: r
         for r in TestRequest.objects.filter(
-            student=student,
-            topic__in=topics,
-            status__in=[TestRequest.Status.PENDING, TestRequest.Status.APPROVED],
+            student=student, topic_id__in=ids, status=TestRequest.Status.APPROVED
         )
     }
     last = {}
     for a in (
         QuizAttempt.objects.filter(
-            student=student, quiz__topic__in=topics, status=QuizAttempt.Status.FINISHED
+            student=student, quiz__topic_id__in=ids, status=QuizAttempt.Status.FINISHED
         )
         .select_related("quiz")
         .order_by("finished_at")
     ):
         last[a.quiz.topic_id] = a
-    start = day_start(now)
+    sessions = {}
+    for s in StudySession.objects.filter(student=student, topic_id__in=ids).order_by("started_at"):
+        sessions[(s.topic_id, s.kind)] = s  # eng oxirgisi qoladi
     used = {}
     for r in TestRequest.objects.filter(
-        student=student, topic__in=topics, created_at__gte=start
+        student=student, topic_id__in=ids, created_at__gte=day_start(now)
     ).exclude(status=TestRequest.Status.REJECTED):
         used[r.topic_id] = used.get(r.topic_id, 0) + 1
     rows = []
     for t in topics:
         quiz = getattr(t, "quiz", None)
-        rows.append(
-            TopicRow(
-                topic=t,
-                bank=quiz.questions.count() if quiz else 0,
-                last=last.get(t.pk),
-                request=open_requests.get(t.pk),
-                used=used.get(t.pk, 0),
-            )
+        row = TopicRow(
+            topic=t,
+            bank=quiz.questions.count() if quiz else 0,
+            last=last.get(t.pk),
+            request=open_requests.get(t.pk),
+            used=used.get(t.pk, 0),
+            preview=bool(upcoming and t.pk == upcoming.pk),
+            session=None,
+            now=now,
         )
+        if row.gate:
+            s = sessions.get((t.pk, row.gate))
+            # Mustahkamlash — faqat oxirgi past natijadan keyin boshlangani hisoblanadi.
+            if s and (row.gate != StudySession.Kind.REVIEW or s.started_at >= row.last.finished_at):
+                row.session = s
+        rows.append(row)
     return rows
 
 
-def request_test(student: Student, topic: Topic, kind: str = TestRequest.Kind.FIRST) -> TestRequest:
-    """Test so'rovi. Sabab bilan rad etilsa — ProfileError."""
+def row_for(student: Student, topic: Topic) -> TopicRow | None:
+    return next((r for r in topic_rows(student) if r.topic.pk == topic.pk), None)
+
+
+def open_study(student: Student, topic: Topic) -> TopicRow | None:
+    """Material sahifasi ochilganda: kerak bo'lsa mustahkamlash/tayyorlanish vaqtini boshlaydi."""
+    row = row_for(student, topic)
+    if row and row.gate and row.session is None and is_open(student):
+        StudySession.objects.create(student=student, topic=topic, kind=row.gate)
+        row = row_for(student, topic)
+    return row
+
+
+def begin_test(student: Student, topic: Topic) -> TestRequest:
+    """O'quvchi testni o'zi boshlaydi (ustoz ruxsati shart emas). Sabab bilan rad etilsa —
+    ProfileError. Qaytgan so'rov bo'yicha o'quvchi savollar soni va vaqtni tanlaydi."""
     if not is_open(student):
         raise ProfileError("Profilga kirish vaqti tugagan — ustozdan qayta ruxsat so‘rang.")
     with transaction.atomic():
-        if not student.allowed_topics.filter(pk=topic.pk).exists():
+        row = row_for(student, topic)
+        if row is None:
             raise ProfileError("Bu mavzudan test topshirishga ruxsat berilmagan.")
-        quiz = getattr(topic, "quiz", None)
-        if quiz is None or not quiz.questions.exists():
+        if row.request is not None:
+            return row.request  # boshlangan, lekin hali tanlanmagan — o'shani davom ettiramiz
+        if not row.bank:
             raise ProfileError("Bu mavzuda hali test savollari yo‘q.")
-        if TestRequest.objects.filter(
-            student=student,
-            topic=topic,
-            status__in=[TestRequest.Status.PENDING, TestRequest.Status.APPROVED],
-        ).exists():
-            raise ProfileError("Bu mavzu bo‘yicha so‘rovingiz allaqachon bor.")
-        if used_today(student, topic) >= TestRequest.DAILY_LIMIT:
+        if not row.left_today:
             raise ProfileError(
                 f"Bugun bu mavzudan {TestRequest.DAILY_LIMIT} ta test topshirdingiz — ertaga qayta urinib ko‘ring."
             )
-        req = TestRequest.objects.create(student=student, topic=topic, kind=kind)
-    label = "qayta topshirmoqchi" if kind == TestRequest.Kind.RETAKE else "test topshirmoqchi"
-    notify(f"📝 {student.full_name} ({student.group.code}) “{topic.title}” mavzusidan {label}.")
-    return req
+        if row.locked:
+            what = "Mustahkamlash" if row.gate == StudySession.Kind.REVIEW else "Yangi mavzuga tayyorlanish"
+            if row.session is None:
+                raise ProfileError(f"Avval materialni oching: {what.lower()} vaqti shundan boshlanadi.")
+            at = timezone.localtime(row.unlocks_at)
+            raise ProfileError(f"{what} {at:%H:%M} da tugaydi — keyin test ochiladi.")
+        kind = (
+            TestRequest.Kind.RETAKE
+            if row.gate == StudySession.Kind.REVIEW
+            else TestRequest.Kind.PREVIEW
+            if row.gate == StudySession.Kind.PREVIEW
+            else TestRequest.Kind.FIRST
+        )
+        return TestRequest.objects.create(
+            student=student,
+            topic=topic,
+            kind=kind,
+            status=TestRequest.Status.APPROVED,
+            decided_at=timezone.now(),
+        )
 
 
 def decide_test(req: TestRequest, approve: bool) -> None:

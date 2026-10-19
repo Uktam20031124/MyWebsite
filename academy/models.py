@@ -258,6 +258,11 @@ class Topic(models.Model):
         help_text="O'quvchi testdan past natija olsa, profilida ko'rinadi: tushuntirish, "
         "bajarilgan misollar. Format: ## sarlavha, - ro'yxat, ``` kod ```, **qalin**, `kod`.",
     )
+    study_ru = models.TextField(
+        "Mustahkamlash materiali (ruscha)",
+        blank=True,
+        help_text="Ruscha test tanlagan o'quvchilarga ko'rsatiladi (bo'sh — o'zbekchasi).",
+    )
     duration_minutes = models.PositiveIntegerField("Davomiyligi (daq.)", default=90)
     order = models.PositiveIntegerField("Tartib", default=0, db_index=True)
     is_active = models.BooleanField("Faol", default=True)
@@ -281,6 +286,9 @@ class Topic(models.Model):
 
     def title_in(self, lang: str) -> str:
         return self.title_ru if lang == QuizLanguage.RU and self.title_ru else self.title
+
+    def study_in(self, lang: str) -> str:
+        return self.study_ru if lang == QuizLanguage.RU and self.study_ru else self.study
 
     def resource_list(self) -> list[dict]:
         items = []
@@ -966,6 +974,10 @@ class QuizAttempt(models.Model):
             attempt.finished_at = timezone.now()
             attempt.timed_out = timed_out
             attempt.save()
+            # Coinlar — test yakunlangan tranzaksiyaning o'zida (bir marta).
+            from .coins import award_for_attempt
+
+            award_for_attempt(attempt)
         self.refresh_from_db()
 
 
@@ -1073,6 +1085,7 @@ class TestRequest(models.Model):
     class Kind(models.TextChoices):
         FIRST = "first", "Test"
         RETAKE = "retake", "Qayta topshirish"
+        PREVIEW = "preview", "Yangi mavzu (oldindan)"
 
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name="test_requests", verbose_name="O'quvchi"
@@ -1102,3 +1115,67 @@ class TestRequest(models.Model):
 
     def __str__(self) -> str:
         return f"{self.student} — {self.topic} ({self.get_status_display()})"
+
+
+class StudySession(models.Model):
+    """O'quvchi mustahkamlash (yoki yangi mavzuga tayyorlanish) materialini ochgan payt.
+
+    Qayta topshirish / yangi mavzu testi shundan ``MIN_MINUTES`` daqiqa o'tgach ochiladi.
+    """
+
+    class Kind(models.TextChoices):
+        REVIEW = "review", "Mustahkamlash"
+        PREVIEW = "preview", "Yangi mavzuga tayyorlanish"
+
+    MIN_MINUTES = {Kind.REVIEW: 20, Kind.PREVIEW: 30}
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="study_sessions", verbose_name="O'quvchi"
+    )
+    topic = models.ForeignKey(
+        Topic, on_delete=models.CASCADE, related_name="study_sessions", verbose_name="Mavzu"
+    )
+    kind = models.CharField("Turi", max_length=8, choices=Kind.choices)
+    started_at = models.DateTimeField("Boshlangan", default=timezone.now)
+
+    class Meta:
+        ordering = ["-started_at"]
+        verbose_name = "Mustahkamlash"
+        verbose_name_plural = "Mustahkamlashlar"
+
+    def __str__(self) -> str:
+        return f"{self.student} — {self.topic} ({self.get_kind_display()})"
+
+    @property
+    def unlocks_at(self):
+        return self.started_at + timedelta(minutes=self.MIN_MINUTES[self.kind])
+
+
+class CoinTransaction(models.Model):
+    """Coin harakati (balans — yig'indi). Test uchun coin bir marta beriladi."""
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="coins", verbose_name="O'quvchi"
+    )
+    amount = models.IntegerField("Coin")
+    reason = models.CharField("Sabab", max_length=120)
+    attempt = models.ForeignKey(
+        QuizAttempt,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="coins",
+        verbose_name="Test",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name = "Coin"
+        verbose_name_plural = "Coinlar"
+        constraints = [
+            models.UniqueConstraint(fields=["attempt", "reason"], name="uniq_coin_per_attempt_reason"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.student}: {self.amount:+d} ({self.reason})"
