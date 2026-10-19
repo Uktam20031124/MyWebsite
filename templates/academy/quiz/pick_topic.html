@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}Test jo‘natish · Darsxona{% endblock %}
+{% block title %}Test jo‘natish · Minar Test{% endblock %}
 {% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>{% if lesson %}<a href="{{ lesson.get_absolute_url }}">{{ lesson.group.name }} · {{ lesson.held_on|date:"d.m.Y" }}</a><span class="sep">/</span>{% endif %}1-qadam: mavzu{% endblock %}
 {% block heading %}Qaysi mavzu bo‘yicha test jo‘natamiz?{% endblock %}
 {% block subheading %}<p class="page-sub">Mavzuni tanlang — keyingi qadamda shogirdlar, savollar soni va vaqtni belgilaysiz. {{ ready_n }} ta mavzuda savollar banki tayyor.</p>{% endblock %}

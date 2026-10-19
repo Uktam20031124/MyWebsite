@@ -1,0 +1,67 @@
+{% extends "academy/base.html" %}
+{% load ui %}
+{% block title %}So‘rovlar · Testlar{% endblock %}
+{% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>So‘rovlar{% endblock %}
+{% block heading %}Javoblarni ko‘rish so‘rovlari{% endblock %}
+{% block subheading %}<p class="page-sub">O‘quvchi testni tugatgach faqat ballini ko‘radi. Qaysi savolda to‘g‘ri, qaysida xato qilganini — faqat siz ruxsat bergandan keyin (to‘g‘ri variantlar baribir ko‘rsatilmaydi).</p>{% endblock %}
+{% block actions %}
+{% if pending %}
+  <form method="post" action="{% url 'quiz_review_approve_all' %}">
+    {% csrf_token %}
+    <button class="btn primary" type="submit" data-confirm="{{ pending|length }} ta so‘rovning hammasiga ruxsat berilsinmi?">{% icon "check" 16 %} Hammasiga ruxsat ({{ pending|length }})</button>
+  </form>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="card" aria-labelledby="pending-h">
+  <div class="card-head"><h2 id="pending-h">{% icon "shield" 18 %} Kutilayotgan so‘rovlar</h2><span class="meta">{{ pending|length }} ta</span></div>
+  <div class="card-body flush">
+    <div class="rows">
+      {% for a in pending %}
+        <div class="row quiz-row">
+          <a class="person grow" href="{% url 'quiz_attempt_review' a.pk %}" title="Javoblarini ko‘rish (faqat siz)">
+            <span class="avatar sm" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
+            <span class="truncate">
+              <span class="person-name block truncate">{{ a.student.full_name }}{% if a.language == "ru" %} <span class="badge plain">RU</span>{% endif %}</span>
+              <span class="person-meta">{{ a.quiz.topic.title }} · {{ a.student.group.code }} · so‘radi {{ a.reveal_requested_at|date:"d.m H:i" }}</span>
+            </span>
+          </a>
+          <div class="quiz-actions">
+            <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
+            <form method="post" action="{% url 'quiz_review_decide' a.pk %}">
+              {% csrf_token %}
+              <button class="btn xs primary" type="submit" name="action" value="approve">{% icon "check" 13 %} Ruxsat</button>
+              <button class="btn xs ghost" type="submit" name="action" value="reject">Rad etish</button>
+            </form>
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty compact"><p>Hozircha so‘rov yo‘q.</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% if decided %}
+<section class="card" style="margin-top:18px" aria-labelledby="decided-h">
+  <div class="card-head"><h2 id="decided-h">{% icon "clock" 18 %} Oxirgi qarorlar</h2></div>
+  <div class="card-body flush">
+    <div class="rows">
+      {% for a in decided %}
+        <div class="row quiz-row">
+          <span class="grow truncate"><span class="person-name block truncate">{{ a.student.full_name }}</span><span class="person-meta">{{ a.quiz.topic.title }} · {{ a.reveal_decided_at|date:"d.m H:i" }}</span></span>
+          <div class="quiz-actions">
+            {% if a.reveal == "approved" %}<span class="badge ok">ruxsat berilgan</span>{% else %}<span class="badge plain">rad etilgan</span>{% endif %}
+            <form method="post" action="{% url 'quiz_review_decide' a.pk %}">
+              {% csrf_token %}
+              {% if a.reveal == "approved" %}<button class="btn xs ghost" type="submit" name="action" value="reject">Yopish</button>{% else %}<button class="btn xs ghost" type="submit" name="action" value="approve">Ruxsat berish</button>{% endif %}
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

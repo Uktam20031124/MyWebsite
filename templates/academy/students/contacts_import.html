@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}Aloqa ma’lumotlari · Darsxona{% endblock %}
+{% block title %}Aloqa ma’lumotlari · Minar Test{% endblock %}
 {% block kicker %}<a href="{% url 'student_list' %}">Shogirdlar</a><span class="sep">/</span>Telegram, telefon, email{% endblock %}
 {% block heading %}Telegram / telefon / emaillarni kiritish{% endblock %}
 {% block subheading %}<p class="page-sub">Ro‘yxatni qo‘ying → ko‘rib chiqing → tasdiqlang. {% if missing_n %}Hozir <strong>{{ missing_n }}</strong> ta faol o‘quvchida Telegram, telefon va email yo‘q — ularga test yuborib bo‘lmaydi.{% else %}Barcha faol o‘quvchilarda aloqa ma’lumoti bor.{% endif %}</p>{% endblock %}

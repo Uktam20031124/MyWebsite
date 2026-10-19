@@ -733,6 +733,14 @@ class QuizAttempt(models.Model):
         ACTIVE = "active", "Yechilmoqda"
         FINISHED = "finished", "Tugatgan"
 
+    class Reveal(models.TextChoices):
+        """O'quvchi o'z javoblarini (to'g'ri/xato) ko'rishi — faqat ustoz ruxsati bilan."""
+
+        NONE = "", "So‘ralmagan"
+        REQUESTED = "requested", "So‘ralgan"
+        APPROVED = "approved", "Ruxsat berilgan"
+        REJECTED = "rejected", "Rad etilgan"
+
     # Vaqt tugash paytida yuborilgan javoblar tarmoq kechikishi bilan kelsa ham qabul qilinadi.
     GRACE_SECONDS = 15
 
@@ -776,6 +784,12 @@ class QuizAttempt(models.Model):
     # Email (Gmail) orqali yuborilgan payt va oxirgi xato (bo'lsa).
     email_sent_at = models.DateTimeField("Emailga yuborilgan", null=True, blank=True)
     email_error = models.CharField("Email xatosi", max_length=255, blank=True)
+    reveal = models.CharField(
+        "Javoblarni ko'rish", max_length=12, choices=Reveal.choices, default=Reveal.NONE,
+        blank=True, db_index=True,
+    )
+    reveal_requested_at = models.DateTimeField("Ko'rish so'ralgan", null=True, blank=True)
+    reveal_decided_at = models.DateTimeField("Ustoz qarori", null=True, blank=True)
     send_error = models.CharField("Yuborish xatosi", max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -900,6 +914,25 @@ class QuizAttempt(models.Model):
                 (pick(c) for c in item["choices"] if c["id"] == item["picked"]), ""
             )
         return items
+
+    @property
+    def can_see_answers(self) -> bool:
+        return self.status == self.Status.FINISHED and self.reveal == self.Reveal.APPROVED
+
+    def request_reveal(self) -> bool:
+        """O'quvchi so'rovi: faqat yakunlangan va hali so'ralmagan testga (rad etilgani
+        qayta so'ralmaydi — ustozni bezovta qilmaslik uchun). Yangi so'rov bo'lsa True."""
+        updated = QuizAttempt.objects.filter(
+            pk=self.pk, status=self.Status.FINISHED, reveal=self.Reveal.NONE
+        ).update(reveal=self.Reveal.REQUESTED, reveal_requested_at=timezone.now())
+        self.refresh_from_db(fields=["reveal", "reveal_requested_at"])
+        return bool(updated)
+
+    def decide_reveal(self, approve: bool) -> None:
+        """Ustoz qarori (so'rovsiz ham ruxsat berish yoki ruxsatni qaytarib olish mumkin)."""
+        self.reveal = self.Reveal.APPROVED if approve else self.Reveal.REJECTED
+        self.reveal_decided_at = timezone.now()
+        self.save(update_fields=["reveal", "reveal_decided_at"])
 
     def finish(self, answers: dict | None = None, timed_out: bool = False) -> None:
         """Javoblarni baholab, testni yakunlaydi. `answers`: {savol_id: variant_id}."""

@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui l10n %}
-{% block title %}Dars jadvali · Darsxona{% endblock %}
+{% block title %}Dars jadvali · Minar Test{% endblock %}
 {% block kicker %}{% icon "calendar" 15 %} {{ monday|date:"j E" }} — {% with sunday=days.6.date %}{{ sunday|date:"j E Y" }}{% endwith %}{% endblock %}
 {% block heading %}Dars jadvali{% endblock %}
 {% block subheading %}<p class="page-sub">{{ sessions|length }} ta dars shu haftada. Blokni bosing — dars yoki guruh sahifasi ochiladi.</p>{% endblock %}

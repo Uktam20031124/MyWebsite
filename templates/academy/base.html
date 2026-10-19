@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#15251e">
   <meta name="color-scheme" content="light dark">
-  <title>{% block title %}Darsxona{% endblock %}</title>
+  <title>{% block title %}Minar Test{% endblock %}</title>
   {% include "academy/includes/head.html" %}
   {# Turbo: havola va formalar sahifani to'liq qayta yuklamasdan ochiladi (faqat <body> almashadi). #}
   <script src="{% static 'vendor/turbo-8.0.12.umd.js' %}" defer data-turbo-track="reload"></script>
@@ -17,9 +17,9 @@
 <div class="app">
   <aside class="sidebar" id="sidebar" aria-label="Yon menyu">
     <a class="brand" href="{% url 'dashboard' %}">
-      <span class="brand-mark" aria-hidden="true">Dx</span>
+      <span class="brand-mark" aria-hidden="true">MT</span>
       <span>
-        <span class="brand-name">Darsxona</span>
+        <span class="brand-name">Minar Test</span>
         <span class="brand-sub block">Ustoz CRM</span>
       </span>
     </a>
@@ -56,6 +56,10 @@
         <a href="{% url 'quiz_batches' %}" {% if url_name == 'quiz_send' or 'quiz_batch' in url_name %}aria-current="page"{% endif %}>
           {% icon "target" %} Testlar
           {% if nav_quiz_open %}<span class="count" title="Hali yechilmagan test havolalari">{{ nav_quiz_open }}</span>{% endif %}
+        </a>
+        <a href="{% url 'quiz_review_requests' %}" {% if url_name == 'quiz_review_requests' %}aria-current="page"{% endif %}>
+          {% icon "shield" %} So‘rovlar
+          {% if nav_review_requests %}<span class="count hot" title="Javoblarini ko‘rish uchun ruxsat so‘ragan o‘quvchilar">{{ nav_review_requests }}</span>{% endif %}
         </a>
       </div>
     </nav>

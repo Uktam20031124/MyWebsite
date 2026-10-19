@@ -150,7 +150,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = GMAIL_USER
 EMAIL_HOST_PASSWORD = os.environ.get("DARSXONA_GMAIL_APP_PASSWORD", "").replace(" ", "")
 EMAIL_TIMEOUT = 20
-EMAIL_FROM_NAME = os.environ.get("DARSXONA_EMAIL_FROM_NAME", "Darsxona")
+EMAIL_FROM_NAME = os.environ.get("DARSXONA_EMAIL_FROM_NAME", "Minar Test")
 DEFAULT_FROM_EMAIL = f"{EMAIL_FROM_NAME} <{GMAIL_USER}>" if GMAIL_USER else "webmaster@localhost"
 # Kunlik hisobot qaysi manzilga (standart — Gmail hisobning o'zi).
 REPORT_EMAIL = os.environ.get("DARSXONA_REPORT_EMAIL", GMAIL_USER)

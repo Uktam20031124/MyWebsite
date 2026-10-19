@@ -285,6 +285,10 @@ class PortalTests(Base):
         self.assertContains(page, "67%")  # 4/6
         self.assertContains(page, "2<small>/2</small>")  # guruhda 2-o'rin
         self.assertContains(page, "Yechilmagan testlar")
+        self.assertNotContains(page, "Javobingiz")  # ruxsatsiz javoblar ko'rinmaydi
+        self.assertContains(page, "ruxsat so‘rash")
+        b.attempts.get(student=self.ali).decide_reveal(True)
+        page = self.client_class().get(url)
         self.assertContains(page, "Javobingiz: <strong>xato 5</strong>")
         self.assertNotContains(page, "to'g'ri 5")  # xato javobda to'g'ri variant ko'rinmaydi
         self.assertEqual(self.client_class().get(reverse("student_portal", args=["yoq"])).status_code, 404)

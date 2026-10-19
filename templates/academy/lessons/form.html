@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}{% if form.instance.pk %}Darsni tahrirlash{% else %}Yangi dars{% endif %} · Darsxona{% endblock %}
+{% block title %}{% if form.instance.pk %}Darsni tahrirlash{% else %}Yangi dars{% endif %} · Minar Test{% endblock %}
 {% block kicker %}<a href="{% url 'lesson_list' %}">Darslar</a><span class="sep">/</span>{% if form.instance.pk %}Tahrir{% else %}Yangi{% endif %}{% endblock %}
 {% block heading %}{% if form.instance.pk %}Darsni tahrirlash{% else %}Yangi dars{% endif %}{% endblock %}
 {% block subheading %}<p class="page-sub">Uyga vazifa bo‘sh qolsa, mavzudagi shablon qo‘yiladi. “O‘tildi” holati guruh dasturini avtomatik yangilaydi.</p>{% endblock %}

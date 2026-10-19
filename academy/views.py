@@ -19,6 +19,7 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import (
@@ -31,7 +32,7 @@ from django.views.generic import (
 )
 from django.views.static import serve as static_serve
 
-from . import delivery, mailer, motivation, telegram_sender
+from . import delivery, mailer, motivation, review_access, telegram_sender
 from .contacts import apply_contacts, has_contact, has_telegram, preview_contacts
 from .delivery import quiz_message  # noqa: F401 — eski import yo'llari uchun
 from .forms import (
@@ -1364,6 +1365,7 @@ def quiz_batch_detail(request, pk):
             "email_n": sum(bool(a.student.email) for a in attempts),
             "hardest": hardest_questions(finished),
             "retake_n": sum(a.percent < RETAKE_BELOW for a in finished),
+            "review_requested_n": sum(a.reveal == QuizAttempt.Reveal.REQUESTED for a in finished),
             "retake_below": RETAKE_BELOW,
             "telegram_ready": telegram_sender.is_configured(),
             "telegram_hint": telegram_sender.setup_hint(),
@@ -1418,6 +1420,59 @@ def quiz_attempt_review(request, pk):
             "next": others[index + 1] if index + 1 < len(others) else None,
         },
     )
+
+
+@login_required
+def quiz_review_requests(request):
+    """O'quvchilarning "javoblarimni ko'rsam bo'ladimi?" so'rovlari."""
+    decided = (
+        QuizAttempt.objects.filter(reveal_decided_at__isnull=False)
+        .select_related("student__group", "quiz__topic", "batch")
+        .order_by("-reveal_decided_at")[:20]
+    )
+    return render(
+        request,
+        "academy/quiz/review_requests.html",
+        {"pending": list(review_access.pending_requests()), "decided": decided},
+    )
+
+
+def _back(request, default: str) -> str:
+    target = request.POST.get("next", "")
+    if url_has_allowed_host_and_scheme(target, {request.get_host()}, request.is_secure()):
+        return target
+    return default
+
+
+@login_required
+@require_POST
+def quiz_review_decide(request, pk):
+    """Ustoz qarori: approve — o'quvchi javoblarini (to'g'ri/xato) ko'radi, reject — yo'q."""
+    attempt = get_object_or_404(
+        QuizAttempt.objects.select_related("student"), pk=pk, status=QuizAttempt.Status.FINISHED
+    )
+    approve = request.POST.get("action") == "approve"
+    attempt.decide_reveal(approve)
+    messages.success(
+        request,
+        f"{attempt.student.full_name}: javoblarini ko‘rishga ruxsat berildi."
+        if approve
+        else f"{attempt.student.full_name}: javoblarini ko‘rish rad etildi.",
+    )
+    return redirect(_back(request, reverse("quiz_review_requests")))
+
+
+@login_required
+@require_POST
+def quiz_review_approve_all(request):
+    """Kutilayotgan barcha so'rovlarga (yoki bitta jo'natmadagilariga) ruxsat."""
+    qs = QuizAttempt.objects.filter(reveal=QuizAttempt.Reveal.REQUESTED)
+    batch_id = request.POST.get("batch", "")
+    if batch_id.isdigit():
+        qs = qs.filter(batch_id=batch_id)
+    n = qs.update(reveal=QuizAttempt.Reveal.APPROVED, reveal_decided_at=timezone.now())
+    messages.success(request, f"{n} ta so‘rovga ruxsat berildi." if n else "Kutilayotgan so‘rov yo‘q.")
+    return redirect(_back(request, reverse("quiz_review_requests")))
 
 
 RETAKE_BELOW = 50  # shundan past natija olganlar qayta topshiradi
@@ -1617,7 +1672,8 @@ def quiz_take(request, token):
 
     if attempt.status == Status.FINISHED:
         if owner:
-            return _quiz_page(request, attempt, "result", items=_student_review(attempt))
+            items = _student_review(attempt) if attempt.can_see_answers else []
+            return _quiz_page(request, attempt, "result", items=items)
         return _quiz_page(request, attempt, "used", status=410)
 
     if attempt.status == Status.ACTIVE:
@@ -1681,6 +1737,19 @@ def _record_leaves(request, attempt: QuizAttempt) -> None:
     if (leaves, away) != (attempt.leave_count, attempt.away_seconds):
         QuizAttempt.objects.filter(pk=attempt.pk).update(leave_count=leaves, away_seconds=away)
         attempt.leave_count, attempt.away_seconds = leaves, away
+
+
+@never_cache
+@require_POST
+def quiz_review_request(request, token):
+    """Natija sahifasidan: javoblarni ko'rish uchun ustozdan ruxsat so'rash (faqat
+    testni yechgan brauzerdan)."""
+    attempt = get_object_or_404(
+        QuizAttempt.objects.select_related("student", "quiz__topic"), token=token
+    )
+    if _is_owner(request, attempt) and attempt.request_reveal():
+        review_access.notify_teacher(attempt)
+    return redirect(attempt.get_absolute_url())
 
 
 @never_cache
@@ -1977,7 +2046,7 @@ def student_portal(request, token):
         .order_by("-finished_at")
     )
     for a in finished:
-        a.items = _student_review(a)
+        a.items = _student_review(a) if a.can_see_answers else []
     pending = list(
         student.quiz_attempts.filter(status=QuizAttempt.Status.PENDING)
         .select_related("quiz__topic", "batch")
@@ -2002,6 +2071,21 @@ def student_portal(request, token):
     return response
 
 
+@never_cache
+@require_POST
+def portal_review_request(request, token, pk):
+    """Shaxsiy sahifadan: shu testdagi javoblarni ko'rish uchun ustozdan ruxsat so'rash."""
+    if not token:
+        raise Http404
+    student = get_object_or_404(Student, portal_token=token)
+    attempt = get_object_or_404(
+        QuizAttempt.objects.select_related("student", "quiz__topic"), pk=pk, student=student
+    )
+    if attempt.request_reveal():
+        review_access.notify_teacher(attempt)
+    return redirect(f"{reverse('student_portal', args=[token])}#a{attempt.pk}")
+
+
 def _portal_message(student, url):
     return (
         f"Salom, {student.full_name}!\n"
@@ -2014,7 +2098,7 @@ def _portal_mail(student, url) -> mailer.Mail:
     return mailer.Mail(
         key=student.pk,
         to=student.email,
-        subject="Shaxsiy sahifangiz — Darsxona",
+        subject="Shaxsiy sahifangiz — Minar Test",
         text=_portal_message(student, url),
         html=mailer.button_html(
             "Shaxsiy sahifangiz",

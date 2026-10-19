@@ -20,6 +20,9 @@ def nav_counts(request):
         "nav_quiz_open": QuizAttempt.objects.exclude(
             status=QuizAttempt.Status.FINISHED
         ).count(),
+        "nav_review_requests": QuizAttempt.objects.filter(
+            reveal=QuizAttempt.Reveal.REQUESTED
+        ).count(),
         "nav_registrations": Registration.objects.filter(
             status=Registration.Status.PENDING
         ).count(),

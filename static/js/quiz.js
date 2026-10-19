@@ -1,4 +1,4 @@
-// Darsxona — test sahifasi: teskari sanoq, javoblarni oraliq saqlash, vaqt tugaganda avto-yakun.
+// Minar Test — test sahifasi: teskari sanoq, javoblarni oraliq saqlash, vaqt tugaganda avto-yakun.
 // Vaqt server tomonida ham tekshiriladi; bu skript faqat qulaylik uchun.
 (() => {
   "use strict";

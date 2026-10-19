@@ -40,6 +40,7 @@ urlpatterns = [
     path("guruhlar/<int:pk>/telegram-chat/", views.group_telegram_chat, name="group_telegram_chat"),
     # O'quvchining shaxsiy sahifasi (login talab qilinmaydi, maxfiy havola)
     path("men/<str:token>/", views.student_portal, name="student_portal"),
+    path("men/<str:token>/sorov/<int:pk>/", views.portal_review_request, name="portal_review_request"),
     # Ro'yxatdan o'tish arizalari
     path("arizalar/", views.registrations, name="registrations"),
     path("arizalar/tasdiqlash/", views.registration_approve_all, name="registration_approve_all"),
@@ -76,6 +77,9 @@ urlpatterns = [
     path("testlar/jonatish/", views.quiz_send, name="quiz_send"),
     path("testlar/<int:pk>/", views.quiz_batch_detail, name="quiz_batch"),
     path("testlar/natija/<int:pk>/", views.quiz_attempt_review, name="quiz_attempt_review"),
+    path("testlar/sorovlar/", views.quiz_review_requests, name="quiz_review_requests"),
+    path("testlar/sorovlar/hammasi/", views.quiz_review_approve_all, name="quiz_review_approve_all"),
+    path("testlar/natija/<int:pk>/ruxsat/", views.quiz_review_decide, name="quiz_review_decide"),
     path("savollar/<int:pk>/rasm/", views.quiz_question_image, name="quiz_question_image"),
     # Savol rasmlari (test sahifasi login'siz ochiladi)
     path("media/<path:path>", views.media_file, name="media_file"),
@@ -87,4 +91,5 @@ urlpatterns = [
     path("t/<str:token>/", views.quiz_take, name="quiz_take"),
     path("t/<str:token>/saqlash/", views.quiz_save, name="quiz_save"),
     path("t/<str:token>/yakunlash/", views.quiz_submit, name="quiz_submit"),
+    path("t/<str:token>/sorov/", views.quiz_review_request, name="quiz_review_request"),
 ]

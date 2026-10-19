@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}{% if form.instance.pk %}Tahrir{% else %}Yangi guruh{% endif %} · Darsxona{% endblock %}
+{% block title %}{% if form.instance.pk %}Tahrir{% else %}Yangi guruh{% endif %} · Minar Test{% endblock %}
 {% block kicker %}<a href="{% url 'group_list' %}">Guruhlar</a><span class="sep">/</span>{% if form.instance.pk %}{{ form.instance.code }}{% else %}Yangi{% endif %}{% endblock %}
 {% block heading %}{% if form.instance.pk %}{{ form.instance.name }}{% else %}Yangi guruh{% endif %}{% endblock %}
 {% block subheading %}<p class="page-sub">Dars kunlari va vaqtini kiriting — guruh jadvalda, bosh sahifada va “Boshlash” tugmasida paydo bo‘ladi.</p>{% endblock %}

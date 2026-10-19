@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}Yo‘qlama · {{ lesson.group.code }} · Darsxona{% endblock %}
+{% block title %}Yo‘qlama · {{ lesson.group.code }} · Minar Test{% endblock %}
 {% block kicker %}<a href="{{ lesson.group.get_absolute_url }}">{{ lesson.group.name }}</a><span class="sep">·</span>{{ lesson.held_on|weekday_full }}, {{ lesson.held_on|date:"d.m.Y" }}{% endblock %}
 {% block heading %}Yo‘qlama{% endblock %}
 {% block subheading %}<p class="page-sub">{% icon "book" 15 %} {{ lesson.topic.title|default:"Mavzusiz dars" }}</p>{% endblock %}

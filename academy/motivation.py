@@ -151,7 +151,7 @@ def certificate_pdf(student: Student, course: str, teacher: str) -> bytes:
     cx = width / 2
     pdf.setFillColor(gold)
     pdf.setFont("DX-Bold", 13)
-    pdf.drawCentredString(cx, height - 92, "DARSXONA")
+    pdf.drawCentredString(cx, height - 92, "MINAR TEST")
     pdf.setFillColor(brand)
     pdf.setFont("DX-Serif", 46)
     pdf.drawCentredString(cx, height - 150, "SERTIFIKAT")

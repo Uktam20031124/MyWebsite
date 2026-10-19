@@ -60,7 +60,7 @@ class Command(BaseCommand):
         if telegram:
             try:
                 tg.send_file_to_self(
-                    target, caption=f"Darsxona zaxira nusxasi · {timezone.localtime():%d.%m.%Y %H:%M}"
+                    target, caption=f"Minar Test zaxira nusxasi · {timezone.localtime():%d.%m.%Y %H:%M}"
                 )
             except tg.TelegramError as exc:
                 # Lokal nusxa tayyor — Telegram xatosi uni bekor qilmaydi, lekin xabar beriladi.

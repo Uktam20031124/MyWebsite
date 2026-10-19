@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}Test · {{ topic.title }} · Darsxona{% endblock %}
+{% block title %}Test · {{ topic.title }} · Minar Test{% endblock %}
 {% block kicker %}<a href="{% url 'topic_list' %}">Mavzular</a><span class="sep">/</span><a href="{{ topic.get_absolute_url }}">{{ topic.title }}</a><span class="sep">/</span>Test{% endblock %}
 {% block heading %}{% if form.instance.pk %}Testni tahrirlash{% else %}Yangi test{% endif %}{% endblock %}
 {% block content %}

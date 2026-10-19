@@ -1,6 +1,6 @@
 {% extends "academy/base.html" %}
 {% load ui %}
-{% block title %}{{ topic.title }} · Darsxona{% endblock %}
+{% block title %}{{ topic.title }} · Minar Test{% endblock %}
 {% block kicker %}<a href="{% url 'topic_list' %}">Mavzular</a><span class="sep">/</span>{% if topic.module %}<a href="{{ topic.module.get_absolute_url }}">{{ topic.module.title }}</a>{% else %}Bo‘limsiz{% endif %}<span class="sep">·</span>{% icon "clock" 14 %} {{ topic.duration_minutes }} daq.{% endblock %}
 {% block heading %}{{ topic.title }}{% endblock %}
 {% block actions %}

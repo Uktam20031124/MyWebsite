@@ -70,7 +70,7 @@ def button_html(title: str, lines: list[str], url: str = "", button: str = "", f
         '<div style="background:#f5f2ea;padding:24px 12px;font-family:Arial,Helvetica,sans-serif">'
         '<div style="max-width:520px;margin:0 auto;background:#fffdf8;border:1px solid #e5ddcf;'
         'border-radius:16px;padding:24px;color:#1c1a16;font-size:15px;line-height:1.5">'
-        '<p style="margin:0 0 6px;font-size:12px;letter-spacing:.08em;color:#b08948;font-weight:700">DARSXONA</p>'
+        '<p style="margin:0 0 6px;font-size:12px;letter-spacing:.08em;color:#b08948;font-weight:700">MINAR TEST</p>'
         f'<h1 style="margin:0 0 14px;font-size:20px;color:#1e3a2f">{escape(title)}</h1>'
         f"{body}{cta}{foot}</div></div>"
     )

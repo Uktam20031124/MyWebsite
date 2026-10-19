@@ -60,6 +60,7 @@ class SnapshotTests(ReviewTestCase):
 
 class StudentCannotSeeAnswersTests(ReviewTestCase):
     def test_result_page_shows_own_marks_but_not_correct_answers(self):
+        self.attempt.decide_reveal(True)  # ustoz ruxsat bergan
         page = self.client.get(self.url)  # o'quvchining o'z brauzeri (cookie bor)
         self.assertContains(page, "33%")
         self.assertContains(page, "1 / 3 to‘g‘ri javob")
@@ -78,6 +79,7 @@ class StudentCannotSeeAnswersTests(ReviewTestCase):
 
         shown = [q.pk for q in _shuffled_questions(self.attempt)]
         self.assertEqual([i["id"] for i in review_in_shown_order(self.attempt)], shown)
+        self.attempt.decide_reveal(True)
         page = self.client.get(self.url).content.decode()
         titles = [self.quiz.questions.get(pk=pk).text.split("\n")[0] for pk in shown]
         positions = [page.index(f"{n}. {t}".replace("'", "&#x27;")) for n, t in enumerate(titles, 1)]

@@ -9,7 +9,7 @@ UZ, RU = QuizLanguage.UZ, QuizLanguage.RU
 
 _TEXTS = {
     UZ: {
-        "kicker": "Darsxona · test",
+        "kicker": "Minar Test · test",
         "hello": "Salom",
         "rule_questions": "{n} ta savol, har birida bitta to‘g‘ri javob.",
         "rule_time": "Vaqt: <strong>{m} daqiqa</strong>. Vaqt tugasa test avtomatik yakunlanadi.",
@@ -33,6 +33,13 @@ _TEXTS = {
         "verdict_high": "Ajoyib! Mavzu yaxshi o‘zlashtirilgan.",
         "verdict_mid": "Yomon emas, lekin mavzuni yana bir bor takrorlang.",
         "verdict_low": "Mavzuni qayta o‘rganib chiqing va ustozingizdan yordam so‘rang.",
+        "review_ask_hint": "Qaysi savolda to‘g‘ri, qaysida xato qilganingizni ko‘rish uchun "
+        "ustozingizdan ruxsat so‘rang.",
+        "review_ask": "Javoblarimni ko‘rish uchun ruxsat so‘rash",
+        "review_wait": "So‘rov ustozingizga yuborildi. Ruxsat berilgach, javoblaringiz shu sahifada "
+        "ko‘rinadi — sahifani keyinroq yangilang.",
+        "review_rejected": "Ustozingiz hozircha javoblarni ko‘rsatmaslikka qaror qildi. Savollaringizni darsda bering.",
+        "refresh": "Yangilash",
         "your_answers": "Javoblaringiz",
         "your_answer": "Javobingiz",
         "no_answer": "Javob berilmagan",
@@ -57,7 +64,7 @@ _TEXTS = {
         "rem_title": "Test hali ochilmagan",
     },
     RU: {
-        "kicker": "Darsxona · тест",
+        "kicker": "Minar Test · тест",
         "hello": "Здравствуйте",
         "rule_questions": "Вопросов: {n}, в каждом один правильный ответ.",
         "rule_time": "Время: <strong>{m} мин</strong>. Когда время закончится, тест завершится "
@@ -82,6 +89,12 @@ _TEXTS = {
         "verdict_high": "Отлично! Тема хорошо усвоена.",
         "verdict_mid": "Неплохо, но повторите тему ещё раз.",
         "verdict_low": "Изучите тему заново и попросите помощи у учителя.",
+        "review_ask_hint": "Чтобы увидеть, где вы ответили верно, а где ошиблись, попросите разрешение у учителя.",
+        "review_ask": "Попросить разрешение посмотреть ответы",
+        "review_wait": "Запрос отправлен учителю. Когда он разрешит, ваши ответы появятся на этой "
+        "странице — обновите её позже.",
+        "review_rejected": "Учитель решил пока не показывать ответы. Задайте вопросы на уроке.",
+        "refresh": "Обновить",
         "your_answers": "Ваши ответы",
         "your_answer": "Ваш ответ",
         "no_answer": "Нет ответа",
