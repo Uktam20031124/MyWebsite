@@ -243,3 +243,27 @@ class CoinTests(TestCase):
         self.assertEqual(coins.balance(ali), 7)
         self.assertEqual(ali.coins.count(), 1)
         self.assertEqual([coins.score_coins(p) for p in (95, 80, 60, 59)], [10, 7, 5, 1])
+
+
+class TopicStudyFormTests(TestCase):
+    def test_teacher_edits_both_languages(self):
+        client = self.client_class()
+        client.force_login(f.user())
+        topic = f.topic(title="Sikllar")
+        url = reverse("topic_update", args=[topic.pk])
+        self.assertContains(client.get(url), 'name="study_ru"')
+        data = {
+            "title": "Sikllar",
+            "title_ru": "Циклы",
+            "description": "",
+            "homework": "",
+            "resources": "",
+            "study": "## Uz",
+            "study_ru": "## Ру",
+            "duration_minutes": 90,
+            "order": 1,
+            "is_active": "on",
+        }
+        client.post(url, data)
+        topic.refresh_from_db()
+        self.assertEqual((topic.study, topic.study_ru), ("## Uz", "## Ру"))
