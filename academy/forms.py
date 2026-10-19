@@ -15,6 +15,7 @@ from .models import (
     QuizBatch,
     QuizLanguage,
     RegistrationLink,
+    Reward,
     Student,
     Topic,
 )
@@ -532,3 +533,9 @@ class RegistrationLinkForm(StyledFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["group"].queryset = Group.objects.filter(status=Group.Status.ACTIVE)
         self.fields["group"].empty_label = "— guruhsiz (tasdiqlashda tanlanadi) —"
+
+
+class RewardForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = Reward
+        fields = ["title", "cost", "description", "order", "is_active"]

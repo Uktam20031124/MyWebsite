@@ -7,16 +7,30 @@
     <p class="muted">Profil ochiq: <strong>{{ student.profile_until|date:"H:i" }}</strong> gacha. Natijalaringiz, o‘sishingiz va testlar.</p>
   </header>
 
+  <section class="portal-hero">
+    <div class="card pad hero-card">
+      <span class="meta">Coinlaringiz</span>
+      <strong class="portal-big">🪙 {{ coin_balance }}</strong>
+      {% if coin_available != coin_balance %}<span class="meta">sarflash mumkin: {{ coin_available }}</span>{% endif %}
+    </div>
+    <div class="card pad hero-card streak-card{% if streak.days %} on{% endif %}">
+      <span class="meta">Streak</span>
+      <strong class="portal-big">🔥 {{ streak.days }} <small>kun</small></strong>
+      <div class="streak-week" aria-label="Oxirgi 7 kun">{% for d, on in streak.week %}<span class="{% if on %}on{% endif %}" title="{{ d|date:'d.m' }}">{{ d|date:"D"|slice:":2" }}</span>{% endfor %}</div>
+      <span class="meta">{% if streak.active_today %}Bugun faolsiz ✅{% else %}Bugun test yoki mashq qiling — streak uzilmasin!{% endif %} · {{ streak_every }} kunlik bonusgacha {{ streak.to_bonus }} kun (+{{ streak_bonus }} 🪙)</span>
+    </div>
+  </section>
+
   <section class="card pad portal-coins" id="coins">
     <div class="portal-coin-head">
-      <div><span class="meta">Coinlaringiz</span><strong class="portal-big">🪙 {{ coin_balance }}</strong></div>
+      <h2 style="margin:0">Coin tarixi</h2>
       <details class="coin-rules"><summary class="meta">Coin qanday beriladi?</summary><ul>{% for r in coin_rules %}<li>{{ r }}</li>{% endfor %}</ul></details>
     </div>
     {% if coin_history %}
       <ul class="coin-history">
         {% for c in coin_history %}<li><span class="coin-amount {% if c.amount < 0 %}neg{% endif %}">{{ c.amount|stringformat:"+d" }}</span> <span class="grow">{{ c.reason }}{% if c.attempt %} · {{ c.attempt.quiz.topic.title }}{% endif %}</span> <span class="meta">{{ c.created_at|date:"d.m H:i" }}</span></li>{% endfor %}
       </ul>
-    {% endif %}
+    {% else %}<p class="meta">Test yeching — coinlar shu yerda ko‘rinadi.</p>{% endif %}
   </section>
 
   <section class="card pad" id="topics">
@@ -50,6 +64,58 @@
     {% empty %}
       <p class="meta">Hozircha ustozingiz test uchun mavzu belgilamagan.</p>
     {% endfor %}
+  </section>
+
+  <section class="card pad" id="mistakes">
+    <h2>Xatolar ustida ishlash</h2>
+    {% if open_mistakes_n %}
+      <p class="meta">Testlarda xato qilgan <strong>{{ open_mistakes_n }}</strong> ta savolingiz bor. Har birini 3 marta ketma-ket to‘g‘ri yechsangiz — ro‘yxatdan chiqadi va +2 🪙. Keyingi testlarda ham ular ko‘proq tushadi.</p>
+      <div class="mistake-topics">
+        {% for t in mistake_topics %}<a class="chip-link" href="{% url 'portal_practice' student.portal_token %}?mavzu={{ t.topic_id }}">{{ t.title }} <b>{{ t.n }}</b></a>{% endfor %}
+      </div>
+      <a class="btn primary block" href="{% url 'portal_practice' student.portal_token %}">💪 Mashqni boshlash</a>
+    {% else %}
+      <p class="meta">Hozircha xato savollar yo‘q — zo‘r! Testda xato qilsangiz, ular shu yerga tushadi.</p>
+    {% endif %}
+  </section>
+
+  <section class="card pad" id="board">
+    <h2>Haftaning eng faollari 🏆</h2>
+    <p class="meta">{{ student.group.name }} · shu hafta (dushanbadan) yig‘ilgan coinlar. Har dushanba yangidan boshlanadi.</p>
+    <ol class="board">
+      {% for r in board %}
+        <li class="{% if r.student.pk == student.pk %}me{% endif %}"><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><span class="grow">{{ r.student.full_name }}</span><strong>{{ r.coins }} 🪙</strong></li>
+      {% endfor %}
+    </ol>
+    {% if my_board and my_board.place > board|length %}<p class="meta">Siz: {{ my_board.place }}-o‘rin · {{ my_board.coins }} 🪙 bu hafta.</p>{% endif %}
+  </section>
+
+  <section class="card pad" id="shop">
+    <h2>Coin do‘koni 🛍</h2>
+    <p class="meta">Coin yig‘ing va sovg‘a oling. So‘rov ustozga boradi, tasdiqlansa coin yechiladi.</p>
+    {% for r in rewards %}
+      <div class="shop-item">
+        <div class="grow"><strong>{{ r.title }}</strong>{% if r.description %}<span class="meta block">{{ r.description }}</span>{% endif %}</div>
+        <span class="shop-cost">{{ r.cost }} 🪙</span>
+        {% if r.pk in pending_reward_ids %}
+          <span class="badge warn">⏳ kutilmoqda</span>
+        {% elif coin_available >= r.cost %}
+          <form method="post" action="{% url 'portal_buy' student.portal_token r.pk %}">
+            {% csrf_token %}
+            <button class="btn sm primary" type="submit" data-confirm="“{{ r.title }}” uchun {{ r.cost }} coin. So‘rov yuborilsinmi?">Olish</button>
+          </form>
+        {% else %}
+          <span class="meta">coin yetmaydi</span>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="meta">Do‘kon hozircha bo‘sh.</p>
+    {% endfor %}
+    {% if purchases %}
+      <ul class="coin-history" style="margin-top:14px">
+        {% for p in purchases %}<li><span class="grow">{{ p.title }} · {{ p.cost }} 🪙</span><span class="badge {% if p.status == 'approved' %}ok{% elif p.status == 'rejected' %}plain{% else %}warn{% endif %}">{{ p.get_status_display }}</span></li>{% endfor %}
+      </ul>
+    {% endif %}
   </section>
 
   {% if pending %}

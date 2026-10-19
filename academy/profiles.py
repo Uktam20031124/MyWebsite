@@ -4,7 +4,7 @@ Oqim:
 1. Ustoz profil havolasini yuboradi (``/men/<kalit>/``). O'quvchi ism-familiyasini va
    "kirishga ruxsat so'rash" tugmasini ko'radi.
 2. Ustoz 2 / 3 / 4 soatga ruxsat beradi — shu vaqt ichida profil ochiq.
-3. Profilda ustoz ruxsat etgan mavzular. O'quvchi
+3. Profilda guruhda o'tilgan mavzular (avtomatik) va ustoz qo'shimcha ruxsat etganlari. O'quvchi
    testni o'zi boshlaydi (10/12 savol, 5/10 daqiqa) — ustoz ruxsati shart emas.
    Bir mavzu bo'yicha kuniga ko'pi bilan ``TestRequest.DAILY_LIMIT`` ta.
 4. Natija 60% dan past bo'lsa — "Darsni qayta mustahkamlash" o'zi ochiladi; material
@@ -137,12 +137,13 @@ class TopicRow:
 
 
 def topic_rows(student: Student, now=None) -> list[TopicRow]:
-    """Ustoz ruxsat bergan mavzular."""
+    """Guruhda o'tilgan mavzular (avtomatik) + ustoz qo'shimcha ruxsat bergan mavzular."""
     now = now or timezone.now()
+    allowed = set(student.allowed_topics.values_list("pk", flat=True))
     topics = list(
-        student.allowed_topics.select_related("module", "quiz").order_by(
-            "module__order", "module__title", "order", "title"
-        )
+        Topic.objects.filter(pk__in=allowed | taught_topic_ids(student))
+        .select_related("module", "quiz")
+        .order_by("module__order", "module__title", "order", "title")
     )
     ids = [t.pk for t in topics]
     open_requests = {

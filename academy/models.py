@@ -871,7 +871,20 @@ class QuizAttempt(models.Model):
             )
             if len(translated) >= count:
                 pool = translated
-        picked = random.SystemRandom().sample(pool, count)
+        rng = random.SystemRandom()
+        pool_set = set(pool)
+        mistakes = [
+            q
+            for q in Mistake.objects.filter(
+                student_id=self.student_id, question__quiz_id=self.quiz_id, resolved_at__isnull=True
+            ).values_list("question_id", flat=True)
+            if q in pool_set
+        ]
+        # Xato qilingan savollardan yarmigacha albatta tushadi (qolgani bankdan tasodifiy).
+        again = rng.sample(mistakes, min(len(mistakes), count // 2))
+        rest = [q for q in pool if q not in set(again)]
+        picked = again + rng.sample(rest, count - len(again))
+        rng.shuffle(picked)
         started = QuizAttempt.objects.filter(pk=self.pk, status=self.Status.PENDING).update(
             status=self.Status.ACTIVE,
             owner_key=owner_key,
@@ -974,10 +987,10 @@ class QuizAttempt(models.Model):
             attempt.finished_at = timezone.now()
             attempt.timed_out = timed_out
             attempt.save()
-            # Coinlar — test yakunlangan tranzaksiyaning o'zida (bir marta).
-            from .coins import award_for_attempt
+            # Coin, xatolar ro'yxati, faol kun (streak) — test yakunlangan tranzaksiyaning o'zida.
+            from .engagement import on_attempt_finished
 
-            award_for_attempt(attempt)
+            on_attempt_finished(attempt)
         self.refresh_from_db()
 
 
@@ -1179,3 +1192,107 @@ class CoinTransaction(models.Model):
 
     def __str__(self) -> str:
         return f"{self.student}: {self.amount:+d} ({self.reason})"
+
+
+class Mistake(models.Model):
+    """O'quvchi xato qilgan (yoki javobsiz qoldirgan) savol — "Xatolar ustida ishlash".
+
+    Mashqda ketma-ket ``RESOLVE_AFTER`` marta to'g'ri yechilsa — ro'yxatdan chiqadi.
+    Testda yana xato qilsa — qaytadan ochiladi.
+    """
+
+    RESOLVE_AFTER = 3
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="mistakes", verbose_name="O'quvchi"
+    )
+    question = models.ForeignKey(
+        Question, on_delete=models.CASCADE, related_name="mistakes", verbose_name="Savol"
+    )
+    streak = models.PositiveSmallIntegerField("Ketma-ket to'g'ri", default=0)
+    wrong_count = models.PositiveSmallIntegerField("Xato soni", default=1)
+    last_wrong_at = models.DateTimeField("Oxirgi xato", default=timezone.now)
+    last_practiced_at = models.DateTimeField("Oxirgi mashq", null=True, blank=True)
+    resolved_at = models.DateTimeField("O'zlashtirildi", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Xato savol"
+        verbose_name_plural = "Xato savollar"
+        constraints = [
+            models.UniqueConstraint(fields=["student", "question"], name="uniq_mistake_student_question"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.student} — {self.question}"
+
+
+class DailyActivity(models.Model):
+    """O'quvchi faol bo'lgan kun (test yoki mashq) — streak uchun."""
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="activity_days", verbose_name="O'quvchi"
+    )
+    day = models.DateField("Kun")
+
+    class Meta:
+        ordering = ["-day"]
+        verbose_name = "Faol kun"
+        verbose_name_plural = "Faol kunlar"
+        constraints = [
+            models.UniqueConstraint(fields=["student", "day"], name="uniq_activity_student_day"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.student} · {self.day:%d.%m.%Y}"
+
+
+class Reward(models.Model):
+    """Coin do'konidagi sovg'a (ustoz qo'shadi)."""
+
+    title = models.CharField("Sovg'a", max_length=120)
+    description = models.CharField("Izoh", max_length=255, blank=True)
+    cost = models.PositiveIntegerField("Narxi (coin)", validators=[MinValueValidator(1)])
+    is_active = models.BooleanField("Do'konda ko'rinadi", default=True)
+    order = models.PositiveIntegerField("Tartib", default=0)
+
+    class Meta:
+        ordering = ["order", "cost", "id"]
+        verbose_name = "Sovg'a"
+        verbose_name_plural = "Sovg'alar"
+
+    def __str__(self) -> str:
+        return f"{self.title} ({self.cost} coin)"
+
+
+class Purchase(models.Model):
+    """O'quvchining sovg'a so'rovi: ustoz tasdiqlasa — coin yechiladi."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Kutilmoqda"
+        APPROVED = "approved", "Berildi"
+        REJECTED = "rejected", "Rad etildi"
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="purchases", verbose_name="O'quvchi"
+    )
+    reward = models.ForeignKey(
+        Reward, on_delete=models.SET_NULL, null=True, blank=True, related_name="purchases", verbose_name="Sovg'a"
+    )
+    title = models.CharField("Sovg'a", max_length=120)  # sovg'a keyin o'zgarsa ham tarix saqlanadi
+    cost = models.PositiveIntegerField("Narxi (coin)")
+    status = models.CharField(
+        "Holat", max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
+    )
+    created_at = models.DateTimeField("So'ralgan", auto_now_add=True)
+    decided_at = models.DateTimeField("Ustoz qarori", null=True, blank=True)
+    transaction = models.OneToOneField(
+        CoinTransaction, on_delete=models.SET_NULL, null=True, blank=True, related_name="purchase"
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Sovg'a so'rovi"
+        verbose_name_plural = "Sovg'a so'rovlari"
+
+    def __str__(self) -> str:
+        return f"{self.student} — {self.title} ({self.get_status_display()})"
