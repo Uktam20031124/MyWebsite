@@ -161,6 +161,13 @@ class Student(models.Model):
     quiz_language = models.CharField(
         "Test tili", max_length=2, choices=QuizLanguage.choices, default=QuizLanguage.UZ
     )
+    # Profil (shaxsiy sahifa): o'quvchi kirishga so'rov yuboradi, ustoz vaqt bilan ruxsat beradi.
+    profile_requested_at = models.DateTimeField("Profilga kirish so'ralgan", null=True, blank=True)
+    profile_until = models.DateTimeField("Profil ochiq (gacha)", null=True, blank=True)
+    # O'quvchi o'zi test so'ray oladigan mavzular (ustoz belgilaydi).
+    allowed_topics = models.ManyToManyField(
+        "Topic", blank=True, related_name="allowed_students", verbose_name="Test uchun ruxsat etilgan mavzular"
+    )
     status = models.CharField(
         "Holat",
         max_length=16,
@@ -244,6 +251,12 @@ class Topic(models.Model):
         "Materiallar",
         blank=True,
         help_text="Har qatorda bitta havola yoki manba.",
+    )
+    study = models.TextField(
+        "Mustahkamlash materiali",
+        blank=True,
+        help_text="O'quvchi testdan past natija olsa, profilida ko'rinadi: tushuntirish, "
+        "bajarilgan misollar. Format: ## sarlavha, - ro'yxat, ``` kod ```, **qalin**, `kod`.",
     )
     duration_minutes = models.PositiveIntegerField("Davomiyligi (daq.)", default=90)
     order = models.PositiveIntegerField("Tartib", default=0, db_index=True)
@@ -689,6 +702,8 @@ class QuizBatch(models.Model):
     scheduled_sent_at = models.DateTimeField("Rejali yuborilgan", null=True, blank=True)
     # Havolalar qaysi kanallar orqali yuboriladi (rejalashtirilgan yuborish uchun): "telegram,email".
     channels = models.CharField("Kanallar", max_length=32, default="telegram", blank=True)
+    # O'quvchi profilidan (ustoz ruxsati bilan) o'zi boshlagan test.
+    from_profile = models.BooleanField("Profildan", default=False)
     retake_of = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,
@@ -1036,3 +1051,54 @@ class Registration(models.Model):
 
     def __str__(self) -> str:
         return f"{self.full_name} ({self.get_status_display()})"
+
+
+class TestRequest(models.Model):
+    """O'quvchining profildan "shu mavzudan test topshirsam bo'ladimi?" so'rovi.
+
+    Ustoz ruxsat bergach, o'quvchi savollar soni (10/12) va vaqtni (5/10 daq.) o'zi
+    tanlab, testni boshlaydi. Bir mavzu bo'yicha kuniga ko'pi bilan DAILY_LIMIT ta.
+    """
+
+    DAILY_LIMIT = 2
+    QUESTION_CHOICES = (10, 12)
+    MINUTE_CHOICES = (5, 10)
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Kutilmoqda"
+        APPROVED = "approved", "Ruxsat berilgan"
+        REJECTED = "rejected", "Rad etilgan"
+        USED = "used", "Boshlangan"
+
+    class Kind(models.TextChoices):
+        FIRST = "first", "Test"
+        RETAKE = "retake", "Qayta topshirish"
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="test_requests", verbose_name="O'quvchi"
+    )
+    topic = models.ForeignKey(
+        Topic, on_delete=models.CASCADE, related_name="test_requests", verbose_name="Mavzu"
+    )
+    kind = models.CharField("Turi", max_length=8, choices=Kind.choices, default=Kind.FIRST)
+    status = models.CharField(
+        "Holat", max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
+    )
+    created_at = models.DateTimeField("So'ralgan", auto_now_add=True)
+    decided_at = models.DateTimeField("Ustoz qarori", null=True, blank=True)
+    attempt = models.OneToOneField(
+        QuizAttempt,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="test_request",
+        verbose_name="Test",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Test so'rovi"
+        verbose_name_plural = "Test so'rovlari"
+
+    def __str__(self) -> str:
+        return f"{self.student} — {self.topic} ({self.get_status_display()})"

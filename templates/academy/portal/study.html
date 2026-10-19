@@ -1,0 +1,43 @@
+{% extends "academy/portal/_base.html" %}
+{% load ui %}
+{% block title %}Mustahkamlash · {{ topic.title }}{% endblock %}
+{% block main %}
+<header class="portal-head">
+  <p class="kicker"><a href="{% url 'student_portal' student.portal_token %}#t{{ topic.pk }}">← Profilga qaytish</a></p>
+  <h1>{{ topic.title }}</h1>
+  <p class="muted">Darsni qayta mustahkamlash{% if row.last %} · oxirgi natija: <strong>{{ row.last.percent }}%</strong>{% endif %}</p>
+</header>
+
+<article class="card pad study">
+  {% if topic.study %}
+    {{ topic.study|study_md }}
+  {% else %}
+    <p class="muted">Bu mavzu uchun material hali yozilmagan — ustozingizdan so‘rang.</p>
+  {% endif %}
+  {% with resources=topic.resource_list %}
+    {% if resources %}
+      <h3>Qo‘shimcha manbalar</h3>
+      <ul>{% for r in resources %}<li>{% if r.url %}<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.text }}</a>{% else %}{{ r.text }}{% endif %}</li>{% endfor %}</ul>
+    {% endif %}
+  {% endwith %}
+</article>
+
+<section class="card pad" id="retake">
+  <h2>Testni qayta topshirish</h2>
+  {% if row.request and row.request.status == "approved" %}
+    <p class="muted">Ustozingiz ruxsat berdi.</p>
+    <a class="btn primary block" href="{% url 'portal_test_start' student.portal_token row.request.pk %}">Testni boshlash</a>
+  {% elif row.request %}
+    <p class="muted">⏳ So‘rov ustozingizga yuborilgan — ruxsat berilgach, “Boshlash” chiqadi.</p>
+  {% elif row.can_request %}
+    <p class="muted">Materialni o‘qib, misollarni o‘zingiz qaytadan yechib chiqdingizmi? Unda qayta topshirish uchun so‘rov yuboring (bugun yana {{ row.left_today }} ta urinish).</p>
+    <form method="post" action="{% url 'portal_test_request' student.portal_token topic.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="kind" value="retake">
+      <button class="btn primary block" type="submit">Mustahkamladim — qayta topshirishga so‘rov</button>
+    </form>
+  {% elif not row.left_today %}
+    <p class="muted">Bugun bu mavzudan 2 ta test topshirdingiz. Ertaga qayta urinib ko‘ring — bugun materialni yaxshilab takrorlang.</p>
+  {% endif %}
+</section>
+{% endblock %}

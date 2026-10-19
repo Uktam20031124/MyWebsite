@@ -1,21 +1,45 @@
-<!doctype html>
-<html lang="uz" data-theme="light">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#15251e">
-  <meta name="color-scheme" content="light dark">
-  <title>{{ student.full_name }} · natijalarim</title>
-  {% include "academy/includes/head.html" %}
-</head>
-<body class="quiz-body">
-<main class="portal">
+{% extends "academy/portal/_base.html" %}
+{% block title %}{{ student.full_name }} · profil{% endblock %}
+{% block main %}
   <header class="portal-head">
     <p class="kicker">Minar Test · {{ student.group.name }}</p>
     <h1>{{ student.full_name }}</h1>
-    <p class="muted">Sizning natijalaringiz va o‘sishingiz.</p>
+    <p class="muted">Profil ochiq: <strong>{{ student.profile_until|date:"H:i" }}</strong> gacha. Natijalaringiz, o‘sishingiz va testlar.</p>
   </header>
+
+  <section class="card pad" id="topics">
+    <h2>Test topshirish</h2>
+    <p class="meta">Ustozingiz ruxsat bergan mavzular. So‘rov yuboring → ustoz ruxsat bersa, savollar soni (10/12) va vaqtni (5/10 daq.) tanlab boshlaysiz. Bir mavzudan kuniga ko‘pi bilan {{ daily_limit }} ta test.</p>
+    {% for r in topic_rows %}
+      <div class="portal-topic{% if r.needs_review %} weak{% endif %}" id="t{{ r.topic.pk }}">
+        <div class="grow">
+          <strong>{{ r.topic.title }}</strong>
+          <span class="meta block">{% if r.last %}oxirgi natija: {{ r.last.percent }}%{% else %}hali topshirilmagan{% endif %} · bugun {{ r.used }}/{{ daily_limit }}</span>
+        </div>
+        <div class="portal-topic-actions">
+          {% if r.needs_review %}<a class="btn sm soft" href="{% url 'portal_study' student.portal_token r.topic.pk %}">📘 Darsni mustahkamlash</a>{% endif %}
+          {% if r.request and r.request.status == "approved" %}
+            <a class="btn sm primary" href="{% url 'portal_test_start' student.portal_token r.request.pk %}">Boshlash</a>
+          {% elif r.request %}
+            <span class="badge warn">⏳ so‘rov yuborilgan</span>
+          {% elif not r.bank %}
+            <span class="meta">savollar yo‘q</span>
+          {% elif not r.left_today %}
+            <span class="badge plain">bugungi limit tugadi</span>
+          {% elif r.needs_review %}
+            <span class="meta">avval mavzuni takrorlang</span>
+          {% else %}
+            <form method="post" action="{% url 'portal_test_request' student.portal_token r.topic.pk %}">
+              {% csrf_token %}
+              <button class="btn sm primary" type="submit">Test so‘rash</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <p class="meta">Hozircha ustozingiz test uchun mavzu belgilamagan.</p>
+    {% endfor %}
+  </section>
 
   {% if pending %}
     <section class="card pad portal-pending">
@@ -86,6 +110,4 @@
   </section>
 
   <p class="meta portal-foot">Bu havola faqat sizniki — boshqalarga bermang. To‘g‘ri javoblarni ustozingizdan so‘rang.</p>
-</main>
-</body>
-</html>
+{% endblock %}

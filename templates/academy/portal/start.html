@@ -1,0 +1,31 @@
+{% extends "academy/portal/_base.html" %}
+{% block title %}Test · {{ req.topic.title }}{% endblock %}
+{% block main %}
+<section class="card pad portal-lock">
+  <p class="kicker"><a href="{% url 'student_portal' student.portal_token %}#t{{ req.topic_id }}">← Profilga qaytish</a></p>
+  <h1>{{ req.topic.title }}</h1>
+  <p class="muted">Ustozingiz ruxsat berdi. Savollar soni va vaqtni tanlang, keyin testni boshlang.</p>
+  {% if error %}<div class="callout warn" role="alert"><div class="grow">{{ error }}</div></div>{% endif %}
+  <form method="post" class="start-form">
+    {% csrf_token %}
+    <fieldset class="channel-field">
+      <legend>Nechta savol?</legend>
+      <div class="channel-picks">
+        {% for n in question_choices %}<label class="channel-pick"><input type="radio" name="questions" value="{{ n }}" required{% if forloop.first %} checked{% endif %}> {{ n }} ta savol</label>{% endfor %}
+      </div>
+      {% if bank < 12 %}<p class="meta">Bankda {{ bank }} ta savol bor — ko‘pi bilan shuncha tushadi.</p>{% endif %}
+    </fieldset>
+    <fieldset class="channel-field" style="margin-top:16px">
+      <legend>Qancha vaqt?</legend>
+      <div class="channel-picks">
+        {% for m in minute_choices %}<label class="channel-pick"><input type="radio" name="minutes" value="{{ m }}" required{% if forloop.last %} checked{% endif %}> {{ m }} daqiqa</label>{% endfor %}
+      </div>
+    </fieldset>
+    <ul class="rules" style="margin-top:16px">
+      <li>Savollar mavzu bankidan tasodifiy tanlanadi, variantlar aralashadi.</li>
+      <li>Keyingi sahifada “Testni boshlash” tugmasi chiqadi — vaqt shundan keyin boshlanadi.</li>
+    </ul>
+    <button class="btn primary block" type="submit">Davom etish</button>
+  </form>
+</section>
+{% endblock %}

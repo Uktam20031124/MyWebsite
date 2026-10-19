@@ -2,8 +2,8 @@
 {% load ui %}
 {% block title %}So‘rovlar · Testlar{% endblock %}
 {% block kicker %}<a href="{% url 'quiz_batches' %}">Testlar</a><span class="sep">/</span>So‘rovlar{% endblock %}
-{% block heading %}Javoblarni ko‘rish so‘rovlari{% endblock %}
-{% block subheading %}<p class="page-sub">O‘quvchi testni tugatgach faqat ballini ko‘radi. Qaysi savolda to‘g‘ri, qaysida xato qilganini — faqat siz ruxsat bergandan keyin (to‘g‘ri variantlar baribir ko‘rsatilmaydi).</p>{% endblock %}
+{% block heading %}So‘rovlar{% endblock %}
+{% block subheading %}<p class="page-sub">Profilga kirish, test topshirish va javoblarni ko‘rish so‘rovlari. O‘quvchi testni tugatgach faqat ballini ko‘radi. Qaysi savolda to‘g‘ri, qaysida xato qilganini — faqat siz ruxsat bergandan keyin (to‘g‘ri variantlar baribir ko‘rsatilmaydi).</p>{% endblock %}
 {% block actions %}
 {% if pending %}
   <form method="post" action="{% url 'quiz_review_approve_all' %}">
@@ -14,8 +14,56 @@
 {% endblock %}
 
 {% block content %}
+{% if access_requests %}
+<section class="card" style="margin-bottom:18px" aria-labelledby="acc-h">
+  <div class="card-head"><h2 id="acc-h">🔑 Profilga kirish so‘rovlari</h2><span class="meta">{{ access_requests|length }} ta</span></div>
+  <div class="card-body flush">
+    <div class="rows">
+      {% for s in access_requests %}
+        <div class="row quiz-row">
+          <a class="person grow" href="{{ s.get_absolute_url }}#profile">
+            <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+            <span class="truncate"><span class="person-name block truncate">{{ s.full_name }}</span><span class="person-meta">{{ s.group.code }} · so‘radi {{ s.profile_requested_at|date:"d.m H:i" }}</span></span>
+          </a>
+          <form method="post" action="{% url 'student_profile_access' s.pk %}" class="quiz-actions">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="requests">
+            {% for h in access_hours %}<button class="btn xs {% if forloop.first %}primary{% else %}soft{% endif %}" type="submit" name="action" value="{{ h }}">{{ h }} soat</button>{% endfor %}
+            <button class="btn xs ghost" type="submit" name="action" value="close">Rad</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if test_requests %}
+<section class="card" style="margin-bottom:18px" aria-labelledby="tr-h">
+  <div class="card-head"><h2 id="tr-h">📝 Test topshirish so‘rovlari</h2><span class="meta">{{ test_requests|length }} ta</span></div>
+  <div class="card-body flush">
+    <div class="rows">
+      {% for r in test_requests %}
+        <div class="row quiz-row">
+          <a class="person grow" href="{{ r.student.get_absolute_url }}#profile">
+            <span class="avatar sm" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span>
+            <span class="truncate"><span class="person-name block truncate">{{ r.student.full_name }}{% if r.kind == "retake" %} <span class="badge plain">qayta topshirish</span>{% endif %}</span><span class="person-meta">{{ r.topic.title }} · {{ r.student.group.code }} · {{ r.created_at|date:"d.m H:i" }}</span></span>
+          </a>
+          <form method="post" action="{% url 'test_request_decide' r.pk %}" class="quiz-actions">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="requests">
+            <button class="btn xs primary" type="submit" name="action" value="approve">{% icon "check" 13 %} Ruxsat</button>
+            <button class="btn xs ghost" type="submit" name="action" value="reject">Rad etish</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <section class="card" aria-labelledby="pending-h">
-  <div class="card-head"><h2 id="pending-h">{% icon "shield" 18 %} Kutilayotgan so‘rovlar</h2><span class="meta">{{ pending|length }} ta</span></div>
+  <div class="card-head"><h2 id="pending-h">{% icon "shield" 18 %} Javoblarni ko‘rish so‘rovlari</h2><span class="meta">{{ pending|length }} ta</span></div>
   <div class="card-body flush">
     <div class="rows">
       {% for a in pending %}
@@ -37,7 +85,7 @@
           </div>
         </div>
       {% empty %}
-        <div class="empty compact"><p>Hozircha so‘rov yo‘q.</p></div>
+        <div class="empty compact"><p>Hozircha javoblarni ko‘rish so‘rovi yo‘q.</p></div>
       {% endfor %}
     </div>
   </div>

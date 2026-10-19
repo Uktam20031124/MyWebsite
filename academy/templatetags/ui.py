@@ -1,10 +1,11 @@
 """Interfeys yordamchilari: ikonka, progress halqasi, mini-grafik, rang tonlari."""
 
 import math
+import re
 import zlib
 
 from django import template
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 
 from academy.models import WEEKDAYS
@@ -134,3 +135,75 @@ def sparkline(values, width: int = 220, height: int = 56):
         f'{"".join(areas)}{"".join(lines)}'
         f'<circle class="spark-dot" cx="{lx:.1f}" cy="{ly:.1f}" r="3.2"/></svg>'
     )
+
+
+_INLINE_CODE = re.compile(r"`([^`]+)`")
+_BOLD = re.compile(r"\*\*(.+?)\*\*")
+
+
+def _inline(text: str) -> str:
+    """Bitta qator: avval escape, keyin `kod` va **qalin** (kod ichida qalin ishlamaydi)."""
+    parts = _INLINE_CODE.split(text)
+    out = []
+    for i, part in enumerate(parts):
+        if i % 2:
+            out.append(f"<code>{escape(part)}</code>")
+        else:
+            out.append(_BOLD.sub(r"<strong>\1</strong>", str(escape(part))))
+    return "".join(out)
+
+
+@register.filter
+def study_md(text: str):
+    """Mustahkamlash materiali uchun kichik, xavfsiz Markdown: ## / ### sarlavha,
+    - va 1. ro'yxat, > eslatma, ``` kod bloki, `kod`, **qalin**. HTML kiritib bo'lmaydi."""
+    html, para, items, list_tag = [], [], [], ""
+    code = None
+
+    def flush():
+        nonlocal list_tag
+        if para:
+            html.append(f"<p>{' '.join(_inline(p) for p in para)}</p>")
+            para.clear()
+        if items:
+            html.append(f"<{list_tag}>" + "".join(f"<li>{_inline(i)}</li>" for i in items) + f"</{list_tag}>")
+            items.clear()
+            list_tag = ""
+
+    for raw in (text or "").splitlines():
+        if code is not None:
+            if raw.strip().startswith("```"):
+                html.append(f'<pre class="quiz-code study-code"><code>{escape(chr(10).join(code))}</code></pre>')
+                code = None
+            else:
+                code.append(raw)
+            continue
+        line = raw.strip()
+        if line.startswith("```"):
+            flush()
+            code = []
+        elif not line:
+            flush()
+        elif line.startswith("### "):
+            flush()
+            html.append(f"<h4>{_inline(line[4:])}</h4>")
+        elif line.startswith("## "):
+            flush()
+            html.append(f"<h3>{_inline(line[3:])}</h3>")
+        elif line.startswith("> "):
+            flush()
+            html.append(f'<div class="study-note">{_inline(line[2:])}</div>')
+        elif re.match(r"^(- |\d+\. )", line):
+            tag = "ul" if line.startswith("- ") else "ol"
+            if para or (items and tag != list_tag):
+                flush()
+            list_tag = tag
+            items.append(re.sub(r"^(- |\d+\. )", "", line))
+        else:
+            if items:
+                flush()
+            para.append(line)
+    if code is not None:
+        html.append(f'<pre class="quiz-code study-code"><code>{escape(chr(10).join(code))}</code></pre>')
+    flush()
+    return mark_safe("".join(html))  # noqa: S308 — hamma matn escape qilingan

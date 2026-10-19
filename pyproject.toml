@@ -10,3 +10,7 @@ ignore = [
     "DJ001",  # TextField/CharField(blank=True) — bo'sh satr ataylab ishlatiladi
     "DJ012",  # model metodlari tartibi — faqat uslub
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# O'quv matnlari (test banki, mustahkamlash materiali) — uzun gaplar tabiiy.
+"academy/school_data/*.py" = ["E501"]
