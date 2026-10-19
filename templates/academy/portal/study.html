@@ -1,17 +1,17 @@
 {% extends "academy/portal/_base.html" %}
 {% load ui %}
-{% block title %}{% if row.gate == "preview" %}Tayyorlanish{% else %}Mustahkamlash{% endif %} · {{ topic.title }}{% endblock %}
+{% block title %}Mustahkamlash · {{ topic.title }}{% endblock %}
 {% block main %}
 <header class="portal-head">
   <p class="kicker"><a href="{% url 'student_portal' student.portal_token %}#t{{ topic.pk }}">← Profilga qaytish</a></p>
   <h1>{{ topic.title }}</h1>
-  <p class="muted">{% if row.gate == "review" %}Darsni qayta mustahkamlash · oxirgi natija: <strong>{{ row.last.percent }}%</strong>{% elif row.gate == "preview" %}✨ Yangi mavzuga oldindan tayyorlanish{% else %}Mavzu materiali{% if row.last %} · oxirgi natija: <strong>{{ row.last.percent }}%</strong>{% endif %}{% endif %}</p>
+  <p class="muted">{% if row.gate == "review" %}Darsni qayta mustahkamlash · oxirgi natija: <strong>{{ row.last.percent }}%</strong>{% else %}Mavzu materiali{% if row.last %} · oxirgi natija: <strong>{{ row.last.percent }}%</strong>{% endif %}{% endif %}</p>
 </header>
 
 {% if row.gate %}
   <section class="card pad study-timer" role="status">
     {% if row.locked %}
-      <strong>{% if row.gate == "review" %}Mustahkamlash vaqti: 20 daqiqa{% else %}Tayyorlanish vaqti: 30 daqiqa{% endif %}</strong>
+      <strong>Mustahkamlash vaqti: 20 daqiqa</strong>
       <p class="muted">Materialni diqqat bilan o‘qing va misollarni o‘zingiz qaytadan yechib ko‘ring. Test <strong data-countdown="{{ row.seconds_left }}"></strong> dan keyin ochiladi.</p>
     {% else %}
       <strong>✅ Vaqt tugadi — testni topshirishingiz mumkin.</strong>

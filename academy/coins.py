@@ -1,7 +1,6 @@
 """Coinlar: o'quvchi yechgan testlari uchun mukofot.
 
 Har bir yakunlangan test uchun natijaga qarab coin (bir marta), qo'shimcha:
-- yangi mavzuni oldindan o'zlashtirgani (profildan, natija ≥ PASS_PERCENT) — bonus;
 - mustahkamlab, qayta topshirib o'tgani — bonus.
 """
 
@@ -21,7 +20,6 @@ RULES = [
     "75–89% — 7 coin",
     "60–74% — 5 coin",
     "60% dan past — 1 coin (urinish uchun)",
-    f"Yangi mavzuni oldindan o‘zlashtirsangiz (60%+) — yana +{PREVIEW_BONUS}",
     f"Mustahkamlab, qayta topshirib o‘tsangiz (60%+) — yana +{RETAKE_BONUS}",
 ]
 

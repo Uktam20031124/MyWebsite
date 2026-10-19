@@ -23,19 +23,16 @@
     <h2>Test topshirish</h2>
     <p class="meta">“Testni boshlash” → savollar soni (10/12) va vaqtni (5/10 daq.) tanlaysiz. Natija {{ pass_percent }}% dan past bo‘lsa — mustahkamlash o‘zi ochiladi, 20 daqiqadan keyin qayta topshirasiz. Bir mavzudan kuniga ko‘pi bilan {{ daily_limit }} ta test.</p>
     {% for r in topic_rows %}
-      <div class="portal-topic{% if r.needs_review %} weak{% endif %}{% if r.preview %} new{% endif %}" id="t{{ r.topic.pk }}">
+      <div class="portal-topic{% if r.needs_review %} weak{% endif %}" id="t{{ r.topic.pk }}">
         <div class="grow">
-          {% if r.preview %}<span class="badge info">✨ yangi mavzu</span>{% endif %}
           <strong>{{ r.topic.title }}</strong>
           <span class="meta block">{% if r.last %}oxirgi natija: <strong>{{ r.last.percent }}%</strong> ({{ r.last.correct }}/{{ r.last.total }}){% else %}hali topshirilmagan{% endif %} · bugun {{ r.used }}/{{ daily_limit }}</span>
           {% if r.gate == "review" %}
             <span class="meta block">📘 Natija {{ pass_percent }}% dan past — mustahkamlang.{% if r.locked and r.session %} Qayta topshirish <span data-countdown="{{ r.seconds_left }}"></span> dan keyin.{% elif not r.session %} Material ochilgach 20 daqiqadan keyin qayta topshirasiz.{% endif %}</span>
-          {% elif r.gate == "preview" %}
-            <span class="meta block">Oldindan tayyorlaning: material ochilgach 30 daqiqadan keyin test ochiladi.{% if r.locked and r.session %} Qoldi: <span data-countdown="{{ r.seconds_left }}"></span>{% endif %}</span>
           {% endif %}
         </div>
         <div class="portal-topic-actions">
-          {% if r.gate %}<a class="btn sm soft" href="{% url 'portal_study' student.portal_token r.topic.pk %}">{% if r.gate == "review" %}📘 Mustahkamlash{% else %}✨ Tayyorlanish{% endif %}</a>{% elif r.topic.study %}<a class="btn sm ghost" href="{% url 'portal_study' student.portal_token r.topic.pk %}">Material</a>{% endif %}
+          {% if r.gate %}<a class="btn sm soft" href="{% url 'portal_study' student.portal_token r.topic.pk %}">📘 Mustahkamlash</a>{% elif r.topic.study %}<a class="btn sm ghost" href="{% url 'portal_study' student.portal_token r.topic.pk %}">Material</a>{% endif %}
           {% if not r.bank %}
             <span class="meta">savollar yo‘q</span>
           {% elif r.request %}
