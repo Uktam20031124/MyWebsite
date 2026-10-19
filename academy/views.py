@@ -32,7 +32,7 @@ from django.views.generic import (
 )
 from django.views.static import serve as static_serve
 
-from . import delivery, mailer, motivation, profiles, review_access, telegram_sender
+from . import coins, delivery, mailer, motivation, profiles, review_access, telegram_sender
 from .contacts import apply_contacts, has_contact, has_telegram, preview_contacts
 from .delivery import quiz_message  # noqa: F401 — eski import yo'llari uchun
 from .forms import (
@@ -2080,6 +2080,10 @@ def student_portal(request, token):
             "attendance": student_attendance_rate(student),
             "topic_rows": profiles.topic_rows(student),
             "daily_limit": TestRequest.DAILY_LIMIT,
+            "pass_percent": profiles.PASS_PERCENT,
+            "coin_balance": coins.balance(student),
+            "coin_history": student.coins.select_related("attempt__quiz__topic")[:10],
+            "coin_rules": coins.RULES,
         },
     )
     response["X-Robots-Tag"] = "noindex, nofollow"

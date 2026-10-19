@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
-from . import profiles
+from . import coins, profiles
 from .models import QuizAttempt, Student, TestRequest, Topic
 
 
@@ -44,19 +44,15 @@ def portal_access_request(request, token):
 @never_cache
 @require_POST
 def portal_test_request(request, token, topic_id):
+    """O'quvchi testni o'zi boshlaydi (ustoz ruxsati shart emas) → savollar soni va vaqt."""
     student = _student(token)
     topic = get_object_or_404(Topic, pk=topic_id)
-    kind = TestRequest.Kind.RETAKE if request.POST.get("kind") == "retake" else TestRequest.Kind.FIRST
     try:
-        profiles.request_test(student, topic, kind)
+        req = profiles.begin_test(student, topic)
     except profiles.ProfileError as exc:
         messages.error(request, str(exc))
-    else:
-        messages.success(
-            request,
-            f"So‘rov ustozga yuborildi: “{topic.title}”. Ruxsat berilgach, shu yerda “Boshlash” chiqadi.",
-        )
-    return redirect(_portal_url(token, f"t{topic.pk}"))
+        return redirect(_portal_url(token, f"t{topic.pk}"))
+    return redirect("portal_test_start", token=token, pk=req.pk)
 
 
 @never_cache
@@ -102,10 +98,20 @@ def portal_study(request, token, topic_id):
     if not profiles.is_open(student):
         return redirect(_portal_url(token))
     topic = get_object_or_404(Topic.objects.select_related("module"), pk=topic_id)
-    if not student.allowed_topics.filter(pk=topic.pk).exists():
+    row = profiles.open_study(student, topic)
+    if row is None:
         raise Http404
-    row = next(r for r in profiles.topic_rows(student) if r.topic.pk == topic.pk)
-    return _page(request, "study", {"student": student, "topic": topic, "row": row})
+    return _page(
+        request,
+        "study",
+        {
+            "student": student,
+            "topic": topic,
+            "row": row,
+            "material": topic.study_in(student.quiz_language),
+            "pass_percent": profiles.PASS_PERCENT,
+        },
+    )
 
 
 # --- Ustoz -----------------------------------------------------------------------
@@ -176,5 +182,7 @@ def profile_context(student) -> dict:
         "allowed_n": len(allowed),
         "taught_missing": len(taught - allowed),
         "profile_requests": student.test_requests.select_related("topic", "attempt")[:8],
+        "coin_balance": coins.balance(student),
+        "coin_history": student.coins.select_related("attempt__quiz__topic")[:8],
         "profile_attempts_n": QuizAttempt.objects.filter(student=student, batch__from_profile=True).count(),
     }
