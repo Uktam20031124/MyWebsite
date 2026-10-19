@@ -1,11 +1,16 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+from academy import mailer
 from academy import telegram_sender as tg
 from academy.automation import daily_report
 
 
 class Command(BaseCommand):
-    help = "Kun yakuni hisoboti ustozning Telegram 'Saqlangan xabarlar'iga (systemd timer: 20:00)."
+    help = (
+        "Kun yakuni hisoboti ustozga: Telegram 'Saqlangan xabarlar' va/yoki email "
+        "(DARSXONA_REPORT_EMAIL) — qaysi biri ulangan bo'lsa (systemd timer: 20:00)."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument("--dry-run", action="store_true", help="Faqat ekranga chiqarish")
@@ -15,8 +20,22 @@ class Command(BaseCommand):
         if dry_run:
             self.stdout.write(text)
             return
-        try:
-            tg.send_text_to_self(text)
-        except tg.TelegramError as exc:
-            raise CommandError(f"Hisobot yuborilmadi: {exc}") from exc
-        self.stdout.write("Kun yakuni hisoboti Telegram'ga yuborildi.")
+        sent, errors = [], []
+        email_on = bool(settings.REPORT_EMAIL) and mailer.is_configured()
+        # Email ulanmagan bo'lsa — Telegram har doim sinab ko'riladi (xatosi ko'rinsin).
+        if tg.is_configured() or not email_on:
+            try:
+                tg.send_text_to_self(text)
+                sent.append("Telegram")
+            except tg.TelegramError as exc:
+                errors.append(f"Telegram: {exc}")
+        if email_on:
+            try:
+                mailer.send_one(settings.REPORT_EMAIL, text.splitlines()[0].lstrip("📊 "), text)
+                sent.append("email")
+            except mailer.MailError as exc:
+                errors.append(f"Email: {exc}")
+        if sent:
+            self.stdout.write(f"Kun yakuni hisoboti yuborildi: {', '.join(sent)}.")
+        if errors:
+            raise CommandError("Hisobot yuborilmadi — " + "; ".join(errors))

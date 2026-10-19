@@ -1424,6 +1424,11 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 .send-students.has-error { box-shadow: inset 3px 0 0 var(--bad); }
 .send-settings .field label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: var(--text); }
 .preset-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.channel-field { border: 0; padding: 0; min-width: 0; }
+.channel-field legend { font-weight: 600; font-size: 14px; margin-bottom: 8px; padding: 0; }
+.channel-picks { display: flex; flex-wrap: wrap; gap: 8px; }
+.channel-pick { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); cursor: pointer; font-size: 14px; }
+.channel-pick:has(input:checked) { border-color: var(--brand); background: var(--surface); }
 .preset-chips .btn[aria-pressed="true"] { --btn-bg: var(--brand); --btn-fg: var(--brand-ink); --btn-bd: var(--brand); }
 .send-pace { margin: 12px 0 0; }
 .send-pace.warn { color: var(--warn); }

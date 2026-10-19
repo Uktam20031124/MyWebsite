@@ -17,7 +17,7 @@ from .models import Group, Registration, RegistrationLink, Student
 log = logging.getLogger(__name__)
 
 
-def submit(link: RegistrationLink, full_name: str, phone: str, telegram: str, ip=None):
+def submit(link: RegistrationLink, full_name: str, phone: str, telegram: str, email: str = "", ip=None):
     """Arizani saqlaydi: (ariza, yangimi). Shu havola orqali shu telefon bilan kutilayotgan
     ariza bo'lsa — yangisi ochilmaydi, o'sha yangilanadi (qayta yuborish, xatoni tuzatish)."""
     reg = Registration.objects.filter(
@@ -26,7 +26,7 @@ def submit(link: RegistrationLink, full_name: str, phone: str, telegram: str, ip
     created = reg is None
     if created:
         reg = Registration(link=link, phone=phone)
-    reg.full_name, reg.telegram, reg.ip = full_name, telegram, ip
+    reg.full_name, reg.telegram, reg.email, reg.ip = full_name, telegram, email, ip
     reg.save()
     if created:
         notify_teacher(reg)
@@ -44,10 +44,15 @@ def suggestions(reg: Registration) -> list[Student]:
 
 
 def approve_existing(reg: Registration, student: Student) -> Student:
-    """Mavjud o'quvchiga biriktiradi: telefon va Telegram arizadagiga almashtiriladi."""
+    """Mavjud o'quvchiga biriktiradi: telefon va Telegram (va email, berilgan bo'lsa)
+    arizadagiga almashtiriladi."""
     with transaction.atomic():
         student.phone, student.telegram = reg.phone, reg.telegram
-        student.save(update_fields=["phone", "telegram"])
+        fields = ["phone", "telegram"]
+        if reg.email:
+            student.email = reg.email
+            fields.append("email")
+        student.save(update_fields=fields)
         _close(reg, Registration.Status.APPROVED, student)
     return student
 
@@ -56,7 +61,11 @@ def approve_new(reg: Registration, group: Group) -> Student:
     """Arizadan yangi o'quvchi yaratadi."""
     with transaction.atomic():
         student = Student.objects.create(
-            group=group, full_name=reg.full_name, phone=reg.phone, telegram=reg.telegram
+            group=group,
+            full_name=reg.full_name,
+            phone=reg.phone,
+            telegram=reg.telegram,
+            email=reg.email,
         )
         _close(reg, Registration.Status.APPROVED, student)
     return student
@@ -80,7 +89,9 @@ def notify_teacher(reg: Registration) -> None:
         return
     where = reg.link.title if reg.link_id else "ro'yxat havolasi"
     text = (
-        f"📝 Yangi ariza ({where}):\n{reg.full_name}\n{reg.phone} · @{reg.telegram}\n"
+        f"📝 Yangi ariza ({where}):\n{reg.full_name}\n{reg.phone} · @{reg.telegram}"
+        + (f" · {reg.email}" if reg.email else "")
+        + "\n"
         "Darsxona → Arizalar bo'limida tekshiring."
     )
 

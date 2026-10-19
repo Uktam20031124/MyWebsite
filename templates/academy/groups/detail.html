@@ -195,6 +195,13 @@
               <button class="btn sm ghost" type="submit" data-confirm="Har bir o‘quvchiga shaxsiy sahifa havolasi Telegram orqali yuborilsinmi?">{% icon "user" 14 %} Shaxsiy sahifalarni yuborish</button>
             </form>
           {% endif %}
+          {% if email_ready %}
+            <form method="post" action="{% url 'group_portal_send' group.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="channel" value="email">
+              <button class="btn sm ghost" type="submit" data-confirm="Emaili bor har bir o‘quvchiga shaxsiy sahifa havolasi email orqali yuborilsinmi?">{% icon "mail" 14 %} Shaxsiy sahifalar — email</button>
+            </form>
+          {% endif %}
         </div>
       </div>
     </section>

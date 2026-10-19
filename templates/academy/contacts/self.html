@@ -23,7 +23,7 @@
           <h1>Ma’lumot allaqachon bor</h1>
         {% endif %}
         {% if saved.kept %}
-          <div class="callout warn" style="margin-top:12px"><div class="grow">{% if 'telegram' in saved.kept %}Telegram username{% endif %}{% if saved.kept|length == 2 %} va {% endif %}{% if 'phone' in saved.kept %}telefon{% endif %} oldin kiritilgan — o‘zgartirish uchun ustozingizga yozing.</div></div>
+          <div class="callout warn" style="margin-top:12px"><div class="grow">{% for k in saved.kept %}{% if not forloop.first %}{% if forloop.last %} va {% else %}, {% endif %}{% endif %}{% if k == 'telegram' %}Telegram username{% elif k == 'phone' %}telefon{% else %}email{% endif %}{% endfor %} oldin kiritilgan — o‘zgartirish uchun ustozingizga yozing.</div></div>
         {% endif %}
       {% else %}
         <h1>Telegram ma’lumotingiz</h1>

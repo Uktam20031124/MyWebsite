@@ -140,6 +140,21 @@ TELEGRAM_API_HASH = os.environ.get("TELEGRAM_API_HASH", "")
 TELEGRAM_SENDER_ID = int(os.environ.get("TELEGRAM_SENDER_ID") or 7730996406)
 TELEGRAM_SESSION_FILE = os.environ.get("TELEGRAM_SESSION_FILE", BASE_DIR / ".telegram_session")
 
+# Gmail orqali email (SMTP). Google hisobida 2 bosqichli tasdiqlash yoqilgan bo'lishi va
+# "App password" (16 belgi) yaratilgan bo'lishi kerak: myaccount.google.com/apppasswords
+GMAIL_USER = os.environ.get("DARSXONA_GMAIL_USER", "").strip()
+EMAIL_BACKEND = os.environ.get("DJANGO_EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = GMAIL_USER
+EMAIL_HOST_PASSWORD = os.environ.get("DARSXONA_GMAIL_APP_PASSWORD", "").replace(" ", "")
+EMAIL_TIMEOUT = 20
+EMAIL_FROM_NAME = os.environ.get("DARSXONA_EMAIL_FROM_NAME", "Darsxona")
+DEFAULT_FROM_EMAIL = f"{EMAIL_FROM_NAME} <{GMAIL_USER}>" if GMAIL_USER else "webmaster@localhost"
+# Kunlik hisobot qaysi manzilga (standart — Gmail hisobning o'zi).
+REPORT_EMAIL = os.environ.get("DARSXONA_REPORT_EMAIL", GMAIL_USER)
+
 # Saytning ochiq manzili: fonda ishlaydigan buyruqlar (eslatmalar) havola yasashi uchun.
 SITE_URL = os.environ.get("DARSXONA_SITE_URL", "").rstrip("/")
 # Ochilmagan test haqida eslatma: yuborilgandan shuncha soat o'tgach, faqat kunduzi

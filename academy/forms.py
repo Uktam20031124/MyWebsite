@@ -117,6 +117,7 @@ class StudentForm(StyledFormMixin, forms.ModelForm):
             "full_name",
             "phone",
             "telegram",
+            "email",
             "status",
             "joined_at",
             "notes",
@@ -125,11 +126,15 @@ class StudentForm(StyledFormMixin, forms.ModelForm):
             "joined_at": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "phone": forms.TextInput(attrs={"type": "tel", "placeholder": "+998 90 123 45 67"}),
             "telegram": forms.TextInput(attrs={"placeholder": "username"}),
+            "email": forms.EmailInput(attrs={"placeholder": "ali@gmail.com", "autocapitalize": "off"}),
             "notes": forms.Textarea(),
         }
 
     def clean_full_name(self):
         return " ".join(self.cleaned_data["full_name"].split())
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()
 
     def clean_phone(self):
         phone = self.cleaned_data["phone"].strip()
@@ -291,6 +296,9 @@ class QuizForm(StyledFormMixin, forms.ModelForm):
         return quiz
 
 
+CHANNEL_CHOICES = [("telegram", "Telegram"), ("email", "Email (Gmail)")]
+
+
 class QuizSendForm(StyledFormMixin, forms.Form):
     """Test jo'natish: kimga, nechta savol va qancha vaqt."""
 
@@ -311,6 +319,13 @@ class QuizSendForm(StyledFormMixin, forms.Form):
         widget=forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
         help_text="Bo‘sh — darhol. Vaqt ko‘rsatilsa, havolalar o‘sha paytda avtomatik yuboriladi.",
     )
+    channels = forms.MultipleChoiceField(
+        label="Qayerga yuborilsin?",
+        choices=CHANNEL_CHOICES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Hech biri tanlanmasa — havolalar faqat yaratiladi, o‘zingiz tarqatasiz.",
+    )
 
     SCHEDULE_MAX_DAYS = 30
 
@@ -323,6 +338,12 @@ class QuizSendForm(StyledFormMixin, forms.Form):
             raise forms.ValidationError(f"Ko‘pi bilan {self.SCHEDULE_MAX_DAYS} kun oldinga.")
         return value
 
+    def clean(self):
+        data = super().clean()
+        if data.get("scheduled_at") and not data.get("channels"):
+            self.add_error("channels", "Rejalashtirilgan yuborish uchun kamida bitta kanalni tanlang.")
+        return data
+
     def __init__(self, *args, quiz: Quiz, students, **kwargs):
         self.bank_size = quiz.questions.count()
         kwargs.setdefault(
@@ -330,6 +351,7 @@ class QuizSendForm(StyledFormMixin, forms.Form):
             {
                 "question_count": min(10, self.bank_size),
                 "time_limit_minutes": quiz.time_limit_minutes,
+                "channels": ["telegram"],
             },
         )
         super().__init__(*args, **kwargs)
@@ -365,6 +387,7 @@ class ContactSelfForm(forms.Form):
     )
     telegram = forms.CharField(label="Telegram username", max_length=80, required=False)
     phone = forms.CharField(label="Telefon raqami", max_length=40, required=False)
+    email = forms.EmailField(label="Email", required=False)
 
     def __init__(self, *args, students, **kwargs):
         kwargs.setdefault("label_suffix", "")
@@ -375,6 +398,9 @@ class ContactSelfForm(forms.Form):
         )
         self.fields["phone"].widget.attrs.update(
             placeholder="+998 90 123 45 67", inputmode="tel", autocomplete="tel"
+        )
+        self.fields["email"].widget.attrs.update(
+            placeholder="ali@gmail.com", autocomplete="email", autocapitalize="off"
         )
         for f in self.fields.values():
             f.widget.attrs.setdefault("class", "input")
@@ -397,8 +423,10 @@ class ContactSelfForm(forms.Form):
 
     def clean(self):
         data = super().clean()
-        if not self.errors and not (data.get("telegram") or data.get("phone")):
-            raise forms.ValidationError("Telegram username yoki telefon raqamini kiriting.")
+        if data.get("email"):
+            data["email"] = data["email"].strip().lower()
+        if not self.errors and not (data.get("telegram") or data.get("phone") or data.get("email")):
+            raise forms.ValidationError("Telegram username, telefon yoki emailni kiriting.")
         return data
 
 
@@ -408,6 +436,7 @@ class RegistrationForm(forms.Form):
     full_name = forms.CharField(label="Familiya, ism, otasining ismi", max_length=160)
     phone = forms.CharField(label="Telefon raqami", max_length=40)
     telegram = forms.CharField(label="Telegram username", max_length=80)
+    email = forms.EmailField(label="Email (ixtiyoriy)", required=False)
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("label_suffix", "")
@@ -416,6 +445,7 @@ class RegistrationForm(forms.Form):
             "full_name": {"placeholder": "Aliyev Sardor Akmalovich", "autocomplete": "name"},
             "phone": {"placeholder": "+998 90 123 45 67", "inputmode": "tel", "autocomplete": "tel"},
             "telegram": {"placeholder": "@username", "autocomplete": "off", "autocapitalize": "off"},
+            "email": {"placeholder": "ali@gmail.com", "autocomplete": "email", "autocapitalize": "off"},
         }
         for name, field in self.fields.items():
             field.widget.attrs.update(attrs[name], **{"class": "input"})
@@ -440,6 +470,9 @@ class RegistrationForm(forms.Form):
                 "Username noto‘g‘ri: 5–32 ta lotin harf, raqam yoki “_” (masalan, @ali_2010)."
             )
         return value
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()
 
 
 class RegistrationLinkForm(StyledFormMixin, forms.ModelForm):

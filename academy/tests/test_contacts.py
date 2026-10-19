@@ -150,7 +150,7 @@ class ContactViewsTests(TestCase):
         response = self.client.post(url, {"student": self.ali.pk, "telegram": "@ab"})
         self.assertContains(response, "Username noto‘g‘ri")
         response = self.client.post(url, {"student": self.ali.pk})
-        self.assertContains(response, "Telegram username yoki telefon raqamini kiriting")
+        self.assertContains(response, "Telegram username, telefon yoki emailni kiriting")
         response = self.client.post(url, {"student": self.other.pk, "telegram": "@ali_v"})
         self.assertEqual(response.status_code, 200)
         self.other.refresh_from_db()
