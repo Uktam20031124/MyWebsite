@@ -57,6 +57,10 @@
           {% icon "target" %} Testlar
           {% if nav_quiz_open %}<span class="count" title="Hali yechilmagan test havolalari">{{ nav_quiz_open }}</span>{% endif %}
         </a>
+        <a href="{% url 'quiz_review_requests' %}" {% if url_name == 'quiz_review_requests' %}aria-current="page"{% endif %}>
+          {% icon "shield" %} So‘rovlar
+          {% if nav_review_requests %}<span class="count hot" title="Javoblarini ko‘rish uchun ruxsat so‘ragan o‘quvchilar">{{ nav_review_requests }}</span>{% endif %}
+        </a>
       </div>
     </nav>
 

@@ -130,6 +130,9 @@ class TakeInRussianTests(Base):
         for q in attempt.questions().prefetch_related("choices"):
             answers[f"q{q.pk}"] = q.choices.get(is_correct=True).pk
         student.post(reverse("quiz_submit", args=[attempt.token]), answers)
+        self.assertContains(student.get(attempt.get_absolute_url()), "Попросить разрешение")
+        attempt.refresh_from_db()
+        attempt.decide_reveal(True)
         result = student.get(attempt.get_absolute_url())
         self.assertContains(result, "Правильных ответов: 2 из 2")
         self.assertContains(result, "Чему равно len")

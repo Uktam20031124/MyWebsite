@@ -18,6 +18,14 @@
     <button class="btn {% if telegram_ready and unsent_n %}soft{% else %}primary{% endif %}" type="submit">{% icon "mail" 16 %} Emailga yuborish ({{ email_unsent_n }})</button>
   </form>
 {% endif %}
+{% if review_requested_n %}
+  <form method="post" action="{% url 'quiz_review_approve_all' %}">
+    {% csrf_token %}
+    <input type="hidden" name="batch" value="{{ batch.pk }}">
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button class="btn soft" type="submit">🔓 So‘rovlarga ruxsat ({{ review_requested_n }})</button>
+  </form>
+{% endif %}
 {% if retake_n %}
   <form method="post" action="{% url 'quiz_batch_retake' batch.pk %}">
     {% csrf_token %}
@@ -86,6 +94,17 @@
               <span class="meta">{{ a.finished_at|date:"d.m H:i" }}</span>
               <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
               <a class="btn xs soft" href="{% url 'quiz_attempt_review' a.pk %}" title="Qaysi savollarda xato qilgani (faqat siz ko‘rasiz)">{% icon "search" 13 %} Javoblar</a>
+              {% if a.reveal == "requested" %}<span class="badge warn" title="O‘quvchi javoblarini ko‘rish uchun ruxsat so‘radi">🔓 so‘rov</span>{% elif a.reveal == "approved" %}<span class="badge ok" title="O‘quvchi javoblarini (to‘g‘ri/xato) ko‘ra oladi">ko‘ra oladi</span>{% elif a.reveal == "rejected" %}<span class="badge plain">rad etilgan</span>{% endif %}
+              <form method="post" action="{% url 'quiz_review_decide' a.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                {% if a.reveal == "approved" %}
+                  <button class="btn xs ghost" type="submit" name="action" value="reject" title="Ruxsatni qaytarib olish">Yopish</button>
+                {% else %}
+                  <button class="btn xs {% if a.reveal == 'requested' %}primary{% else %}ghost{% endif %}" type="submit" name="action" value="approve" title="O‘quvchiga javoblarini (to‘g‘ri/xato) ko‘rsatish">Ruxsat</button>
+                  {% if a.reveal == "requested" %}<button class="btn xs ghost" type="submit" name="action" value="reject">Rad</button>{% endif %}
+                {% endif %}
+              </form>
             {% else %}
               {% if a.status == 'active' %}
                 <span class="badge warn">{{ a.get_status_display }}</span>

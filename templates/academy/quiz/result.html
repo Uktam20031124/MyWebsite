@@ -10,6 +10,24 @@
 </div>
 <p class="muted">{% if attempt.percent >= 80 %}{{ t.verdict_high }}{% elif attempt.percent >= 50 %}{{ t.verdict_mid }}{% else %}{{ t.verdict_low }}{% endif %}</p>
 
+{% if attempt.reveal == "" %}
+  <div class="callout next review-ask">
+    <div class="grow">
+      <p style="margin:0 0 10px">{{ t.review_ask_hint }}</p>
+      <form method="post" action="{% url 'quiz_review_request' attempt.token %}">
+        {% csrf_token %}
+        <button class="btn primary block" type="submit">{{ t.review_ask }}</button>
+      </form>
+    </div>
+  </div>
+{% elif attempt.reveal == "requested" %}
+  <div class="callout next review-ask" role="status">
+    <div class="grow"><p style="margin:0 0 10px">{{ t.review_wait }}</p><a class="btn soft sm" href="{{ attempt.get_absolute_url }}">{{ t.refresh }}</a></div>
+  </div>
+{% elif attempt.reveal == "rejected" %}
+  <div class="callout warn review-ask" role="status"><div class="grow">{{ t.review_rejected }}</div></div>
+{% endif %}
+
 {% if items %}
   <h2 class="result-h">{{ t.your_answers }}</h2>
   <ol class="result-list">

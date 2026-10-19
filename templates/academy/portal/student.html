@@ -48,11 +48,24 @@
   <section class="card pad">
     <h2>Testlarim</h2>
     {% for a in finished %}
-      <details class="portal-attempt">
+      <details class="portal-attempt" id="a{{ a.pk }}"{% if a.reveal == "requested" %} open{% endif %}>
         <summary>
           <span class="grow"><strong>{{ a.quiz.topic.title }}</strong><span class="meta block">{{ a.finished_at|date:"d.m.Y H:i" }}{% if a.timed_out %} · vaqt tugadi{% endif %}</span></span>
           <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
         </summary>
+        {% if not a.can_see_answers %}
+          {% if a.reveal == "" %}
+            <form method="post" action="{% url 'portal_review_request' student.portal_token a.pk %}" class="portal-review">
+              {% csrf_token %}
+              <p class="meta">Qaysi savolda to‘g‘ri, qaysida xato qilganingizni ko‘rish uchun ustozingizdan ruxsat so‘rang.</p>
+              <button class="btn soft sm" type="submit">Javoblarimni ko‘rish uchun ruxsat so‘rash</button>
+            </form>
+          {% elif a.reveal == "requested" %}
+            <p class="meta portal-review">⏳ So‘rov yuborildi — ustozingiz ruxsat bergach, javoblaringiz shu yerda ko‘rinadi.</p>
+          {% else %}
+            <p class="meta portal-review">Ustozingiz hozircha javoblarni ko‘rsatmaslikka qaror qildi.</p>
+          {% endif %}
+        {% endif %}
         <ol class="result-list">
           {% for item in a.items %}
             <li class="result-item {% if item.is_correct %}ok{% elif item.answered %}bad{% else %}skip{% endif %}">
