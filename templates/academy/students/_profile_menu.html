@@ -5,7 +5,7 @@
   {% else %}<span class="badge plain">{% translate "yopiq" %}</span>{% endif %}
   <button class="btn xs soft" type="button" popovertarget="pm-{{ s.pk }}" aria-label="{% blocktranslate with name=s.full_name trimmed %}{{ name }}: profil amallari{% endblocktranslate %}">{% icon "user" 13 %} {% translate "Profil" %} {% icon "down" 12 %}</button>
   <div class="row-menu" id="pm-{{ s.pk }}" popover data-row-menu>
-    <div class="row-menu-title">{{ s.full_name }}</div>
+    <div class="row-menu-title">{{ s|person_name }}</div>
     <a class="row-menu-item" href="{% url 'student_portal_open' s.pk %}" target="_blank" rel="noopener">{% icon "external" 15 %} {% translate "Profilga kirish" %}</a>
     {% if s.telegram or s.phone or s.email %}
       <form method="post" action="{% url 'student_portal_action' s.pk %}">

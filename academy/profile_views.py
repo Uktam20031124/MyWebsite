@@ -225,9 +225,15 @@ def portal_buy(request, token, reward_id):
 # --- Ustoz -----------------------------------------------------------------------
 
 
-def _back(request, student) -> str:
-    from .views import local_next
+def local_next(request) -> str:
+    """Formadagi ``next`` — faqat shu saytdagi manzil bo'lsa (masalan, shogirdlar ro'yxatiga qaytish)."""
+    target = request.POST.get("next", "")
+    if target.startswith("/") and url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
+        return target
+    return ""
 
+
+def _back(request, student) -> str:
     if request.POST.get("next") == "requests":
         return reverse("quiz_review_requests")
     return local_next(request) or f"{student.get_absolute_url()}#profile"
@@ -318,7 +324,28 @@ def purchase_decide(request, pk):
             request,
             f"{p.student.full_name} — “{p.title}”: " + (_("berildi, coin yechildi.") if approve else _("rad etildi.")),
         )
+        if approve and p.reward and p.reward.perk == Reward.Perk.HONOR:
+            messages.success(
+                request,
+                _("{full_name}: “A’lochi” unvoni berildi — ismi hamma joyda oltin medal bilan ko‘rinadi.").format(
+                    full_name=p.student.full_name
+                ),
+            )
     return redirect(_back(request, p.student))
+
+
+@login_required
+@require_POST
+def student_honor(request, pk):
+    """Ustoz: "A'lochi" unvonini qo'lda berish yoki olib qo'yish."""
+    student = get_object_or_404(Student, pk=pk)
+    if request.POST.get("action") == "remove":
+        engagement.revoke_honor(student)
+        messages.info(request, _("{full_name}: “A’lochi” unvoni olib qo‘yildi.").format(full_name=student.full_name))
+    else:
+        engagement.grant_honor(student)
+        messages.success(request, _("{full_name}: “A’lochi” unvoni berildi 🏅").format(full_name=student.full_name))
+    return redirect(local_next(request) or student.get_absolute_url())
 
 
 @login_required

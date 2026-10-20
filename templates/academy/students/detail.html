@@ -4,17 +4,26 @@
 {% block kicker %}<a href="{% url 'student_list' %}">{% translate "Shogirdlar" %}</a><span class="sep">/</span><a href="{{ student.group.get_absolute_url }}">{{ student.group.name }}</a>{% endblock %}
 {% block heading %}
 <span class="profile">
-  <span class="avatar xl" style="--h: {{ student.full_name|hue }}" aria-hidden="true">{{ student.initials }}</span>
+  <span class="avatar xl{% if student.honor_since %} honor{% endif %}" style="--h: {{ student.full_name|hue }}" aria-hidden="true">{{ student.initials }}</span>
   <span class="profile-info">
-    <span>{{ student.full_name }}</span>
+    <span>{{ student|person_name }}</span>
     <span class="meta" style="font-family:var(--font);font-size:14px;letter-spacing:0">
       <span class="badge {% if student.status == 'active' %}ok{% elif student.status == 'dropped' %}bad{% elif student.status == 'paused' %}warn{% else %}info{% endif %}">{{ student.get_status_display }}</span>
       {% blocktranslate with joined_at=student.joined_at|date:"d.m.Y" trimmed %}&nbsp;{{ joined_at }} dan beri{% endblocktranslate %}
+      {% if student.honor_since %}<span class="badge honor-badge" title="{% blocktranslate with since=student.honor_since|date:"d.m.Y" trimmed %}{{ since }} dan beri{% endblocktranslate %}">{% honor_medal 13 %} {% translate "A’lochi" %}</span>{% endif %}
     </span>
   </span>
 </span>
 {% endblock %}
 {% block actions %}
+<form method="post" action="{% url 'student_honor' student.pk %}">
+  {% csrf_token %}
+  {% if student.honor_since %}
+    <button class="btn ghost" type="submit" name="action" value="remove" data-confirm="{% blocktranslate with name=student.full_name trimmed %}{{ name }}dan “A’lochi” unvoni olib qo‘yilsinmi? (coin qaytarilmaydi){% endblocktranslate %}">{% honor_medal 16 %} {% translate "Unvonni olib qo‘yish" %}</button>
+  {% else %}
+    <button class="btn soft" type="submit" name="action" value="give" title="{% translate "Ismi hamma joyda oltin rangda, medal bilan ko‘rinadi; sertifikatga “A’lochi” muhri tushadi" %}">{% honor_medal 16 %} {% translate "“A’lochi” unvonini berish" %}</button>
+  {% endif %}
+</form>
 <a class="btn soft" href="{% url 'student_update' student.pk %}">{% icon "edit" 16 %} {% translate "Tahrirlash" %}</a>
 {% endblock %}
 

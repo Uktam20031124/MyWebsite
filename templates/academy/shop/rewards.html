@@ -14,7 +14,7 @@
       <div class="rows">
         {% for r in rewards %}
           <a class="row" href="{% url 'reward_edit' r.pk %}">
-            <span class="grow truncate"><span class="person-name block truncate">{{ r.title }}{% if not r.is_active %} <span class="badge plain">{% translate "yashirin" %}</span>{% endif %}</span><span class="person-meta">{% blocktranslate with description=r.description|default:"—" given=r.given trimmed %}{{ description }} · berilgan: {{ given }}{% endblocktranslate %}{% if r.waiting %} {% blocktranslate with waiting=r.waiting trimmed %}· kutilmoqda: {{ waiting }}{% endblocktranslate %}{% endif %}</span></span>
+            <span class="grow truncate"><span class="person-name block truncate">{% if r.perk == 'honor' %}{% honor_medal 14 %} {% endif %}{{ r.title }}{% if not r.is_active %} <span class="badge plain">{% translate "yashirin" %}</span>{% endif %}</span><span class="person-meta">{% blocktranslate with description=r.description|default:"—" given=r.given trimmed %}{{ description }} · berilgan: {{ given }}{% endblocktranslate %}{% if r.waiting %} {% blocktranslate with waiting=r.waiting trimmed %}· kutilmoqda: {{ waiting }}{% endblocktranslate %}{% endif %}</span></span>
             <strong>{{ r.cost }} 🪙</strong>
           </a>
         {% empty %}
@@ -41,7 +41,7 @@
   <div class="card-head"><h2>{% icon "clock" 18 %} {% translate "Oxirgi so‘rovlar" %}</h2></div>
   <div class="card-body flush"><div class="rows">
     {% for p in recent %}
-      <div class="row"><span class="grow truncate"><span class="person-name block truncate">{{ p.student.full_name }} — {{ p.title }}</span><span class="person-meta">{{ p.created_at|date:"d.m H:i" }} · {{ p.cost }} 🪙</span></span><span class="badge {% if p.status == 'approved' %}ok{% elif p.status == 'rejected' %}plain{% else %}warn{% endif %}">{{ p.get_status_display }}</span></div>
+      <div class="row"><span class="grow truncate"><span class="person-name block truncate">{{ p.student|person_name }} — {{ p.title }}</span><span class="person-meta">{{ p.created_at|date:"d.m H:i" }} · {{ p.cost }} 🪙</span></span><span class="badge {% if p.status == 'approved' %}ok{% elif p.status == 'rejected' %}plain{% else %}warn{% endif %}">{{ p.get_status_display }}</span></div>
     {% endfor %}
   </div></div>
 </section>

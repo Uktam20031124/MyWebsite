@@ -47,9 +47,9 @@
         <tr>
           <td>
             <a class="person" href="{{ s.get_absolute_url }}">
-              <span class="avatar" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+              <span class="avatar{% if s.honor_since %} honor{% endif %}" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
               <span class="truncate">
-                <span class="person-name block truncate">{{ s.full_name }}</span>
+                <span class="person-name block truncate">{{ s|person_name }}</span>
                 <span class="person-meta">{% blocktranslate with joined_at=s.joined_at|date:"d.m.Y" trimmed %}{{ joined_at }} dan{% endblocktranslate %}</span>
               </span>
             </a>

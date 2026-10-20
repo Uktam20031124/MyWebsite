@@ -22,8 +22,8 @@
       {% for s in access_requests %}
         <div class="row quiz-row">
           <a class="person grow" href="{{ s.get_absolute_url }}#profile">
-            <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
-            <span class="truncate"><span class="person-name block truncate">{{ s.full_name }}</span><span class="person-meta">{% blocktranslate with code=s.group.code profile_requested_at=s.profile_requested_at|date:"d.m H:i" trimmed %}{{ code }} · so‘radi {{ profile_requested_at }}{% endblocktranslate %}</span></span>
+            <span class="avatar sm{% if s.honor_since %} honor{% endif %}" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+            <span class="truncate"><span class="person-name block truncate">{{ s|person_name }}</span><span class="person-meta">{% blocktranslate with code=s.group.code profile_requested_at=s.profile_requested_at|date:"d.m H:i" trimmed %}{{ code }} · so‘radi {{ profile_requested_at }}{% endblocktranslate %}</span></span>
           </a>
           <form method="post" action="{% url 'student_profile_access' s.pk %}" class="quiz-actions">
             {% csrf_token %}
@@ -46,8 +46,8 @@
       {% for p in purchase_requests %}
         <div class="row quiz-row">
           <a class="person grow" href="{{ p.student.get_absolute_url }}#profile">
-            <span class="avatar sm" style="--h: {{ p.student.full_name|hue }}" aria-hidden="true">{{ p.student.initials }}</span>
-            <span class="truncate"><span class="person-name block truncate">{{ p.student.full_name }}</span><span class="person-meta">{{ p.title }} · {{ p.cost }} 🪙 · {{ p.student.group.code }} · {{ p.created_at|date:"d.m H:i" }}</span></span>
+            <span class="avatar sm{% if p.student.honor_since %} honor{% endif %}" style="--h: {{ p.student.full_name|hue }}" aria-hidden="true">{{ p.student.initials }}</span>
+            <span class="truncate"><span class="person-name block truncate">{{ p.student|person_name }}</span><span class="person-meta">{{ p.title }} · {{ p.cost }} 🪙 · {{ p.student.group.code }} · {{ p.created_at|date:"d.m H:i" }}</span></span>
           </a>
           <form method="post" action="{% url 'purchase_decide' p.pk %}" class="quiz-actions">
             {% csrf_token %}
@@ -70,8 +70,8 @@
       {% for r in test_requests %}
         <div class="row quiz-row">
           <a class="person grow" href="{{ r.student.get_absolute_url }}#profile">
-            <span class="avatar sm" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span>
-            <span class="truncate"><span class="person-name block truncate">{{ r.student.full_name }}{% if r.kind == "retake" %} <span class="badge plain">{% translate "qayta topshirish" %}</span>{% endif %}</span><span class="person-meta">{{ r.topic|topic_title }} · {{ r.student.group.code }} · {{ r.created_at|date:"d.m H:i" }}</span></span>
+            <span class="avatar sm{% if r.student.honor_since %} honor{% endif %}" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span>
+            <span class="truncate"><span class="person-name block truncate">{{ r.student|person_name }}{% if r.kind == "retake" %} <span class="badge plain">{% translate "qayta topshirish" %}</span>{% endif %}</span><span class="person-meta">{{ r.topic|topic_title }} · {{ r.student.group.code }} · {{ r.created_at|date:"d.m H:i" }}</span></span>
           </a>
           <form method="post" action="{% url 'test_request_decide' r.pk %}" class="quiz-actions">
             {% csrf_token %}
@@ -93,9 +93,9 @@
       {% for a in pending %}
         <div class="row quiz-row">
           <a class="person grow" href="{% url 'quiz_attempt_review' a.pk %}" title="{% translate "Javoblarini ko‘rish (faqat siz)" %}">
-            <span class="avatar sm" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
+            <span class="avatar sm{% if a.student.honor_since %} honor{% endif %}" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
             <span class="truncate">
-              <span class="person-name block truncate">{{ a.student.full_name }}{% if a.language == "ru" %} <span class="badge plain">{% translate "RU" %}</span>{% endif %}</span>
+              <span class="person-name block truncate">{{ a.student|person_name }}{% if a.language == "ru" %} <span class="badge plain">{% translate "RU" %}</span>{% endif %}</span>
               <span class="person-meta">{% blocktranslate with title=a.quiz.topic|topic_title code=a.student.group.code reveal_requested_at=a.reveal_requested_at|date:"d.m H:i" trimmed %}{{ title }} · {{ code }} · so‘radi {{ reveal_requested_at }}{% endblocktranslate %}</span>
             </span>
           </a>
@@ -122,7 +122,7 @@
     <div class="rows">
       {% for a in decided %}
         <div class="row quiz-row">
-          <span class="grow truncate"><span class="person-name block truncate">{{ a.student.full_name }}</span><span class="person-meta">{{ a.quiz.topic|topic_title }} · {{ a.reveal_decided_at|date:"d.m H:i" }}</span></span>
+          <span class="grow truncate"><span class="person-name block truncate">{{ a.student|person_name }}</span><span class="person-meta">{{ a.quiz.topic|topic_title }} · {{ a.reveal_decided_at|date:"d.m H:i" }}</span></span>
           <div class="quiz-actions">
             {% if a.reveal == "approved" %}<span class="badge ok">{% translate "ruxsat berilgan" %}</span>{% else %}<span class="badge plain">{% translate "rad etilgan" %}</span>{% endif %}
             <form method="post" action="{% url 'quiz_review_decide' a.pk %}">

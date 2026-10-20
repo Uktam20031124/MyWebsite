@@ -72,7 +72,7 @@ from .models import (
     Topic,
     new_attempt_token,
 )
-from .profile_views import profile_context
+from .profile_views import local_next, profile_context
 from .quiz_i18n import attempt_texts
 from .registrations import approve_existing, approve_new, reject, submit, suggestions
 from .services import (
@@ -2291,14 +2291,6 @@ def student_portal_action(request, pk):
     else:
         _send_portal_links(request, [student], _channel_param(request))
     return redirect(local_next(request) or f"{student.get_absolute_url()}#portal")
-
-
-def local_next(request) -> str:
-    """Formadagi ``next`` — faqat shu saytdagi manzil bo'lsa (masalan, shogirdlar ro'yxatiga qaytish)."""
-    target = request.POST.get("next", "")
-    if target.startswith("/") and url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
-        return target
-    return ""
 
 
 @login_required

@@ -30,9 +30,9 @@
     {% for row in rows %}
       <fieldset class="att-row">
         <legend class="person">
-          <span class="avatar" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
+          <span class="avatar{% if row.student.honor_since %} honor{% endif %}" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
           <span class="truncate">
-            <span class="person-name block truncate">{{ row.student.full_name }}</span>
+            <span class="person-name block truncate">{{ row.student|person_name }}</span>
             <span class="person-meta">
               {% if row.student.status != 'active' %}{{ row.student.get_status_display }} · {% endif %}{{ row.student.phone|default:"" }}
             </span>

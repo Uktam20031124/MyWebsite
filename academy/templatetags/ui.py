@@ -247,3 +247,32 @@ def js_i18n():
     """<script id="js-i18n" type="application/json"> — app.js shu lug'atdan o'qiydi (o'zbekchada bo'sh)."""
     data = {} if get_language() == "uz" else {k: gettext(k) for k in JS_STRINGS}
     return json_script(data, "js-i18n")
+
+
+# "A'lochi" unvoni: oltin medal (ism yonida) — inline SVG, hamma joyda bir xil.
+_MEDAL = (
+    '<svg class="honor-medal" viewBox="0 0 24 24" width="{s}" height="{s}" role="img" aria-label="{label}">'
+    "<title>{label}</title>"
+    '<path d="M7 2h4l2 6H9z" fill="#2a5fa8"/><path d="M13 2h4l-2 6h-4z" fill="#c0392b"/>'
+    '<circle cx="12" cy="14.5" r="7" fill="url(#honor-g)" stroke="#9c6a12" stroke-width="1"/>'
+    '<path d="m12 10.4 1.25 2.55 2.8.4-2.03 1.98.48 2.79L12 16.8l-2.5 1.32.48-2.79-2.03-1.98 2.8-.4z" '
+    'fill="#fff6d6"/></svg>'
+)
+
+
+@register.simple_tag
+def honor_medal(size: int = 16):
+    return format_html(_MEDAL, s=size, label=gettext("A’lochi"))
+
+
+@register.filter
+def person_name(person):
+    """O'quvchi ismi; "A'lochi" bo'lsa — oltin rangda va medal bilan (hamma ko'radigan joylarda)."""
+    if isinstance(person, dict):
+        name, honor = person.get("full_name", ""), person.get("honor_since")
+    else:
+        name, honor = getattr(person, "full_name", "") or str(person or ""), getattr(person, "honor_since", None)
+    if not honor:
+        return name
+    # Medal ism oldida: uzun ism qisqartirilganda (…) ham ko'rinib turadi.
+    return format_html('{}<span class="honor-name">{}</span>', honor_medal(15), name)

@@ -546,7 +546,7 @@ class RegistrationLinkForm(StyledFormMixin, forms.ModelForm):
 class RewardForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = Reward
-        fields = ["title", "cost", "description", "order", "is_active"]
+        fields = ["title", "cost", "perk", "description", "order", "is_active"]
 
 
 # --- Umumiy test havolasi -------------------------------------------------------
