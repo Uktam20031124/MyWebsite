@@ -3,6 +3,8 @@
 Ustoz interfeysi o'zbekcha qoladi; bu yerda faqat o'quvchiga boradigan matnlar.
 """
 
+from django.utils import timezone
+
 from .models import QuizLanguage
 
 UZ, RU = QuizLanguage.UZ, QuizLanguage.RU
@@ -61,10 +63,28 @@ _TEXTS = {
         "msg_title": "“{topic}” bo‘yicha test",
         "msg_button": "Testni boshlash",
         "msg_counts": "{n} ta savol, {m} daqiqa.",
+        "msg_fallback": "Tugma ishlamasa:",
         "rem_quiz": "“{topic}” mavzusi bo‘yicha test hali ochilmagan: {n} ta savol, {m} daqiqa.",
         "rem_tail": "Vaqtingiz bo‘lganda yechib qo‘ying — natija ustozga boradi.",
         "rem_subject": "Eslatma: “{topic}” testi hali ochilmagan",
         "rem_title": "Test hali ochilmagan",
+        # Umumiy havola (bitta havola — ko'p qatnashchi)
+        "open_intro": "Testni boshlash uchun familiya, ism va sharifingizni kiriting.",
+        "open_name": "F.I.Sh.",
+        "open_name_ph": "Masalan: Aliyev Vali Karimovich",
+        "open_name_error": "F.I.Sh.ni to‘liq kiriting — kamida familiya va ism.",
+        "open_duplicate": "Bu F.I.Sh. bilan test allaqachon topshirilgan. Xato bo‘lsa, ustozingizga murojaat qiling.",
+        "open_lang": "Test tili",
+        "open_rule_once": "Testni <strong>bir marta</strong> topshirasiz: boshlagandan keyin uni boshqa "
+        "qurilmada davom ettirib bo‘lmaydi.",
+        "open_closes": "Test {date} gacha ochiq.",
+        "open_closed_title": "Test yopilgan",
+        "open_closed_text": "Bu test havolasi hozir faol emas yoki muddati tugagan.",
+        "open_sent": "Natijangiz ustozga yuborildi. Rahmat!",
+        "open_empty": "Bu testda hali savollar yo‘q. Ustozingizga murojaat qiling.",
+        "msg_open_how": "Havolani oching, F.I.Sh.ingizni kiriting va “Testni boshlash” tugmasini bosing.",
+        "msg_open_once": "Testni bir marta topshirish mumkin — tayyor bo‘lganingizda oching.",
+        "msg_open_hello": "Assalomu alaykum!",
     },
     RU: {
         "kicker": "Minar Test · тест",
@@ -118,10 +138,27 @@ _TEXTS = {
         "msg_title": "Тест по теме «{topic}»",
         "msg_button": "Начать тест",
         "msg_counts": "Вопросов: {n}, время: {m} мин.",
+        "msg_fallback": "Если кнопка не работает:",
         "rem_quiz": "Тест по теме «{topic}» ещё не открыт: вопросов — {n}, время — {m} мин.",
         "rem_tail": "Решите, когда будет время, — результат придёт учителю.",
         "rem_subject": "Напоминание: тест «{topic}» ещё не открыт",
         "rem_title": "Тест ещё не открыт",
+        "open_intro": "Чтобы начать тест, введите фамилию, имя и отчество.",
+        "open_name": "Ф.И.О.",
+        "open_name_ph": "Например: Алиев Вали Каримович",
+        "open_name_error": "Введите Ф.И.О. полностью — как минимум фамилию и имя.",
+        "open_duplicate": "Тест с таким Ф.И.О. уже сдан. Если это ошибка, обратитесь к учителю.",
+        "open_lang": "Язык теста",
+        "open_rule_once": "Тест сдаётся <strong>один раз</strong>: после начала продолжить его на другом "
+        "устройстве нельзя.",
+        "open_closes": "Тест открыт до {date}.",
+        "open_closed_title": "Тест закрыт",
+        "open_closed_text": "Эта ссылка на тест сейчас не активна или срок её действия истёк.",
+        "open_sent": "Ваш результат отправлен учителю. Спасибо!",
+        "open_empty": "В этом тесте пока нет вопросов. Обратитесь к учителю.",
+        "msg_open_how": "Откройте ссылку, введите своё Ф.И.О. и нажмите «Начать тест».",
+        "msg_open_once": "Тест можно сдать один раз — открывайте, когда будете готовы.",
+        "msg_open_hello": "Здравствуйте!",
     },
 }
 
@@ -134,11 +171,12 @@ def attempt_texts(attempt) -> dict:
     """Shablon uchun: shu urinish tilidagi, son va nomlari qo'yilgan matnlar."""
     t = dict(texts(attempt.language))
     t["rule_questions"] = t["rule_questions"].format(n=attempt.question_count)
-    t["rule_time"] = t["rule_time"].format(m=attempt.batch.time_limit_minutes)
+    t["rule_time"] = t["rule_time"].format(m=attempt.time_limit_minutes)
     if attempt.total:
         t["score"] = t["score"].format(correct=attempt.correct or 0, total=attempt.total)
     t["lang"] = attempt.language
-    t["topic"] = attempt.quiz.topic.title_in(attempt.language)
+    open_quiz = getattr(attempt, "open_quiz", None)
+    t["topic"] = (open_quiz and open_quiz.title) or attempt.quiz.topic.title_in(attempt.language)
     return t
 
 
@@ -153,3 +191,32 @@ def message_parts(attempt) -> dict:
     return {key: value.format(**values) for key, value in t.items() if key.startswith(("msg_", "rem_"))} | {
         "hello": f"{t['hello']}, {attempt.student.full_name}!"
     }
+
+
+def open_quiz_texts(open_quiz, lang: str) -> dict:
+    """Umumiy havola kirish sahifasi uchun matnlar (``lang`` — qatnashchi tanlagan til)."""
+    t = dict(texts(lang))
+    n = open_quiz.question_total
+    t["rule_questions"] = t["rule_questions"].format(n=n)
+    t["rule_time"] = t["rule_time"].format(m=open_quiz.time_limit_minutes)
+    if open_quiz.closes_at:
+        closes = timezone.localtime(open_quiz.closes_at)
+        t["open_closes"] = t["open_closes"].format(date=closes.strftime("%d.%m.%Y %H:%M"))
+    t["lang"] = lang
+    t["topic"] = open_quiz.title or open_quiz.quiz.topic.title_in(lang)
+    return t
+
+
+def open_message_parts(open_quiz, lang: str) -> dict:
+    """Umumiy havola xati: shu tildagi tayyor qatorlar."""
+    t = texts(lang)
+    values = {
+        "topic": open_quiz.title or open_quiz.quiz.topic.title_in(lang),
+        "n": open_quiz.question_total,
+        "m": open_quiz.time_limit_minutes,
+    }
+    keys = (
+        "msg_quiz", "msg_subject", "msg_title", "msg_button", "msg_fallback",
+        "msg_open_how", "msg_open_once", "msg_open_hello",
+    )
+    return {key: t[key].format(**values) for key in keys}

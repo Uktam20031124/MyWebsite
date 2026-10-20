@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import profile_views, views
+from . import open_quiz_views, profile_views, views
 
 urlpatterns = [
     path("kirish/", views.ThrottledLoginView.as_view(), name="login"),
@@ -87,6 +87,30 @@ urlpatterns = [
     path("mavzular/<int:pk>/test/ochirish/", views.QuizDeleteView.as_view(), name="quiz_delete"),
     path("testlar/", views.QuizBatchListView.as_view(), name="quiz_batches"),
     path("testlar/jonatish/", views.quiz_send, name="quiz_send"),
+    # Umumiy havola: bitta havola — ko'p qatnashchi (F.I.Sh. bilan)
+    path("testlar/umumiy/", open_quiz_views.open_quiz_list, name="open_quiz_list"),
+    path("testlar/umumiy/yangi/", open_quiz_views.open_quiz_create, name="open_quiz_create"),
+    path("testlar/umumiy/<int:pk>/", open_quiz_views.open_quiz_detail, name="open_quiz"),
+    path("testlar/umumiy/<int:pk>/yuborish/", open_quiz_views.open_quiz_invite, name="open_quiz_invite"),
+    path("testlar/umumiy/<int:pk>/holat/", open_quiz_views.open_quiz_toggle, name="open_quiz_toggle"),
+    path("testlar/umumiy/<int:pk>/ochirish/", open_quiz_views.open_quiz_delete, name="open_quiz_delete"),
+    path("testlar/umumiy/<int:pk>/csv/", open_quiz_views.open_quiz_export, name="open_quiz_export"),
+    path(
+        "testlar/umumiy/<int:pk>/natija/<int:attempt_pk>/",
+        open_quiz_views.open_attempt_review,
+        name="open_attempt_review",
+    ),
+    path(
+        "testlar/umumiy/<int:pk>/natija/<int:attempt_pk>/ochirish/",
+        open_quiz_views.open_attempt_delete,
+        name="open_attempt_delete",
+    ),
+    path("o/<str:token>/", open_quiz_views.open_quiz_public, name="open_quiz_public"),
+    path("o/<str:token>/<str:attempt_token>/", open_quiz_views.open_quiz_take, name="open_quiz_take"),
+    path("o/<str:token>/<str:attempt_token>/saqlash/", open_quiz_views.open_quiz_save, name="open_quiz_save"),
+    path(
+        "o/<str:token>/<str:attempt_token>/yakunlash/", open_quiz_views.open_quiz_submit, name="open_quiz_submit"
+    ),
     path("testlar/<int:pk>/", views.quiz_batch_detail, name="quiz_batch"),
     path("testlar/natija/<int:pk>/", views.quiz_attempt_review, name="quiz_attempt_review"),
     path("testlar/sorovlar/", views.quiz_review_requests, name="quiz_review_requests"),

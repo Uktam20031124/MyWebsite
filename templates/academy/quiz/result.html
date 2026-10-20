@@ -2,7 +2,7 @@
 {% block title %}{{ t.result }} · {{ t.topic }}{% endblock %}
 {% block panel %}
 <h1>{{ t.result }}</h1>
-<p class="meta">{{ attempt.student.full_name }} · {{ t.topic }}</p>
+<p class="meta">{{ participant_name }} · {{ t.topic }}</p>
 {% if attempt.timed_out %}<div class="callout warn" style="margin-top:12px"><div class="grow">{{ t.timed_out }}</div></div>{% endif %}
 <div class="quiz-score {% if attempt.percent >= 80 %}ok{% elif attempt.percent >= 50 %}warn{% else %}bad{% endif %}">
   <div class="quiz-score-n">{{ attempt.percent }}%</div>
@@ -18,7 +18,8 @@
   </div>
 {% endif %}
 
-{% if attempt.reveal == "" %}
+{% if not personal %}
+{% elif attempt.reveal == "" %}
   <div class="callout next review-ask">
     <div class="grow">
       <p style="margin:0 0 10px">{{ t.review_ask_hint }}</p>
@@ -57,5 +58,5 @@
   <p class="meta">{{ t.ask_teacher }}</p>
 {% endif %}
 
-<p class="meta">{{ t.sent_to_teacher }}</p>
+<p class="meta">{% if personal %}{{ t.sent_to_teacher }}{% else %}{{ t.open_sent }}{% endif %}</p>
 {% endblock %}

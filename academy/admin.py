@@ -8,6 +8,8 @@ from .models import (
     Group,
     Lesson,
     Module,
+    OpenAttempt,
+    OpenQuiz,
     Question,
     Quiz,
     QuizAttempt,
@@ -135,6 +137,24 @@ class QuizBatchAdmin(admin.ModelAdmin):
     search_fields = ("quiz__topic__title",)
     list_select_related = ("quiz__topic", "group", "lesson__group", "lesson__topic")
     inlines = [QuizAttemptInline]
+
+
+class OpenAttemptInline(admin.TabularInline):
+    model = OpenAttempt
+    extra = 0
+    fields = ("full_name", "status", "correct", "total", "started_at", "finished_at")
+    readonly_fields = fields
+    can_delete = False
+
+
+@admin.register(OpenQuiz)
+class OpenQuizAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "quiz", "question_count", "time_limit_minutes", "is_active", "closes_at", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("title", "quiz__topic__title")
+    list_select_related = ("quiz__topic",)
+    readonly_fields = ("token",)
+    inlines = [OpenAttemptInline]
 
 
 @admin.register(QuizAttempt)

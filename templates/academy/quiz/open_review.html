@@ -1,0 +1,38 @@
+{% extends "academy/base.html" %}
+{% load i18n ui %}
+{% block title %}{% blocktranslate with full_name=attempt.full_name trimmed %}{{ full_name }} · javoblar · Minar Test{% endblocktranslate %}{% endblock %}
+{% block kicker %}<a href="{% url 'open_quiz_list' %}">{% translate "Umumiy havolalar" %}</a><span class="sep">/</span><a href="{{ oq.get_absolute_url }}">{{ oq.display_title|truncatechars:40 }}</a><span class="sep">/</span>{% translate "Javoblar" %}{% endblock %}
+{% block heading %}{{ attempt.full_name }}{% endblock %}
+{% block subheading %}<p class="page-sub">{% icon "shield" 15 %} {% translate "Faqat siz ko‘rasiz — qatnashchiga xatolari va to‘g‘ri javoblar ko‘rsatilmaydi." %}{% if attempt.language == 'ru' %} {% blocktranslate trimmed %}· Test <strong>rus tilida</strong> yechilgan (bu yerda o‘zbekcha ko‘rsatilgan).{% endblocktranslate %}{% endif %}</p>{% endblock %}
+{% block actions %}
+{% if prev %}<a class="btn ghost" href="{% url 'open_attempt_review' oq.pk prev.pk %}{% if only_wrong %}?xato=1{% endif %}" title="{{ prev.full_name }}">{% icon "left" 16 %} {% translate "Oldingi" %}</a>{% endif %}
+{% if next %}<a class="btn ghost" href="{% url 'open_attempt_review' oq.pk next.pk %}{% if only_wrong %}?xato=1{% endif %}" title="{{ next.full_name }}">{% translate "Keyingi" %} {% icon "right" 16 %}</a>{% endif %}
+<a class="btn soft" href="{{ oq.get_absolute_url }}">{% icon "users" 16 %} {% translate "Barcha natijalar" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="kpis">
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">{% translate "Natija" %}</span><span class="kpi-icon {% if attempt.percent >= 80 %}ok{% elif attempt.percent >= 50 %}gold{% else %}accent{% endif %}">{% icon "trophy" 17 %}</span></div>
+    <div class="kpi-value">{{ attempt.percent }}%</div>
+    <div class="kpi-foot">{% blocktranslate with correct=attempt.correct total=attempt.total trimmed %}{{ correct }} / {{ total }} to‘g‘ri{% endblocktranslate %}</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">{% translate "Xato" %}</span><span class="kpi-icon accent">{% icon "x" 17 %}</span></div>
+    <div class="kpi-value">{{ wrong_n }}</div>
+    {% if unanswered_n %}<div class="kpi-foot">{% blocktranslate with unanswered_n=unanswered_n trimmed %}shundan {{ unanswered_n }} tasi javobsiz{% endblocktranslate %}</div>{% endif %}
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">{% translate "Sarflangan vaqt" %}</span><span class="kpi-icon info">{% icon "clock" 17 %}</span></div>
+    <div class="kpi-value" style="font-size:22px">{% if duration %}{% blocktranslate with v_0=duration.0 v_1=duration.1 trimmed %}{{ v_0 }} daq. {{ v_1 }} s{% endblocktranslate %}{% else %}—{% endif %}</div>
+    <div class="kpi-foot">{% blocktranslate with time_limit_minutes=oq.time_limit_minutes trimmed %}{{ time_limit_minutes }} daqiqadan{% endblocktranslate %}{% if attempt.timed_out %} {% translate "· vaqt tugadi" %}{% endif %}</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">{% translate "Topshirilgan" %}</span><span class="kpi-icon gold">{% icon "calendar" 17 %}</span></div>
+    <div class="kpi-value" style="font-size:22px">{{ attempt.finished_at|date:"d.m H:i" }}</div>
+    <div class="kpi-foot">{{ attempt.get_language_display }}</div>
+  </article>
+</section>
+
+{% include "academy/quiz/_review_items.html" %}
+{% endblock %}

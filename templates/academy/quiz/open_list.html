@@ -1,0 +1,43 @@
+{% extends "academy/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Umumiy havolalar · Minar Test" %}{% endblock %}
+{% block kicker %}{% icon "target" 15 %} {% translate "Mavzu testlari" %}{% endblock %}
+{% block heading %}{% translate "Testlar" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Umumiy havola — bitta havola ko‘p kishiga: har kim F.I.Sh.ini kiritib testni boshlaydi, natijalar shu yerda ism bo‘yicha ko‘rinadi." %}</p>{% endblock %}
+{% block actions %}
+<a class="btn primary" href="{% url 'open_quiz_create' %}">{% icon "plus" 16 %} {% translate "Umumiy havola yaratish" %}</a>
+{% endblock %}
+
+{% block content %}
+<div class="toolbar">{% include "academy/quiz/_tabs.html" with active="open" %}</div>
+<section class="card">
+  <div class="card-body flush">
+    <div class="rows">
+      {% for oq in open_quizzes %}
+        <a class="row oq-row" href="{{ oq.get_absolute_url }}">
+          <span class="oq-icon{% if not oq.is_active %} off{% endif %}" aria-hidden="true">{% icon "link" 18 %}</span>
+          <div class="grow">
+            <div class="row-title truncate">{{ oq.display_title }}</div>
+            <div class="meta">{% if oq.title %}{{ oq.quiz.topic|topic_title }} · {% endif %}{% blocktranslate with n=oq.question_count m=oq.time_limit_minutes trimmed %}{{ n }} savol · {{ m }} daq.{% endblocktranslate %} · {{ oq.get_language_display }} · {{ oq.created_at|date:"d.m.Y" }}</div>
+          </div>
+          <span class="oq-counts">
+            <span title="{% translate "Qatnashdi" %}">{% icon "users" 15 %} {{ oq.joined_n }}</span>
+            <span title="{% translate "Yakunladi" %}">{% icon "check" 15 %} {{ oq.done_n }}</span>
+            {% if oq.invited_n %}<span title="{% translate "Emailga yuborilgan" %}">{% icon "mail" 15 %} {{ oq.invited_n }}</span>{% endif %}
+          </span>
+          {% if not oq.is_active %}<span class="badge plain">{% translate "Yopiq" %}</span>
+          {% elif oq.closes_at and oq.closes_at <= now %}<span class="badge warn">{% translate "Muddati tugagan" %}</span>
+          {% else %}<span class="badge ok">{% translate "Ochiq" %}</span>{% endif %}
+        </a>
+      {% empty %}
+        <div class="empty">
+          <span class="empty-icon">{% icon "link" 22 %}</span>
+          <strong>{% translate "Hali umumiy havola yo‘q" %}</strong>
+          <p>{% translate "Havola yarating va uni bir nechta email manzilga birdaniga yuboring — har bir qatnashchi F.I.Sh.ini kiritib testni yechadi." %}</p>
+          <a class="btn primary" href="{% url 'open_quiz_create' %}">{% icon "plus" 16 %} {% translate "Umumiy havola yaratish" %}</a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

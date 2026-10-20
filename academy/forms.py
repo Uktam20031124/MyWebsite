@@ -1,10 +1,12 @@
+import re
 from datetime import timedelta
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from django.core.validators import MaxValueValidator
-from django.db.models import Q
+from django.core.validators import MaxValueValidator, validate_email
+from django.db.models import Count, Q
 from django.utils import timezone
+from django.utils.translation import get_language
 from django.utils.translation import gettext_lazy as _
 
 from .models import (
@@ -12,6 +14,7 @@ from .models import (
     Group,
     Lesson,
     Module,
+    OpenQuiz,
     Quiz,
     QuizBatch,
     QuizLanguage,
@@ -544,3 +547,121 @@ class RewardForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = Reward
         fields = ["title", "cost", "description", "order", "is_active"]
+
+
+# --- Umumiy test havolasi -------------------------------------------------------
+
+EMAIL_SPLIT = re.compile(r"[\s,;]+")
+MAX_INVITES = 200
+
+
+def parse_emails(text: str) -> tuple[list[str], list[str]]:
+    """Matndan email manzillar (vergul, nuqtali vergul, bo'sh joy yoki yangi qator bilan).
+    Qaytaradi: (to'g'rilari — takrorlarsiz, kichik harfda; noto'g'rilari)."""
+    good, bad, seen = [], [], set()
+    for raw in EMAIL_SPLIT.split(text or ""):
+        value = raw.strip().strip("<>()\"'").lower()
+        if not value:
+            continue
+        try:
+            validate_email(value)
+        except forms.ValidationError:
+            bad.append(raw.strip())
+            continue
+        if value not in seen:
+            seen.add(value)
+            good.append(value)
+    return good, bad
+
+
+class EmailListField(forms.CharField):
+    """Bir nechta email manzil: ro'yxat qaytaradi, noto'g'rilarini aniq ko'rsatadi."""
+
+    widget = forms.Textarea
+
+    def to_python(self, value):
+        return parse_emails(super().to_python(value))
+
+    def validate(self, value):
+        good, bad = value
+        if bad:
+            shown = ", ".join(bad[:5]) + ("…" if len(bad) > 5 else "")
+            raise forms.ValidationError(_("Noto‘g‘ri email: {emails}").format(emails=shown))
+        if self.required and not good:
+            raise forms.ValidationError(_("Kamida bitta email manzil kiriting."))
+        if len(good) > MAX_INVITES:
+            raise forms.ValidationError(_("Bir martada ko‘pi bilan {n} ta manzil.").format(n=MAX_INVITES))
+
+    def run_validators(self, value):
+        super().run_validators(" ".join(value[0]))
+
+    def clean(self, value):
+        return super().clean(value)[0]
+
+
+EMAILS_HELP = _(
+    "Vergul bilan yoki har birini yangi qatordan yozing. Har biriga alohida xat boradi — "
+    "manzillar bir-biriga ko‘rinmaydi."
+)
+
+
+class OpenQuizForm(StyledFormMixin, forms.ModelForm):
+    """Umumiy havola yaratish: test, savollar soni, vaqt, til va (ixtiyoriy) emailga yuborish."""
+
+    emails = EmailListField(
+        label=_("Emailga yuborish"),
+        required=False,
+        help_text=EMAILS_HELP,
+        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "ali@gmail.com, vali@mail.ru"}),
+    )
+
+    class Meta:
+        model = OpenQuiz
+        fields = ["quiz", "title", "language", "question_count", "time_limit_minutes", "closes_at"]
+        widgets = {
+            "closes_at": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        quizzes = (
+            Quiz.objects.filter(questions__isnull=False)
+            .select_related("topic__module")
+            .annotate(n=Count("questions", distinct=True))
+            .order_by("topic__module__order", "topic__order", "topic__title")
+        )
+        self.bank = {q.pk: q.n for q in quizzes}
+        field = self.fields["quiz"]
+        field.queryset = quizzes
+        field.label = _("Mavzu testi")
+        field.label_from_instance = lambda q: _("{topic} · {n} ta savol").format(
+            topic=q.topic.title_in(get_language()), n=q.n
+        )
+        self.fields["closes_at"].input_formats = ["%Y-%m-%dT%H:%M"]
+        if not self.is_bound and not self.instance.pk:
+            self.initial.setdefault("question_count", 10)
+            self.initial.setdefault("time_limit_minutes", 10)
+
+    def clean_closes_at(self):
+        value = self.cleaned_data["closes_at"]
+        if value and value <= timezone.now():
+            raise forms.ValidationError(_("Kelajakdagi vaqtni tanlang (yoki bo‘sh qoldiring)."))
+        return value
+
+    def clean(self):
+        data = super().clean()
+        quiz, count = data.get("quiz"), data.get("question_count")
+        if quiz and count and count > self.bank.get(quiz.pk, 0):
+            self.add_error(
+                "question_count",
+                _("Bu testda {n} ta savol bor — ko‘pi bilan shuncha.").format(n=self.bank.get(quiz.pk, 0)),
+            )
+        return data
+
+
+class OpenQuizInviteForm(StyledFormMixin, forms.Form):
+    emails = EmailListField(
+        label=_("Email manzillar"),
+        help_text=EMAILS_HELP,
+        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "ali@gmail.com, vali@mail.ru"}),
+    )

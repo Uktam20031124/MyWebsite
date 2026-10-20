@@ -1,0 +1,31 @@
+{% extends "academy/quiz/public_base.html" %}
+{% load ui %}
+{% block title %}{{ t.topic }} · Minar Test{% endblock %}
+{% block panel %}
+<nav class="seg-tabs oq-lang" aria-label="{{ t.open_lang }}">
+  <a href="?til=uz"{% if lang == "uz" %} aria-current="true"{% endif %} lang="uz">O‘zbekcha</a>
+  <a href="?til=ru"{% if lang == "ru" %} aria-current="true"{% endif %} lang="ru">Русский</a>
+</nav>
+<h1>{{ t.topic }}</h1>
+<p class="muted">{{ t.open_intro }}</p>
+<ul class="rules">
+  <li>{{ t.rule_questions }}</li>
+  <li>{{ t.rule_time|safe }}</li>
+  <li>{{ t.open_rule_once|safe }}</li>
+  <li>{{ t.rule_leave|safe }}</li>
+</ul>
+{% if oq.closes_at %}<p class="oq-closes">{% icon "clock" 15 %} {{ t.open_closes }}</p>{% endif %}
+<form method="post" novalidate class="oq-form">
+  {% csrf_token %}
+  <input type="hidden" name="til" value="{{ lang }}">
+  <div class="field{% if error %} has-error{% endif %}">
+    <label for="oq-name">{{ t.open_name }}</label>
+    <div class="input-wrap">
+      {% icon "user" 17 %}
+      <input class="input" id="oq-name" name="full_name" value="{{ full_name }}" placeholder="{{ t.open_name_ph }}" autocomplete="name" maxlength="160" required autofocus{% if error %} aria-invalid="true" aria-describedby="oq-name-error"{% endif %}>
+    </div>
+    {% if error %}<p class="errorlist" id="oq-name-error" role="alert">{{ error }}</p>{% endif %}
+  </div>
+  <button class="btn primary block" type="submit">{{ t.start }} {% icon "right" 16 %}</button>
+</form>
+{% endblock %}

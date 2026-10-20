@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="toolbar">{% include "academy/quiz/_tabs.html" with active="batches" %}</div>
 {% if groups %}
   <div class="toolbar">
     <nav class="seg-tabs" aria-label="{% translate "Guruh bo‘yicha" %}">

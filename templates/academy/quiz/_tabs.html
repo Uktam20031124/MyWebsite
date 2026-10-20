@@ -1,0 +1,4 @@
+{% load i18n ui %}<nav class="seg-tabs section-tabs" aria-label="{% translate "Test turlari" %}">
+  <a href="{% url 'quiz_batches' %}"{% if active == "batches" %} aria-current="true"{% endif %}>{% icon "send" 15 %} {% translate "Shaxsiy jo‘natmalar" %}</a>
+  <a href="{% url 'open_quiz_list' %}"{% if active == "open" %} aria-current="true"{% endif %}>{% icon "link" 15 %} {% translate "Umumiy havolalar" %}</a>
+</nav>

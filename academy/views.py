@@ -1608,16 +1608,16 @@ def quiz_attempt_renew(request, pk):
 # --- Testlar (o'quvchi, login talab qilinmaydi) -----------------------------
 
 
-def _owner_cookie(attempt: QuizAttempt) -> str:
-    return f"quiz_{attempt.pk}"
+def _owner_cookie(attempt) -> str:
+    return f"{attempt.COOKIE_PREFIX}{attempt.pk}"
 
 
-def _is_owner(request, attempt: QuizAttempt) -> bool:
+def _is_owner(request, attempt) -> bool:
     key = request.COOKIES.get(_owner_cookie(attempt), "")
     return bool(key and attempt.owner_key) and secrets.compare_digest(key, attempt.owner_key)
 
 
-def _shuffled_questions(attempt: QuizAttempt) -> list:
+def _shuffled_questions(attempt) -> list:
     """Savollar va variantlar har bir o'quvchida o'z tartibida (urug' — token)."""
     rng = random.Random(attempt.token)
     lang = attempt.language
@@ -1633,7 +1633,7 @@ def _shuffled_questions(attempt: QuizAttempt) -> list:
     return questions
 
 
-def _posted_answers(request, attempt: QuizAttempt) -> dict:
+def _posted_answers(request, attempt) -> dict:
     answers = {}
     for qid in attempt.questions().values_list("pk", flat=True):
         value = request.POST.get(f"q{qid}", "")
@@ -1642,7 +1642,7 @@ def _posted_answers(request, attempt: QuizAttempt) -> dict:
     return answers
 
 
-def _student_review(attempt: QuizAttempt) -> list[dict]:
+def _student_review(attempt) -> list[dict]:
     """O'quvchi uchun: har bir savol, o'zi tanlagan javob va to'g'ri/xato belgisi.
 
     To'g'ri variant ataylab berilmaydi (shablonga ham tushmaydi) — u faqat ustozga
@@ -1662,7 +1662,7 @@ def _student_review(attempt: QuizAttempt) -> list[dict]:
     ]
 
 
-def review_in_shown_order(attempt: QuizAttempt, lang: str = "uz") -> list[dict]:
+def review_in_shown_order(attempt, lang: str = "uz") -> list[dict]:
     """Javoblar tahlili — o'quvchiga test paytida ko'rsatilgan tartibda (raqamlar mos).
     Ustoz o'zbekcha ko'radi, o'quvchi — o'z tilida."""
     shown = {q.pk: i for i, q in enumerate(_shuffled_questions(attempt))}
@@ -1670,6 +1670,9 @@ def review_in_shown_order(attempt: QuizAttempt, lang: str = "uz") -> list[dict]:
 
 
 def _quiz_page(request, attempt, template, status=200, **extra):
+    """O'quvchi test sahifasi. Shaxsiy (QuizAttempt) va umumiy (OpenAttempt) havolalar uchun
+    shablonlar bir xil — farqi URL'lar va qatnashchi ismida."""
+    personal = isinstance(attempt, QuizAttempt)
     response = render(
         request,
         f"academy/quiz/{template}.html",
@@ -1678,6 +1681,10 @@ def _quiz_page(request, attempt, template, status=200, **extra):
             "quiz": attempt.quiz,
             "topic": attempt.quiz.topic,
             "t": attempt_texts(attempt),
+            "participant_name": attempt.student.full_name if personal else attempt.full_name,
+            "personal": personal,
+            "save_url": reverse("quiz_save" if personal else "open_quiz_save", args=_attempt_args(attempt)),
+            "submit_url": reverse("quiz_submit" if personal else "open_quiz_submit", args=_attempt_args(attempt)),
             **extra,
         },
         status=status,
@@ -1747,10 +1754,15 @@ def quiz_take(request, token):
 def quiz_save(request, token):
     """Javoblarni oraliq saqlash (JS): sahifa yopilsa ham vaqt tugaganda baholanadi."""
     attempt = get_object_or_404(QuizAttempt.objects.select_related("quiz", "batch"), token=token)
+    return save_answers(request, attempt)
+
+
+def save_answers(request, attempt) -> JsonResponse:
+    """Oraliq saqlash — shaxsiy va umumiy havolalar uchun bir xil."""
     if (
-        attempt.status != QuizAttempt.Status.ACTIVE
+        attempt.status != attempt.Status.ACTIVE
         or not _is_owner(request, attempt)
-        or attempt.is_expired(grace=QuizAttempt.GRACE_SECONDS)
+        or attempt.is_expired(grace=attempt.GRACE_SECONDS)
     ):
         return JsonResponse({"ok": False}, status=409)
     attempt.answers = _posted_answers(request, attempt)
@@ -1759,7 +1771,11 @@ def quiz_save(request, token):
     return JsonResponse({"ok": True, "seconds_left": attempt.seconds_left()})
 
 
-def _record_leaves(request, attempt: QuizAttempt) -> None:
+def _attempt_args(attempt) -> list:
+    return [attempt.token] if isinstance(attempt, QuizAttempt) else [attempt.open_quiz.token, attempt.token]
+
+
+def _record_leaves(request, attempt) -> None:
     """Brauzerdan kelgan "test oynasidan chiqishlar" soni va vaqti — faqat oshadi
     (o'quvchi kamaytira olmaydi); vaqt test muddatidan oshmaydi."""
 
@@ -1768,9 +1784,9 @@ def _record_leaves(request, attempt: QuizAttempt) -> None:
         return min(int(value), cap) if value.isdigit() else 0
 
     leaves = max(attempt.leave_count, posted("leave_count", 999))
-    away = max(attempt.away_seconds, posted("away_seconds", attempt.batch.time_limit_minutes * 60))
+    away = max(attempt.away_seconds, posted("away_seconds", attempt.time_limit_minutes * 60))
     if (leaves, away) != (attempt.leave_count, attempt.away_seconds):
-        QuizAttempt.objects.filter(pk=attempt.pk).update(leave_count=leaves, away_seconds=away)
+        type(attempt).objects.filter(pk=attempt.pk).update(leave_count=leaves, away_seconds=away)
         attempt.leave_count, attempt.away_seconds = leaves, away
 
 
@@ -1791,9 +1807,15 @@ def quiz_review_request(request, token):
 @require_POST
 def quiz_submit(request, token):
     attempt = get_object_or_404(QuizAttempt.objects.select_related("quiz", "batch"), token=token)
-    if attempt.status == QuizAttempt.Status.ACTIVE and _is_owner(request, attempt):
+    submit_answers(request, attempt)
+    return redirect(attempt.get_absolute_url())
+
+
+def submit_answers(request, attempt) -> None:
+    """Testni yakunlash — shaxsiy va umumiy havolalar uchun bir xil."""
+    if attempt.status == attempt.Status.ACTIVE and _is_owner(request, attempt):
         _record_leaves(request, attempt)
-        if attempt.is_expired(grace=QuizAttempt.GRACE_SECONDS):
+        if attempt.is_expired(grace=attempt.GRACE_SECONDS):
             # Juda kech yuborilgan javoblar qabul qilinmaydi — oxirgi saqlangani baholanadi.
             attempt.finish(timed_out=True)
         else:
@@ -1801,7 +1823,6 @@ def quiz_submit(request, token):
                 _posted_answers(request, attempt),
                 timed_out=request.POST.get("timeout") == "1" or attempt.is_expired(),
             )
-    return redirect(attempt.get_absolute_url())
 
 
 # --- Aloqa ma'lumotlari (Telegram / telefon) ---------------------------------
