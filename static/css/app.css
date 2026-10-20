@@ -2208,3 +2208,22 @@ a.p-stat:hover { color: #fff; transform: translateY(-2px); background: linear-gr
 .shop-item.honor-item .shop-icon { background: linear-gradient(145deg, #fff3cc, #f6da86); }
 :root[data-theme="dark"] .shop-item.honor-item .shop-icon { background: linear-gradient(145deg, #4a3810, #3a2c0c); }
 h1 .honor-medal, .page-head .honor-medal, .p-hero h1 .honor-medal { width: 0.78em; height: 0.78em; vertical-align: -0.05em; margin-right: 0.2em; }
+
+/* --- Ustozdan coin sovg'a --------------------------------------------------- */
+.coin-gift {
+  margin: 12px 0 6px; padding: 12px;
+  border: 1px dashed color-mix(in srgb, var(--gold) 55%, var(--border));
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold-soft), transparent 70%);
+  display: grid; gap: 8px;
+}
+.coin-gift-head { display: flex; align-items: center; gap: 6px; font-weight: 650; font-size: 14px; }
+.coin-gift-head .i { color: var(--gold); }
+.coin-gift-presets { margin: 0; }
+.coin-gift-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 8px; }
+.coin-gift-row .input { height: 34px; }
+.coin-amount.gift { background: var(--gold-soft); color: var(--gold); }
+@media (max-width: 640px) {
+  .coin-gift-row { grid-template-columns: 90px minmax(0, 1fr); }
+  .coin-gift-row .btn { grid-column: 1 / -1; }
+}

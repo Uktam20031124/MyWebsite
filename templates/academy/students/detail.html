@@ -121,11 +121,25 @@
           </form>
         </details>
 
-        <div class="profile-coins" style="margin-top:14px">
+        <div class="profile-coins" id="coins" style="margin-top:14px">
           {% blocktranslate with coin_balance=coin_balance trimmed %}<strong>🪙 Coinlar: {{ coin_balance }}</strong>{% endblocktranslate %}
+
+          <form class="coin-gift" method="post" action="{% url 'student_coin_gift' student.pk %}" data-gift-confirm="{% blocktranslate with name=student.full_name trimmed %}{{ name }}ga {n} coin sovg‘a qilinsinmi?{% endblocktranslate %}">
+            {% csrf_token %}{% form_nonce %}
+            <div class="coin-gift-head">{% icon "gift" 16 %} {% translate "Coin sovg‘a qilish" %}</div>
+            <div class="preset-chips coin-gift-presets">
+              {% for n in gift_presets %}<button class="btn xs soft" type="button" data-preset="gift-amount" data-value="{{ n }}">+{{ n }}</button>{% endfor %}
+            </div>
+            <div class="coin-gift-row">
+              <input class="input" type="number" id="gift-amount" name="amount" min="1" max="{{ gift_max }}" value="50" required aria-label="{% translate "Coin soni" %}">
+              <input class="input" type="text" name="note" maxlength="80" placeholder="{% translate "Izoh (ixtiyoriy): masalan, olimpiada uchun" %}" aria-label="{% translate "Izoh" %}">
+              <button class="btn primary sm" type="submit">{% icon "gift" 14 %} {% translate "Sovg‘a qilish" %}</button>
+            </div>
+          </form>
+
           {% if coin_history %}
             <ul class="coin-history">
-              {% for c in coin_history %}<li><span class="coin-amount {% if c.amount < 0 %}neg{% endif %}">{{ c.amount|stringformat:"+d" }}</span> <span class="grow">{{ c.display_reason }}{% if c.attempt %} · {{ c.attempt.quiz.topic|topic_title }}{% endif %}</span> <span class="meta">{{ c.created_at|date:"d.m H:i" }}</span></li>{% endfor %}
+              {% for c in coin_history %}<li><span class="coin-amount {% if c.amount < 0 %}neg{% endif %}{% if c.is_gift %} gift{% endif %}">{{ c.amount|stringformat:"+d" }}</span> <span class="grow">{{ c.display_reason }}{% if c.attempt %} · {{ c.attempt.quiz.topic|topic_title }}{% endif %}</span> <span class="meta">{{ c.created_at|date:"d.m H:i" }}</span>{% if c.can_undo %}<form method="post" action="{% url 'student_coin_undo' student.pk c.pk %}" class="inline-form">{% csrf_token %}<button class="btn xs ghost square" type="submit" title="{% translate "Sovg‘ani bekor qilish" %}" aria-label="{% translate "Sovg‘ani bekor qilish" %}" data-confirm="{% blocktranslate with amount=c.amount trimmed %}{{ amount }} coinlik sovg‘a bekor qilinsinmi?{% endblocktranslate %}">{% icon "undo" 13 %}</button></form>{% endif %}</li>{% endfor %}
             </ul>
           {% else %}<p class="meta" style="margin:4px 0 0">{% translate "Hali coin yo‘q — test yechgach beriladi." %}</p>{% endif %}
         </div>

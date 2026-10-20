@@ -477,6 +477,7 @@ class StudentListView(AuthMixin, ListView):
         ctx["groups"] = Group.objects.filter(status=Group.Status.ACTIVE)
         ctx["statuses"] = Student.Status.choices
         ctx["access_hours"] = profiles.ACCESS_HOURS
+        ctx["gift_presets"] = coins.GIFT_PRESETS[:3]
         return ctx
 
 
