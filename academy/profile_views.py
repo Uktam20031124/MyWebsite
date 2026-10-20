@@ -3,19 +3,21 @@
 Mantiq ``academy.profiles`` da; bu yerda faqat so'rov/javob.
 """
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from . import coins, engagement, profiles
 from .forms import RewardForm
-from .middleware import activate_default_language
+from .middleware import PORTAL_LANG_COOKIE, activate_portal_language
 from .models import Purchase, QuizAttempt, Reward, Student, TestRequest, Topic
 
 
@@ -24,7 +26,7 @@ def _student(request, token) -> Student:
     if not token:  # o'chirilgan havola (bo'sh kalit) hech qachon mos kelmasin
         raise Http404
     student = get_object_or_404(Student.objects.select_related("group"), portal_token=token)
-    activate_default_language(request, student.quiz_language)
+    activate_portal_language(request, student)
     return student
 
 
@@ -39,6 +41,31 @@ def _page(request, template, context, status=200):
 
 
 # --- O'quvchi --------------------------------------------------------------------
+
+
+@never_cache
+@require_POST
+def portal_language(request, token):
+    """Profil tilini almashtirish — cookie faqat shu profil manziliga yoziladi."""
+    student = _student(request, token)
+    home = reverse("student_portal", args=[student.portal_token])
+    lang = request.POST.get("language", "")
+    target = request.POST.get("next", "")
+    # Faqat shu profil ichidagi sahifaga qaytaramiz (ochiq yo'naltirish bo'lmasin).
+    if not (target.startswith(home) and url_has_allowed_host_and_scheme(target, allowed_hosts=None)):
+        target = home
+    response = redirect(target)
+    if lang in dict(settings.LANGUAGES):
+        response.set_cookie(
+            PORTAL_LANG_COOKIE,
+            lang,
+            max_age=settings.LANGUAGE_COOKIE_AGE,
+            path=home,
+            samesite="Lax",
+            secure=request.is_secure(),
+            httponly=True,
+        )
+    return response
 
 
 @never_cache
@@ -199,9 +226,11 @@ def portal_buy(request, token, reward_id):
 
 
 def _back(request, student) -> str:
-    return request.POST.get("next") == "requests" and reverse("quiz_review_requests") or (
-        f"{student.get_absolute_url()}#profile"
-    )
+    from .views import local_next
+
+    if request.POST.get("next") == "requests":
+        return reverse("quiz_review_requests")
+    return local_next(request) or f"{student.get_absolute_url()}#profile"
 
 
 @login_required

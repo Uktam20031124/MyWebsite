@@ -104,6 +104,13 @@
   });
 
   form.addEventListener("submit", (e) => {
+    // Til almashtirish: javoblar shu so'rov bilan saqlanadi — tasdiq so'ralmaydi, sahifadan
+    // chiqish ogohlantirishi chiqmaydi va oynadan chiqish hisoblanmaydi.
+    if (e.submitter?.hasAttribute("data-quiz-lang")) {
+      submitted = true;
+      window.removeEventListener("beforeunload", guard);
+      return;
+    }
     const left = total - answered();
     ownDialog = true;
     const ok = left === 0 || window.confirm((form.dataset.confirmText || "{left}?").replace("{left}", left));

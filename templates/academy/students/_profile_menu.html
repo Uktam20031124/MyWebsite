@@ -1,0 +1,28 @@
+{% load i18n ui %}{% with is_open=s.profile_is_open %}
+<div class="profile-cell-inner">
+  {% if is_open %}<span class="badge ok" title="{% translate "Profil ochiq" %}">{% blocktranslate with profile_until=s.profile_until|date:"H:i" trimmed %}ochiq · {{ profile_until }} gacha{% endblocktranslate %}</span>
+  {% elif s.profile_requested_at %}<span class="badge warn">{% translate "🔑 kirish so‘ralgan" %}</span>
+  {% else %}<span class="badge plain">{% translate "yopiq" %}</span>{% endif %}
+  <button class="btn xs soft" type="button" popovertarget="pm-{{ s.pk }}" aria-label="{% blocktranslate with name=s.full_name trimmed %}{{ name }}: profil amallari{% endblocktranslate %}">{% icon "user" 13 %} {% translate "Profil" %} {% icon "down" 12 %}</button>
+  <div class="row-menu" id="pm-{{ s.pk }}" popover data-row-menu>
+    <div class="row-menu-title">{{ s.full_name }}</div>
+    <a class="row-menu-item" href="{% url 'student_portal_open' s.pk %}" target="_blank" rel="noopener">{% icon "external" 15 %} {% translate "Profilga kirish" %}</a>
+    {% if s.telegram or s.phone or s.email %}
+      <form method="post" action="{% url 'student_portal_action' s.pk %}">
+        {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+        {% if s.telegram or s.phone %}<button class="row-menu-item" type="submit" name="action" value="send">{% icon "send" 15 %} {% translate "Telegram’da yuborish" %}</button>{% endif %}
+        {% if s.email %}<button class="row-menu-item" type="submit" name="channel" value="email">{% icon "mail" 15 %} {% translate "Emailga yuborish" %}</button>{% endif %}
+      </form>
+    {% else %}
+      <span class="row-menu-item muted-item">{% icon "send" 15 %} {% translate "Telegram yoki email kiritilmagan" %}</span>
+    {% endif %}
+    <div class="row-menu-sep"></div>
+    <form method="post" action="{% url 'student_profile_access' s.pk %}">
+      {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <div class="row-menu-label">{% icon "lock" 13 %} {% if is_open %}{% translate "Muddatni yangilash" %}{% else %}{% translate "Profilni faollashtirish" %}{% endif %}</div>
+      <div class="row-menu-hours">{% for h in access_hours %}<button class="btn xs {% if s.profile_requested_at and not is_open %}primary{% else %}soft{% endif %}" type="submit" name="action" value="{{ h }}">{% blocktranslate with h=h trimmed %}{{ h }} soatga ochish{% endblocktranslate %}</button>{% endfor %}</div>
+      {% if is_open or s.profile_requested_at %}<button class="row-menu-item danger-item" type="submit" name="action" value="close">{% icon "x" 15 %} {% if is_open %}{% translate "Profilni o‘chirib qo‘yish" %}{% else %}{% translate "So‘rovni rad etish" %}{% endif %}</button>{% endif %}
+    </form>
+  </div>
+</div>
+{% endwith %}

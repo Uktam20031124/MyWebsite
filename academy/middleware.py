@@ -58,9 +58,21 @@ class LanguageMiddleware:
         return response
 
 
-def activate_default_language(request, lang: str) -> None:
-    """Foydalanuvchi tilni o'zi tanlamagan bo'lsa — berilgan tilni yoqadi (masalan, o'quvchi
-    profilida uning test tili)."""
-    if not cookie_language(request) and lang in dict(settings.LANGUAGES):
-        translation.activate(lang)
-        request.LANGUAGE_CODE = lang
+# O'quvchi profili tili — faqat o'sha profil manziliga bog'langan cookie (path=/men/<kalit>/):
+# bir profilda til almashtirish boshqa profillarga ham, ustoz paneliga ham ta'sir qilmaydi.
+PORTAL_LANG_COOKIE = "portal_lang"
+
+
+def activate_portal_language(request, student) -> None:
+    """Profil tili: o'quvchi shu profilda tanlagani, bo'lmasa — uning test tili. Saytning umumiy
+    til cookie'si (ustoz tanlovi) bu yerda hisobga olinmaydi."""
+    from django.urls import reverse
+
+    languages = dict(settings.LANGUAGES)
+    lang = request.COOKIES.get(PORTAL_LANG_COOKIE, "")
+    if lang not in languages:
+        lang = student.quiz_language if student.quiz_language in languages else settings.LANGUAGE_CODE
+    translation.activate(lang)
+    request.LANGUAGE_CODE = lang
+    # lang_switch.html shu manzilga yuboradi (umumiy set_language o'rniga).
+    request.portal_lang_url = reverse("portal_language", args=[student.portal_token])

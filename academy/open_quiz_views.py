@@ -34,6 +34,7 @@ from .views import (
     review_in_shown_order,
     save_answers,
     submit_answers,
+    switch_language,
 )
 
 # F.I.Sh.: kamida ikki so'z (familiya va ism), harflar, apostrof va chiziqcha.
@@ -365,6 +366,14 @@ def open_quiz_take(request, token, attempt_token):
 @require_POST
 def open_quiz_save(request, token, attempt_token):
     return save_answers(request, _open_attempt(token, attempt_token))
+
+
+@never_cache
+@require_POST
+def open_quiz_language(request, token, attempt_token):
+    attempt = _open_attempt(token, attempt_token)
+    switch_language(request, attempt)
+    return redirect(attempt.get_absolute_url())
 
 
 @never_cache
