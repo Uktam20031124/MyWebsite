@@ -305,7 +305,64 @@ def profile_context(student) -> dict:
         "coin_balance": coins.balance(student),
         "coin_history": student.coins.select_related("attempt__quiz__topic")[:8],
         "profile_attempts_n": QuizAttempt.objects.filter(student=student, batch__from_profile=True).count(),
+        "gift_presets": coins.GIFT_PRESETS,
+        "gift_max": coins.GIFT_MAX,
     }
+
+
+GIFT_NONCES = "gift_nonces"
+
+
+def _fresh_nonce(request) -> bool:
+    """Bir martalik forma kaliti: ikki marta bosish yoki qayta yuborish sovg'ani takrorlamasin."""
+    nonce = request.POST.get("nonce", "")[:32]
+    used = request.session.get(GIFT_NONCES, [])
+    if not nonce or nonce in used:
+        return False
+    request.session[GIFT_NONCES] = (used + [nonce])[-50:]
+    return True
+
+
+@login_required
+@require_POST
+def student_coin_gift(request, pk):
+    """Ustoz o'quvchiga coin sovg'a qiladi."""
+    student = get_object_or_404(Student, pk=pk)
+    back = local_next(request) or f"{student.get_absolute_url()}#coins"
+    raw = request.POST.get("amount", "")
+    amount = int(raw) if raw.isdigit() else 0
+    if not 1 <= amount <= coins.GIFT_MAX:
+        messages.error(request, _("Coin soni 1 dan {max} gacha bo‘lishi kerak.").format(max=coins.GIFT_MAX))
+        return redirect(back)
+    if not _fresh_nonce(request):
+        messages.info(request, _("Bu sovg‘a allaqachon berilgan — takror yuborilmadi."))
+        return redirect(back)
+    coins.gift(student, amount, request.POST.get("note", ""))
+    messages.success(
+        request,
+        _("{full_name}ga {amount} coin sovg‘a qilindi 🎁 Balans: {balance}.").format(
+            full_name=student.full_name, amount=amount, balance=coins.balance(student)
+        ),
+    )
+    return redirect(back)
+
+
+@login_required
+@require_POST
+def student_coin_undo(request, pk, tx_pk):
+    """Yaqinda (24 soat ichida) berilgan sovg'ani bekor qilish."""
+    student = get_object_or_404(Student, pk=pk)
+    tx = get_object_or_404(student.coins, pk=tx_pk)
+    if coins.undo_gift(tx):
+        messages.success(
+            request,
+            _("{amount} coinlik sovg‘a bekor qilindi. Balans: {balance}.").format(
+                amount=tx.amount, balance=coins.balance(student)
+            ),
+        )
+    else:
+        messages.error(request, _("Bu yozuvni bekor qilib bo‘lmaydi (faqat 24 soat ichidagi ustoz sovg‘asi)."))
+    return redirect(local_next(request) or f"{student.get_absolute_url()}#coins")
 
 
 @login_required

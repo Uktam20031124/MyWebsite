@@ -102,6 +102,20 @@
     }
   });
 
+  // --- Coin sovg'a: tasdiq (miqdori bilan) va ikki marta bosishdan himoya -------------
+  // <form data-gift-confirm="... {n} coin ...">: miqdor bosilgan tugmadan (name="amount")
+  // yoki formadagi "amount" maydonidan olinadi.
+  document.addEventListener("submit", (e) => {
+    const form = e.target.closest?.("form[data-gift-confirm]");
+    if (!form) return;
+    const n = e.submitter?.name === "amount" ? e.submitter.value : form.elements.amount?.value;
+    if (!window.confirm(form.dataset.giftConfirm.replace("{n}", n || "?"))) {
+      e.preventDefault();
+      return;
+    }
+    setTimeout(() => $$('button[type="submit"]', form).forEach((b) => (b.disabled = true)));
+  });
+
   // --- Qator menyusi (popover): tugma yonida ochiladi, sig'masa — yuqoriga ---------
   // "toggle" hodisasi ko'tarilmaydi, shuning uchun capture bosqichida tinglanadi.
   const placeMenu = (menu, measured) => {

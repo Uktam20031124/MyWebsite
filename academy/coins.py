@@ -58,6 +58,30 @@ def award_for_attempt(attempt: QuizAttempt) -> None:
         _give(attempt, RETAKE_BONUS, "Mustahkamlab, qayta topshirdi")
 
 
+# --- Ustozdan sovg'a -----------------------------------------------------------------
+GIFT_REASON = "🎁 Ustozdan sovg‘a"
+GIFT_MAX = 1000
+GIFT_PRESETS = (10, 50, 100, 300)
+GIFT_UNDO_HOURS = 24  # adashib berilgan sovg'ani shu vaqt ichida bekor qilish mumkin
+
+
+def gift(student: Student, amount: int, note: str = "") -> CoinTransaction:
+    """Ustoz o'quvchiga coin sovg'a qiladi (izoh — ixtiyoriy, coin tarixida ko'rinadi)."""
+    if not 1 <= amount <= GIFT_MAX:
+        raise ValueError(amount)
+    note = " ".join(note.split())[:80]
+    reason = f"{GIFT_REASON}: {note}" if note else GIFT_REASON
+    return CoinTransaction.objects.create(student=student, amount=amount, reason=reason)
+
+
+def undo_gift(tx: CoinTransaction) -> bool:
+    """Yaqinda berilgan sovg'ani bekor qilish (yozuv o'chiriladi — tarixda qolmaydi)."""
+    if not tx.can_undo:
+        return False
+    tx.delete()
+    return True
+
+
 def balance(student: Student) -> int:
     return student.coins.aggregate(s=Sum("amount"))["s"] or 0
 

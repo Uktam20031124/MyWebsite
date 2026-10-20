@@ -54,6 +54,10 @@ urlpatterns = [
     path("dokon/sorov/<int:pk>/", profile_views.purchase_decide, name="purchase_decide"),
     path("shogirdlar/<int:pk>/profil/", profile_views.student_profile_access, name="student_profile_access"),
     path("shogirdlar/<int:pk>/alochi/", profile_views.student_honor, name="student_honor"),
+    path("shogirdlar/<int:pk>/coin/", profile_views.student_coin_gift, name="student_coin_gift"),
+    path(
+        "shogirdlar/<int:pk>/coin/<int:tx_pk>/bekor/", profile_views.student_coin_undo, name="student_coin_undo"
+    ),
     path("shogirdlar/<int:pk>/mavzular/", profile_views.student_allowed_topics, name="student_allowed_topics"),
     path("testlar/sorov/<int:pk>/", profile_views.test_request_decide, name="test_request_decide"),
     # Ro'yxatdan o'tish arizalari

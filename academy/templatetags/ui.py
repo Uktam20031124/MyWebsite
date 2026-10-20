@@ -2,6 +2,7 @@
 
 import math
 import re
+import secrets
 import zlib
 
 from django import template
@@ -276,3 +277,9 @@ def person_name(person):
         return name
     # Medal ism oldida: uzun ism qisqartirilganda (…) ham ko'rinib turadi.
     return format_html('{}<span class="honor-name">{}</span>', honor_medal(15), name)
+
+
+@register.simple_tag
+def form_nonce():
+    """Bir martalik forma kaliti (takroriy yuborishdan himoya, ``profile_views._fresh_nonce``)."""
+    return format_html('<input type="hidden" name="nonce" value="{}">', secrets.token_hex(8))

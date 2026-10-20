@@ -1445,7 +1445,18 @@ class CoinTransaction(models.Model):
         (re.compile(r"^Xato tuzatildi: (?P<t>.+)$"), gettext_noop("Xato tuzatildi: {t}")),
         (re.compile(r"^🔥 (?P<n>\d+) kun ketma-ket faol$"), gettext_noop("🔥 {n} kun ketma-ket faol")),
         (re.compile(r"^Do‘kon: (?P<t>.+)$"), gettext_noop("Do‘kon: {t}")),
+        (re.compile(r"^🎁 Ustozdan sovg‘a$"), gettext_noop("🎁 Ustozdan sovg‘a")),
+        (re.compile(r"^🎁 Ustozdan sovg‘a: (?P<t>.+)$"), gettext_noop("🎁 Ustozdan sovg‘a: {t}")),
     ]
+
+    @property
+    def is_gift(self) -> bool:
+        return self.attempt_id is None and self.amount > 0 and self.reason.startswith("🎁 Ustozdan sovg‘a")
+
+    @property
+    def can_undo(self) -> bool:
+        """Ustoz sovg'asi va berilganiga 24 soat bo'lmagan (``coins.GIFT_UNDO_HOURS``)."""
+        return self.is_gift and self.created_at > timezone.now() - timedelta(hours=24)
 
     @property
     def display_reason(self) -> str:
