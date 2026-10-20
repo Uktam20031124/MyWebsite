@@ -1,0 +1,31 @@
+{% extends "academy/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Umumiy havola yaratish · Minar Test" %}{% endblock %}
+{% block kicker %}<a href="{% url 'open_quiz_list' %}">{% translate "Umumiy havolalar" %}</a><span class="sep">/</span>{% translate "Yangi" %}{% endblock %}
+{% block heading %}{% translate "Umumiy havola yaratish" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Bitta havola — ko‘p qatnashchi. Har kim havolani ochib, F.I.Sh.ini kiritadi va “Testni boshlash”ni bosadi." %}</p>{% endblock %}
+{% block content %}
+<div class="split">
+  <section class="card pad form-card">
+    <form method="post" novalidate data-dirty-guard>
+      {% csrf_token %}
+      {% include "academy/includes/form_fields.html" with wide="quiz title emails" %}
+      <div class="form-actions">
+        <button class="btn primary" type="submit">{% icon "link" 16 %} {% translate "Havola yaratish" %}</button>
+        <a class="btn ghost" href="{% url 'open_quiz_list' %}">{% translate "Bekor" %}</a>
+        <span class="spacer"></span>
+        <span class="meta">{% icon "mail" 14 %} {% translate "Emaillar kiritilsa — darhol yuboriladi" %}</span>
+      </div>
+    </form>
+  </section>
+  <aside class="card pad oq-how">
+    <h2>{% icon "sparkle" 16 %} {% translate "Qanday ishlaydi?" %}</h2>
+    <ol class="oq-steps">
+      <li><strong>{% translate "Havola yaratasiz" %}</strong><span>{% translate "Mavzu testi, savollar soni va vaqtni tanlaysiz." %}</span></li>
+      <li><strong>{% translate "Emailga yuborasiz" %}</strong><span>{% translate "Bir nechta manzilga birdaniga — keyin ham qo‘shish mumkin. Havolani Telegram yoki boshqa joyga ham ulashsangiz bo‘ladi." %}</span></li>
+      <li><strong>{% translate "Qatnashchi F.I.Sh. kiritadi" %}</strong><span>{% translate "va “Testni boshlash”ni bosadi. Bir F.I.Sh. bilan faqat bir marta." %}</span></li>
+      <li><strong>{% translate "Natijalarni kuzatasiz" %}</strong><span>{% translate "Havola sahifasida — ism, ball, vaqt va har bir javob. CSV yuklab olish mumkin." %}</span></li>
+    </ol>
+  </aside>
+</div>
+{% endblock %}

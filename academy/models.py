@@ -137,6 +137,16 @@ class Group(models.Model):
         return len(new_items)
 
 
+def initials_of(full_name: str) -> str:
+    """Avatar uchun bosh harflar: "Aliyev Vali" → "AV"."""
+    parts = full_name.split()
+    if not parts:
+        return "?"
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return (parts[0][0] + parts[-1][0]).upper()
+
+
 class QuizLanguage(models.TextChoices):
     """Test qaysi tilda yechiladi (savollar, sahifa matnlari, xabar)."""
 
@@ -200,12 +210,7 @@ class Student(models.Model):
         return reverse("student_detail", args=[self.pk])
 
     def initials(self) -> str:
-        parts = [p for p in self.full_name.split() if p]
-        if not parts:
-            return "?"
-        if len(parts) == 1:
-            return parts[0][:2].upper()
-        return (parts[0][0] + parts[-1][0]).upper()
+        return initials_of(self.full_name)
 
     def save(self, *args, **kwargs):
         self.telegram = self.telegram.strip().lstrip("@")
@@ -754,8 +759,136 @@ def new_attempt_token() -> str:
     return secrets.token_urlsafe(16)
 
 
-class QuizAttempt(models.Model):
+class AttemptScoringMixin:
+    """Test urinishining umumiy mantig'i: savol tanlash, vaqt, baholash, javoblar tahlili.
+
+    Model quyidagi maydonlarga ega bo'lishi kerak: quiz, language, question_ids, answers,
+    snapshot, deadline, status (Status.FINISHED), finished_at, timed_out, correct, total.
+    ``QuizAttempt`` (o'quvchiga shaxsiy havola) va ``OpenAttempt`` (umumiy havola) ishlatadi.
+    """
+
+    # Vaqt tugash paytida yuborilgan javoblar tarmoq kechikishi bilan kelsa ham qabul qilinadi.
+    GRACE_SECONDS = 15
+
+    @property
+    def percent(self):
+        if not self.total:
+            return None
+        return round(100 * (self.correct or 0) / self.total)
+
+    def seconds_left(self, now=None) -> int:
+        if not self.deadline:
+            return 0
+        now = now or timezone.now()
+        return max(0, int((self.deadline - now).total_seconds()))
+
+    def is_expired(self, now=None, grace: int = 0) -> bool:
+        now = now or timezone.now()
+        return bool(self.deadline) and now > self.deadline + timedelta(seconds=grace)
+
+    def pick_questions(self, count: int, prefer=()) -> list[int]:
+        """Bankdan tasodifiy ``count`` ta savol; ``prefer`` dagilardan yarmigacha albatta tushadi."""
+        pool = list(self.quiz.questions.values_list("pk", flat=True))
+        count = min(count, len(pool))
+        if self.language == QuizLanguage.RU:
+            # Tarjimasi bor savollar yetarli bo'lsa — faqat ulardan (aralash til bo'lmasin).
+            translated = list(self.quiz.questions.exclude(text_ru="").values_list("pk", flat=True))
+            if len(translated) >= count:
+                pool = translated
+        rng = random.SystemRandom()
+        pool_set = set(pool)
+        prefer = [q for q in prefer if q in pool_set]
+        again = rng.sample(prefer, min(len(prefer), count // 2))
+        rest = [q for q in pool if q not in set(again)]
+        picked = again + rng.sample(rest, count - len(again))
+        rng.shuffle(picked)
+        return picked
+
+    def questions(self):
+        """O'quvchiga tushgan savollar (eski havolalarda — bankning hammasi)."""
+        qs = self.quiz.questions.all()
+        return qs.filter(pk__in=self.question_ids) if self.question_ids else qs
+
+    def build_review(self) -> list[dict]:
+        """O'quvchiga tushgan savollar, variantlar, tanlagani va to'g'ri javob — hozirgi
+        savollar bankidan. Tartib — o'quvchiga berilgan tartib (question_ids)."""
+        question_ids = self.question_ids or list(self.quiz.questions.values_list("pk", flat=True))
+        questions = {
+            q.pk: q for q in Question.objects.filter(pk__in=question_ids).prefetch_related("choices")
+        }
+        review = []
+        for qid in question_ids:
+            picked = _as_int(self.answers.get(str(qid)))
+            q = questions.get(qid)
+            if q is None:
+                # Test yechilayotganda o'chirilgan savol ham umumiy songa kiradi (javobsiz).
+                review.append({"id": qid, "text": "", "missing": True, "choices": [],
+                               "picked": picked, "is_correct": False})
+                continue
+            choices = [
+                {"id": c.pk, "text": c.text, "text_ru": c.text_ru, "correct": c.is_correct}
+                for c in q.choices.all()
+            ]
+            review.append({
+                "id": qid,
+                "text": q.text,
+                "text_ru": q.text_ru,
+                "image": q.image.url if q.image else "",
+                "choices": choices,
+                "picked": picked,
+                "is_correct": any(c["correct"] and c["id"] == picked for c in choices),
+            })
+        return review
+
+    def review(self, lang: str = QuizLanguage.UZ) -> list[dict]:
+        """Javoblar tahlili: yakunlanganda saqlangan nusxa (keyinchalik test tahrirlansa
+        ham o'zgarmaydi); eski natijalarda — hozirgi bankdan. `lang` — matnlar tili
+        (tarjimasi bo'lmasa o'zbekchasi)."""
+
+        def pick(d):
+            return d.get("text_ru") or d["text"] if lang == QuizLanguage.RU else d["text"]
+
+        # Nusxa: ko'rsatish uchun qo'shilgan maydonlar bazadagi snapshot'ga tushmasin.
+        items = [dict(item) for item in (self.snapshot or self.build_review())]
+        for item in items:
+            title, _sep, code = (pick(item) if item["text"] else "").partition("\n")
+            item["title"], item["code"] = title, code
+            item["answered"] = item["picked"] is not None
+            item["correct_text"] = next((pick(c) for c in item["choices"] if c["correct"]), "")
+            item["picked_text"] = next(
+                (pick(c) for c in item["choices"] if c["id"] == item["picked"]), ""
+            )
+        return items
+
+    def on_finished(self) -> None:
+        """Yakunlangandan keyingi qo'shimcha ish (tranzaksiya ichida) — modelda qayta yoziladi."""
+
+    def finish(self, answers: dict | None = None, timed_out: bool = False) -> None:
+        """Javoblarni baholab, testni yakunlaydi. `answers`: {savol_id: variant_id}."""
+        model = type(self)
+        with transaction.atomic():
+            attempt = model.objects.select_for_update().get(pk=self.pk)
+            if attempt.status == model.Status.FINISHED:
+                self.refresh_from_db()
+                return
+            if answers is not None:
+                attempt.answers = answers
+            # Baholash va ustoz ko'radigan javoblar tahlili — bitta nusxadan.
+            attempt.snapshot = attempt.build_review()
+            attempt.correct = sum(item["is_correct"] for item in attempt.snapshot)
+            attempt.total = len(attempt.snapshot)
+            attempt.status = model.Status.FINISHED
+            attempt.finished_at = timezone.now()
+            attempt.timed_out = timed_out
+            attempt.save()
+            attempt.on_finished()
+        self.refresh_from_db()
+
+
+class QuizAttempt(AttemptScoringMixin, models.Model):
     """Bitta o'quvchi uchun bir martalik test havolasi."""
+
+    COOKIE_PREFIX = "quiz_"
 
     class Status(models.TextChoices):
         PENDING = "pending", _("Ochilmagan")
@@ -769,9 +902,6 @@ class QuizAttempt(models.Model):
         REQUESTED = "requested", _("So‘ralgan")
         APPROVED = "approved", _("Ruxsat berilgan")
         REJECTED = "rejected", _("Rad etilgan")
-
-    # Vaqt tugash paytida yuborilgan javoblar tarmoq kechikishi bilan kelsa ham qabul qilinadi.
-    GRACE_SECONDS = 15
 
     batch = models.ForeignKey(
         QuizBatch, on_delete=models.CASCADE, related_name="attempts", verbose_name=_("Jo'natma")
@@ -839,12 +969,6 @@ class QuizAttempt(models.Model):
         return reverse("quiz_take", args=[self.token])
 
     @property
-    def percent(self):
-        if not self.total:
-            return None
-        return round(100 * (self.correct or 0) / self.total)
-
-    @property
     def time_limit_minutes(self) -> int:
         return self.batch.time_limit_minutes
 
@@ -855,42 +979,14 @@ class QuizAttempt(models.Model):
             return len(self.question_ids)
         return min(self.batch.question_count, self.quiz.questions.count())
 
-    def seconds_left(self, now=None) -> int:
-        if not self.deadline:
-            return 0
-        now = now or timezone.now()
-        return max(0, int((self.deadline - now).total_seconds()))
-
-    def is_expired(self, now=None, grace: int = 0) -> bool:
-        now = now or timezone.now()
-        return bool(self.deadline) and now > self.deadline + timedelta(seconds=grace)
-
     def start(self, owner_key: str) -> bool:
         """Testni boshlaydi va savollarni tanlaydi. Faqat birinchi chaqiruv muvaffaqiyatli."""
         now = timezone.now()
-        pool = list(self.quiz.questions.values_list("pk", flat=True))
-        count = min(self.batch.question_count, len(pool))
-        if self.language == QuizLanguage.RU:
-            # Tarjimasi bor savollar yetarli bo'lsa — faqat ulardan (aralash til bo'lmasin).
-            translated = list(
-                self.quiz.questions.exclude(text_ru="").values_list("pk", flat=True)
-            )
-            if len(translated) >= count:
-                pool = translated
-        rng = random.SystemRandom()
-        pool_set = set(pool)
-        mistakes = [
-            q
-            for q in Mistake.objects.filter(
-                student_id=self.student_id, question__quiz_id=self.quiz_id, resolved_at__isnull=True
-            ).values_list("question_id", flat=True)
-            if q in pool_set
-        ]
         # Xato qilingan savollardan yarmigacha albatta tushadi (qolgani bankdan tasodifiy).
-        again = rng.sample(mistakes, min(len(mistakes), count // 2))
-        rest = [q for q in pool if q not in set(again)]
-        picked = again + rng.sample(rest, count - len(again))
-        rng.shuffle(picked)
+        mistakes = Mistake.objects.filter(
+            student_id=self.student_id, question__quiz_id=self.quiz_id, resolved_at__isnull=True
+        ).values_list("question_id", flat=True)
+        picked = self.pick_questions(self.batch.question_count, prefer=list(mistakes))
         started = QuizAttempt.objects.filter(pk=self.pk, status=self.Status.PENDING).update(
             status=self.Status.ACTIVE,
             owner_key=owner_key,
@@ -901,61 +997,6 @@ class QuizAttempt(models.Model):
         self.refresh_from_db()
         return bool(started)
 
-    def questions(self):
-        """O'quvchiga tushgan savollar (eski havolalarda — bankning hammasi)."""
-        qs = self.quiz.questions.all()
-        return qs.filter(pk__in=self.question_ids) if self.question_ids else qs
-
-    def build_review(self) -> list[dict]:
-        """O'quvchiga tushgan savollar, variantlar, tanlagani va to'g'ri javob — hozirgi
-        savollar bankidan. Tartib — o'quvchiga berilgan tartib (question_ids)."""
-        question_ids = self.question_ids or list(self.quiz.questions.values_list("pk", flat=True))
-        questions = {
-            q.pk: q for q in Question.objects.filter(pk__in=question_ids).prefetch_related("choices")
-        }
-        review = []
-        for qid in question_ids:
-            picked = _as_int(self.answers.get(str(qid)))
-            q = questions.get(qid)
-            if q is None:
-                # Test yechilayotganda o'chirilgan savol ham umumiy songa kiradi (javobsiz).
-                review.append({"id": qid, "text": "", "missing": True, "choices": [],
-                               "picked": picked, "is_correct": False})
-                continue
-            choices = [
-                {"id": c.pk, "text": c.text, "text_ru": c.text_ru, "correct": c.is_correct}
-                for c in q.choices.all()
-            ]
-            review.append({
-                "id": qid,
-                "text": q.text,
-                "text_ru": q.text_ru,
-                "image": q.image.url if q.image else "",
-                "choices": choices,
-                "picked": picked,
-                "is_correct": any(c["correct"] and c["id"] == picked for c in choices),
-            })
-        return review
-
-    def review(self, lang: str = QuizLanguage.UZ) -> list[dict]:
-        """Javoblar tahlili: yakunlanganda saqlangan nusxa (keyinchalik test tahrirlansa
-        ham o'zgarmaydi); eski natijalarda — hozirgi bankdan. `lang` — matnlar tili
-        (tarjimasi bo'lmasa o'zbekchasi)."""
-
-        def pick(d):
-            return d.get("text_ru") or d["text"] if lang == QuizLanguage.RU else d["text"]
-
-        # Nusxa: ko'rsatish uchun qo'shilgan maydonlar bazadagi snapshot'ga tushmasin.
-        items = [dict(item) for item in (self.snapshot or self.build_review())]
-        for item in items:
-            title, _sep, code = (pick(item) if item["text"] else "").partition("\n")
-            item["title"], item["code"] = title, code
-            item["answered"] = item["picked"] is not None
-            item["correct_text"] = next((pick(c) for c in item["choices"] if c["correct"]), "")
-            item["picked_text"] = next(
-                (pick(c) for c in item["choices"] if c["id"] == item["picked"]), ""
-            )
-        return items
 
     @property
     def can_see_answers(self) -> bool:
@@ -976,28 +1017,195 @@ class QuizAttempt(models.Model):
         self.reveal_decided_at = timezone.now()
         self.save(update_fields=["reveal", "reveal_decided_at"])
 
-    def finish(self, answers: dict | None = None, timed_out: bool = False) -> None:
-        """Javoblarni baholab, testni yakunlaydi. `answers`: {savol_id: variant_id}."""
-        with transaction.atomic():
-            attempt = QuizAttempt.objects.select_for_update().get(pk=self.pk)
-            if attempt.status == self.Status.FINISHED:
-                self.refresh_from_db()
-                return
-            if answers is not None:
-                attempt.answers = answers
-            # Baholash va ustoz ko'radigan javoblar tahlili — bitta nusxadan.
-            attempt.snapshot = attempt.build_review()
-            attempt.correct = sum(item["is_correct"] for item in attempt.snapshot)
-            attempt.total = len(attempt.snapshot)
-            attempt.status = self.Status.FINISHED
-            attempt.finished_at = timezone.now()
-            attempt.timed_out = timed_out
-            attempt.save()
-            # Coin, xatolar ro'yxati, faol kun (streak) — test yakunlangan tranzaksiyaning o'zida.
-            from .engagement import on_attempt_finished
+    def on_finished(self) -> None:
+        # Coin, xatolar ro'yxati, faol kun (streak) — test yakunlangan tranzaksiyaning o'zida.
+        from .engagement import on_attempt_finished
 
-            on_attempt_finished(attempt)
-        self.refresh_from_db()
+        on_attempt_finished(self)
+
+
+def new_open_quiz_token() -> str:
+    return secrets.token_urlsafe(9)
+
+
+def name_key(full_name: str) -> str:
+    """F.I.Sh. solishtirish kaliti: katta-kichik harf, ortiqcha bo'sh joy va apostrof turlari
+    farq qilmaydi ("aliyev  vali" == "Aliyev Vali", "Oʻ" == "O'")."""
+    text = re.sub(r"[ʻʼ‘’`´]", "'", full_name or "")
+    return " ".join(text.lower().split())
+
+
+class OpenQuiz(models.Model):
+    """Umumiy test havolasi: bitta havola — ko'p qatnashchi. Har biri F.I.Sh. kiritib boshlaydi.
+
+    Shaxsiy havoladan (``QuizAttempt``) farqi: qatnashchi bazadagi shogird bo'lishi shart emas
+    (olimpiada, saralash, ochiq dars), natijalar F.I.Sh. bo'yicha ajratiladi.
+    """
+
+    quiz = models.ForeignKey(
+        Quiz, on_delete=models.CASCADE, related_name="open_quizzes", verbose_name=_("Test")
+    )
+    title = models.CharField(
+        _("Nomi"), max_length=160, blank=True,
+        help_text=_("Masalan: “Saralash bosqichi” yoki “Ochiq dars”. Bo‘sh — mavzu nomi."),
+    )
+    token = models.CharField(max_length=24, unique=True, default=new_open_quiz_token, editable=False)
+    language = models.CharField(
+        _("Test tili"), max_length=2, choices=QuizLanguage.choices, default=QuizLanguage.UZ,
+        help_text=_("Qatnashchi boshlashdan oldin tilni o‘zi ham tanlashi mumkin."),
+    )
+    question_count = models.PositiveSmallIntegerField(_("Savollar soni"), validators=[MinValueValidator(1)])
+    time_limit_minutes = models.PositiveSmallIntegerField(
+        _("Vaqt (daq.)"),
+        validators=[MinValueValidator(1), MaxValueValidator(QuizBatch.MAX_TIME_LIMIT)],
+    )
+    is_active = models.BooleanField(_("Faol"), default=True)
+    closes_at = models.DateTimeField(
+        _("Yopilish vaqti"), null=True, blank=True,
+        help_text=_("Bo‘sh — qo‘lda yopguningizcha ochiq."),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name = _("Umumiy test havolasi")
+        verbose_name_plural = _("Umumiy test havolalari")
+
+    def __str__(self) -> str:
+        return self.display_title
+
+    @property
+    def display_title(self) -> str:
+        return self.title or self.quiz.topic.title_in(get_language())
+
+    def get_absolute_url(self):
+        return reverse("open_quiz", args=[self.pk])
+
+    def get_public_url(self):
+        return reverse("open_quiz_public", args=[self.token])
+
+    def is_open(self, now=None) -> bool:
+        now = now or timezone.now()
+        return self.is_active and not (self.closes_at and now >= self.closes_at)
+
+    @property
+    def question_total(self) -> int:
+        """Qatnashchi oladigan savollar soni (bankdagidan ko'p bo'lmaydi)."""
+        return min(self.question_count, self.quiz.questions.count())
+
+
+class OpenAttempt(AttemptScoringMixin, models.Model):
+    """Umumiy havola orqali kirgan qatnashchining bitta urinishi."""
+
+    COOKIE_PREFIX = "open_"
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", _("Yechilmoqda")
+        FINISHED = "finished", _("Tugatgan")
+
+    open_quiz = models.ForeignKey(
+        OpenQuiz, on_delete=models.CASCADE, related_name="attempts", verbose_name=_("Umumiy havola")
+    )
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="open_attempts", verbose_name=_("Test"))
+    full_name = models.CharField(_("F.I.Sh."), max_length=160)
+    name_key = models.CharField(max_length=160, editable=False)
+    token = models.CharField(max_length=32, unique=True, default=new_attempt_token, editable=False)
+    owner_key = models.CharField(max_length=64, blank=True, editable=False)
+    status = models.CharField(
+        _("Holat"), max_length=16, choices=Status.choices, default=Status.ACTIVE, db_index=True
+    )
+    language = models.CharField(_("Til"), max_length=2, choices=QuizLanguage.choices, default=QuizLanguage.UZ)
+    question_ids = models.JSONField(_("Savollar"), default=list, blank=True, editable=False)
+    leave_count = models.PositiveSmallIntegerField(_("Chiqib ketishlar"), default=0)
+    away_seconds = models.PositiveIntegerField(_("Tashqarida (s)"), default=0)
+    answers = models.JSONField(_("Javoblar"), default=dict, blank=True)
+    snapshot = models.JSONField(_("Javoblar tahlili"), default=list, blank=True, editable=False)
+    started_at = models.DateTimeField(_("Boshlangan"), default=timezone.now)
+    deadline = models.DateTimeField(_("Tugash vaqti"), null=True, blank=True)
+    finished_at = models.DateTimeField(_("Tugagan"), null=True, blank=True)
+    timed_out = models.BooleanField(_("Vaqt tugadi"), default=False)
+    correct = models.PositiveSmallIntegerField(_("To'g'ri javoblar"), null=True, blank=True)
+    total = models.PositiveSmallIntegerField(_("Savollar soni"), null=True, blank=True)
+
+    class Meta:
+        ordering = ["-started_at", "-pk"]
+        verbose_name = _("Umumiy test natijasi")
+        verbose_name_plural = _("Umumiy test natijalari")
+        constraints = [
+            # Bitta F.I.Sh. bilan bir havolada faqat bir marta (boshqa brauzerdan ham).
+            models.UniqueConstraint(fields=["open_quiz", "name_key"], name="uniq_open_attempt_name"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.full_name} — {self.open_quiz}"
+
+    def save(self, *args, **kwargs):
+        self.name_key = name_key(self.full_name)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse("open_quiz_take", args=[self.open_quiz.token, self.token])
+
+    @property
+    def time_limit_minutes(self) -> int:
+        return self.open_quiz.time_limit_minutes
+
+    @property
+    def question_count(self) -> int:
+        return len(self.question_ids) if self.question_ids else self.open_quiz.question_total
+
+    @property
+    def duration_seconds(self):
+        if self.finished_at and self.started_at:
+            return int((self.finished_at - self.started_at).total_seconds())
+        return None
+
+    @property
+    def initials(self) -> str:
+        return initials_of(self.full_name)
+
+    @property
+    def duration_text(self) -> str:
+        """Sarflangan vaqt "daq:ss" ko'rinishida (yakunlanmagan bo'lsa — bo'sh)."""
+        seconds = self.duration_seconds
+        return f"{seconds // 60}:{seconds % 60:02d}" if seconds is not None else ""
+
+    @classmethod
+    def begin(cls, open_quiz: OpenQuiz, full_name: str, language: str, owner_key: str) -> "OpenAttempt":
+        """Yangi urinish: savollar tanlanadi, vaqt shu paytdan boshlanadi."""
+        now = timezone.now()
+        attempt = cls(
+            open_quiz=open_quiz,
+            quiz=open_quiz.quiz,
+            full_name=" ".join(full_name.split()),
+            language=language,
+            owner_key=owner_key,
+            started_at=now,
+            deadline=now + timedelta(minutes=open_quiz.time_limit_minutes),
+        )
+        attempt.question_ids = attempt.pick_questions(open_quiz.question_count)
+        attempt.save()
+        return attempt
+
+
+class OpenQuizInvite(models.Model):
+    """Umumiy havola emailga yuborilgan manzil (kimga yuborilgani va xatosi)."""
+
+    open_quiz = models.ForeignKey(
+        OpenQuiz, on_delete=models.CASCADE, related_name="invites", verbose_name=_("Umumiy havola")
+    )
+    email = models.EmailField(_("Email"))
+    sent_at = models.DateTimeField(_("Yuborilgan"), null=True, blank=True)
+    error = models.CharField(_("Xato"), max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "email"]
+        verbose_name = _("Email taklif")
+        verbose_name_plural = _("Email takliflar")
+
+    def __str__(self) -> str:
+        return self.email
 
 
 def _as_int(value):

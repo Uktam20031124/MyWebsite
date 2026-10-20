@@ -1,0 +1,7 @@
+{% extends "academy/quiz/public_base.html" %}
+{% block title %}{{ t.open_closed_title }} · Minar Test{% endblock %}
+{% block panel %}
+<h1>{{ t.open_closed_title }}</h1>
+<p class="muted">{{ t.topic }}</p>
+<p>{% if empty %}{{ t.open_empty }}{% else %}{{ t.open_closed_text }}{% endif %}</p>
+{% endblock %}

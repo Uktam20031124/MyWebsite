@@ -69,6 +69,7 @@ def quiz_mail(link: str, attempt: QuizAttempt) -> mailer.Mail:
             url=link,
             button=m["msg_button"],
             footer=m["msg_once"],
+            fallback=m["msg_fallback"],
         ),
     )
 

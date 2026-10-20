@@ -1,0 +1,162 @@
+{% extends "academy/base.html" %}
+{% load i18n ui %}
+{% block title %}{% blocktranslate with title=oq.display_title trimmed %}{{ title }} · Umumiy havola · Minar Test{% endblocktranslate %}{% endblock %}
+{% block head_extra %}
+  {# Natijalar o'zi yangilanadi: sahifa "morph" bilan almashadi, aylantirish joyi saqlanadi. #}
+  <meta name="turbo-refresh-method" content="morph">
+  <meta name="turbo-refresh-scroll" content="preserve">
+{% endblock %}
+{% block kicker %}<a href="{% url 'quiz_batches' %}">{% translate "Testlar" %}</a><span class="sep">/</span><a href="{% url 'open_quiz_list' %}">{% translate "Umumiy havolalar" %}</a>{% endblock %}
+{% block heading %}{{ oq.display_title }}{% endblock %}
+{% block subheading %}<p class="page-sub">{% if oq.title %}{% icon "book" 15 %} {{ oq.quiz.topic|topic_title }} · {% endif %}{% icon "target" 15 %} {% blocktranslate with n=oq.question_total trimmed %}{{ n }} ta savol{% endblocktranslate %} · {% icon "clock" 15 %} {% blocktranslate with m=oq.time_limit_minutes trimmed %}{{ m }} daqiqa{% endblocktranslate %} · {{ oq.get_language_display }}{% if oq.closes_at %} · {% blocktranslate with closes_at=oq.closes_at|date:"d.m.Y H:i" trimmed %}{{ closes_at }} gacha{% endblocktranslate %}{% endif %}</p>{% endblock %}
+{% block actions %}
+<a class="btn soft" href="{% url 'open_quiz_export' oq.pk %}" data-turbo="false">{% icon "download" 16 %} {% translate "CSV" %}</a>
+<form method="post" action="{% url 'open_quiz_toggle' oq.pk %}">
+  {% csrf_token %}
+  {% if oq.is_active %}
+    <button class="btn soft" type="submit" data-confirm="{% translate "Havola yopilsinmi? Yangi qatnashchilar kira olmaydi (boshlaganlar yakunlay oladi)." %}">{% icon "lock" 16 %} {% translate "Yopish" %}</button>
+  {% else %}
+    <button class="btn primary" type="submit">{% icon "play" 16 %} {% translate "Qayta ochish" %}</button>
+  {% endif %}
+</form>
+<form method="post" action="{% url 'open_quiz_delete' oq.pk %}">
+  {% csrf_token %}
+  <button class="btn danger-ghost square" type="submit" title="{% translate "O‘chirish" %}" aria-label="{% translate "O‘chirish" %}" data-confirm="{% translate "Havola va barcha natijalar o‘chirilsinmi? Bu amalni qaytarib bo‘lmaydi." %}">{% icon "trash" 16 %}</button>
+</form>
+{% endblock %}
+
+{% block content %}
+<section class="card oq-link-card{% if not is_open %} closed{% endif %}">
+  <div class="oq-link-main">
+    <span class="oq-link-icon" aria-hidden="true">{% icon "link" 20 %}</span>
+    <div class="grow">
+      <div class="oq-link-label">
+        {% translate "Umumiy havola" %}
+        {% if is_open %}<span class="badge ok">{% translate "Ochiq" %}</span>{% elif not oq.is_active %}<span class="badge plain">{% translate "Yopiq" %}</span>{% else %}<span class="badge warn">{% translate "Muddati tugagan" %}</span>{% endif %}
+      </div>
+      <div class="contact-link">
+        <input class="input mono" value="{{ link }}" readonly aria-label="{% translate "Umumiy havola" %}" onclick="this.select()">
+        <button class="btn sm primary" type="button" data-copy="{{ link }}">{% icon "file" 14 %} {% translate "Nusxa olish" %}</button>
+        <a class="btn sm ghost square" href="{{ link }}" target="_blank" rel="noopener" title="{% translate "Ochish" %}" aria-label="{% translate "Ochish" %}">{% icon "external" 14 %}</a>
+      </div>
+      <p class="meta oq-link-hint">{% translate "Havolani emailga yuboring yoki Telegram guruhga tashlang — har bir qatnashchi F.I.Sh.ini kiritib testni boshlaydi." %}</p>
+    </div>
+  </div>
+</section>
+
+<section class="kpis">
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">{% translate "Qatnashdi" %}</span><span class="kpi-icon info">{% icon "users" 17 %}</span></div>
+    <div class="kpi-value">{{ joined_n }}</div>
+    <div class="kpi-foot">{% if invite_sent_n %}{% blocktranslate with n=invite_sent_n trimmed %}{{ n }} ta emailga yuborilgan{% endblocktranslate %}{% else %}{% translate "F.I.Sh. kiritib boshlaganlar" %}{% endif %}</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">{% translate "Yakunladi" %}</span><span class="kpi-icon ok">{% icon "check" 17 %}</span></div>
+    <div class="kpi-value">{{ done_n }}</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">{% translate "Hozir yechmoqda" %}</span><span class="kpi-icon gold">{% icon "clock" 17 %}</span></div>
+    <div class="kpi-value">{{ active_n }}</div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-top"><span class="kpi-label">{% translate "O‘rtacha natija" %}</span><span class="kpi-icon accent">{% icon "trophy" 17 %}</span></div>
+    <div class="kpi-value">{% if avg is not None %}{{ avg }}<small>%</small>{% else %}—{% endif %}</div>
+  </article>
+</section>
+
+<section class="card" id="results" aria-labelledby="results-h" data-autorefresh="20">
+  <div class="card-head">
+    <h2 id="results-h">{% icon "chart" 18 %} {% translate "Natijalar" %}</h2>
+    <span class="badge live" title="{% translate "Sahifa har 20 soniyada o‘zi yangilanadi" %}">{% translate "jonli" %}</span>
+  </div>
+  <div class="card-body oq-toolbar">
+    <form class="search-field" method="get" role="search">
+      {% icon "search" 16 %}
+      <input class="input" type="search" name="q" value="{{ q }}" placeholder="{% translate "F.I.Sh. bo‘yicha qidirish" %}" aria-label="{% translate "F.I.Sh. bo‘yicha qidirish" %}">
+      {% if sort != "yangi" %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+    </form>
+    <nav class="seg-tabs" aria-label="{% translate "Saralash" %}">
+      <a href="?sort=yangi{% if q %}&amp;q={{ q|urlencode }}{% endif %}"{% if sort == "yangi" %} aria-current="true"{% endif %}>{% translate "Yangilari" %}</a>
+      <a href="?sort=ball{% if q %}&amp;q={{ q|urlencode }}{% endif %}"{% if sort == "ball" %} aria-current="true"{% endif %}>{% translate "Ball" %}</a>
+      <a href="?sort=ism{% if q %}&amp;q={{ q|urlencode }}{% endif %}"{% if sort == "ism" %} aria-current="true"{% endif %}>{% translate "Ism" %}</a>
+    </nav>
+  </div>
+  <div class="table-wrap">
+    <table class="table oq-table">
+      <thead>
+        <tr>
+          <th>{% translate "F.I.Sh." %}</th>
+          <th>{% translate "Natija" %}</th>
+          <th>{% translate "Vaqt" %}</th>
+          <th class="center">{% translate "Oynadan chiqish" %}</th>
+          <th>{% translate "Boshlagan" %}</th>
+          <th class="right"><span class="sr-only">{% translate "Amallar" %}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in attempts %}
+          <tr>
+            <td>
+              <div class="person">
+                <span class="avatar sm" style="--h: {{ a.full_name|hue }}" aria-hidden="true">{{ a.initials }}</span>
+                <span class="truncate"><span class="person-name block truncate">{{ a.full_name }}</span><span class="person-meta">{{ a.get_language_display }}</span></span>
+              </div>
+            </td>
+            <td>
+              {% if a.status == "finished" %}
+                <span class="oq-score"><span class="badge {{ a.percent|quiz_tone }}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>{% if a.timed_out %} <span class="meta">{% translate "vaqt tugadi" %}</span>{% endif %}</span>
+              {% else %}
+                <span class="badge live">{% translate "yechmoqda" %}</span>
+              {% endif %}
+            </td>
+            <td class="nowrap tabular">{{ a.duration_text|default:"—" }}</td>
+            <td class="center">{% if a.leave_count %}<span class="badge warn" title="{% blocktranslate with s=a.away_seconds trimmed %}tashqarida {{ s }} s{% endblocktranslate %}">{{ a.leave_count }}</span>{% else %}<span class="meta">0</span>{% endif %}</td>
+            <td class="nowrap meta">{{ a.started_at|date:"d.m H:i" }}</td>
+            <td class="right nowrap">
+              {% if a.status == "finished" %}<a class="btn xs soft" href="{% url 'open_attempt_review' oq.pk a.pk %}">{% icon "eye" 13 %} {% translate "Javoblar" %}</a>{% endif %}
+              <form method="post" action="{% url 'open_attempt_delete' oq.pk a.pk %}" class="inline-form">
+                {% csrf_token %}
+                <button class="btn xs ghost square" type="submit" title="{% translate "Natijani o‘chirish (qayta topshirishga ruxsat)" %}" aria-label="{% translate "Natijani o‘chirish" %}" data-confirm="{% blocktranslate with name=a.full_name trimmed %}{{ name }} natijasi o‘chirilsinmi? U testni qayta topshira oladi.{% endblocktranslate %}">{% icon "trash" 13 %}</button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6">
+            <div class="empty compact">
+              <span class="empty-icon">{% icon "users" 22 %}</span>
+              {% if q %}<p>{% translate "Bu F.I.Sh. bo‘yicha natija topilmadi." %}</p>{% else %}<strong>{% translate "Hali hech kim kirmadi" %}</strong><p>{% translate "Qatnashchilar havolani ochib, F.I.Sh. kiritishi bilan shu yerda ko‘rinadi." %}</p>{% endif %}
+            </div>
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card oq-invite-card" id="invite" aria-labelledby="invite-h">
+  <div class="card-head">
+    <h2 id="invite-h">{% icon "mail" 18 %} {% translate "Emailga yuborish" %}</h2>
+    {% if invites %}<span class="meta">{% blocktranslate with n=invite_sent_n trimmed %}yuborilgan: {{ n }}{% endblocktranslate %}</span>{% endif %}
+  </div>
+  <div class="card-body">
+    <form method="post" action="{% url 'open_quiz_invite' oq.pk %}" class="oq-invite" data-dirty-guard>
+      {% csrf_token %}
+      <div class="field">
+        {{ invite_form.emails.label_tag }}{{ invite_form.emails }}
+        <div class="hint">{{ invite_form.emails.help_text }}</div>
+      </div>
+      <button class="btn primary" type="submit"{% if not is_open %} disabled{% endif %}>{% icon "send" 15 %} {% translate "Hammasiga yuborish" %}</button>
+    </form>
+    {% if invites %}
+      <details class="oq-invites">
+        <summary class="meta">{% blocktranslate with n=invites|length trimmed %}Yuborilgan manzillar ({{ n }}){% endblocktranslate %}</summary>
+        <ul>
+          {% for i in invites %}
+            <li><span class="grow truncate">{{ i.email }}</span>{% if i.sent_at %}<span class="meta">{{ i.sent_at|date:"d.m H:i" }}</span><span class="badge ok">{% translate "yuborildi" %}</span>{% else %}<span class="badge bad" title="{{ i.error }}">{% translate "xato" %}</span>{% endif %}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -4,14 +4,14 @@
 <header class="quiz-bar">
   <div>
     <div class="quiz-bar-title">{{ t.topic }}</div>
-    <small>{{ attempt.student.full_name }}</small>
+    <small>{{ participant_name }}</small>
   </div>
   <div class="quiz-timer" role="timer" aria-live="off" aria-label="{{ t.time_left }}" data-quiz-timer data-seconds="{{ seconds_left }}">
     {{ seconds_left }} s
   </div>
 </header>
 <main class="quiz-main">
-  <form method="post" action="{% url 'quiz_submit' attempt.token %}" data-quiz-form data-save-url="{% url 'quiz_save' attempt.token %}" data-progress-text="{{ t.progress }}" data-confirm-text="{{ t.confirm_unanswered }}">
+  <form method="post" action="{{ submit_url }}" data-quiz-form data-save-url="{{ save_url }}" data-progress-text="{{ t.progress }}" data-confirm-text="{{ t.confirm_unanswered }}">
     {% csrf_token %}
     <input type="hidden" name="timeout" value="0" data-quiz-timeout>
     <input type="hidden" name="leave_count" value="{{ attempt.leave_count }}" data-quiz-leaves>

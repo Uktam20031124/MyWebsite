@@ -419,6 +419,29 @@
     });
   };
 
+  // Jonli natijalar: [data-autorefresh="20"] bo'lsa sahifa N soniyada qayta yuklanadi (Turbo
+  // "morph" — aylantirish joyi saqlanadi). Foydalanuvchi yozayotgan, menyu/panel ochiq yoki
+  // sahifa ko'rinmayotgan bo'lsa — kutiladi.
+  let refreshTimer = null;
+  const initAutoRefresh = () => {
+    clearTimeout(refreshTimer);
+    const el = $("[data-autorefresh]");
+    if (!el) return;
+    const seconds = Math.max(5, Number(el.dataset.autorefresh) || 30);
+    const tick = () => {
+      const busy =
+        document.hidden || typing(document.activeElement) || dirtyForm() || $("#palette")?.open ||
+        document.body.classList.contains("nav-open") || $("details[open]") !== null;
+      if (busy) {
+        refreshTimer = setTimeout(tick, 5000);
+        return;
+      }
+      window.Turbo ? window.Turbo.visit(window.location.href, { action: "replace" }) : window.location.reload();
+    };
+    refreshTimer = setTimeout(tick, seconds * 1000);
+  };
+  document.addEventListener("turbo:before-visit", () => clearTimeout(refreshTimer));
+
   const init = () => {
     $$("[data-mod-key]").forEach((el) => (el.textContent = isMac ? "⌘" : "Ctrl"));
     renderTheme();
@@ -432,6 +455,7 @@
     initFilters();
     $$("[data-check-count]").forEach((el) => updateCheckCount(el.dataset.checkCount));
     initQuizPace();
+    initAutoRefresh();
     // Kalendar: bugungi kunga avtomatik aylantirish (mobil)
     const today = $(".tt-col.today");
     if (today) today.closest(".table-wrap")?.scrollTo({ left: Math.max(0, today.offsetLeft - 70) });

@@ -55,25 +55,27 @@ def valid_email(value: str) -> str:
     return value
 
 
-def button_html(title: str, lines: list[str], url: str = "", button: str = "", footer: str = "") -> str:
+def button_html(
+    title: str, lines: list[str], url: str = "", button: str = "", footer: str = "", fallback: str = "Tugma ishlamasa:"
+) -> str:
     """Oddiy, hamma pochta dasturlarida to'g'ri ko'rinadigan HTML xat."""
     body = "".join(f'<p style="margin:0 0 12px">{escape(line)}</p>' for line in lines)
     cta = (
-        f'<p style="margin:20px 0"><a href="{escape(url)}" style="background:#c2572a;color:#fff;'
+        f'<p style="margin:20px 0"><a href="{escape(url)}" style="background:#0b7c7e;color:#fff;'
         f'padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block">'
         f"{escape(button)}</a></p>"
-        f'<p style="margin:0 0 12px;font-size:13px;color:#8a8275">Tugma ishlamasa: '
-        f'<a href="{escape(url)}" style="color:#2c6688">{escape(url)}</a></p>'
+        f'<p style="margin:0 0 12px;font-size:13px;color:#80879a">{escape(fallback)} '
+        f'<a href="{escape(url)}" style="color:#2a5fa8">{escape(url)}</a></p>'
         if url
         else ""
     )
-    foot = f'<p style="margin:18px 0 0;font-size:13px;color:#8a8275">{escape(footer)}</p>' if footer else ""
+    foot = f'<p style="margin:18px 0 0;font-size:13px;color:#80879a">{escape(footer)}</p>' if footer else ""
     return (
-        '<div style="background:#f5f2ea;padding:24px 12px;font-family:Arial,Helvetica,sans-serif">'
-        '<div style="max-width:520px;margin:0 auto;background:#fffdf8;border:1px solid #e5ddcf;'
-        'border-radius:16px;padding:24px;color:#1c1a16;font-size:15px;line-height:1.5">'
-        '<p style="margin:0 0 6px;font-size:12px;letter-spacing:.08em;color:#b08948;font-weight:700">MINAR TEST</p>'
-        f'<h1 style="margin:0 0 14px;font-size:20px;color:#1e3a2f">{escape(title)}</h1>'
+        '<div style="background:#f5f3ee;padding:24px 12px;font-family:Arial,Helvetica,sans-serif">'
+        '<div style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e7e2d8;'
+        'border-top:4px solid #1b3768;border-radius:16px;padding:24px;color:#141824;font-size:15px;line-height:1.5">'
+        '<p style="margin:0 0 6px;font-size:12px;letter-spacing:.08em;color:#c08a2c;font-weight:700">MINAR TEST</p>'
+        f'<h1 style="margin:0 0 14px;font-size:20px;color:#1b3768">{escape(title)}</h1>'
         f"{body}{cta}{foot}</div></div>"
     )
 

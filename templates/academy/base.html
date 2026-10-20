@@ -7,6 +7,7 @@
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}{% translate "Minar Test" %}{% endblock %}</title>
   {% include "academy/includes/head.html" %}
+  {% block head_extra %}{% endblock %}
   {# Turbo: havola va formalar sahifani to'liq qayta yuklamasdan ochiladi (faqat <body> almashadi). #}
   <script src="{% static 'vendor/turbo-8.0.12.umd.js' %}" defer data-turbo-track="reload"></script>
   <script src="{% static 'js/app.js' %}" defer data-turbo-track="reload"></script>
@@ -54,7 +55,7 @@
         <a href="{% url 'topic_list' %}" {% if 'topic' in url_name or 'module' in url_name %}aria-current="page"{% endif %}>
           {% icon "book" %} {% translate "Mavzular" %} <span class="count">{{ nav_topics }}</span>
         </a>
-        <a href="{% url 'quiz_batches' %}" {% if url_name == 'quiz_send' or 'quiz_batch' in url_name %}aria-current="page"{% endif %}>
+        <a href="{% url 'quiz_batches' %}" {% if url_name == 'quiz_send' or 'quiz_batch' in url_name or 'open_quiz' in url_name or 'open_attempt' in url_name %}aria-current="page"{% endif %}>
           {% icon "target" %} {% translate "Testlar" %}
           {% if nav_quiz_open %}<span class="count" title="{% translate "Hali yechilmagan test havolalari" %}">{{ nav_quiz_open }}</span>{% endif %}
         </a>
@@ -154,6 +155,7 @@
       {"title": "{% translate "Yangi dars yozish" %}", "meta": "{% translate "Amal" %}", "icon": "plus", "url": "{% url 'lesson_create' %}"},
       {"title": "{% translate "Yangi shogird qo‘shish" %}", "meta": "{% translate "Amal" %}", "icon": "plus", "url": "{% url 'student_create' %}"},
       {"title": "{% translate "Yangi guruh yaratish" %}", "meta": "{% translate "Amal" %}", "icon": "plus", "url": "{% url 'group_create' %}"},
+      {"title": "{% translate "Umumiy test havolasi yaratish" %}", "meta": "{% translate "Amal" %}", "icon": "link", "url": "{% url 'open_quiz_create' %}"},
       {"title": "{% translate "Mavzularni import qilish" %}", "meta": "{% translate "Amal" %}", "icon": "upload", "url": "{% url 'topic_import' %}"},
       {"title": "{% translate "Shogirdlar ro‘yxatini yuklab olish (CSV)" %}", "meta": "{% translate "Amal" %}", "icon": "download", "url": "{% url 'student_export' %}", "download": true}
     ]
