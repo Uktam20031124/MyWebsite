@@ -291,7 +291,7 @@ class PortalTests(Base):
         self.assertContains(page, "2<small>/2</small>")  # guruhda 2-o'rin
         self.assertContains(page, "Yechilmagan testlar")
         self.assertNotContains(page, "Javobingiz")  # ruxsatsiz javoblar ko'rinmaydi
-        self.assertContains(page, "ruxsat so‘rash")
+        self.assertContains(page, "Javoblarimni ko‘rish (1 daqiqa)")
         b.attempts.get(student=self.ali).decide_reveal(True)
         page = self.client_class().get(url)
         self.assertContains(page, "Javobingiz: <strong>xato 5</strong>")

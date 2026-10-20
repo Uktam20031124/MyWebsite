@@ -6,12 +6,18 @@
     <div class="quiz-bar-title">{{ t.topic }}</div>
     <small>{{ participant_name }}</small>
   </div>
+  <div class="quiz-bar-tools">
+  <div class="quiz-lang" role="group" aria-label="{{ t.open_lang }}">
+    <button type="submit" form="quiz-form" formaction="{{ language_url }}" formnovalidate name="language" value="uz" lang="uz" data-quiz-lang{% if attempt.language == "uz" %} aria-pressed="true" disabled{% endif %}>UZ</button>
+    <button type="submit" form="quiz-form" formaction="{{ language_url }}" formnovalidate name="language" value="ru" lang="ru" data-quiz-lang{% if attempt.language == "ru" %} aria-pressed="true" disabled{% endif %}>RU</button>
+  </div>
   <div class="quiz-timer" role="timer" aria-live="off" aria-label="{{ t.time_left }}" data-quiz-timer data-seconds="{{ seconds_left }}">
     {{ seconds_left }} s
   </div>
+  </div>
 </header>
 <main class="quiz-main">
-  <form method="post" action="{{ submit_url }}" data-quiz-form data-save-url="{{ save_url }}" data-progress-text="{{ t.progress }}" data-confirm-text="{{ t.confirm_unanswered }}">
+  <form method="post" action="{{ submit_url }}" id="quiz-form" data-quiz-form data-save-url="{{ save_url }}" data-progress-text="{{ t.progress }}" data-confirm-text="{{ t.confirm_unanswered }}">
     {% csrf_token %}
     <input type="hidden" name="timeout" value="0" data-quiz-timeout>
     <input type="hidden" name="leave_count" value="{{ attempt.leave_count }}" data-quiz-leaves>

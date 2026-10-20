@@ -197,18 +197,27 @@
     <section class="card pad">
       <h2>{% translate "Testlarim" %}</h2>
       {% for a in finished %}
-        <details class="portal-attempt" id="a{{ a.pk }}"{% if a.reveal == "requested" %} open{% endif %}>
+        <details class="portal-attempt" id="a{{ a.pk }}"{% if a.reveal == "requested" or a.preview_seconds_left %} open{% endif %}>
           <summary>
             <span class="pa-dot tone-{{ a.percent|quiz_tone }}" aria-hidden="true"></span>
             <span class="grow"><strong>{{ a.quiz.topic|topic_title }}</strong><span class="meta block">{{ a.finished_at|date:"d.m.Y H:i" }}{% if a.timed_out %} {% translate "· vaqt tugadi" %}{% endif %}</span></span>
             <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
             {% icon "down" 16 "pa-chev" %}
           </summary>
+          {% if a.reveal == "preview" and a.preview_seconds_left %}
+            <p class="callout next portal-review review-timer" role="status">⏱ {% translate "Javoblar yopilishiga:" %} <strong class="tabular" data-countdown="{{ a.preview_seconds_left }}">{{ a.preview_seconds_left }}</strong></p>
+          {% endif %}
           {% if not a.can_see_answers %}
             {% if a.reveal == "" %}
               <form method="post" action="{% url 'portal_review_request' student.portal_token a.pk %}" class="portal-review">
                 {% csrf_token %}
-                <p class="meta">{% translate "Qaysi savolda to‘g‘ri, qaysida xato qilganingizni ko‘rish uchun ustozingizdan ruxsat so‘rang." %}</p>
+                <p class="meta">{% translate "Javoblaringizni (qaysi savolda to‘g‘ri, qaysida xato) 1 daqiqa ko‘rishingiz mumkin — faqat bir marta. Keyin qayta ko‘rish uchun ustozingizdan ruxsat so‘raladi." %}</p>
+                <button class="btn primary sm" type="submit">{% icon "eye" 14 %} {% translate "Javoblarimni ko‘rish (1 daqiqa)" %}</button>
+              </form>
+            {% elif a.reveal == "preview" %}
+              <form method="post" action="{% url 'portal_review_request' student.portal_token a.pk %}" class="portal-review">
+                {% csrf_token %}
+                <p class="meta">{% translate "1 daqiqalik ko‘rish tugadi. Javoblarni yana ko‘rish uchun ustozingizdan ruxsat so‘rang." %}</p>
                 <button class="btn soft sm" type="submit">{% translate "Javoblarimni ko‘rish uchun ruxsat so‘rash" %}</button>
               </form>
             {% elif a.reveal == "requested" %}

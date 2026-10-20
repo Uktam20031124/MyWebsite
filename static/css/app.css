@@ -2142,3 +2142,43 @@ a.p-stat:hover { color: #fff; transform: translateY(-2px); background: linear-gr
   .oq-toolbar .search-field { max-width: none; }
 }
 .oq-invite-card { margin-top: 18px; }
+
+/* Test paytida tilni almashtirish (UZ | RU) */
+.quiz-bar-tools { display: flex; align-items: center; gap: 10px; flex: none; }
+.quiz-lang { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(255, 255, 255, 0.1); }
+.quiz-lang button {
+  border: 0; background: none; padding: 6px 10px; border-radius: 8px;
+  font: 700 12.5px var(--font); color: rgba(255, 255, 255, 0.72); cursor: pointer;
+}
+.quiz-lang button:hover:not([disabled]) { color: #fff; background: rgba(255, 255, 255, 0.1); }
+.quiz-lang button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.95); color: #10234a; cursor: default; }
+@media (max-width: 420px) { .quiz-lang button { padding: 6px 8px; } .quiz-timer { min-width: 76px; } }
+
+/* Shogirdlar jadvali: profil holati va amallar menyusi (popover — jadval aylantirishi kesmaydi) */
+.profile-cell { white-space: nowrap; }
+.profile-cell-inner { display: flex; align-items: center; gap: 8px; }
+.row-menu {
+  position: fixed; inset: auto; margin: 0;
+  width: 300px; max-width: calc(100vw - 16px); padding: 6px;
+  border: 1px solid var(--border); border-radius: 14px;
+  background: var(--surface); color: var(--text);
+  box-shadow: var(--shadow-lg);
+}
+.row-menu:popover-open { animation: pal-in 0.16s var(--ease); }
+.row-menu form { margin: 0; }
+.row-menu-title { padding: 8px 10px 6px; font-size: 12px; font-weight: 700; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 10px; border: 0; border-radius: 9px;
+  background: none; color: var(--text); font: 500 14px var(--font); text-align: left; cursor: pointer;
+}
+.row-menu-item:hover { background: var(--surface-3); color: var(--text); }
+.row-menu-item .i { color: var(--text-3); }
+.row-menu-item.danger-item, .row-menu-item.danger-item .i { color: var(--bad); }
+.row-menu-item.danger-item:hover { background: var(--bad-soft); }
+.row-menu-item.muted-item { color: var(--text-3); cursor: default; font-size: 13px; }
+.row-menu-item.muted-item:hover { background: none; }
+.row-menu-sep { height: 1px; margin: 6px 4px; background: var(--border); }
+.row-menu-label { display: flex; align-items: center; gap: 6px; padding: 6px 10px 6px; font-size: 12px; font-weight: 700; color: var(--text-3); }
+.row-menu-hours { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 8px 6px; }
+.row-menu-hours .btn { flex: 1 1 auto; padding: 0 8px; }

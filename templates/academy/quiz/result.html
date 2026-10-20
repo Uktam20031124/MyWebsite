@@ -22,7 +22,21 @@
 {% elif attempt.reveal == "" %}
   <div class="callout next review-ask">
     <div class="grow">
-      <p style="margin:0 0 10px">{{ t.review_ask_hint }}</p>
+      <p style="margin:0 0 10px">{{ t.review_free_hint }}</p>
+      <form method="post" action="{% url 'quiz_review_request' attempt.token %}">
+        {% csrf_token %}
+        <button class="btn primary block" type="submit">{{ t.review_free }}</button>
+      </form>
+    </div>
+  </div>
+{% elif attempt.reveal == "preview" and attempt.preview_seconds_left %}
+  <div class="callout next review-ask review-timer" role="status">
+    <div class="grow">⏱ {{ t.review_closes }} <strong class="tabular" data-countdown="{{ attempt.preview_seconds_left }}">{{ attempt.preview_seconds_left }}</strong></div>
+  </div>
+{% elif attempt.reveal == "preview" %}
+  <div class="callout next review-ask">
+    <div class="grow">
+      <p style="margin:0 0 10px">{{ t.review_again_hint }}</p>
       <form method="post" action="{% url 'quiz_review_request' attempt.token %}">
         {% csrf_token %}
         <button class="btn primary block" type="submit">{{ t.review_ask }}</button>
@@ -59,4 +73,5 @@
 {% endif %}
 
 <p class="meta">{% if personal %}{{ t.sent_to_teacher }}{% else %}{{ t.open_sent }}{% endif %}</p>
+{% if attempt.preview_seconds_left %}{% load static %}<script src="{% static 'js/portal.js' %}" defer></script>{% endif %}
 {% endblock %}

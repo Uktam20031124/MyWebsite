@@ -102,6 +102,38 @@
     }
   });
 
+  // --- Qator menyusi (popover): tugma yonida ochiladi, sig'masa — yuqoriga ---------
+  // "toggle" hodisasi ko'tarilmaydi, shuning uchun capture bosqichida tinglanadi.
+  const placeMenu = (menu, measured) => {
+    const trigger = document.querySelector(`[popovertarget="${CSS.escape(menu.id)}"]`);
+    if (!trigger) return;
+    const r = trigger.getBoundingClientRect();
+    const w = measured ? menu.offsetWidth : 300;
+    const h = measured ? menu.offsetHeight : 0;
+    const left = Math.min(Math.max(8, r.right - w), window.innerWidth - w - 8);
+    const below = r.bottom + 6;
+    const top = h && below + h > window.innerHeight - 8 ? Math.max(8, r.top - h - 6) : below;
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+  };
+  document.addEventListener(
+    "beforetoggle",
+    (e) => e.newState === "open" && e.target.matches?.("[data-row-menu]") && placeMenu(e.target, false),
+    true
+  );
+  document.addEventListener(
+    "toggle",
+    (e) => e.newState === "open" && e.target.matches?.("[data-row-menu]") && placeMenu(e.target, true),
+    true
+  );
+  const closeMenus = () => {
+    try {
+      $$("[data-row-menu]:popover-open").forEach((m) => m.hidePopover());
+    } catch { /* eski brauzer: :popover-open yo'q */ }
+  };
+  window.addEventListener("scroll", closeMenus, { passive: true, capture: true });
+  window.addEventListener("resize", closeMenus);
+
   // --- Parol: ko'rsatish/yashirish va Caps Lock ogohlantirishi ---------------
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-password-toggle]");

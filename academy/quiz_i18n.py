@@ -42,6 +42,11 @@ _TEXTS = {
         "ko‘rinadi — sahifani keyinroq yangilang.",
         "review_rejected": "Ustozingiz hozircha javoblarni ko‘rsatmaslikka qaror qildi. Savollaringizni darsda bering.",
         "refresh": "Yangilash",
+        "review_free_hint": "Javoblaringizni (qaysi savolda to‘g‘ri, qaysida xato) 1 daqiqa ko‘rishingiz mumkin — "
+        "faqat bir marta. Keyin qayta ko‘rish uchun ustozingizdan ruxsat so‘raladi.",
+        "review_free": "Javoblarimni ko‘rish (1 daqiqa)",
+        "review_closes": "Javoblar yopilishiga:",
+        "review_again_hint": "1 daqiqalik ko‘rish tugadi. Javoblarni yana ko‘rish uchun ustozingizdan ruxsat so‘rang.",
         "study_offer": "Natija 70% dan past. Mavzuni mustahkamlab oling: tushuntirish va bajarilgan "
         "misollar tayyor — 20 daqiqadan keyin testni qayta topshirasiz.",
         "study_button": "Mavzuni mustahkamlash",
@@ -118,6 +123,12 @@ _TEXTS = {
         "странице — обновите её позже.",
         "review_rejected": "Учитель решил пока не показывать ответы. Задайте вопросы на уроке.",
         "refresh": "Обновить",
+        "review_free_hint": "Свои ответы (где верно, где ошибка) можно посмотреть 1 минуту — только один раз. "
+        "Для повторного просмотра понадобится разрешение учителя.",
+        "review_free": "Посмотреть мои ответы (1 минута)",
+        "review_closes": "До закрытия ответов:",
+        "review_again_hint": "Минута просмотра закончилась. Чтобы посмотреть ответы снова, "
+        "попросите разрешение у учителя.",
         "study_offer": "Результат ниже 70%. Закрепите тему: объяснение и решённые примеры уже "
         "готовы — через 20 минут сможете пересдать тест.",
         "study_button": "Закрепить тему",

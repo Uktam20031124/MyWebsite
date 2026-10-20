@@ -51,7 +51,7 @@ from .forms import (
     TopicForm,
     TopicImportForm,
 )
-from .middleware import activate_default_language
+from .middleware import activate_portal_language
 from .models import (
     MAX_SCORE,
     Attendance,
@@ -476,6 +476,7 @@ class StudentListView(AuthMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx["groups"] = Group.objects.filter(status=Group.Status.ACTIVE)
         ctx["statuses"] = Student.Status.choices
+        ctx["access_hours"] = profiles.ACCESS_HOURS
         return ctx
 
 
@@ -1685,6 +1686,9 @@ def _quiz_page(request, attempt, template, status=200, **extra):
             "personal": personal,
             "save_url": reverse("quiz_save" if personal else "open_quiz_save", args=_attempt_args(attempt)),
             "submit_url": reverse("quiz_submit" if personal else "open_quiz_submit", args=_attempt_args(attempt)),
+            "language_url": reverse(
+                "quiz_language" if personal else "open_quiz_language", args=_attempt_args(attempt)
+            ),
             **extra,
         },
         status=status,
@@ -1793,12 +1797,12 @@ def _record_leaves(request, attempt) -> None:
 @never_cache
 @require_POST
 def quiz_review_request(request, token):
-    """Natija sahifasidan: javoblarni ko'rish uchun ustozdan ruxsat so'rash (faqat
-    testni yechgan brauzerdan)."""
+    """Natija sahifasidan "javoblarni ko'rish": birinchi marta — 1 daqiqa o'zi ko'radi, keyin —
+    ustozga so'rov (faqat testni yechgan brauzerdan)."""
     attempt = get_object_or_404(
         QuizAttempt.objects.select_related("student", "quiz__topic"), token=token
     )
-    if _is_owner(request, attempt) and attempt.request_reveal():
+    if _is_owner(request, attempt) and attempt.ask_reveal() == "requested":
         review_access.notify_teacher(attempt)
     return redirect(attempt.get_absolute_url())
 
@@ -1808,6 +1812,30 @@ def quiz_review_request(request, token):
 def quiz_submit(request, token):
     attempt = get_object_or_404(QuizAttempt.objects.select_related("quiz", "batch"), token=token)
     submit_answers(request, attempt)
+    return redirect(attempt.get_absolute_url())
+
+
+def switch_language(request, attempt) -> None:
+    """Test paytida tilni almashtirish: javoblar saqlanadi, savollar boshqa tilda qayta
+    ko'rsatiladi (tartib va vaqt o'zgarmaydi). Oynadan chiqish hisoblanmaydi."""
+    lang = request.POST.get("language", "")
+    if (
+        lang in QuizLanguage.values
+        and attempt.status == attempt.Status.ACTIVE
+        and _is_owner(request, attempt)
+        and not attempt.is_expired(grace=attempt.GRACE_SECONDS)
+    ):
+        attempt.answers = _posted_answers(request, attempt)
+        attempt.language = lang
+        attempt.save(update_fields=["answers", "language"])
+        _record_leaves(request, attempt)
+
+
+@never_cache
+@require_POST
+def quiz_language(request, token):
+    attempt = get_object_or_404(QuizAttempt.objects.select_related("quiz", "batch"), token=token)
+    switch_language(request, attempt)
     return redirect(attempt.get_absolute_url())
 
 
@@ -2112,7 +2140,7 @@ def student_portal(request, token):
     if not token:
         raise Http404
     student = get_object_or_404(Student.objects.select_related("group"), portal_token=token)
-    activate_default_language(request, student.quiz_language)
+    activate_portal_language(request, student)
     if not profiles.is_open(student):
         response = render(request, "academy/portal/locked.html", {"student": student})
         response["X-Robots-Tag"] = "noindex, nofollow"
@@ -2171,14 +2199,14 @@ def student_portal(request, token):
 @never_cache
 @require_POST
 def portal_review_request(request, token, pk):
-    """Shaxsiy sahifadan: shu testdagi javoblarni ko'rish uchun ustozdan ruxsat so'rash."""
+    """Shaxsiy sahifadan "javoblarni ko'rish": birinchi marta — 1 daqiqa, keyin — ustozga so'rov."""
     if not token:
         raise Http404
     student = get_object_or_404(Student, portal_token=token)
     attempt = get_object_or_404(
         QuizAttempt.objects.select_related("student", "quiz__topic"), pk=pk, student=student
     )
-    if attempt.request_reveal():
+    if attempt.ask_reveal() == "requested":
         review_access.notify_teacher(attempt)
     return redirect(f"{reverse('student_portal', args=[token])}#a{attempt.pk}")
 
@@ -2262,7 +2290,22 @@ def student_portal_action(request, pk):
         messages.success(request, _("Yangi havola yaratildi — eskisi endi ishlamaydi."))
     else:
         _send_portal_links(request, [student], _channel_param(request))
-    return redirect(f"{student.get_absolute_url()}#portal")
+    return redirect(local_next(request) or f"{student.get_absolute_url()}#portal")
+
+
+def local_next(request) -> str:
+    """Formadagi ``next`` — faqat shu saytdagi manzil bo'lsa (masalan, shogirdlar ro'yxatiga qaytish)."""
+    target = request.POST.get("next", "")
+    if target.startswith("/") and url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
+        return target
+    return ""
+
+
+@login_required
+def student_portal_open(request, pk):
+    """Ustoz uchun: o'quvchi profilini ochish (kalit bo'lmasa — yaratiladi)."""
+    student = get_object_or_404(Student, pk=pk)
+    return redirect(motivation.portal_url(student))
 
 
 @login_required

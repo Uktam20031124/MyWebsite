@@ -33,6 +33,7 @@ urlpatterns = [
     # O'quvchi o'z Telegram/telefonini kiritadigan ochiq sahifa (login talab qilinmaydi)
     path("aloqa/<str:token>/", views.contact_self, name="contact_self"),
     path("shogirdlar/<int:pk>/sahifa/", views.student_portal_action, name="student_portal_action"),
+    path("shogirdlar/<int:pk>/sahifa/ochish/", views.student_portal_open, name="student_portal_open"),
     path("shogirdlar/<int:pk>/sertifikat/", views.student_certificate, name="student_certificate"),
     path("shogirdlar/<int:pk>/sertifikat/yuborish/", views.student_certificate_send, name="student_certificate_send"),
     path("guruhlar/<int:pk>/sahifalar/", views.group_portal_send, name="group_portal_send"),
@@ -40,6 +41,7 @@ urlpatterns = [
     path("guruhlar/<int:pk>/telegram-chat/", views.group_telegram_chat, name="group_telegram_chat"),
     # O'quvchining shaxsiy sahifasi (login talab qilinmaydi, maxfiy havola)
     path("men/<str:token>/", views.student_portal, name="student_portal"),
+    path("men/<str:token>/til/", profile_views.portal_language, name="portal_language"),
     path("men/<str:token>/sorov/<int:pk>/", views.portal_review_request, name="portal_review_request"),
     path("men/<str:token>/kirish/", profile_views.portal_access_request, name="portal_access_request"),
     path("men/<str:token>/test/<int:topic_id>/", profile_views.portal_test_request, name="portal_test_request"),
@@ -111,6 +113,7 @@ urlpatterns = [
     path(
         "o/<str:token>/<str:attempt_token>/yakunlash/", open_quiz_views.open_quiz_submit, name="open_quiz_submit"
     ),
+    path("o/<str:token>/<str:attempt_token>/til/", open_quiz_views.open_quiz_language, name="open_quiz_language"),
     path("testlar/<int:pk>/", views.quiz_batch_detail, name="quiz_batch"),
     path("testlar/natija/<int:pk>/", views.quiz_attempt_review, name="quiz_attempt_review"),
     path("testlar/sorovlar/", views.quiz_review_requests, name="quiz_review_requests"),
@@ -127,5 +130,6 @@ urlpatterns = [
     path("t/<str:token>/", views.quiz_take, name="quiz_take"),
     path("t/<str:token>/saqlash/", views.quiz_save, name="quiz_save"),
     path("t/<str:token>/yakunlash/", views.quiz_submit, name="quiz_submit"),
+    path("t/<str:token>/til/", views.quiz_language, name="quiz_language"),
     path("t/<str:token>/sorov/", views.quiz_review_request, name="quiz_review_request"),
 ]

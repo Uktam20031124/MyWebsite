@@ -1,7 +1,9 @@
+from datetime import timedelta
 from unittest import mock
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from academy.models import Quiz, QuizAttempt
 from academy.services import create_quiz_batch, parse_quiz
@@ -28,15 +30,31 @@ class RevealFlowTests(TestCase):
         self.teacher = self.client_class()
         self.teacher.force_login(f.user())
 
+    def expire_preview(self):
+        QuizAttempt.objects.filter(pk=self.attempt.pk).update(reveal_until=timezone.now() - timedelta(seconds=1))
+
     def test_full_flow(self):
         page = self.student.get(self.url)
         self.assertContains(page, "0 / 3 to‘g‘ri javob")
         self.assertNotContains(page, "Javobingiz")
-        self.assertContains(page, "Javoblarimni ko‘rish uchun ruxsat so‘rash")
+        self.assertContains(page, "Javoblarimni ko‘rish (1 daqiqa)")
 
+        ask = reverse("quiz_review_request", args=[self.attempt.token])
         with mock.patch("academy.review_access.notify_teacher") as notify:
-            self.student.post(reverse("quiz_review_request", args=[self.attempt.token]))
-            self.student.post(reverse("quiz_review_request", args=[self.attempt.token]))
+            # Birinchi bosish — 1 daqiqa o'zi ko'radi (ustozga so'rov ketmaydi).
+            self.student.post(ask)
+            page = self.student.get(self.url)
+            self.assertContains(page, "Javobingiz: <strong>xato 1</strong>")
+            self.assertContains(page, "Javoblar yopilishiga:")
+            self.student.post(ask)  # 1 daqiqa ichida takror bosish hech narsani o'zgartirmaydi
+            notify.assert_not_called()
+            # 1 daqiqa tugadi — javoblar yopiladi, endi faqat ustozdan so'rash mumkin.
+            self.expire_preview()
+            page = self.student.get(self.url)
+            self.assertNotContains(page, "Javobingiz")
+            self.assertContains(page, "1 daqiqalik ko‘rish tugadi")
+            self.student.post(ask)
+            self.student.post(ask)
         notify.assert_called_once()  # takror so'rov ustozni bezovta qilmaydi
         self.assertContains(self.student.get(self.url), "So‘rov ustozingizga yuborildi")
 
@@ -75,10 +93,14 @@ class RevealFlowTests(TestCase):
 
         profiles.grant_access(self.ali, 2)
         portal = reverse("student_portal", args=[self.ali.portal_token])
-        with mock.patch("academy.review_access.notify_teacher"):
-            self.client_class().post(
-                reverse("portal_review_request", args=[self.ali.portal_token, self.attempt.pk])
-            )
+        ask = reverse("portal_review_request", args=[self.ali.portal_token, self.attempt.pk])
+        with mock.patch("academy.review_access.notify_teacher") as notify:
+            self.client_class().post(ask)
+            self.assertContains(self.client_class().get(portal), "Javoblar yopilishiga:")
+            self.expire_preview()
+            self.assertContains(self.client_class().get(portal), "1 daqiqalik ko‘rish tugadi")
+            self.client_class().post(ask)
+        notify.assert_called_once()
         self.assertContains(self.client_class().get(portal), "So‘rov yuborildi")
         self.teacher.post(reverse("quiz_review_approve_all"), {"batch": self.attempt.batch_id})
         self.assertContains(self.client_class().get(portal), "Javobingiz:")

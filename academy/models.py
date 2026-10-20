@@ -212,6 +212,10 @@ class Student(models.Model):
     def initials(self) -> str:
         return initials_of(self.full_name)
 
+    def profile_is_open(self) -> bool:
+        """Profilga kirish ruxsati hozir amaldami (``profiles.is_open`` bilan bir xil)."""
+        return bool(self.profile_until and self.profile_until > timezone.now())
+
     def save(self, *args, **kwargs):
         self.telegram = self.telegram.strip().lstrip("@")
         super().save(*args, **kwargs)
@@ -896,9 +900,11 @@ class QuizAttempt(AttemptScoringMixin, models.Model):
         FINISHED = "finished", _("Tugatgan")
 
     class Reveal(models.TextChoices):
-        """O'quvchi o'z javoblarini (to'g'ri/xato) ko'rishi — faqat ustoz ruxsati bilan."""
+        """O'quvchi o'z javoblarini (to'g'ri/xato) ko'rishi: bir marta 1 daqiqa o'zi, keyin —
+        faqat ustoz ruxsati bilan."""
 
         NONE = "", _("So‘ralmagan")
+        PREVIEW = "preview", _("1 daqiqa ko‘rdi")
         REQUESTED = "requested", _("So‘ralgan")
         APPROVED = "approved", _("Ruxsat berilgan")
         REJECTED = "rejected", _("Rad etilgan")
@@ -949,6 +955,8 @@ class QuizAttempt(AttemptScoringMixin, models.Model):
     )
     reveal_requested_at = models.DateTimeField(_("Ko'rish so'ralgan"), null=True, blank=True)
     reveal_decided_at = models.DateTimeField(_("Ustoz qarori"), null=True, blank=True)
+    # Bir martalik bepul ko'rish (PREVIEW) shu paytgacha.
+    reveal_until = models.DateTimeField(_("Ko'rish (gacha)"), null=True, blank=True)
     send_error = models.CharField(_("Yuborish xatosi"), max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -997,19 +1005,39 @@ class QuizAttempt(AttemptScoringMixin, models.Model):
         self.refresh_from_db()
         return bool(started)
 
+    # O'quvchi javoblarini ustoz ruxsatisiz ko'rishi mumkin bo'lgan vaqt (bir marta).
+    PREVIEW_SECONDS = 60
+
+    @property
+    def preview_seconds_left(self) -> int:
+        if self.reveal != self.Reveal.PREVIEW or not self.reveal_until:
+            return 0
+        return max(0, int((self.reveal_until - timezone.now()).total_seconds()))
 
     @property
     def can_see_answers(self) -> bool:
-        return self.status == self.Status.FINISHED and self.reveal == self.Reveal.APPROVED
+        if self.status != self.Status.FINISHED:
+            return False
+        return self.reveal == self.Reveal.APPROVED or self.preview_seconds_left > 0
 
-    def request_reveal(self) -> bool:
-        """O'quvchi so'rovi: faqat yakunlangan va hali so'ralmagan testga (rad etilgani
-        qayta so'ralmaydi — ustozni bezovta qilmaslik uchun). Yangi so'rov bo'lsa True."""
-        updated = QuizAttempt.objects.filter(
-            pk=self.pk, status=self.Status.FINISHED, reveal=self.Reveal.NONE
-        ).update(reveal=self.Reveal.REQUESTED, reveal_requested_at=timezone.now())
-        self.refresh_from_db(fields=["reveal", "reveal_requested_at"])
-        return bool(updated)
+    def ask_reveal(self) -> str:
+        """O'quvchi "javoblarni ko'rish"ni bosdi. Birinchi marta — 1 daqiqa o'zi ko'radi
+        ("preview"); u tugagach — ustozga so'rov ("requested"). Rad etilgani va takror
+        bosishlar hech narsani o'zgartirmaydi (""). Shartli UPDATE — ikki marta bosish poyga
+        holatida ham bitta natija beradi."""
+        now = timezone.now()
+        finished = QuizAttempt.objects.filter(pk=self.pk, status=self.Status.FINISHED)
+        outcome = ""
+        if finished.filter(reveal=self.Reveal.NONE).update(
+            reveal=self.Reveal.PREVIEW, reveal_until=now + timedelta(seconds=self.PREVIEW_SECONDS)
+        ):
+            outcome = "preview"
+        elif finished.filter(reveal=self.Reveal.PREVIEW, reveal_until__lte=now).update(
+            reveal=self.Reveal.REQUESTED, reveal_requested_at=now
+        ):
+            outcome = "requested"
+        self.refresh_from_db(fields=["reveal", "reveal_requested_at", "reveal_until"])
+        return outcome
 
     def decide_reveal(self, approve: bool) -> None:
         """Ustoz qarori (so'rovsiz ham ruxsat berish yoki ruxsatni qaytarib olish mumkin)."""

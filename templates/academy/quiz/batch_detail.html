@@ -94,7 +94,7 @@
               <span class="meta">{{ a.finished_at|date:"d.m H:i" }}</span>
               <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
               <a class="btn xs soft" href="{% url 'quiz_attempt_review' a.pk %}" title="{% translate "Qaysi savollarda xato qilgani (faqat siz ko‘rasiz)" %}">{% icon "search" 13 %} {% translate "Javoblar" %}</a>
-              {% if a.reveal == "requested" %}<span class="badge warn" title="{% translate "O‘quvchi javoblarini ko‘rish uchun ruxsat so‘radi" %}">{% translate "🔓 so‘rov" %}</span>{% elif a.reveal == "approved" %}<span class="badge ok" title="{% translate "O‘quvchi javoblarini (to‘g‘ri/xato) ko‘ra oladi" %}">{% translate "ko‘ra oladi" %}</span>{% elif a.reveal == "rejected" %}<span class="badge plain">{% translate "rad etilgan" %}</span>{% endif %}
+              {% if a.reveal == "requested" %}<span class="badge warn" title="{% translate "O‘quvchi javoblarini ko‘rish uchun ruxsat so‘radi" %}">{% translate "🔓 so‘rov" %}</span>{% elif a.reveal == "approved" %}<span class="badge ok" title="{% translate "O‘quvchi javoblarini (to‘g‘ri/xato) ko‘ra oladi" %}">{% translate "ko‘ra oladi" %}</span>{% elif a.reveal == "rejected" %}<span class="badge plain">{% translate "rad etilgan" %}</span>{% elif a.reveal == "preview" %}<span class="badge info" title="{% translate "O‘quvchi javoblarini bir marta 1 daqiqa ko‘rdi" %}">{% translate "1 daqiqa ko‘rdi" %}</span>{% endif %}
               <form method="post" action="{% url 'quiz_review_decide' a.pk %}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
