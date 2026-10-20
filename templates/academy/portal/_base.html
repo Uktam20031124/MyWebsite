@@ -4,14 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#15251e">
+  <meta name="theme-color" content="#10244c">
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}{% blocktranslate with full_name=student.full_name trimmed %}{{ full_name }} · profil{% endblocktranslate %}{% endblock %}</title>
   {% include "academy/includes/head.html" %}
 </head>
-<body class="quiz-body">
+<body class="quiz-body portal-body">
+{% include "academy/includes/icons.html" %}
 <main class="portal">
-  <div class="portal-top">{% include "academy/includes/lang_switch.html" %}</div>
+  {% block topbar %}<div class="portal-top">{% include "academy/includes/lang_switch.html" %}</div>{% endblock %}
   {% if messages %}<div class="portal-messages">{% for m in messages %}<div class="callout {% if m.level_tag == 'error' %}warn{% else %}next{% endif %}" role="status"><div class="grow">{{ m }}</div></div>{% endfor %}</div>{% endif %}
   {% block main %}{% endblock %}
 </main>

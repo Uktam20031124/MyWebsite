@@ -15,6 +15,14 @@
     el && (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName) || el.isContentEditable);
   const visit = (url) => (window.Turbo ? window.Turbo.visit(url) : (window.location.href = url));
 
+  // Tarjima: <script id="js-i18n"> (ui.js_i18n) — kalit o'zbekcha matn; {nom} o'rniga qiymat qo'yiladi.
+  // Turbo bilan til almashganda <body> ham yangilanadi, shuning uchun lug'at har safar o'qiladi.
+  const t = (text, vars = {}) => {
+    let dict = {};
+    try { dict = JSON.parse($("#js-i18n")?.textContent || "{}"); } catch { /* bo'sh lug'at */ }
+    return (dict[text] || text).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+  };
+
   const store = {
     get(key) {
       try { return localStorage.getItem(key); } catch { return null; }
@@ -33,7 +41,9 @@
   const renderTheme = () => {
     const dark = root.dataset.theme === "dark";
     $$("[data-theme-icon]").forEach((el) => (el.hidden = el.dataset.themeIcon !== (dark ? "dark" : "light")));
-    $$("[data-theme-label]").forEach((el) => (el.textContent = dark ? "Kunduzgi rejim" : "Tungi rejim"));
+    const label = dark ? t("Kunduzgi rejim") : t("Tungi rejim");
+    $$("[data-theme-label]").forEach((el) => (el.textContent = label));
+    $$("[data-theme-toggle][aria-label]").forEach((el) => el.setAttribute("aria-label", label));
   };
   document.addEventListener("click", (e) => {
     if (!e.target.closest("[data-theme-toggle]")) return;
@@ -82,15 +92,35 @@
     const text = btn.getAttribute("data-copy");
     const done = () => {
       const label = btn.textContent;
-      btn.textContent = "Nusxalandi ✓";
+      btn.textContent = t("Nusxalandi ✓");
       setTimeout(() => (btn.textContent = label), 1500);
     };
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(done, () => window.prompt("Nusxa oling:", text));
+      navigator.clipboard.writeText(text).then(done, () => window.prompt(t("Nusxa oling:"), text));
     } else {
-      window.prompt("Nusxa oling:", text);
+      window.prompt(t("Nusxa oling:"), text);
     }
   });
+
+  // --- Parol: ko'rsatish/yashirish va Caps Lock ogohlantirishi ---------------
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-password-toggle]");
+    if (!btn) return;
+    const input = btn.parentElement.querySelector("input");
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    btn.setAttribute("aria-pressed", String(show));
+    btn.setAttribute("aria-label", show ? btn.dataset.labelHide : btn.dataset.labelShow);
+    $$("[data-eye]", btn).forEach((el) => (el.hidden = el.dataset.eye !== (show ? "hide" : "show")));
+    input.focus();
+  });
+  const capsCheck = (e) => {
+    if (!e.target.matches?.('input[type="password"], [data-password-toggle] ~ input, .has-action > input') || !e.getModifierState) return;
+    const hint = e.target.closest(".field")?.querySelector("[data-caps-hint]");
+    if (hint) hint.hidden = !e.getModifierState("CapsLock");
+  };
+  document.addEventListener("keydown", capsCheck);
+  document.addEventListener("keyup", capsCheck);
 
   // --- Filtr o'zgarganda formani yuborish ----------------------------------
   document.addEventListener("change", (e) => {
@@ -144,7 +174,7 @@
     const counter = $(`[data-check-count="${name}"]`);
     if (counter) {
       const n = boxes.filter((b) => b.checked).length;
-      counter.innerHTML = `<span class="badge ${n ? "ok" : "bad"}">${n} / ${boxes.length} tanlandi</span>`;
+      counter.innerHTML = `<span class="badge ${n ? "ok" : "bad"}">${t("{n} / {total} tanlandi", { n, total: boxes.length })}</span>`;
     }
   };
   document.addEventListener("change", (e) => {
@@ -193,7 +223,7 @@
     if (dirtyForm()) e.preventDefault();
   });
   document.addEventListener("turbo:before-visit", (e) => {
-    if (dirtyForm() && !window.confirm("Saqlanmagan o‘zgarishlar bor. Sahifadan chiqilsinmi?")) {
+    if (dirtyForm() && !window.confirm(t("Saqlanmagan o‘zgarishlar bor. Sahifadan chiqilsinmi?"))) {
       e.preventDefault();
     }
   });
@@ -217,7 +247,7 @@
     const list = $("[data-palette-list]", palette);
     const commands = JSON.parse($("#palette-commands")?.textContent || "[]");
     const kindIcon = { student: "user", group: "layers", topic: "book", lesson: "lesson" };
-    const kindLabel = { student: "Shogirdlar", group: "Guruhlar", topic: "Mavzular", lesson: "Darslar" };
+    const kindLabel = { student: t("Shogirdlar"), group: t("Guruhlar"), topic: t("Mavzular"), lesson: t("Darslar") };
     let items = [];
     let active = 0;
     let timer = null;
@@ -243,7 +273,7 @@
             `<span class="pi-meta">${esc(row.meta || "")}</span></a></li>`;
         }
       }
-      list.innerHTML = html || `<li class="palette-empty">Hech narsa topilmadi</li>`;
+      list.innerHTML = html || `<li class="palette-empty">${esc(t("Hech narsa topilmadi"))}</li>`;
       input.setAttribute("aria-activedescendant", items.length ? `pi-${active}` : "");
     };
 
@@ -260,8 +290,8 @@
 
     const search = (q) => {
       active = 0;
-      if (!q) return render([["Tezkor o‘tish", commands]]);
-      render([["Buyruqlar", localMatches(q)]]);
+      if (!q) return render([[t("Tezkor o‘tish"), commands]]);
+      render([[t("Buyruqlar"), localMatches(q)]]);
       clearTimeout(timer);
       timer = setTimeout(async () => {
         controller?.abort();
@@ -276,7 +306,7 @@
           for (const r of data.results) (byKind[r.kind] ||= []).push({ ...r, icon: kindIcon[r.kind] });
           render([
             ...Object.keys(kindLabel).map((k) => [kindLabel[k], byKind[k] || []]),
-            ["Buyruqlar", localMatches(q)],
+            [t("Buyruqlar"), localMatches(q)],
           ]);
         } catch (err) {
           if (err.name !== "AbortError") console.warn(err);
@@ -319,7 +349,12 @@
     const form = $("[data-attendance-form]");
     const counter = $("[data-attendance-count]");
     if (!form || !counter) return;
-    const labels = { present: ["keldi", "ok"], late: ["kechikdi", "warn"], absent: ["kelmadi", "bad"], excused: ["sababli", "info"] };
+    const labels = {
+      present: [t("keldi"), "ok"],
+      late: [t("kechikdi"), "warn"],
+      absent: [t("kelmadi"), "bad"],
+      excused: [t("sababli"), "info"],
+    };
     const render = () => {
       const counts = {};
       $$('input[type="radio"]:checked', form).forEach((el) => (counts[el.value] = (counts[el.value] || 0) + 1));
@@ -373,8 +408,10 @@
           return;
         }
         const sec = Math.round((m * 60) / n);
-        const label = sec >= 60 ? `${Math.floor(sec / 60)} daq. ${sec % 60 ? `${sec % 60} s` : ""}` : `${sec} s`;
-        pace.textContent = `Har bir savolga ≈ ${label.trim()}.` + (sec < 30 ? " Vaqt juda kam bo‘lishi mumkin." : "");
+        const min = t("daq.");
+        const s = t("s");
+        const label = sec >= 60 ? `${Math.floor(sec / 60)} ${min} ${sec % 60 ? `${sec % 60} ${s}` : ""}` : `${sec} ${s}`;
+        pace.textContent = t("Har bir savolga ≈ {label}.", { label: label.trim() }) + (sec < 30 ? ` ${t("Vaqt juda kam bo‘lishi mumkin.")}` : "");
         pace.classList.toggle("warn", sec < 30);
       };
       [count, time].forEach((el) => el.addEventListener("input", render));

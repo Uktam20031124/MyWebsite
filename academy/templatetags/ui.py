@@ -5,9 +5,9 @@ import re
 import zlib
 
 from django import template
-from django.utils.html import escape, format_html
+from django.utils.html import escape, format_html, json_script
 from django.utils.safestring import mark_safe
-from django.utils.translation import get_language, gettext
+from django.utils.translation import get_language, gettext, gettext_noop
 
 from academy.models import WEEKDAYS
 
@@ -214,3 +214,36 @@ def study_md(text: str):
 def topic_title(topic) -> str:
     """Mavzu nomi joriy interfeys tilida (ruschasi bo'lmasa — o'zbekcha); mavzu yo'q — ""."""
     return topic.title_in(get_language()) if topic else ""
+
+
+# JS (app.js) dagi interfeys matnlari: kalit — o'zbekcha matn, qiymat — joriy tildagi tarjima.
+JS_STRINGS = [
+    gettext_noop("Tungi rejim"),
+    gettext_noop("Kunduzgi rejim"),
+    gettext_noop("Nusxalandi ✓"),
+    gettext_noop("Nusxa oling:"),
+    gettext_noop("{n} / {total} tanlandi"),
+    gettext_noop("Saqlanmagan o‘zgarishlar bor. Sahifadan chiqilsinmi?"),
+    gettext_noop("Shogirdlar"),
+    gettext_noop("Guruhlar"),
+    gettext_noop("Mavzular"),
+    gettext_noop("Darslar"),
+    gettext_noop("Hech narsa topilmadi"),
+    gettext_noop("Tezkor o‘tish"),
+    gettext_noop("Buyruqlar"),
+    gettext_noop("keldi"),
+    gettext_noop("kechikdi"),
+    gettext_noop("kelmadi"),
+    gettext_noop("sababli"),
+    gettext_noop("daq."),
+    gettext_noop("s"),
+    gettext_noop("Har bir savolga ≈ {label}."),
+    gettext_noop("Vaqt juda kam bo‘lishi mumkin."),
+]
+
+
+@register.simple_tag
+def js_i18n():
+    """<script id="js-i18n" type="application/json"> — app.js shu lug'atdan o'qiydi (o'zbekchada bo'sh)."""
+    data = {} if get_language() == "uz" else {k: gettext(k) for k in JS_STRINGS}
+    return json_script(data, "js-i18n")

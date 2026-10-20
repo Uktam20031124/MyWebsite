@@ -43,72 +43,33 @@
 </section>
 
 <div class="split">
-  <section class="card" aria-labelledby="hist-h">
-    <div class="card-head">
-      <h2 id="hist-h">{% icon "lesson" 18 %} {% translate "Yo‘qlama tarixi" %}</h2>
-      <span class="meta">{% blocktranslate with history=history|length trimmed %}oxirgi {{ history }} dars{% endblocktranslate %}</span>
-    </div>
-    {% if timeline %}
-      <div class="card-body" style="padding-bottom:6px">
-        <div class="score-bars" aria-label="{% translate "Darslar bo‘yicha ballar" %}">
-          {% for a in timeline %}
-            {% if a.status == 'absent' %}<span class="absent" style="height:100%" title="{% blocktranslate with held_on=a.lesson.held_on|date:'d.m' trimmed %}{{ held_on }} · kelmadi{% endblocktranslate %}"></span>
-            {% elif a.score is None %}<span class="none" style="height:18%" title="{% blocktranslate with held_on=a.lesson.held_on|date:'d.m' trimmed %}{{ held_on }} · baholanmagan{% endblocktranslate %}"></span>
-            {% else %}<span style="height:{{ a.score|add:4 }}%" title="{% blocktranslate with held_on=a.lesson.held_on|date:'d.m' score=a.score trimmed %}{{ held_on }} · {{ score }} ball{% endblocktranslate %}"></span>{% endif %}
-          {% endfor %}
+  <div class="stack">
+    <section class="card" aria-labelledby="quiz-h">
+      <div class="card-head"><h2 id="quiz-h">{% icon "target" 18 %} {% translate "Testlar" %}</h2>{% if quiz.n %}<span class="badge {{ quiz.pct|quiz_tone }}">{% blocktranslate with pct=quiz.pct trimmed %}o‘rtacha {{ pct }}%{% endblocktranslate %}</span>{% endif %}</div>
+      {% if quiz.recent|length > 1 %}
+        <div class="card-body" style="padding-bottom:6px">
+          <div class="score-bars" aria-label="{% translate "Oxirgi testlar natijasi" %}">
+            {% for a in quiz.recent %}<span class="{% if a.percent < 50 %}low{% endif %}" style="height:{{ a.percent|add:4 }}%" title="{{ a.finished_at|date:'d.m' }} · {{ a.quiz.topic|topic_title }} · {{ a.percent }}%"></span>{% endfor %}
+          </div>
         </div>
-      </div>
-    {% endif %}
-    <div class="table-wrap">
-      <table class="table">
-        <thead><tr><th>{% translate "Sana" %}</th><th>{% translate "Mavzu" %}</th><th>{% translate "Holat" %}</th><th class="right">{% translate "Ball" %}</th></tr></thead>
-        <tbody>
-          {% for a in history %}
-          <tr>
-            <td class="nowrap">{{ a.lesson.held_on|date:"d.m.Y" }} <span class="meta">{{ a.lesson.held_on|weekday_short }}</span></td>
-            <td>
-              <a href="{{ a.lesson.get_absolute_url }}">{{ a.lesson.topic|topic_title|default:_("Mavzusiz") }}</a>
-              {% if a.note %}<div class="meta">{{ a.note }}</div>{% endif %}
-            </td>
-            <td><span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% elif a.status == 'late' %}warn{% else %}info{% endif %}">{{ a.get_status_display }}</span></td>
-            <td class="right tabular">{% if a.score is not None %}<strong>{{ a.score }}</strong>{% else %}<span class="meta">—</span>{% endif %}</td>
-          </tr>
+      {% endif %}
+      <div class="card-body flush">
+        <div class="rows">
+          {% for t in quiz_attempts %}
+            <a class="row" href="{% if t.status == 'finished' %}{% url 'quiz_attempt_review' t.pk %}{% else %}{{ t.batch.get_absolute_url }}{% endif %}">
+              <div class="grow"><div class="row-title truncate">{{ t.quiz.topic|topic_title }}</div><div class="meta">{% blocktranslate with created_at=t.created_at|date:"d.m.Y" question_count=t.batch.question_count time_limit_minutes=t.batch.time_limit_minutes trimmed %}{{ created_at }} · {{ question_count }} savol · {{ time_limit_minutes }} daq.{% endblocktranslate %}</div></div>
+              {% if t.status == 'finished' %}
+                <span class="badge {% if t.percent >= 80 %}ok{% elif t.percent >= 50 %}warn{% else %}bad{% endif %}">{{ t.correct }}/{{ t.total }} · {{ t.percent }}%</span>
+              {% else %}
+                <span class="badge">{{ t.get_status_display }}</span>
+              {% endif %}
+            </a>
           {% empty %}
-          <tr><td colspan="4"><div class="empty compact"><p>{% translate "Hali yo‘qlama yo‘q." %}</p></div></td></tr>
+            <div class="empty compact"><p>{% translate "Hali test yuborilmagan." %}</p></div>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <aside class="stack">
-    <section class="card" aria-labelledby="contact-h">
-      <div class="card-head"><h2 id="contact-h">{% icon "phone" 18 %} {% translate "Aloqa" %}</h2></div>
-      <div class="card-body" style="padding-top:8px">
-        <div class="contact-list">
-          {% if student.phone %}<a href="tel:{{ student.phone|cut:' ' }}">{% icon "phone" 17 %} {{ student.phone }}</a>{% else %}<span class="meta">{% icon "phone" 17 %} {% translate "Telefon kiritilmagan" %}</span>{% endif %}
-          {% if student.telegram %}<a href="https://t.me/{{ student.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">{% icon "send" 17 %} @{{ student.telegram }} {% icon "external" 14 %}</a>{% else %}<span class="meta">{% icon "send" 17 %} {% translate "Telegram kiritilmagan" %}</span>{% endif %}
-          {% if student.email %}<a href="mailto:{{ student.email }}">{% icon "mail" 17 %} {{ student.email }}</a>{% else %}<span class="meta">{% icon "mail" 17 %} {% translate "Email kiritilmagan" %}</span>{% endif %}
         </div>
       </div>
     </section>
-    <section class="card" id="portal" aria-labelledby="portal-h">
-      <div class="card-head"><h2 id="portal-h">{% icon "user" 18 %} {% translate "Shaxsiy sahifa" %}</h2></div>
-      <div class="card-body">
-        <p class="meta" style="margin:0 0 10px">{% translate "O‘quvchi o‘z natijalari, o‘sishi va guruhdagi o‘rnini ko‘radi (to‘g‘ri javoblarsiz)." %}</p>
-        <div class="contact-link">
-          <input class="input mono" value="{{ portal_link }}" readonly aria-label="{% translate "Shaxsiy sahifa havolasi" %}">
-          <a class="btn sm ghost square" href="{{ portal_link }}" target="_blank" rel="noopener" title="{% translate "Ochish" %}" aria-label="{% translate "Ochish" %}">{% icon "external" 14 %}</a>
-        </div>
-        <form method="post" action="{% url 'student_portal_action' student.pk %}" class="contact-link-actions" style="margin-top:10px">
-          {% csrf_token %}
-          {% if can_telegram %}<button class="btn sm primary" type="submit" name="action" value="send">{% icon "send" 14 %} {% translate "Telegram’da yuborish" %}</button>{% endif %}
-          {% if can_email %}<button class="btn sm {% if can_telegram %}soft{% else %}primary{% endif %}" type="submit" name="channel" value="email">{% icon "mail" 14 %} {% translate "Emailga yuborish" %}</button>{% endif %}
-          <button class="btn sm ghost" type="submit" name="action" value="reset" data-confirm="{% translate "Eski havola ishlamay qoladi. Yangisi yaratilsinmi?" %}">{% icon "undo" 14 %} {% translate "Yangilash" %}</button>
-        </form>
-      </div>
-    </section>
-
     <section class="card" id="profile" aria-labelledby="profile-h">
       <div class="card-head">
         <h2 id="profile-h">{% icon "shield" 18 %} {% translate "Profil: kirish va testlar" %}</h2>
@@ -183,6 +144,74 @@
       </div>
     </section>
 
+    <section class="card" aria-labelledby="hist-h">
+      <div class="card-head">
+        <h2 id="hist-h">{% icon "lesson" 18 %} {% translate "Yo‘qlama tarixi" %}</h2>
+        <span class="meta">{% blocktranslate with history=history|length trimmed %}oxirgi {{ history }} dars{% endblocktranslate %}</span>
+      </div>
+      {% if timeline %}
+        <div class="card-body" style="padding-bottom:6px">
+          <div class="score-bars" aria-label="{% translate "Darslar bo‘yicha ballar" %}">
+            {% for a in timeline %}
+              {% if a.status == 'absent' %}<span class="absent" style="height:100%" title="{% blocktranslate with held_on=a.lesson.held_on|date:'d.m' trimmed %}{{ held_on }} · kelmadi{% endblocktranslate %}"></span>
+              {% elif a.score is None %}<span class="none" style="height:18%" title="{% blocktranslate with held_on=a.lesson.held_on|date:'d.m' trimmed %}{{ held_on }} · baholanmagan{% endblocktranslate %}"></span>
+              {% else %}<span style="height:{{ a.score|add:4 }}%" title="{% blocktranslate with held_on=a.lesson.held_on|date:'d.m' score=a.score trimmed %}{{ held_on }} · {{ score }} ball{% endblocktranslate %}"></span>{% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>{% translate "Sana" %}</th><th>{% translate "Mavzu" %}</th><th>{% translate "Holat" %}</th><th class="right">{% translate "Ball" %}</th></tr></thead>
+          <tbody>
+            {% for a in history %}
+            <tr>
+              <td class="nowrap">{{ a.lesson.held_on|date:"d.m.Y" }} <span class="meta">{{ a.lesson.held_on|weekday_short }}</span></td>
+              <td>
+                <a href="{{ a.lesson.get_absolute_url }}">{{ a.lesson.topic|topic_title|default:_("Mavzusiz") }}</a>
+                {% if a.note %}<div class="meta">{{ a.note }}</div>{% endif %}
+              </td>
+              <td><span class="badge {% if a.status == 'present' %}ok{% elif a.status == 'absent' %}bad{% elif a.status == 'late' %}warn{% else %}info{% endif %}">{{ a.get_status_display }}</span></td>
+              <td class="right tabular">{% if a.score is not None %}<strong>{{ a.score }}</strong>{% else %}<span class="meta">—</span>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4"><div class="empty compact"><p>{% translate "Hali yo‘qlama yo‘q." %}</p></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <aside class="stack">
+    <section class="card" aria-labelledby="contact-h">
+      <div class="card-head"><h2 id="contact-h">{% icon "phone" 18 %} {% translate "Aloqa" %}</h2></div>
+      <div class="card-body" style="padding-top:8px">
+        <div class="contact-list">
+          {% if student.phone %}<a href="tel:{{ student.phone|cut:' ' }}">{% icon "phone" 17 %} {{ student.phone }}</a>{% else %}<span class="meta">{% icon "phone" 17 %} {% translate "Telefon kiritilmagan" %}</span>{% endif %}
+          {% if student.telegram %}<a href="https://t.me/{{ student.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">{% icon "send" 17 %} @{{ student.telegram }} {% icon "external" 14 %}</a>{% else %}<span class="meta">{% icon "send" 17 %} {% translate "Telegram kiritilmagan" %}</span>{% endif %}
+          {% if student.email %}<a href="mailto:{{ student.email }}">{% icon "mail" 17 %} {{ student.email }}</a>{% else %}<span class="meta">{% icon "mail" 17 %} {% translate "Email kiritilmagan" %}</span>{% endif %}
+        </div>
+      </div>
+    </section>
+    <section class="card" id="portal" aria-labelledby="portal-h">
+      <div class="card-head"><h2 id="portal-h">{% icon "user" 18 %} {% translate "Shaxsiy sahifa" %}</h2></div>
+      <div class="card-body">
+        <p class="meta" style="margin:0 0 10px">{% translate "O‘quvchi o‘z natijalari, o‘sishi va guruhdagi o‘rnini ko‘radi (to‘g‘ri javoblarsiz)." %}</p>
+        <div class="contact-link">
+          <input class="input mono" value="{{ portal_link }}" readonly aria-label="{% translate "Shaxsiy sahifa havolasi" %}">
+          <a class="btn sm ghost square" href="{{ portal_link }}" target="_blank" rel="noopener" title="{% translate "Ochish" %}" aria-label="{% translate "Ochish" %}">{% icon "external" 14 %}</a>
+        </div>
+        <form method="post" action="{% url 'student_portal_action' student.pk %}" class="contact-link-actions" style="margin-top:10px">
+          {% csrf_token %}
+          {% if can_telegram %}<button class="btn sm primary" type="submit" name="action" value="send">{% icon "send" 14 %} {% translate "Telegram’da yuborish" %}</button>{% endif %}
+          {% if can_email %}<button class="btn sm {% if can_telegram %}soft{% else %}primary{% endif %}" type="submit" name="channel" value="email">{% icon "mail" 14 %} {% translate "Emailga yuborish" %}</button>{% endif %}
+          <button class="btn sm ghost" type="submit" name="action" value="reset" data-confirm="{% translate "Eski havola ishlamay qoladi. Yangisi yaratilsinmi?" %}">{% icon "undo" 14 %} {% translate "Yangilash" %}</button>
+        </form>
+      </div>
+    </section>
+
     <section class="card" id="certificate" aria-labelledby="cert-h">
       <div class="card-head"><h2 id="cert-h">{% icon "trophy" 18 %} {% translate "Sertifikat" %}</h2></div>
       <form class="card-body" method="post" action="{% url 'student_certificate' student.pk %}" target="_blank" data-turbo="false">
@@ -197,32 +226,6 @@
       </form>
     </section>
 
-    <section class="card" aria-labelledby="quiz-h">
-      <div class="card-head"><h2 id="quiz-h">{% icon "target" 18 %} {% translate "Testlar" %}</h2>{% if quiz.n %}<span class="badge {{ quiz.pct|quiz_tone }}">{% blocktranslate with pct=quiz.pct trimmed %}o‘rtacha {{ pct }}%{% endblocktranslate %}</span>{% endif %}</div>
-      {% if quiz.recent|length > 1 %}
-        <div class="card-body" style="padding-bottom:6px">
-          <div class="score-bars" aria-label="{% translate "Oxirgi testlar natijasi" %}">
-            {% for a in quiz.recent %}<span class="{% if a.percent < 50 %}low{% endif %}" style="height:{{ a.percent|add:4 }}%" title="{{ a.finished_at|date:'d.m' }} · {{ a.quiz.topic|topic_title }} · {{ a.percent }}%"></span>{% endfor %}
-          </div>
-        </div>
-      {% endif %}
-      <div class="card-body flush">
-        <div class="rows">
-          {% for t in quiz_attempts %}
-            <a class="row" href="{% if t.status == 'finished' %}{% url 'quiz_attempt_review' t.pk %}{% else %}{{ t.batch.get_absolute_url }}{% endif %}">
-              <div class="grow"><div class="row-title truncate">{{ t.quiz.topic|topic_title }}</div><div class="meta">{% blocktranslate with created_at=t.created_at|date:"d.m.Y" question_count=t.batch.question_count time_limit_minutes=t.batch.time_limit_minutes trimmed %}{{ created_at }} · {{ question_count }} savol · {{ time_limit_minutes }} daq.{% endblocktranslate %}</div></div>
-              {% if t.status == 'finished' %}
-                <span class="badge {% if t.percent >= 80 %}ok{% elif t.percent >= 50 %}warn{% else %}bad{% endif %}">{{ t.correct }}/{{ t.total }} · {{ t.percent }}%</span>
-              {% else %}
-                <span class="badge">{{ t.get_status_display }}</span>
-              {% endif %}
-            </a>
-          {% empty %}
-            <div class="empty compact"><p>{% translate "Hali test yuborilmagan." %}</p></div>
-          {% endfor %}
-        </div>
-      </div>
-    </section>
     {% if student.notes %}
       <section class="card pad"><h2 style="font-size:16px;margin-bottom:10px">{% translate "Izoh" %}</h2><div class="prose muted">{{ student.notes|linebreaks }}</div></section>
     {% endif %}
