@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#15251e">
+  <meta name="theme-color" content="#10244c">
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}{% translate "Minar Test" %}{% endblock %}</title>
   {% include "academy/includes/head.html" %}
@@ -13,11 +13,12 @@
 </head>
 <body>
 {% include "academy/includes/icons.html" %}
+{% js_i18n %}
 <a class="skip-link" href="#content">{% translate "Asosiy qismga o‘tish" %}</a>
 <div class="app">
   <aside class="sidebar" id="sidebar" aria-label="{% translate "Yon menyu" %}">
     <a class="brand" href="{% url 'dashboard' %}">
-      <span class="brand-mark" aria-hidden="true">MT</span>
+      {% include "academy/includes/brand_mark.html" %}
       <span>
         <span class="brand-name">{% translate "Minar Test" %}</span>
         <span class="brand-sub block">{% translate "Ustoz CRM" %}</span>
@@ -144,17 +145,17 @@
   </div>
   <script type="application/json" id="palette-commands">
     [
-      {"title": "Bosh sahifa", "meta": "Sahifa", "icon": "home", "url": "{% url 'dashboard' %}"},
-      {"title": "Dars jadvali", "meta": "Sahifa", "icon": "calendar", "url": "{% url 'timetable' %}"},
-      {"title": "Guruhlar", "meta": "Sahifa", "icon": "layers", "url": "{% url 'group_list' %}"},
-      {"title": "Shogirdlar", "meta": "Sahifa", "icon": "users", "url": "{% url 'student_list' %}"},
-      {"title": "Darslar", "meta": "Sahifa", "icon": "lesson", "url": "{% url 'lesson_list' %}"},
-      {"title": "Mavzular katalogi", "meta": "Sahifa", "icon": "book", "url": "{% url 'topic_list' %}"},
-      {"title": "Yangi dars yozish", "meta": "Amal", "icon": "plus", "url": "{% url 'lesson_create' %}"},
-      {"title": "Yangi shogird qo‘shish", "meta": "Amal", "icon": "plus", "url": "{% url 'student_create' %}"},
-      {"title": "Yangi guruh yaratish", "meta": "Amal", "icon": "plus", "url": "{% url 'group_create' %}"},
-      {"title": "Mavzularni import qilish", "meta": "Amal", "icon": "upload", "url": "{% url 'topic_import' %}"},
-      {"title": "Shogirdlar ro‘yxatini yuklab olish (CSV)", "meta": "Amal", "icon": "download", "url": "{% url 'student_export' %}", "download": true}
+      {"title": "{% translate "Bosh sahifa" %}", "meta": "{% translate "Sahifa" %}", "icon": "home", "url": "{% url 'dashboard' %}"},
+      {"title": "{% translate "Dars jadvali" %}", "meta": "{% translate "Sahifa" %}", "icon": "calendar", "url": "{% url 'timetable' %}"},
+      {"title": "{% translate "Guruhlar" %}", "meta": "{% translate "Sahifa" %}", "icon": "layers", "url": "{% url 'group_list' %}"},
+      {"title": "{% translate "Shogirdlar" %}", "meta": "{% translate "Sahifa" %}", "icon": "users", "url": "{% url 'student_list' %}"},
+      {"title": "{% translate "Darslar" %}", "meta": "{% translate "Sahifa" %}", "icon": "lesson", "url": "{% url 'lesson_list' %}"},
+      {"title": "{% translate "Mavzular katalogi" %}", "meta": "{% translate "Sahifa" %}", "icon": "book", "url": "{% url 'topic_list' %}"},
+      {"title": "{% translate "Yangi dars yozish" %}", "meta": "{% translate "Amal" %}", "icon": "plus", "url": "{% url 'lesson_create' %}"},
+      {"title": "{% translate "Yangi shogird qo‘shish" %}", "meta": "{% translate "Amal" %}", "icon": "plus", "url": "{% url 'student_create' %}"},
+      {"title": "{% translate "Yangi guruh yaratish" %}", "meta": "{% translate "Amal" %}", "icon": "plus", "url": "{% url 'group_create' %}"},
+      {"title": "{% translate "Mavzularni import qilish" %}", "meta": "{% translate "Amal" %}", "icon": "upload", "url": "{% url 'topic_import' %}"},
+      {"title": "{% translate "Shogirdlar ro‘yxatini yuklab olish (CSV)" %}", "meta": "{% translate "Amal" %}", "icon": "download", "url": "{% url 'student_export' %}", "download": true}
     ]
   </script>
 </dialog>

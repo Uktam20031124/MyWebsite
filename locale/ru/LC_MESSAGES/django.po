@@ -114,7 +114,7 @@ msgstr "Email (Gmail)"
 msgid "Telegram"
 msgstr "Telegram"
 
-#: academy/forms.py:358 academy/models.py:191 templates/academy/base.html templates/academy/groups/detail.html
+#: academy/forms.py:358 academy/models.py:191 academy/templatetags/ui.py:227 templates/academy/base.html
 msgid "Shogirdlar"
 msgstr "Ученики"
 
@@ -646,7 +646,7 @@ msgstr "Показывается ученикам, выбравшим тест �
 msgid "Davomiyligi (daq.)"
 msgstr "Длительность (мин)"
 
-#: academy/models.py:280 templates/academy/base.html templates/academy/quiz/form.html templates/academy/search.html
+#: academy/models.py:280 academy/templatetags/ui.py:229 templates/academy/base.html templates/academy/quiz/form.html
 msgid "Mavzular"
 msgstr "Темы"
 
@@ -698,7 +698,7 @@ msgstr "Комментарий к уроку"
 msgid "Dars"
 msgstr "Урок"
 
-#: academy/models.py:403 templates/academy/base.html templates/academy/lessons/detail.html templates/academy/lessons/form.html
+#: academy/models.py:403 academy/templatetags/ui.py:230 templates/academy/base.html templates/academy/lessons/detail.html
 msgid "Darslar"
 msgstr "Уроки"
 
@@ -766,7 +766,7 @@ msgstr "Заполняется автоматически, если выбран
 msgid "Jo'natishda taklif qilinadigan vaqt. Har bir jo'natmada o'zgartirish mumkin."
 msgstr "Время, предлагаемое при отправке. Можно менять в каждой отправке."
 
-#: academy/models.py:537 templates/academy/base.html templates/academy/lessons/detail.html templates/academy/quiz/batch_detail.html
+#: academy/models.py:537 templates/academy/base.html templates/academy/lessons/detail.html templates/academy/portal/student.html
 msgid "Testlar"
 msgstr "Тесты"
 
@@ -946,7 +946,7 @@ msgstr "Ссылка на тест"
 msgid "Test havolalari"
 msgstr "Ссылки на тест"
 
-#: academy/models.py:87 templates/academy/base.html templates/academy/dashboard.html templates/academy/groups/detail.html
+#: academy/models.py:87 academy/templatetags/ui.py:228 templates/academy/base.html templates/academy/dashboard.html
 msgid "Guruhlar"
 msgstr "Группы"
 
@@ -1061,6 +1061,74 @@ msgstr "Укажите в файле .env TELEGRAM_API_ID и TELEGRAM_API_HASH (
 #: academy/telegram_sender.py:80
 msgid "`python manage.py telegram_login` buyrug‘i bilan akkauntga ulaning."
 msgstr "Подключите аккаунт командой `python manage.py telegram_login`."
+
+#: academy/templatetags/ui.py:221 templates/academy/base.html templates/academy/login.html
+msgid "Tungi rejim"
+msgstr "Ночной режим"
+
+#: academy/templatetags/ui.py:222 templates/academy/login.html
+msgid "Kunduzgi rejim"
+msgstr "Дневной режим"
+
+#: academy/templatetags/ui.py:223
+msgid "Nusxalandi ✓"
+msgstr "Скопировано ✓"
+
+#: academy/templatetags/ui.py:224
+msgid "Nusxa oling:"
+msgstr "Скопируйте:"
+
+#: academy/templatetags/ui.py:225
+msgid "{n} / {total} tanlandi"
+msgstr "Выбрано: {n} / {total}"
+
+#: academy/templatetags/ui.py:226
+msgid "Saqlanmagan o‘zgarishlar bor. Sahifadan chiqilsinmi?"
+msgstr "Есть несохранённые изменения. Покинуть страницу?"
+
+#: academy/templatetags/ui.py:231
+msgid "Hech narsa topilmadi"
+msgstr "Ничего не найдено"
+
+#: academy/templatetags/ui.py:232
+msgid "Tezkor o‘tish"
+msgstr "Быстрый переход"
+
+#: academy/templatetags/ui.py:233
+msgid "Buyruqlar"
+msgstr "Команды"
+
+#: academy/templatetags/ui.py:234 templates/academy/groups/journal.html
+msgid "keldi"
+msgstr "пришёл"
+
+#: academy/templatetags/ui.py:235 templates/academy/groups/journal.html
+msgid "kechikdi"
+msgstr "опоздал"
+
+#: academy/templatetags/ui.py:236 templates/academy/groups/journal.html
+msgid "kelmadi"
+msgstr "не пришёл"
+
+#: academy/templatetags/ui.py:237 templates/academy/groups/journal.html
+msgid "sababli"
+msgstr "уваж."
+
+#: academy/templatetags/ui.py:238
+msgid "daq."
+msgstr "мин"
+
+#: academy/templatetags/ui.py:239
+msgid "s"
+msgstr "с"
+
+#: academy/templatetags/ui.py:240
+msgid "Har bir savolga ≈ {label}."
+msgstr "≈ {label} на каждый вопрос."
+
+#: academy/templatetags/ui.py:241
+msgid "Vaqt juda kam bo‘lishi mumkin."
+msgstr "Времени может не хватить."
 
 #: academy/views.py:1039
 msgid "Rasm o‘chirildi."
@@ -1375,6 +1443,10 @@ msgid "Admin panel"
 msgstr "Админ-панель"
 
 #: templates/academy/base.html
+msgid "Amal"
+msgstr "Действие"
+
+#: templates/academy/base.html
 msgid "Asosiy menyu"
 msgstr "Главное меню"
 
@@ -1426,11 +1498,19 @@ msgstr "Ещё не решённые ссылки на тесты"
 msgid "Javoblarini ko‘rish uchun ruxsat so‘ragan o‘quvchilar"
 msgstr "Ученики, запросившие разрешение посмотреть свои ответы"
 
+#: templates/academy/base.html templates/academy/topics/list.html
+msgid "Mavzular katalogi"
+msgstr "Каталог тем"
+
+#: templates/academy/base.html
+msgid "Mavzularni import qilish"
+msgstr "Импорт тем"
+
 #: templates/academy/base.html
 msgid "Menyu"
 msgstr "Меню"
 
-#: templates/academy/base.html templates/academy/login.html
+#: templates/academy/base.html templates/academy/login.html templates/academy/portal/student.html
 msgid "Minar Test"
 msgstr "Minar Test"
 
@@ -1443,12 +1523,20 @@ msgid "Qidirish yoki buyruq…"
 msgstr "Поиск или команда…"
 
 #: templates/academy/base.html
+msgid "Sahifa"
+msgstr "Страница"
+
+#: templates/academy/base.html
 msgid "Shaxsiy o‘quv CRM"
 msgstr "Личная учебная CRM"
 
 #: templates/academy/base.html
 msgid "Shogird, guruh, mavzu yoki sahifa…"
 msgstr "Ученик, группа, тема или страница…"
+
+#: templates/academy/base.html
+msgid "Shogirdlar ro‘yxatini yuklab olish (CSV)"
+msgstr "Скачать список учеников (CSV)"
 
 #: templates/academy/base.html templates/academy/quiz/review_requests.html templates/academy/shop/rewards.html
 msgid "So‘rovlar"
@@ -1458,10 +1546,6 @@ msgstr "Запросы"
 msgid "Tekshirilishi kutilayotgan arizalar"
 msgstr "Заявки, ожидающие проверки"
 
-#: templates/academy/base.html templates/academy/login.html
-msgid "Tungi rejim"
-msgstr "Ночной режим"
-
 #: templates/academy/base.html
 msgid "Ustoz"
 msgstr "Учитель"
@@ -1469,6 +1553,18 @@ msgstr "Учитель"
 #: templates/academy/base.html templates/academy/login.html
 msgid "Ustoz CRM"
 msgstr "CRM учителя"
+
+#: templates/academy/base.html
+msgid "Yangi dars yozish"
+msgstr "Записать новый урок"
+
+#: templates/academy/base.html
+msgid "Yangi guruh yaratish"
+msgstr "Создать новую группу"
+
+#: templates/academy/base.html
+msgid "Yangi shogird qo‘shish"
+msgstr "Добавить ученика"
 
 #: templates/academy/base.html
 msgid "Yon menyu"
@@ -1514,7 +1610,7 @@ msgstr "Ваши данные видит только ваш учитель."
 msgid "Ma’lumotingiz saqlandi. Endi testlar sizga Telegram orqali keladi."
 msgstr "Ваши данные сохранены. Теперь тесты будут приходить вам в Telegram."
 
-#: templates/academy/contacts/self.html templates/academy/portal/locked.html templates/academy/portal/student.html
+#: templates/academy/contacts/self.html templates/academy/portal/locked.html
 msgid "Minar Test · %(name)s"
 msgstr "Minar Test · %(name)s"
 
@@ -2110,7 +2206,7 @@ msgstr "Последние уроки: %(limit)s"
 msgid "O‘rtacha ball (0–100)"
 msgstr "Средний балл (0–100)"
 
-#: templates/academy/groups/journal.html templates/academy/students/detail.html
+#: templates/academy/groups/journal.html templates/academy/portal/student.html templates/academy/students/detail.html
 msgid "Reyting"
 msgstr "Рейтинг"
 
@@ -2127,24 +2223,8 @@ msgid "ball × 0.5 + test × 0.3 + davomat × 0.2"
 msgstr "балл × 0.5 + тест × 0.3 + посещаемость × 0.2"
 
 #: templates/academy/groups/journal.html
-msgid "kechikdi"
-msgstr "опоздал"
-
-#: templates/academy/groups/journal.html
-msgid "keldi"
-msgstr "пришёл"
-
-#: templates/academy/groups/journal.html
-msgid "kelmadi"
-msgstr "не пришёл"
-
-#: templates/academy/groups/journal.html
 msgid "raqam — darsdagi ball"
 msgstr "число — балл за урок"
-
-#: templates/academy/groups/journal.html
-msgid "sababli"
-msgstr "уваж."
 
 #: templates/academy/groups/list.html
 msgid "%(name)s dasturi"
@@ -2439,8 +2519,24 @@ msgid "Kechikkan"
 msgstr "Опоздавшие"
 
 #: templates/academy/login.html
-msgid "Bir bosishda yo‘qlama"
-msgstr "Посещаемость в один клик"
+msgid "Avtomatik testlar"
+msgstr "Автоматические тесты"
+
+#: templates/academy/login.html
+msgid "Bir necha marta noto‘g‘ri urinishdan so‘ng kirish vaqtincha bloklanadi."
+msgstr "После нескольких неверных попыток вход временно блокируется."
+
+#: templates/academy/login.html
+msgid "Caps Lock yoqilgan"
+msgstr "Включён Caps Lock"
+
+#: templates/academy/login.html
+msgid "Coin, streak va o‘sish grafigi"
+msgstr "Коины, серия дней и график роста"
+
+#: templates/academy/login.html
+msgid "Darslar va bir bosishda yo‘qlama"
+msgstr "Уроки и посещаемость в один клик"
 
 #: templates/academy/login.html
 msgid "Davom etish uchun hisobingizga kiring."
@@ -2471,8 +2567,24 @@ msgid "Kirish · Minar Test"
 msgstr "Вход · Minar Test"
 
 #: templates/academy/login.html
+msgid "O‘zbek va rus tilida, natija darhol"
+msgstr "На узбекском и русском, результат сразу"
+
+#: templates/academy/login.html
+msgid "Parolni ko‘rsatish"
+msgstr "Показать пароль"
+
+#: templates/academy/login.html
+msgid "Parolni yashirish"
+msgstr "Скрыть пароль"
+
+#: templates/academy/login.html
 msgid "Reyting va tahlil"
 msgstr "Рейтинг и аналитика"
+
+#: templates/academy/login.html
+msgid "UZ | RU · ustoz va o‘quvchilar uchun"
+msgstr "UZ | RU · для учителя и учеников"
 
 #: templates/academy/portal/_base.html templates/academy/portal/student.html
 msgid "%(full_name)s · profil"
@@ -2651,6 +2763,10 @@ msgid "Coinlaringiz"
 msgstr "Ваши coin"
 
 #: templates/academy/portal/student.html
+msgid "Do‘kon"
+msgstr "Магазин"
+
+#: templates/academy/portal/student.html
 msgid "Do‘kon hozircha bo‘sh."
 msgstr "Магазин пока пуст."
 
@@ -2715,8 +2831,12 @@ msgid "O‘sish"
 msgstr "Рост"
 
 #: templates/academy/portal/student.html
-msgid "Profil ochiq: <strong>%(profile_until)s</strong> gacha. Natijalaringiz, o‘sishingiz va testlar."
-msgstr "Профиль открыт до <strong>%(profile_until)s</strong>. Ваши результаты, рост и тесты."
+msgid "Profil bo‘limlari"
+msgstr "Разделы профиля"
+
+#: templates/academy/portal/student.html
+msgid "Profil ochiq: <strong>%(profile_until)s</strong> gacha"
+msgstr "Профиль открыт до <strong>%(profile_until)s</strong>"
 
 #: templates/academy/portal/student.html
 msgid "Qaysi savolda to‘g‘ri, qaysida xato qilganingizni ko‘rish uchun ustozingizdan ruxsat so‘rang."
@@ -2733,6 +2853,10 @@ msgstr "Вы: %(place)s-е место · %(coins)s 🪙 за неделю."
 #: templates/academy/portal/student.html
 msgid "Streak"
 msgstr "Серия"
+
+#: templates/academy/portal/student.html
+msgid "Tarix"
+msgstr "История"
 
 #: templates/academy/portal/student.html
 msgid "Test topshirish"
@@ -2757,6 +2881,10 @@ msgstr "Начать тест"
 #: templates/academy/portal/student.html
 msgid "Ustozingiz hozircha javoblarni ko‘rsatmaslikka qaror qildi."
 msgstr "Учитель пока решил не показывать ответы."
+
+#: templates/academy/portal/student.html
+msgid "Xatolar"
+msgstr "Ошибки"
 
 #: templates/academy/portal/student.html
 msgid "Xatolar ustida ishlash"
@@ -4513,10 +4641,6 @@ msgstr "Импортировать"
 #: templates/academy/topics/list.html
 msgid "Mavzu nomi yoki tavsifi"
 msgstr "Название или описание темы"
-
-#: templates/academy/topics/list.html
-msgid "Mavzular katalogi"
-msgstr "Каталог тем"
 
 #: templates/academy/topics/list.html
 msgid "Mavzular · Minar Test"

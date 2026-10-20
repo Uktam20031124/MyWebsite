@@ -1,37 +1,65 @@
-{% load i18n ui %}<!doctype html>
+{% load i18n static ui %}<!doctype html>
 <html lang="{{ LANGUAGE_CODE|default:'uz' }}" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10244c">
   <meta name="color-scheme" content="light dark">
   <title>{% translate "Kirish · Minar Test" %}</title>
   {% include "academy/includes/head.html" %}
 </head>
-<body>
-  <div class="portal-top page-lang">{% include "academy/includes/lang_switch.html" %}</div>
+<body class="auth-body">
 {% include "academy/includes/icons.html" %}
+{% js_i18n %}
 <div class="auth">
   <section class="auth-art" aria-hidden="true">
-    <div class="brand" style="padding:0">
-      <span class="brand-mark">MT</span>
+    <svg class="auth-rosette" viewBox="-100 -100 200 200" focusable="false">
+      <g fill="none" stroke="currentColor" stroke-width=".55">
+        <circle r="97"/><circle r="84"/><circle r="31"/><circle r="18"/>
+        <rect x="-62" y="-62" width="124" height="124"/>
+        <rect x="-62" y="-62" width="124" height="124" transform="rotate(45)"/>
+        <rect x="-62" y="-62" width="124" height="124" transform="rotate(22.5)"/>
+        <rect x="-62" y="-62" width="124" height="124" transform="rotate(67.5)"/>
+        <rect x="-36" y="-36" width="72" height="72"/>
+        <rect x="-36" y="-36" width="72" height="72" transform="rotate(45)"/>
+        <path d="M0-97V-31M0 31V97M-97 0H-31M31 0H97M-68.6-68.6-21.9-21.9M21.9 21.9 68.6 68.6M-68.6 68.6-21.9 21.9M21.9-21.9 68.6-68.6"/>
+      </g>
+    </svg>
+
+    <div class="brand auth-brand">
+      {% include "academy/includes/brand_mark.html" %}
       <span><span class="brand-name">{% translate "Minar Test" %}</span><span class="brand-sub block">{% translate "Ustoz CRM" %}</span></span>
     </div>
+
     <div class="auth-quote">
+      <span class="auth-pill">{% icon "sparkle" 14 %} {% translate "UZ | RU · ustoz va o‘quvchilar uchun" %}</span>
       <h2>{% translate "Har bir dars — rejada, har bir shogird — nazoratda." %}</h2>
       <p>{% translate "Guruhlar, haftalik jadval, o‘quv dasturi, yo‘qlama va reyting — bitta tartibli daftarda." %}</p>
     </div>
-    <div class="auth-points">
-      <span>{% icon "calendar" 15 %} {% translate "Haftalik jadval" %}</span>
-      <span>{% icon "check" 15 %} {% translate "Bir bosishda yo‘qlama" %}</span>
-      <span>{% icon "trophy" 15 %} {% translate "Reyting va tahlil" %}</span>
-    </div>
+
+    <ul class="auth-features">
+      <li><span class="af-icon">{% icon "calendar" 18 %}</span><span><strong>{% translate "Haftalik jadval" %}</strong><small>{% translate "Darslar va bir bosishda yo‘qlama" %}</small></span></li>
+      <li><span class="af-icon">{% icon "target" 18 %}</span><span><strong>{% translate "Avtomatik testlar" %}</strong><small>{% translate "O‘zbek va rus tilida, natija darhol" %}</small></span></li>
+      <li><span class="af-icon">{% icon "trophy" 18 %}</span><span><strong>{% translate "Reyting va tahlil" %}</strong><small>{% translate "Coin, streak va o‘sish grafigi" %}</small></span></li>
+    </ul>
   </section>
 
   <main class="auth-form">
+    <div class="auth-tools">
+      {% include "academy/includes/lang_switch.html" %}
+      <button class="btn soft sm square" type="button" data-theme-toggle aria-label="{% translate "Tungi rejim" %}" data-label-light="{% translate "Tungi rejim" %}" data-label-dark="{% translate "Kunduzgi rejim" %}">
+        <span data-theme-icon="light">{% icon "moon" 16 %}</span><span data-theme-icon="dark" hidden>{% icon "sun" 16 %}</span>
+      </button>
+    </div>
+
     <div class="auth-card">
-      <p class="kicker">{% translate "Faqat ustoz uchun" %}</p>
+      <div class="brand auth-brand-mobile">
+        {% include "academy/includes/brand_mark.html" %}
+        <span class="brand-name">{% translate "Minar Test" %}</span>
+      </div>
+      <p class="kicker">{% icon "lock" 14 %} {% translate "Faqat ustoz uchun" %}</p>
       <h1>{% translate "Xush kelibsiz" %}</h1>
-      <p class="muted" style="margin-bottom:26px">{% translate "Davom etish uchun hisobingizga kiring." %}</p>
+      <p class="muted auth-lead">{% translate "Davom etish uchun hisobingizga kiring." %}</p>
       <form method="post" novalidate>
         {% csrf_token %}
         {% if locked_message %}
@@ -41,24 +69,26 @@
         {% endif %}
         <div class="field">
           <label for="{{ form.username.id_for_label }}">{% translate "Login" %}</label>
-          {{ form.username }}
+          <div class="input-wrap">{% icon "user" 17 %}{{ form.username }}</div>
         </div>
         <div class="field">
           <label for="{{ form.password.id_for_label }}">{% translate "Parol" %}</label>
-          {{ form.password }}
+          <div class="input-wrap has-action">
+            {% icon "lock" 17 %}{{ form.password }}
+            <button class="input-action" type="button" data-password-toggle aria-label="{% translate "Parolni ko‘rsatish" %}" aria-pressed="false" data-label-show="{% translate "Parolni ko‘rsatish" %}" data-label-hide="{% translate "Parolni yashirish" %}">
+              <span data-eye="show">{% icon "eye" 17 %}</span><span data-eye="hide" hidden>{% icon "eye-off" 17 %}</span>
+            </button>
+          </div>
+          <p class="caps-hint" data-caps-hint hidden>{% icon "alert" 14 %} {% translate "Caps Lock yoqilgan" %}</p>
         </div>
         {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
-        <button class="btn primary block" type="submit">{% translate "Kirish" %} {% icon "right" 16 %}</button>
+        <button class="btn primary block auth-submit" type="submit">{% translate "Kirish" %} {% icon "right" 16 %}</button>
       </form>
-      <p class="auth-foot">
-        <button class="btn ghost sm" type="button" data-theme-toggle>
-          <span data-theme-icon="light">{% icon "moon" 15 %}</span><span data-theme-icon="dark" hidden>{% icon "sun" 15 %}</span>
-          <span data-theme-label>{% translate "Tungi rejim" %}</span>
-        </button>
-      </p>
+      <p class="auth-note">{% icon "shield" 14 %} {% translate "Bir necha marta noto‘g‘ri urinishdan so‘ng kirish vaqtincha bloklanadi." %}</p>
     </div>
+    <p class="auth-copy">© {% now "Y" %} {% translate "Minar Test" %}</p>
   </main>
 </div>
-{% load static %}<script src="{% static 'js/app.js' %}" defer></script>
+<script src="{% static 'js/app.js' %}" defer></script>
 </body>
 </html>
