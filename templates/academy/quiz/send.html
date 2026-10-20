@@ -44,9 +44,9 @@
           <div class="row send-student">
            <label class="send-pick grow">
             <input type="checkbox" name="students" value="{{ row.student.pk }}" {% if row.checked %}checked{% endif %} {% if row.attendance == 'present' or row.attendance == 'late' %}data-came{% endif %}>
-            <span class="avatar sm" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
+            <span class="avatar sm{% if row.student.honor_since %} honor{% endif %}" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
             <span class="grow truncate">
-              <span class="person-name block truncate">{{ row.student.full_name }}</span>
+              <span class="person-name block truncate">{{ row.student|person_name }}</span>
               <span class="person-meta">{% if row.student.telegram %}@{{ row.student.telegram|cut:"@" }}{% elif row.student.phone %}{{ row.student.phone }}{% elif not row.student.email %}<span class="send-error">{% translate "Telegram / telefon / email yo‘q — yuborib bo‘lmaydi" %}</span>{% endif %}{% if row.student.email %}{% if row.student.telegram or row.student.phone %} · {% endif %}{{ row.student.email }}{% endif %}</span>
             </span>
             {% if row.attendance %}<span class="badge {% if row.attendance == 'present' %}ok{% elif row.attendance == 'absent' %}bad{% elif row.attendance == 'late' %}warn{% else %}info{% endif %}">{{ row.attendance_label }}</span>{% endif %}

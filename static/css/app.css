@@ -2182,3 +2182,29 @@ a.p-stat:hover { color: #fff; transform: translateY(-2px); background: linear-gr
 .row-menu-label { display: flex; align-items: center; gap: 6px; padding: 6px 10px 6px; font-size: 12px; font-weight: 700; color: var(--text-3); }
 .row-menu-hours { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 8px 6px; }
 .row-menu-hours .btn { flex: 1 1 auto; padding: 0 8px; }
+
+/* --- "A'lochi" unvoni: oltin ism, medal, avatar halqasi ------------------------- */
+.honor-name {
+  font-weight: 700;
+  background: linear-gradient(100deg, #a8700f 0%, #d99a1e 35%, #f2c14e 55%, #b9801a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+:root[data-theme="dark"] .honor-name, .p-hero .honor-name {
+  background-image: linear-gradient(100deg, #ffe08a 0%, #f3c14d 45%, #fff0b8 70%, #e2a92f 100%);
+}
+.honor-medal { display: inline-block; flex: none; vertical-align: -2px; margin-right: 5px; filter: drop-shadow(0 1px 2px rgba(185, 128, 26, 0.45)); }
+.avatar.honor { box-shadow: 0 0 0 2px #e2a92f, 0 0 0 4px rgba(226, 169, 47, 0.25); }
+.badge.honor-badge { background: linear-gradient(135deg, #fff3cc, #f6da86); color: #6f4a06; gap: 4px; }
+.badge.honor-badge::before { display: none; }
+:root[data-theme="dark"] .badge.honor-badge { background: linear-gradient(135deg, #4a3810, #3a2c0c); color: #ffd978; }
+.p-pill.honor-pill {
+  background: linear-gradient(135deg, rgba(246, 216, 145, 0.35), rgba(226, 169, 47, 0.18));
+  border-color: rgba(246, 216, 145, 0.6);
+  color: #ffe9a8; font-weight: 700;
+}
+.p-pill.honor-pill .honor-medal, .badge .honor-medal, .btn .honor-medal, .shop-icon .honor-medal { margin: 0; }
+.shop-item.honor-item .shop-icon { background: linear-gradient(145deg, #fff3cc, #f6da86); }
+:root[data-theme="dark"] .shop-item.honor-item .shop-icon { background: linear-gradient(145deg, #4a3810, #3a2c0c); }
+h1 .honor-medal, .page-head .honor-medal, .p-hero h1 .honor-medal { width: 0.78em; height: 0.78em; vertical-align: -0.05em; margin-right: 0.2em; }

@@ -9,10 +9,11 @@
       {% include "academy/includes/lang_switch.html" %}
     </div>
     <div class="p-id">
-      <span class="avatar xl p-avatar" style="--h: {{ student.full_name|hue }}" aria-hidden="true">{{ student.initials }}</span>
+      <span class="avatar xl p-avatar{% if student.honor_since %} honor{% endif %}" style="--h: {{ student.full_name|hue }}" aria-hidden="true">{{ student.initials }}</span>
       <div class="p-id-text">
-        <h1>{{ student.full_name }}</h1>
+        <h1>{{ student|person_name }}</h1>
         <div class="p-pills">
+          {% if student.honor_since %}<span class="p-pill honor-pill">{% honor_medal 15 %} {% translate "A’lochi" %}</span>{% endif %}
           <span class="p-pill">{% icon "layers" 14 %} {{ student.group.name }}</span>
           <span class="p-pill">{% icon "clock" 14 %} {% blocktranslate with profile_until=student.profile_until|date:"H:i" trimmed %}Profil ochiq: <strong>{{ profile_until }}</strong> gacha{% endblocktranslate %}</span>
         </div>
@@ -138,7 +139,7 @@
       <p class="meta">{% blocktranslate with name=student.group.name trimmed %}{{ name }} · shu hafta (dushanbadan) yig‘ilgan coinlar. Har dushanba yangidan boshlanadi.{% endblocktranslate %}</p>
       <ol class="board">
         {% for r in board %}
-          <li class="{% if r.student.pk == student.pk %}me{% endif %} p{{ r.place }}"><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><span class="avatar sm" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span><span class="grow">{{ r.student.full_name }}</span><strong>{{ r.coins }} 🪙</strong></li>
+          <li class="{% if r.student.pk == student.pk %}me{% endif %} p{{ r.place }}"><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><span class="avatar sm{% if r.student.honor_since %} honor{% endif %}" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span><span class="grow">{{ r.student|person_name }}</span><strong>{{ r.coins }} 🪙</strong></li>
         {% endfor %}
       </ol>
       {% if my_board and my_board.place > board|length %}<p class="meta">{% blocktranslate with place=my_board.place coins=my_board.coins trimmed %}Siz: {{ place }}-o‘rin · {{ coins }} 🪙 bu hafta.{% endblocktranslate %}</p>{% endif %}
@@ -151,12 +152,14 @@
       <p class="meta">{% translate "Coin yig‘ing va sovg‘a oling. So‘rov ustozga boradi, tasdiqlansa coin yechiladi." %}</p>
       <div class="shop-grid">
       {% for r in rewards %}
-        <div class="shop-item{% if coin_available >= r.cost %} can{% endif %}">
-          <span class="shop-icon" aria-hidden="true">{% icon "gift" 20 %}</span>
+        <div class="shop-item{% if coin_available >= r.cost %} can{% endif %}{% if r.perk == 'honor' %} honor-item{% endif %}">
+          <span class="shop-icon" aria-hidden="true">{% if r.perk == 'honor' %}{% honor_medal 24 %}{% else %}{% icon "gift" 20 %}{% endif %}</span>
           <div class="grow"><strong>{{ r.title }}</strong>{% if r.description %}<span class="meta block">{{ r.description }}</span>{% endif %}</div>
           <div class="shop-buy">
             <span class="shop-cost">{{ r.cost }} 🪙</span>
-            {% if r.pk in pending_reward_ids %}
+            {% if r.perk == 'honor' and student.honor_since %}
+              <span class="badge ok">{% translate "✓ sizda bor" %}</span>
+            {% elif r.pk in pending_reward_ids %}
               <span class="badge warn">{% translate "⏳ kutilmoqda" %}</span>
             {% elif coin_available >= r.cost %}
               <form method="post" action="{% url 'portal_buy' student.portal_token r.pk %}">

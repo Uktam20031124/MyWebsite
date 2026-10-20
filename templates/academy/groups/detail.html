@@ -146,9 +146,9 @@
         <div class="rows">
           {% for s in students %}
             <a class="row" href="{{ s.get_absolute_url }}">
-              <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+              <span class="avatar sm{% if s.honor_since %} honor{% endif %}" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
               <div class="grow">
-                <div class="row-title truncate">{{ s.full_name }}</div>
+                <div class="row-title truncate">{{ s|person_name }}</div>
                 <div class="meta">
                   {% if s.status != 'active' %}{{ s.get_status_display }} · {% endif %}
                   {% if s.att_total %}{% blocktranslate with att_present=s.att_present att_total=s.att_total trimmed %}{{ att_present }}/{{ att_total }} dars{% endblocktranslate %}{% if s.score_avg is not None %} {% blocktranslate with score_avg=s.score_avg trimmed %}· ball {{ score_avg }}{% endblocktranslate %}{% endif %}{% else %}{% translate "hali yo‘qlama yo‘q" %}{% endif %}
@@ -170,7 +170,7 @@
       <div class="card-head"><h2 id="coin-h">{% translate "🏆 Haftaning eng faollari" %}</h2><span class="meta">{% translate "coin · dushanbadan" %}</span></div>
       <div class="card-body">
         <ol class="board">
-          {% for r in coin_board %}<li><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><a class="grow" href="{{ r.student.get_absolute_url }}">{{ r.student.full_name }}</a><strong>{{ r.coins }} 🪙</strong></li>{% empty %}<li class="meta">{% translate "Faol o‘quvchi yo‘q." %}</li>{% endfor %}
+          {% for r in coin_board %}<li><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><a class="grow" href="{{ r.student.get_absolute_url }}">{{ r.student|person_name }}</a><strong>{{ r.coins }} 🪙</strong></li>{% empty %}<li class="meta">{% translate "Faol o‘quvchi yo‘q." %}</li>{% endfor %}
         </ol>
       </div>
     </section>
@@ -183,7 +183,7 @@
       <div class="card-body">
         {% if board.rows %}
           <ol class="leader-list">
-            {% for row in board.rows|slice:":3" %}<li><span class="strong">{{ row.student.full_name }}</span> <span class="meta">{% blocktranslate with pct=row.pct n=row.n trimmed %}— {{ pct }}% ({{ n }} ta test){% endblocktranslate %}</span></li>{% endfor %}
+            {% for row in board.rows|slice:":3" %}<li><span class="strong">{{ row.student|person_name }}</span> <span class="meta">{% blocktranslate with pct=row.pct n=row.n trimmed %}— {{ pct }}% ({{ n }} ta test){% endblocktranslate %}</span></li>{% endfor %}
           </ol>
           <p class="meta" style="margin:8px 0 12px">{% blocktranslate with tests_n=board.tests_n avg=board.avg trimmed %}Guruh: {{ tests_n }} ta test, o‘rtacha {{ avg }}%.{% endblocktranslate %}</p>
         {% else %}
@@ -224,7 +224,7 @@
         {% if contact_missing %}
           <p class="meta" style="margin:0 0 10px">{% translate "Test havolalari faqat Telegram username yoki telefoni bor o‘quvchilarga yuboriladi. Yo‘qlar:" %}</p>
           <div class="chips" style="margin-bottom:14px">
-            {% for s in contact_missing %}<a class="tag" href="{% url 'student_update' s.pk %}">{{ s.full_name }}</a>{% endfor %}
+            {% for s in contact_missing %}<a class="tag" href="{% url 'student_update' s.pk %}">{{ s|person_name }}</a>{% endfor %}
           </div>
         {% else %}
           <p class="meta" style="margin:0 0 14px">{% translate "Barcha faol o‘quvchilarga test yuborish mumkin." %}</p>

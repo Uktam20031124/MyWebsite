@@ -22,8 +22,8 @@
       <div class="card-body flush"><div class="rows">
         {% for s in students %}
           <a class="row" href="{{ s.get_absolute_url }}">
-            <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
-            <div class="grow"><div class="row-title truncate">{{ s.full_name }}</div><div class="meta">{{ s.phone|default:"" }}</div></div>
+            <span class="avatar sm{% if s.honor_since %} honor{% endif %}" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+            <div class="grow"><div class="row-title truncate">{{ s|person_name }}</div><div class="meta">{{ s.phone|default:"" }}</div></div>
             <span class="tag">{{ s.group.code }}</span>
           </a>
         {% empty %}<div class="empty compact"><p>{% translate "Topilmadi." %}</p></div>{% endfor %}

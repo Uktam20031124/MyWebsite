@@ -36,8 +36,8 @@
                   <tr class="{{ r.status }}">
                     <td class="meta tabular">{{ r.line_no }}</td>
                     <td>
-                      {% if r.student %}<a class="strong" href="{{ r.student.get_absolute_url }}">{{ r.student.full_name }}</a><div class="meta">{{ r.student.group.name }}</div>{% else %}<span class="strong">{{ r.name|default:"—" }}</span>{% endif %}
-                      {% if r.candidates %}<div class="meta">{% translate "Mos:" %} {% for c in r.candidates %}{{ c.full_name }} ({{ c.group.code }}){% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+                      {% if r.student %}<a class="strong" href="{{ r.student.get_absolute_url }}">{{ r.student|person_name }}</a><div class="meta">{{ r.student.group.name }}</div>{% else %}<span class="strong">{{ r.name|default:"—" }}</span>{% endif %}
+                      {% if r.candidates %}<div class="meta">{% translate "Mos:" %} {% for c in r.candidates %}{{ c|person_name }} ({{ c.group.code }}){% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
                     </td>
                     <td>{% if r.username %}@{{ r.username }}{% if r.changes.telegram and r.changes.telegram.0 %}<div class="meta">{% blocktranslate with v_0=r.changes.telegram.0 trimmed %}edi: {{ v_0 }}{% endblocktranslate %}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>
                     <td class="nowrap">{% if r.phone %}{{ r.phone }}{% if r.changes.phone and r.changes.phone.0 %}<div class="meta">{% blocktranslate with v_0=r.changes.phone.0 trimmed %}edi: {{ v_0 }}{% endblocktranslate %}</div>{% endif %}{% else %}<span class="meta">—</span>{% endif %}</td>

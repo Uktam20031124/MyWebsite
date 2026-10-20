@@ -193,6 +193,8 @@ class Student(models.Model):
     notes = models.TextField(_("Izoh"), blank=True)
     # O'quvchining shaxsiy natijalar sahifasi kaliti (/men/<kalit>/); bo'sh — hali yaratilmagan.
     portal_token = models.CharField(max_length=32, blank=True, editable=False, db_index=True)
+    # "A'lochi" unvoni (do'kondan olingan yoki ustoz bergan): ism hamma joyda oltin, medal bilan.
+    honor_since = models.DateTimeField(_("A’lochi (berilgan sana)"), null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1509,7 +1511,18 @@ class DailyActivity(models.Model):
 class Reward(models.Model):
     """Coin do'konidagi sovg'a (ustoz qo'shadi)."""
 
+    class Perk(models.TextChoices):
+        """Tasdiqlanganda avtomatik nima bo'ladi."""
+
+        NONE = "", _("Oddiy — ustoz o‘zi beradi")
+        HONOR = "honor", _("A’lochi unvoni — oltin medal va sertifikatda belgi")
+
     title = models.CharField(_("Sovg'a"), max_length=120)
+    perk = models.CharField(
+        _("Avtomatik ta’sir"), max_length=16, choices=Perk.choices, default=Perk.NONE, blank=True,
+        help_text=_("“A’lochi unvoni”: tasdiqlanishi bilan o‘quvchi ismi hamma joyda oltin rangda, "
+                    "medal bilan ko‘rinadi va sertifikatga “A’lochi” muhri tushadi."),
+    )
     description = models.CharField(_("Izoh"), max_length=255, blank=True)
     cost = models.PositiveIntegerField(_("Narxi (coin)"), validators=[MinValueValidator(1)])
     is_active = models.BooleanField(_("Do'konda ko'rinadi"), default=True)

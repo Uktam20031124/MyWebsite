@@ -139,9 +139,9 @@
           {% for s in insights.leaders %}
             <a class="row" href="{{ s.get_absolute_url }}">
               <span class="rank{% if forloop.counter <= 3 %} r{{ forloop.counter }}{% endif %}">{{ forloop.counter }}</span>
-              <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+              <span class="avatar sm{% if s.honor_since %} honor{% endif %}" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
               <div class="grow">
-                <div class="row-title truncate">{{ s.full_name }}</div>
+                <div class="row-title truncate">{{ s|person_name }}</div>
                 <div class="meta">{{ s.group.code }}{% if s.score_avg is not None %} {% blocktranslate with score_avg=s.score_avg trimmed %}· ball {{ score_avg }}{% endblocktranslate %}{% endif %}{% if s.quiz.n %} {% blocktranslate with pct=s.quiz.pct trimmed %}· test {{ pct }}%{% endblocktranslate %}{% endif %}{% if s.att_total %} {% blocktranslate with att_pct=s.att_pct trimmed %}· davomat {{ att_pct }}%{% endblocktranslate %}{% endif %}</div>
               </div>
               <strong class="tabular">{{ s.rating }}</strong>
@@ -163,9 +163,9 @@
         <div class="rows">
           {% for s in insights.at_risk %}
             <a class="row" href="{{ s.get_absolute_url }}">
-              <span class="avatar sm" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
+              <span class="avatar sm{% if s.honor_since %} honor{% endif %}" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
               <div class="grow">
-                <div class="row-title truncate">{{ s.full_name }}</div>
+                <div class="row-title truncate">{{ s|person_name }}</div>
                 <div class="meta">{{ s.group.code }} · {{ s.risk_reasons|join:" · " }}</div>
               </div>
               {% if s.quiz.n >= 2 and s.quiz.recent_pct < 50 %}<span class="badge bad" title="{% translate "Oxirgi testlar" %}">{{ s.quiz.recent_pct }}%</span>{% elif s.att_total %}<span class="badge {{ s.att_pct|tone }}">{{ s.att_pct }}%</span>{% endif %}

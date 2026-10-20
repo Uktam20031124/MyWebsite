@@ -259,6 +259,8 @@ def buy(student: Student, reward_id: int) -> Purchase:
             raise EngagementError(_("Bu sovg'a hozir do‘konda yo‘q."))
         if student.purchases.filter(reward=reward, status=Purchase.Status.PENDING).exists():
             raise EngagementError(_("Bu sovg'a uchun so‘rovingiz ustozda kutilmoqda."))
+        if reward.perk == Reward.Perk.HONOR and student.honor_since:
+            raise EngagementError(_("Sizda “A’lochi” unvoni allaqachon bor."))
         if available(student) < reward.cost:
             raise EngagementError(
                 _("Coin yetmaydi: kerak {cost}, sizda {available}.").format(
@@ -282,6 +284,22 @@ def decide_purchase(purchase: Purchase, approve: bool) -> None:
         p.status = Purchase.Status.APPROVED if approve else Purchase.Status.REJECTED
         p.decided_at = timezone.now()
         p.save(update_fields=["status", "decided_at", "transaction"])
+        if approve and p.reward and p.reward.perk == Reward.Perk.HONOR:
+            grant_honor(p.student, when=p.decided_at)
+
+
+def grant_honor(student: Student, when=None) -> bool:
+    """"A'lochi" unvonini berish (bor bo'lsa — o'zgarmaydi). Yangi berilgan bo'lsa True."""
+    when = when or timezone.now()
+    granted = Student.objects.filter(pk=student.pk, honor_since__isnull=True).update(honor_since=when)
+    if granted:
+        student.honor_since = when
+    return bool(granted)
+
+
+def revoke_honor(student: Student) -> None:
+    Student.objects.filter(pk=student.pk).update(honor_since=None)
+    student.honor_since = None
 
 
 def pending_purchases():

@@ -2,7 +2,7 @@
 {% load i18n ui %}
 {% block title %}{% if form.instance.pk %}{% translate "Tahrir" %}{% else %}{% translate "Yangi shogird" %}{% endif %} {% translate "· Minar Test" %}{% endblock %}
 {% block kicker %}<a href="{% url 'student_list' %}">{% translate "Shogirdlar" %}</a><span class="sep">/</span>{% if form.instance.pk %}{% translate "Tahrir" %}{% else %}{% translate "Yangi" %}{% endif %}{% endblock %}
-{% block heading %}{% if form.instance.pk %}{{ form.instance.full_name }}{% else %}{% translate "Yangi shogird" %}{% endif %}{% endblock %}
+{% block heading %}{% if form.instance.pk %}{{ form.instance|person_name }}{% else %}{% translate "Yangi shogird" %}{% endif %}{% endblock %}
 {% block content %}
 <section class="card pad form-card">
   <form method="post" novalidate data-dirty-guard>

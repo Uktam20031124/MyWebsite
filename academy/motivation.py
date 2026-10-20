@@ -1,5 +1,6 @@
 """Motivatsiya: haftalik reyting (guruh chatiga), o'quvchining shaxsiy sahifasi, sertifikat."""
 
+import math
 import secrets
 from dataclasses import dataclass
 from datetime import timedelta
@@ -132,7 +133,7 @@ def certificate_pdf(student: Student, course: str, teacher: str) -> bytes:
     quiz = quiz_stats([student.pk]).get(student.pk)
     attendance = student_attendance_rate(student)
     width, height = landscape(A4)
-    brand, gold, ink, muted = (HexColor(c) for c in ("#1e3a2f", "#b08948", "#1c1a16", "#6b6358"))
+    brand, gold, ink, muted = (HexColor(c) for c in ("#1b3768", "#c08a2c", "#141824", "#5c6475"))
 
     buf = BytesIO()
     pdf = canvas.Canvas(buf, pagesize=(width, height))
@@ -164,6 +165,11 @@ def certificate_pdf(student: Student, course: str, teacher: str) -> bytes:
     pdf.setStrokeColor(gold)
     pdf.setLineWidth(1)
     pdf.line(cx - 220, height - 245, cx + 220, height - 245)
+    if student.honor_since:
+        _honor_seal(pdf, width - 140, height - 112)
+        pdf.setFillColor(gold)
+        pdf.setFont("DX-Bold", 13)
+        pdf.drawCentredString(cx, height - 262, "«A’LOCHI» O‘QUVCHI")
     pdf.setFillColor(muted)
     pdf.setFont("DX", 14)
     pdf.drawCentredString(cx, height - 275, "ga quyidagi kursni muvaffaqiyatli yakunlagani uchun berildi:")
@@ -193,6 +199,43 @@ def certificate_pdf(student: Student, course: str, teacher: str) -> bytes:
     pdf.showPage()
     pdf.save()
     return buf.getvalue()
+
+
+def _honor_seal(pdf, x: float, y: float) -> None:
+    """"A'lochi" muhri: oltin doira, lenta va yulduz (markaz — x, y)."""
+    from reportlab.lib.colors import HexColor
+
+    pdf.saveState()
+    # Lentalar
+    pdf.setFillColor(HexColor("#2a5fa8"))
+    pdf.wedge(x - 46, y - 82, x + 2, y - 10, 250, 25, stroke=0, fill=1)
+    pdf.setFillColor(HexColor("#b5382c"))
+    pdf.wedge(x - 2, y - 82, x + 46, y - 10, 265, 25, stroke=0, fill=1)
+    # Doira
+    pdf.setFillColor(HexColor("#e9b949"))
+    pdf.setStrokeColor(HexColor("#9c6a12"))
+    pdf.setLineWidth(2)
+    pdf.circle(x, y, 44, stroke=1, fill=1)
+    pdf.setStrokeColor(HexColor("#fff3cc"))
+    pdf.setLineWidth(1)
+    pdf.circle(x, y, 37, stroke=1, fill=0)
+    # Yulduz
+    points = []
+    for i in range(10):
+        r = 15 if i % 2 == 0 else 6.5
+        a = math.pi / 2 + i * math.pi / 5
+        points.append((x + r * math.cos(a), y + 6 + r * math.sin(a)))
+    path = pdf.beginPath()
+    path.moveTo(*points[0])
+    for p in points[1:]:
+        path.lineTo(*p)
+    path.close()
+    pdf.setFillColor(HexColor("#fffaf0"))
+    pdf.drawPath(path, stroke=0, fill=1)
+    pdf.setFillColor(HexColor("#6f4a06"))
+    pdf.setFont("DX-Bold", 9.5)
+    pdf.drawCentredString(x, y - 22, "A’LOCHI")
+    pdf.restoreState()
 
 
 def certificate_filename(student: Student) -> str:
