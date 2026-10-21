@@ -101,6 +101,7 @@ from .services import (
     week_start,
     week_timetable,
 )
+from .slides import deck as slide_deck
 
 
 def int_param(request, name):
@@ -675,6 +676,17 @@ class TopicDetailView(AuthMixin, DetailView):
             ctx["prev_id"] = siblings[i - 1] if i > 0 else None
             ctx["next_id"] = siblings[i + 1] if i + 1 < len(siblings) else None
         return ctx
+
+
+@login_required
+def topic_slides(request, pk):
+    """Dars taqdimoti: to'liq ekran, klaviatura bilan boshqariladi (← → / Space, F — to'liq ekran)."""
+    topic = get_object_or_404(Topic.objects.select_related("module"), pk=pk)
+    slides = slide_deck(topic.slides)
+    if not slides:
+        messages.info(request, _("Bu mavzuga hali taqdimot yozilmagan — tahrirlash sahifasida qo‘shing."))
+        return redirect("topic_update", pk=topic.pk)
+    return render(request, "academy/topics/slides.html", {"topic": topic, "slides": slides})
 
 
 class TopicCreateView(AuthMixin, SuccessMessageMixin, CreateView):

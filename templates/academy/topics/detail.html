@@ -4,6 +4,7 @@
 {% block kicker %}<a href="{% url 'topic_list' %}">{% translate "Mavzular" %}</a><span class="sep">/</span>{% if topic.module %}<a href="{{ topic.module.get_absolute_url }}">{{ topic.module.title }}</a>{% else %}{% translate "Bo‘limsiz" %}{% endif %}<span class="sep">·</span>{% icon "clock" 14 %} {% blocktranslate with duration_minutes=topic.duration_minutes trimmed %}{{ duration_minutes }} daq.{% endblocktranslate %}{% endblock %}
 {% block heading %}{{ topic|topic_title }}{% endblock %}
 {% block actions %}
+{% if topic.slides %}<a class="btn dark" href="{% url 'topic_slides' topic.pk %}" data-turbo="false" target="_blank" rel="noopener">🎬 {% translate "Taqdimot" %}</a>{% endif %}
 <a class="btn soft" href="{% url 'topic_update' topic.pk %}">{% icon "edit" 16 %} {% translate "Tahrirlash" %}</a>
 <a class="btn primary" href="{% url 'lesson_create' %}?topic={{ topic.pk }}">{% icon "plus" 16 %} {% translate "Dars yozish" %}</a>
 {% endblock %}
