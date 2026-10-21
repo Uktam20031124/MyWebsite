@@ -1414,7 +1414,7 @@ class CoinTransaction(models.Model):
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name="coins", verbose_name=_("O'quvchi")
     )
-    amount = models.IntegerField(_("Coin"))
+    amount = models.IntegerField(_("Quvvat ⚡️"))
     reason = models.CharField(_("Sabab"), max_length=120)
     attempt = models.ForeignKey(
         QuizAttempt,
@@ -1428,8 +1428,8 @@ class CoinTransaction(models.Model):
 
     class Meta:
         ordering = ["-created_at", "-pk"]
-        verbose_name = _("Coin")
-        verbose_name_plural = _("Coinlar")
+        verbose_name = _("Quvvat")
+        verbose_name_plural = _("Quvvat harakatlari")
         constraints = [
             models.UniqueConstraint(fields=["attempt", "reason"], name="uniq_coin_per_attempt_reason"),
         ]
@@ -1444,7 +1444,7 @@ class CoinTransaction(models.Model):
         (re.compile(r"^Yangi mavzuni oldindan o‘zlashtirdi$"), gettext_noop("Yangi mavzuni oldindan o‘zlashtirdi")),
         (re.compile(r"^Xato tuzatildi: (?P<t>.+)$"), gettext_noop("Xato tuzatildi: {t}")),
         (re.compile(r"^🔥 (?P<n>\d+) kun ketma-ket faol$"), gettext_noop("🔥 {n} kun ketma-ket faol")),
-        (re.compile(r"^Do‘kon: (?P<t>.+)$"), gettext_noop("Do‘kon: {t}")),
+        (re.compile(r"^Do‘kon: (?P<t>.+)$"), gettext_noop("🎁 Mukofot: {t}")),
         (re.compile(r"^🎁 Ustozdan sovg‘a$"), gettext_noop("🎁 Ustozdan sovg‘a")),
         (re.compile(r"^🎁 Ustozdan sovg‘a: (?P<t>.+)$"), gettext_noop("🎁 Ustozdan sovg‘a: {t}")),
     ]
@@ -1535,7 +1535,7 @@ class Reward(models.Model):
                     "medal bilan ko‘rinadi va sertifikatga “A’lochi” muhri tushadi."),
     )
     description = models.CharField(_("Izoh"), max_length=255, blank=True)
-    cost = models.PositiveIntegerField(_("Narxi (coin)"), validators=[MinValueValidator(1)])
+    cost = models.PositiveIntegerField(_("Narxi (⚡️ quvvat)"), validators=[MinValueValidator(1)])
     is_active = models.BooleanField(_("Do'konda ko'rinadi"), default=True)
     order = models.PositiveIntegerField(_("Tartib"), default=0)
 
@@ -1545,7 +1545,7 @@ class Reward(models.Model):
         verbose_name_plural = _("Sovg'alar")
 
     def __str__(self) -> str:
-        return f"{self.title} ({self.cost} coin)"
+        return f"{self.title} ({self.cost} ⚡️)"
 
 
 class Purchase(models.Model):
@@ -1563,7 +1563,7 @@ class Purchase(models.Model):
         Reward, on_delete=models.SET_NULL, null=True, blank=True, related_name="purchases", verbose_name=_("Sovg'a")
     )
     title = models.CharField(_("Sovg'a"), max_length=120)  # sovg'a keyin o'zgarsa ham tarix saqlanadi
-    cost = models.PositiveIntegerField(_("Narxi (coin)"))
+    cost = models.PositiveIntegerField(_("Narxi (⚡️ quvvat)"))
     status = models.CharField(
         _("Holat"), max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
     )

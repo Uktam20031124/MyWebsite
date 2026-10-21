@@ -214,11 +214,11 @@ def portal_buy(request, token, reward_id):
     else:
         messages.success(
             request,
-            _("“{title}” so‘rovi ustozga yuborildi. Tasdiqlansa, {cost} coin yechiladi.").format(
+            _("“{title}” so‘rovi ustozga yuborildi. Tasdiqlansa, {cost} ⚡️ quvvat sarflanadi.").format(
                 title=p.title, cost=p.cost
             ),
         )
-        profiles.notify(f"🛍 {student.full_name} ({student.group.code}): “{p.title}” ({p.cost} coin) so‘radi.")
+        profiles.notify(f"🛍 {student.full_name} ({student.group.code}): “{p.title}” ({p.cost} ⚡️) so‘radi.")
     return redirect(_portal_url(token, "shop"))
 
 
@@ -332,7 +332,7 @@ def student_coin_gift(request, pk):
     raw = request.POST.get("amount", "")
     amount = int(raw) if raw.isdigit() else 0
     if not 1 <= amount <= coins.GIFT_MAX:
-        messages.error(request, _("Coin soni 1 dan {max} gacha bo‘lishi kerak.").format(max=coins.GIFT_MAX))
+        messages.error(request, _("Quvvat miqdori 1 dan {max} gacha bo‘lishi kerak.").format(max=coins.GIFT_MAX))
         return redirect(back)
     if not _fresh_nonce(request):
         messages.info(request, _("Bu sovg‘a allaqachon berilgan — takror yuborilmadi."))
@@ -340,7 +340,7 @@ def student_coin_gift(request, pk):
     coins.gift(student, amount, request.POST.get("note", ""))
     messages.success(
         request,
-        _("{full_name}ga {amount} coin sovg‘a qilindi 🎁 Balans: {balance}.").format(
+        _("{full_name}ga {amount} ⚡️ quvvat sovg‘a qilindi 🎁 Jami: {balance} ⚡️.").format(
             full_name=student.full_name, amount=amount, balance=coins.balance(student)
         ),
     )
@@ -356,7 +356,7 @@ def student_coin_undo(request, pk, tx_pk):
     if coins.undo_gift(tx):
         messages.success(
             request,
-            _("{amount} coinlik sovg‘a bekor qilindi. Balans: {balance}.").format(
+            _("{amount} ⚡️ quvvatlik sovg‘a bekor qilindi. Jami: {balance} ⚡️.").format(
                 amount=tx.amount, balance=coins.balance(student)
             ),
         )
@@ -374,13 +374,11 @@ def purchase_decide(request, pk):
     p.refresh_from_db()
     if approve and p.status != Purchase.Status.APPROVED:
         messages.error(
-            request, _("{full_name}: coin yetmaydi — so‘rov rad etildi.").format(full_name=p.student.full_name)
+            request, _("{full_name}: quvvat yetmaydi — so‘rov rad etildi.").format(full_name=p.student.full_name)
         )
     else:
-        messages.success(
-            request,
-            f"{p.student.full_name} — “{p.title}”: " + (_("berildi, coin yechildi.") if approve else _("rad etildi.")),
-        )
+        outcome = _("berildi, quvvat sarflandi.") if approve else _("rad etildi.")
+        messages.success(request, f"{p.student.full_name} — “{p.title}”: {outcome}")
         if approve and p.reward and p.reward.perk == Reward.Perk.HONOR:
             messages.success(
                 request,

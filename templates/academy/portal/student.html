@@ -22,9 +22,9 @@
 
     <div class="p-stats">
       <a class="p-stat big coin" href="#shop" data-tab-link>
-        <span class="p-stat-label">{% icon "coin" 15 %} {% translate "Coinlaringiz" %}</span>
+        <span class="p-stat-label">{% icon "bolt" 15 %} {% translate "Quvvatingiz" %}</span>
         <strong class="p-stat-value">{{ coin_balance }}</strong>
-        <span class="p-stat-foot">{% if coin_available != coin_balance %}{% blocktranslate with coin_available=coin_available trimmed %}sarflash mumkin: {{ coin_available }}{% endblocktranslate %}{% else %}{% translate "Coin do‘koni 🛍" %}{% endif %}</span>
+        <span class="p-stat-foot">{% if coin_available != coin_balance %}{% blocktranslate with coin_available=coin_available trimmed %}sarflash mumkin: {{ coin_available }} ⚡️{% endblocktranslate %}{% else %}{% translate "Mukofotlar 🎁" %}{% endif %}</span>
       </a>
       <div class="p-stat big streak{% if streak.days %} on{% endif %}">
         <span class="p-stat-label">{% translate "Streak" %}</span>
@@ -47,7 +47,7 @@
         <span class="p-stat-foot">{% blocktranslate with present=attendance.present total=attendance.total trimmed %}{{ present }}/{{ total }} dars{% endblocktranslate %}</span>
       </div>
     </div>
-    <p class="p-streak-note">{% if streak.active_today %}{% translate "Bugun faolsiz ✅" %}{% else %}{% translate "Bugun test yoki mashq qiling — streak uzilmasin!" %}{% endif %} {% blocktranslate with streak_every=streak_every to_bonus=streak.to_bonus streak_bonus=streak_bonus trimmed %}· {{ streak_every }} kunlik bonusgacha {{ to_bonus }} kun (+{{ streak_bonus }} 🪙){% endblocktranslate %}</p>
+    <p class="p-streak-note">{% if streak.active_today %}{% translate "Bugun faolsiz ✅" %}{% else %}{% translate "Bugun test yoki mashq qiling — streak uzilmasin!" %}{% endif %} {% blocktranslate with streak_every=streak_every to_bonus=streak.to_bonus streak_bonus=streak_bonus trimmed %}· {{ streak_every }} kunlik bonusgacha {{ to_bonus }} kun (+{{ streak_bonus }} ⚡️){% endblocktranslate %}</p>
   </header>
 
   {% if pending %}
@@ -66,7 +66,7 @@
     <button type="button" role="tab" aria-controls="tab-tests" aria-selected="true">{% icon "target" 16 %}<span>{% translate "Testlar" %}</span></button>
     <button type="button" role="tab" aria-controls="tab-mistakes" aria-selected="false">{% icon "undo" 16 %}<span>{% translate "Xatolar" %}</span>{% if open_mistakes_n %}<b class="p-tab-n">{{ open_mistakes_n }}</b>{% endif %}</button>
     <button type="button" role="tab" aria-controls="tab-board" aria-selected="false">{% icon "trophy" 16 %}<span>{% translate "Reyting" %}</span></button>
-    <button type="button" role="tab" aria-controls="tab-shop" aria-selected="false">{% icon "gift" 16 %}<span>{% translate "Do‘kon" %}</span></button>
+    <button type="button" role="tab" aria-controls="tab-shop" aria-selected="false">{% icon "gift" 16 %}<span>{% translate "Mukofotlar" %}</span></button>
     <button type="button" role="tab" aria-controls="tab-history" aria-selected="false">{% icon "chart" 16 %}<span>{% translate "Tarix" %}</span></button>
   </nav>
 
@@ -122,7 +122,7 @@
     <section class="card pad" id="mistakes">
       <h2>{% translate "Xatolar ustida ishlash" %}</h2>
       {% if open_mistakes_n %}
-        <p class="meta">{% blocktranslate with open_mistakes_n=open_mistakes_n trimmed %}Testlarda xato qilgan <strong>{{ open_mistakes_n }}</strong> ta savolingiz bor. Har birini 3 marta ketma-ket to‘g‘ri yechsangiz — ro‘yxatdan chiqadi va +2 🪙. Keyingi testlarda ham ular ko‘proq tushadi.{% endblocktranslate %}</p>
+        <p class="meta">{% blocktranslate with open_mistakes_n=open_mistakes_n trimmed %}Testlarda xato qilgan <strong>{{ open_mistakes_n }}</strong> ta savolingiz bor. Har birini 3 marta ketma-ket to‘g‘ri yechsangiz — ro‘yxatdan chiqadi va +2 ⚡️. Keyingi testlarda ham ular ko‘proq tushadi.{% endblocktranslate %}</p>
         <div class="mistake-topics">
           {% for t in mistake_topics %}<a class="chip-link" href="{% url 'portal_practice' student.portal_token %}?mavzu={{ t.topic_id }}">{{ t.title }} <b>{{ t.n }}</b></a>{% endfor %}
         </div>
@@ -136,27 +136,27 @@
   <div class="p-panel" id="tab-board" role="tabpanel">
     <section class="card pad" id="board">
       <h2>{% translate "Haftaning eng faollari 🏆" %}</h2>
-      <p class="meta">{% blocktranslate with name=student.group.name trimmed %}{{ name }} · shu hafta (dushanbadan) yig‘ilgan coinlar. Har dushanba yangidan boshlanadi.{% endblocktranslate %}</p>
+      <p class="meta">{% blocktranslate with name=student.group.name trimmed %}{{ name }} · shu hafta (dushanbadan) yig‘ilgan quvvat ⚡️. Har dushanba yangidan boshlanadi.{% endblocktranslate %}</p>
       <ol class="board">
         {% for r in board %}
-          <li class="{% if r.student.pk == student.pk %}me{% endif %} p{{ r.place }}"><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><span class="avatar sm{% if r.student.honor_since %} honor{% endif %}" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span><span class="grow">{{ r.student|person_name }}</span><strong>{{ r.coins }} 🪙</strong></li>
+          <li class="{% if r.student.pk == student.pk %}me{% endif %} p{{ r.place }}"><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><span class="avatar sm{% if r.student.honor_since %} honor{% endif %}" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span><span class="grow">{{ r.student|person_name }}</span><strong>{{ r.coins }} ⚡️</strong></li>
         {% endfor %}
       </ol>
-      {% if my_board and my_board.place > board|length %}<p class="meta">{% blocktranslate with place=my_board.place coins=my_board.coins trimmed %}Siz: {{ place }}-o‘rin · {{ coins }} 🪙 bu hafta.{% endblocktranslate %}</p>{% endif %}
+      {% if my_board and my_board.place > board|length %}<p class="meta">{% blocktranslate with place=my_board.place coins=my_board.coins trimmed %}Siz: {{ place }}-o‘rin · {{ coins }} ⚡️ bu hafta.{% endblocktranslate %}</p>{% endif %}
     </section>
   </div>
 
   <div class="p-panel" id="tab-shop" role="tabpanel">
     <section class="card pad" id="shop">
-      <h2>{% translate "Coin do‘koni 🛍" %}</h2>
-      <p class="meta">{% translate "Coin yig‘ing va sovg‘a oling. So‘rov ustozga boradi, tasdiqlansa coin yechiladi." %}</p>
+      <h2>{% translate "Mukofotlar 🎁" %}</h2>
+      <p class="meta">{% translate "Quvvat ⚡️ yig‘ing va mukofot oling. So‘rov ustozga boradi, tasdiqlansa quvvat sarflanadi." %}</p>
       <div class="shop-grid">
       {% for r in rewards %}
         <div class="shop-item{% if coin_available >= r.cost %} can{% endif %}{% if r.perk == 'honor' %} honor-item{% endif %}">
           <span class="shop-icon" aria-hidden="true">{% if r.perk == 'honor' %}{% honor_medal 24 %}{% else %}{% icon "gift" 20 %}{% endif %}</span>
           <div class="grow"><strong>{{ r.title }}</strong>{% if r.description %}<span class="meta block">{{ r.description }}</span>{% endif %}</div>
           <div class="shop-buy">
-            <span class="shop-cost">{{ r.cost }} 🪙</span>
+            <span class="shop-cost">{{ r.cost }} ⚡️</span>
             {% if r.perk == 'honor' and student.honor_since %}
               <span class="badge ok">{% translate "✓ sizda bor" %}</span>
             {% elif r.pk in pending_reward_ids %}
@@ -164,10 +164,10 @@
             {% elif coin_available >= r.cost %}
               <form method="post" action="{% url 'portal_buy' student.portal_token r.pk %}">
                 {% csrf_token %}
-                <button class="btn sm primary" type="submit" data-confirm="{% blocktranslate with title=r.title cost=r.cost trimmed %}“{{ title }}” uchun {{ cost }} coin. So‘rov yuborilsinmi?{% endblocktranslate %}">{% translate "Olish" %}</button>
+                <button class="btn sm primary" type="submit" data-confirm="{% blocktranslate with title=r.title cost=r.cost trimmed %}“{{ title }}” uchun {{ cost }} ⚡️ quvvat. So‘rov yuborilsinmi?{% endblocktranslate %}">{% translate "Olish" %}</button>
               </form>
             {% else %}
-              <span class="meta">{% translate "coin yetmaydi" %}</span>
+              <span class="meta">{% translate "quvvat yetmaydi" %}</span>
               <span class="bar thin shop-progress" aria-hidden="true"><span style="width:{% widthratio coin_available r.cost 100 %}%"></span></span>
             {% endif %}
           </div>
@@ -178,21 +178,21 @@
       </div>
       {% if purchases %}
         <ul class="coin-history" style="margin-top:14px">
-          {% for p in purchases %}<li><span class="grow">{{ p.title }} · {{ p.cost }} 🪙</span><span class="badge {% if p.status == 'approved' %}ok{% elif p.status == 'rejected' %}plain{% else %}warn{% endif %}">{{ p.get_status_display }}</span></li>{% endfor %}
+          {% for p in purchases %}<li><span class="grow">{{ p.title }} · {{ p.cost }} ⚡️</span><span class="badge {% if p.status == 'approved' %}ok{% elif p.status == 'rejected' %}plain{% else %}warn{% endif %}">{{ p.get_status_display }}</span></li>{% endfor %}
         </ul>
       {% endif %}
     </section>
 
     <section class="card pad portal-coins" id="coins">
       <div class="portal-coin-head">
-        <h2 style="margin:0">{% translate "Coin tarixi" %}</h2>
-        <details class="coin-rules"><summary class="meta">{% translate "Coin qanday beriladi?" %}</summary><ul>{% for r in coin_rules %}<li>{{ r }}</li>{% endfor %}</ul></details>
+        <h2 style="margin:0">{% translate "Quvvat tarixi" %}</h2>
+        <details class="coin-rules"><summary class="meta">{% translate "Quvvat qanday beriladi?" %}</summary><ul>{% for r in coin_rules %}<li>{{ r }}</li>{% endfor %}</ul></details>
       </div>
       {% if coin_history %}
         <ul class="coin-history">
           {% for c in coin_history %}<li><span class="coin-amount {% if c.amount < 0 %}neg{% endif %}">{{ c.amount|stringformat:"+d" }}</span> <span class="grow">{{ c.display_reason }}{% if c.attempt %} · {{ c.attempt.quiz.topic|topic_title }}{% endif %}</span> <span class="meta nowrap">{{ c.created_at|date:"d.m H:i" }}</span></li>{% endfor %}
         </ul>
-      {% else %}<p class="meta">{% translate "Test yeching — coinlar shu yerda ko‘rinadi." %}</p>{% endif %}
+      {% else %}<p class="meta">{% translate "Test yeching — quvvat ⚡️ shu yerda ko‘rinadi." %}</p>{% endif %}
     </section>
   </div>
 

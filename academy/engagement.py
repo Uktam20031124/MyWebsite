@@ -263,7 +263,7 @@ def buy(student: Student, reward_id: int) -> Purchase:
             raise EngagementError(_("Sizda “A’lochi” unvoni allaqachon bor."))
         if available(student) < reward.cost:
             raise EngagementError(
-                _("Coin yetmaydi: kerak {cost}, sizda {available}.").format(
+                _("Quvvat yetmaydi: kerak {cost} ⚡️, sizda {available} ⚡️.").format(
                     cost=reward.cost, available=available(student)
                 )
             )

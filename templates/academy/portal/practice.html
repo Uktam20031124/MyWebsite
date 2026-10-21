@@ -11,7 +11,7 @@
 {% if feedback %}
   <div class="callout {% if feedback.correct %}next{% else %}warn{% endif %} practice-feedback" role="status">
     <div class="grow">
-      {% if feedback.fixed %}{% blocktranslate with fixed_coins=fixed_coins trimmed %}🎉 <strong>Zo‘r! Savol o‘zlashtirildi</strong> — ro‘yxatdan chiqdi, +{{ fixed_coins }} 🪙.{% endblocktranslate %}
+      {% if feedback.fixed %}{% blocktranslate with fixed_coins=fixed_coins trimmed %}🎉 <strong>Zo‘r! Savol o‘zlashtirildi</strong> — ro‘yxatdan chiqdi, +{{ fixed_coins }} ⚡️.{% endblocktranslate %}
       {% elif feedback.correct %}{% blocktranslate with left=feedback.left trimmed %}✅ <strong>To‘g‘ri!</strong> Yana {{ left }} marta to‘g‘ri yechsangiz, ro‘yxatdan chiqadi.{% endblocktranslate %}
       {% else %}{% blocktranslate trimmed %}❌ <strong>Xato.</strong> Bu savol keyinroq yana chiqadi — mavzu materialini qarab chiqing.{% endblocktranslate %}{% endif %}
     </div>

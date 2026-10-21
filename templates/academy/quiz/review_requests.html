@@ -40,14 +40,14 @@
 
 {% if purchase_requests %}
 <section class="card" style="margin-bottom:18px" aria-labelledby="buy-h">
-  <div class="card-head"><h2 id="buy-h">{% translate "🛍 Coin do‘koni so‘rovlari" %}</h2><a class="meta" href="{% url 'rewards' %}">{% translate "Do‘konni boshqarish →" %}</a></div>
+  <div class="card-head"><h2 id="buy-h">{% translate "🎁 Mukofot so‘rovlari" %}</h2><a class="meta" href="{% url 'rewards' %}">{% translate "Do‘konni boshqarish →" %}</a></div>
   <div class="card-body flush">
     <div class="rows">
       {% for p in purchase_requests %}
         <div class="row quiz-row">
           <a class="person grow" href="{{ p.student.get_absolute_url }}#profile">
             <span class="avatar sm{% if p.student.honor_since %} honor{% endif %}" style="--h: {{ p.student.full_name|hue }}" aria-hidden="true">{{ p.student.initials }}</span>
-            <span class="truncate"><span class="person-name block truncate">{{ p.student|person_name }}</span><span class="person-meta">{{ p.title }} · {{ p.cost }} 🪙 · {{ p.student.group.code }} · {{ p.created_at|date:"d.m H:i" }}</span></span>
+            <span class="truncate"><span class="person-name block truncate">{{ p.student|person_name }}</span><span class="person-meta">{{ p.title }} · {{ p.cost }} ⚡️ · {{ p.student.group.code }} · {{ p.created_at|date:"d.m H:i" }}</span></span>
           </a>
           <form method="post" action="{% url 'purchase_decide' p.pk %}" class="quiz-actions">
             {% csrf_token %}

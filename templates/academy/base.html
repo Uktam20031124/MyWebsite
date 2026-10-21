@@ -60,7 +60,7 @@
           {% if nav_quiz_open %}<span class="count" title="{% translate "Hali yechilmagan test havolalari" %}">{{ nav_quiz_open }}</span>{% endif %}
         </a>
         <a href="{% url 'rewards' %}" {% if url_name == 'rewards' or url_name == 'reward_edit' %}aria-current="page"{% endif %}>
-          {% icon "trophy" %} {% translate "Coin do‘koni" %}
+          {% icon "trophy" %} {% translate "Mukofotlar" %}
         </a>
         <a href="{% url 'quiz_review_requests' %}" {% if url_name == 'quiz_review_requests' %}aria-current="page"{% endif %}>
           {% icon "shield" %} {% translate "So‘rovlar" %}
