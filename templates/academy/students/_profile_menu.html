@@ -17,10 +17,10 @@
       <span class="row-menu-item muted-item">{% icon "send" 15 %} {% translate "Telegram yoki email kiritilmagan" %}</span>
     {% endif %}
     <div class="row-menu-sep"></div>
-    <form method="post" action="{% url 'student_coin_gift' s.pk %}" data-gift-confirm="{% blocktranslate with name=s.full_name trimmed %}{{ name }}ga {n} coin sovg‘a qilinsinmi?{% endblocktranslate %}">
+    <form method="post" action="{% url 'student_coin_gift' s.pk %}" data-gift-confirm="{% blocktranslate with name=s.full_name trimmed %}{{ name }}ga {n} ⚡️ quvvat sovg‘a qilinsinmi?{% endblocktranslate %}">
       {% csrf_token %}{% form_nonce %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
-      <div class="row-menu-label">{% icon "gift" 13 %} {% translate "Coin sovg‘a qilish" %}</div>
-      <div class="row-menu-hours">{% for n in gift_presets %}<button class="btn xs soft" type="submit" name="amount" value="{{ n }}">+{{ n }} 🪙</button>{% endfor %}</div>
+      <div class="row-menu-label">{% icon "gift" 13 %} {% translate "Quvvat sovg‘a qilish" %}</div>
+      <div class="row-menu-hours">{% for n in gift_presets %}<button class="btn xs soft" type="submit" name="amount" value="{{ n }}">+{{ n }} ⚡️</button>{% endfor %}</div>
     </form>
     <div class="row-menu-sep"></div>
     <form method="post" action="{% url 'student_profile_access' s.pk %}">

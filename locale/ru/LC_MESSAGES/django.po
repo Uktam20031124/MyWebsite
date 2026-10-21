@@ -7,20 +7,20 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && ""(n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: academy/coins.py:20
-msgid "90% va undan yuqori — 10 coin"
-msgstr "90% и выше — 10 coin"
+msgid "90% va undan yuqori — 10 ⚡️"
+msgstr "90% и выше — 10 ⚡️"
 
 #: academy/coins.py:21
-msgid "75–89% — 7 coin"
-msgstr "75–89% — 7 coin"
+msgid "75–89% — 7 ⚡️"
+msgstr "75–89% — 7 ⚡️"
 
 #: academy/coins.py:22
-msgid "60–74% — 5 coin"
-msgstr "60–74% — 5 coin"
+msgid "60–74% — 5 ⚡️"
+msgstr "60–74% — 5 ⚡️"
 
 #: academy/coins.py:23
-msgid "60% dan past — 1 coin (urinish uchun)"
-msgstr "Ниже 60% — 1 coin (за попытку)"
+msgid "60% dan past — 1 ⚡️ (urinish uchun)"
+msgstr "Ниже 60% — 1 ⚡️ (за попытку)"
 
 #: academy/coins.py:24
 msgid "Mustahkamlab, qayta topshirib o‘tsangiz ({PASS_PERCENT}%+) — yana +{RETAKE_BONUS}"
@@ -55,8 +55,8 @@ msgid "Sizda “A’lochi” unvoni allaqachon bor."
 msgstr "У вас уже есть звание «Отличник»."
 
 #: academy/engagement.py:266
-msgid "Coin yetmaydi: kerak {cost}, sizda {available}."
-msgstr "Не хватает coin: нужно {cost}, у вас {available}."
+msgid "Quvvat yetmaydi: kerak {cost} ⚡️, sizda {available} ⚡️."
+msgstr "Не хватает энергии: нужно {cost} ⚡️, у вас {available} ⚡️."
 
 #: academy/forms.py:137 academy/forms.py:505
 msgid "ali@gmail.com"
@@ -514,17 +514,21 @@ msgstr "Подготовка к новой теме"
 msgid "Mustahkamlashlar"
 msgstr "Закрепления"
 
-#: academy/models.py:1417 academy/models.py:1431
-msgid "Coin"
-msgstr "Coin"
+#: academy/models.py:1417
+msgid "Quvvat ⚡️"
+msgstr "Энергия ⚡️"
 
 #: academy/models.py:1418
 msgid "Sabab"
 msgstr "Причина"
 
+#: academy/models.py:1431
+msgid "Quvvat"
+msgstr "Энергия"
+
 #: academy/models.py:1432
-msgid "Coinlar"
-msgstr "Coin'ы"
+msgid "Quvvat harakatlari"
+msgstr "Движения энергии"
 
 #: academy/models.py:1442
 msgid "Test: {p}%"
@@ -547,8 +551,8 @@ msgid "🔥 {n} kun ketma-ket faol"
 msgstr "🔥 {n} дн. активности подряд"
 
 #: academy/models.py:1447
-msgid "Do‘kon: {t}"
-msgstr "Магазин: {t}"
+msgid "🎁 Mukofot: {t}"
+msgstr "🎁 Награда: {t}"
 
 #: academy/models.py:1448
 msgid "🎁 Ustozdan sovg‘a"
@@ -631,8 +635,8 @@ msgid "Izoh"
 msgstr "Описание"
 
 #: academy/models.py:1538 academy/models.py:1566
-msgid "Narxi (coin)"
-msgstr "Цена (coin)"
+msgid "Narxi (⚡️ quvvat)"
+msgstr "Цена (⚡️ энергия)"
 
 #: academy/models.py:1539
 msgid "Do'konda ko'rinadi"
@@ -1107,8 +1111,8 @@ msgid "Yuborilmadi: {failed}"
 msgstr "Не отправлено: {failed}"
 
 #: academy/profile_views.py:217
-msgid "“{title}” so‘rovi ustozga yuborildi. Tasdiqlansa, {cost} coin yechiladi."
-msgstr "Запрос «{title}» отправлен учителю. Если подтвердит, спишется {cost} coin."
+msgid "“{title}” so‘rovi ustozga yuborildi. Tasdiqlansa, {cost} ⚡️ quvvat sarflanadi."
+msgstr "Запрос «{title}» отправлен учителю. Если он одобрит, будет потрачено {cost} ⚡️ энергии."
 
 #: academy/profile_views.py:251
 msgid "{full_name}: profil {action} soatga ochildi."
@@ -1126,7 +1130,7 @@ msgstr "Добавлено пройденных тем: {n}."
 msgid "Test uchun ruxsat etilgan mavzular: {n} ta."
 msgstr "Темы, разрешённые для теста: {n}."
 
-#: academy/profile_views.py:283 academy/profile_views.py:382
+#: academy/profile_views.py:283 academy/profile_views.py:380
 msgid "rad etildi."
 msgstr "отклонено."
 
@@ -1135,46 +1139,46 @@ msgid "ruxsat berildi."
 msgstr "разрешено."
 
 #: academy/profile_views.py:335
-msgid "Coin soni 1 dan {max} gacha bo‘lishi kerak."
-msgstr "Количество коинов — от 1 до {max}."
+msgid "Quvvat miqdori 1 dan {max} gacha bo‘lishi kerak."
+msgstr "Количество энергии — от 1 до {max}."
 
 #: academy/profile_views.py:338
 msgid "Bu sovg‘a allaqachon berilgan — takror yuborilmadi."
 msgstr "Этот подарок уже отправлен — повторно не отправлено."
 
 #: academy/profile_views.py:343
-msgid "{full_name}ga {amount} coin sovg‘a qilindi 🎁 Balans: {balance}."
-msgstr "{full_name}: подарено {amount} коинов 🎁 Баланс: {balance}."
+msgid "{full_name}ga {amount} ⚡️ quvvat sovg‘a qilindi 🎁 Jami: {balance} ⚡️."
+msgstr "{full_name}: подарено {amount} ⚡️ энергии 🎁 Всего: {balance} ⚡️."
 
 #: academy/profile_views.py:359
-msgid "{amount} coinlik sovg‘a bekor qilindi. Balans: {balance}."
-msgstr "Подарок на {amount} коинов отменён. Баланс: {balance}."
+msgid "{amount} ⚡️ quvvatlik sovg‘a bekor qilindi. Jami: {balance} ⚡️."
+msgstr "Подарок на {amount} ⚡️ энергии отменён. Всего: {balance} ⚡️."
 
 #: academy/profile_views.py:364
 msgid "Bu yozuvni bekor qilib bo‘lmaydi (faqat 24 soat ichidagi ustoz sovg‘asi)."
 msgstr "Эту запись нельзя отменить (только подарок учителя за последние 24 часа)."
 
 #: academy/profile_views.py:377
-msgid "{full_name}: coin yetmaydi — so‘rov rad etildi."
-msgstr "{full_name}: не хватает coin — запрос отклонён."
+msgid "{full_name}: quvvat yetmaydi — so‘rov rad etildi."
+msgstr "{full_name}: не хватает энергии — запрос отклонён."
 
-#: academy/profile_views.py:382
-msgid "berildi, coin yechildi."
-msgstr "выдано, coin списаны."
+#: academy/profile_views.py:380
+msgid "berildi, quvvat sarflandi."
+msgstr "выдано, энергия потрачена."
 
-#: academy/profile_views.py:387
+#: academy/profile_views.py:385
 msgid "{full_name}: “A’lochi” unvoni berildi — ismi hamma joyda oltin medal bilan ko‘rinadi."
 msgstr "{full_name}: присвоено звание «Отличник» — имя везде показывается с золотой медалью."
 
-#: academy/profile_views.py:401
+#: academy/profile_views.py:399
 msgid "{full_name}: “A’lochi” unvoni olib qo‘yildi."
 msgstr "{full_name}: звание «Отличник» снято."
 
-#: academy/profile_views.py:404
+#: academy/profile_views.py:402
 msgid "{full_name}: “A’lochi” unvoni berildi 🏅"
 msgstr "{full_name}: присвоено звание «Отличник» 🏅"
 
-#: academy/profile_views.py:415
+#: academy/profile_views.py:413
 msgid "Sovg'a saqlandi."
 msgstr "Подарок сохранён."
 
@@ -1666,10 +1670,6 @@ msgstr "Панель команд"
 msgid "Chiqish"
 msgstr "Выйти"
 
-#: templates/academy/base.html templates/academy/shop/rewards.html
-msgid "Coin do‘koni"
-msgstr "Магазин coin"
-
 #: templates/academy/base.html
 msgid "Ctrl</kbd><kbd>K</kbd>"
 msgstr "Ctrl</kbd><kbd>K</kbd>"
@@ -1705,6 +1705,10 @@ msgstr "Меню"
 #: templates/academy/base.html templates/academy/login.html templates/academy/portal/student.html
 msgid "Minar Test"
 msgstr "Minar Test"
+
+#: templates/academy/base.html templates/academy/portal/student.html templates/academy/shop/rewards.html
+msgid "Mukofotlar"
+msgstr "Награды"
 
 #: templates/academy/base.html templates/academy/groups/list.html templates/academy/lessons/list.html templates/academy/students/list.html
 msgid "O‘quv markazi"
@@ -2267,10 +2271,6 @@ msgid "Yuqoriga"
 msgstr "Вверх"
 
 #: templates/academy/groups/detail.html
-msgid "coin · dushanbadan"
-msgstr "coin · с понедельника"
-
-#: templates/academy/groups/detail.html
 msgid "hali yo‘qlama yo‘q"
 msgstr "посещаемость ещё не отмечалась"
 
@@ -2313,6 +2313,10 @@ msgstr "— %(pct)s%% (тестов: %(n)s)"
 #: templates/academy/groups/detail.html
 msgid "“%(title)s” dasturdan olib tashlansinmi?"
 msgstr "Убрать «%(title)s» из программы?"
+
+#: templates/academy/groups/detail.html
+msgid "⚡️ quvvat · dushanbadan"
+msgstr "⚡️ энергия · с понедельника"
 
 #: templates/academy/groups/detail.html
 msgid "🏆 Haftaning eng faollari"
@@ -2727,10 +2731,6 @@ msgid "Caps Lock yoqilgan"
 msgstr "Включён Caps Lock"
 
 #: templates/academy/login.html
-msgid "Coin, streak va o‘sish grafigi"
-msgstr "Коины, серия дней и график роста"
-
-#: templates/academy/login.html
 msgid "Darslar va bir bosishda yo‘qlama"
 msgstr "Уроки и посещаемость в один клик"
 
@@ -2773,6 +2773,10 @@ msgstr "Показать пароль"
 #: templates/academy/login.html
 msgid "Parolni yashirish"
 msgstr "Скрыть пароль"
+
+#: templates/academy/login.html
+msgid "Quvvat ⚡️, streak va o‘sish grafigi"
+msgstr "Энергия ⚡️, серия дней и график роста"
 
 #: templates/academy/login.html
 msgid "Reyting va tahlil"
@@ -2863,8 +2867,8 @@ msgid "❌ <strong>Xato.</strong> Bu savol keyinroq yana chiqadi — mavzu mater
 msgstr "❌ <strong>Неверно.</strong> Этот вопрос попадётся ещё раз — посмотрите материал по теме."
 
 #: templates/academy/portal/practice.html
-msgid "🎉 <strong>Zo‘r! Savol o‘zlashtirildi</strong> — ro‘yxatdan chiqdi, +%(fixed_coins)s 🪙."
-msgstr "🎉 <strong>Отлично! Вопрос усвоен</strong> — убран из списка, +%(fixed_coins)s 🪙."
+msgid "🎉 <strong>Zo‘r! Savol o‘zlashtirildi</strong> — ro‘yxatdan chiqdi, +%(fixed_coins)s ⚡️."
+msgstr "🎉 <strong>Отлично! Вопрос усвоен</strong> — убран из списка, +%(fixed_coins)s ⚡️."
 
 #: templates/academy/portal/practice.html
 msgid "🎉 Hammasi o‘zlashtirildi!"
@@ -2915,8 +2919,8 @@ msgid "Test · %(title)s"
 msgstr "Тест · %(title)s"
 
 #: templates/academy/portal/student.html
-msgid "%(name)s · shu hafta (dushanbadan) yig‘ilgan coinlar. Har dushanba yangidan boshlanadi."
-msgstr "%(name)s · coin, заработанные на этой неделе (с понедельника). Каждый понедельник всё начинается заново."
+msgid "%(name)s · shu hafta (dushanbadan) yig‘ilgan quvvat ⚡️. Har dushanba yangidan boshlanadi."
+msgstr "%(name)s · энергия ⚡️, набранная на этой неделе (с понедельника). Каждый понедельник всё начинается заново."
 
 #: templates/academy/portal/student.html
 msgid "%(present)s/%(total)s dars"
@@ -2941,30 +2945,6 @@ msgstr "Сегодня вы активны ✅"
 #: templates/academy/portal/student.html
 msgid "Bugun test yoki mashq qiling — streak uzilmasin!"
 msgstr "Решите сегодня тест или сделайте разбор ошибок — чтобы серия не прервалась!"
-
-#: templates/academy/portal/student.html
-msgid "Coin do‘koni 🛍"
-msgstr "Магазин coin 🛍"
-
-#: templates/academy/portal/student.html
-msgid "Coin qanday beriladi?"
-msgstr "Как начисляются coin?"
-
-#: templates/academy/portal/student.html
-msgid "Coin tarixi"
-msgstr "История coin"
-
-#: templates/academy/portal/student.html
-msgid "Coin yig‘ing va sovg‘a oling. So‘rov ustozga boradi, tasdiqlansa coin yechiladi."
-msgstr "Копите coin и получайте подарки. Запрос уходит учителю — после подтверждения coin списываются."
-
-#: templates/academy/portal/student.html
-msgid "Coinlaringiz"
-msgstr "Ваши coin"
-
-#: templates/academy/portal/student.html
-msgid "Do‘kon"
-msgstr "Магазин"
 
 #: templates/academy/portal/student.html
 msgid "Do‘kon hozircha bo‘sh."
@@ -3019,6 +2999,10 @@ msgid "Material ochilgach 20 daqiqadan keyin qayta topshirasiz."
 msgstr "Пересдать можно через 20 минут после открытия материала."
 
 #: templates/academy/portal/student.html
+msgid "Mukofotlar 🎁"
+msgstr "Награды 🎁"
+
+#: templates/academy/portal/student.html
 msgid "Olish"
 msgstr "Получить"
 
@@ -3055,8 +3039,24 @@ msgid "Qayta topshirish <span data-countdown=\"%(seconds)s\"></span> dan keyin."
 msgstr "Пересдача — через <span data-countdown=\"%(seconds)s\"></span>."
 
 #: templates/academy/portal/student.html
-msgid "Siz: %(place)s-o‘rin · %(coins)s 🪙 bu hafta."
-msgstr "Вы: %(place)s-е место · %(coins)s 🪙 за неделю."
+msgid "Quvvat qanday beriladi?"
+msgstr "Как начисляется энергия?"
+
+#: templates/academy/portal/student.html
+msgid "Quvvat tarixi"
+msgstr "История энергии"
+
+#: templates/academy/portal/student.html
+msgid "Quvvat ⚡️ yig‘ing va mukofot oling. So‘rov ustozga boradi, tasdiqlansa quvvat sarflanadi."
+msgstr "Собирайте энергию ⚡️ и получайте награды. Запрос уходит учителю; если он одобрит, энергия будет потрачена."
+
+#: templates/academy/portal/student.html
+msgid "Quvvatingiz"
+msgstr "Ваша энергия"
+
+#: templates/academy/portal/student.html
+msgid "Siz: %(place)s-o‘rin · %(coins)s ⚡️ bu hafta."
+msgstr "Вы: %(place)s-е место · %(coins)s ⚡️ на этой неделе."
 
 #: templates/academy/portal/student.html
 msgid "Streak"
@@ -3071,12 +3071,12 @@ msgid "Test topshirish"
 msgstr "Сдать тест"
 
 #: templates/academy/portal/student.html
-msgid "Test yeching — coinlar shu yerda ko‘rinadi."
-msgstr "Решайте тесты — coin появятся здесь."
+msgid "Test yeching — quvvat ⚡️ shu yerda ko‘rinadi."
+msgstr "Решайте тесты — энергия ⚡️ появится здесь."
 
 #: templates/academy/portal/student.html
-msgid "Testlarda xato qilgan <strong>%(open_mistakes_n)s</strong> ta savolingiz bor. Har birini 3 marta ketma-ket to‘g‘ri yechsangiz — ro‘yxatdan chiqadi va +2 🪙. Keyingi testlarda ham ular ko‘proq tushadi."
-msgstr "В тестах у вас <strong>%(open_mistakes_n)s</strong> вопросов с ошибками. Ответьте на каждый правильно 3 раза подряд — он уйдёт из списка, +2 🪙. В следующих тестах они тоже будут попадаться чаще."
+msgid "Testlarda xato qilgan <strong>%(open_mistakes_n)s</strong> ta savolingiz bor. Har birini 3 marta ketma-ket to‘g‘ri yechsangiz — ro‘yxatdan chiqadi va +2 ⚡️. Keyingi testlarda ham ular ko‘proq tushadi."
+msgstr "В тестах у вас <strong>%(open_mistakes_n)s</strong> вопросов с ошибками. Решите каждый 3 раза подряд правильно — он уйдёт из списка, и вы получите +2 ⚡️. В следующих тестах они будут встречаться чаще."
 
 #: templates/academy/portal/student.html
 msgid "Testlarim"
@@ -3107,10 +3107,6 @@ msgid "bugungi limit tugadi"
 msgstr "лимит на сегодня исчерпан"
 
 #: templates/academy/portal/student.html
-msgid "coin yetmaydi"
-msgstr "не хватает coin"
-
-#: templates/academy/portal/student.html
 msgid "hali topshirilmagan"
 msgstr "ещё не сдавали"
 
@@ -3123,8 +3119,12 @@ msgid "oxirgi natija: <strong>%(percent)s%%</strong> (%(correct)s/%(total)s)"
 msgstr "последний результат: <strong>%(percent)s%%</strong> (%(correct)s/%(total)s)"
 
 #: templates/academy/portal/student.html
-msgid "sarflash mumkin: %(coin_available)s"
-msgstr "можно потратить: %(coin_available)s"
+msgid "quvvat yetmaydi"
+msgstr "не хватает энергии"
+
+#: templates/academy/portal/student.html
+msgid "sarflash mumkin: %(coin_available)s ⚡️"
+msgstr "можно потратить: %(coin_available)s ⚡️"
 
 #: templates/academy/portal/student.html
 msgid "savollar yo‘q"
@@ -3143,8 +3143,8 @@ msgid "xato"
 msgstr "неверно"
 
 #: templates/academy/portal/student.html
-msgid "· %(streak_every)s kunlik bonusgacha %(to_bonus)s kun (+%(streak_bonus)s 🪙)"
-msgstr "· до бонуса за %(streak_every)s дней осталось %(to_bonus)s дн. (+%(streak_bonus)s 🪙)"
+msgid "· %(streak_every)s kunlik bonusgacha %(to_bonus)s kun (+%(streak_bonus)s ⚡️)"
+msgstr "· до бонуса за %(streak_every)s дней осталось %(to_bonus)s дн. (+%(streak_bonus)s ⚡️)"
 
 #: templates/academy/portal/student.html
 msgid "· bugun %(used)s/%(daily_limit)s"
@@ -3155,8 +3155,8 @@ msgid "· vaqt tugadi"
 msgstr "· время вышло"
 
 #: templates/academy/portal/student.html
-msgid "“%(title)s” uchun %(cost)s coin. So‘rov yuborilsinmi?"
-msgstr "«%(title)s» за %(cost)s coin. Отправить запрос?"
+msgid "“%(title)s” uchun %(cost)s ⚡️ quvvat. So‘rov yuborilsinmi?"
+msgstr "«%(title)s» за %(cost)s ⚡️ энергии. Отправить запрос?"
 
 #: templates/academy/portal/student.html
 msgid "“Testni boshlash” → savollar soni (10/12) va vaqtni (5/10 daq.) tanlaysiz. Natija %(pass_percent)s%% dan past bo‘lsa — mavzuni mustahkamlash taklif qilinadi, 20 daqiqadan keyin qayta topshirasiz. Bir mavzudan kuniga ko‘pi bilan %(daily_limit)s ta test."
@@ -4131,16 +4131,16 @@ msgid "ruxsat berilgan"
 msgstr "разрешено"
 
 #: templates/academy/quiz/review_requests.html
+msgid "🎁 Mukofot so‘rovlari"
+msgstr "🎁 Запросы наград"
+
+#: templates/academy/quiz/review_requests.html
 msgid "📝 Test topshirish so‘rovlari"
 msgstr "📝 Запросы на сдачу теста"
 
 #: templates/academy/quiz/review_requests.html
 msgid "🔑 Profilga kirish so‘rovlari"
 msgstr "🔑 Запросы на вход в профиль"
-
-#: templates/academy/quiz/review_requests.html
-msgid "🛍 Coin do‘koni so‘rovlari"
-msgstr "🛍 Запросы из магазина coin"
 
 #: templates/academy/quiz/send.html
 msgid "%(full_name)s: test tili"
@@ -4471,20 +4471,20 @@ msgid "%(rewards)s ta"
 msgstr "%(rewards)s"
 
 #: templates/academy/shop/rewards.html
-msgid "Coin do‘koni · Minar Test"
-msgstr "Магазин coin · Minar Test"
-
-#: templates/academy/shop/rewards.html
 msgid "Motivatsiya"
 msgstr "Мотивация"
+
+#: templates/academy/shop/rewards.html
+msgid "Mukofotlar · Minar Test"
+msgstr "Награды · Minar Test"
 
 #: templates/academy/shop/rewards.html
 msgid "Oxirgi so‘rovlar"
 msgstr "Последние запросы"
 
 #: templates/academy/shop/rewards.html
-msgid "O‘quvchilar coin yig‘ib, shu sovg‘alarni so‘raydi. So‘rov “So‘rovlar” bo‘limiga keladi; siz tasdiqlasangiz — coin yechiladi."
-msgstr "Ученики копят coin и запрашивают эти подарки. Запрос приходит в раздел «Запросы»; если подтвердите — coin списываются."
+msgid "O‘quvchilar quvvat ⚡️ yig‘ib, shu mukofotlarni so‘raydi. So‘rov “So‘rovlar” bo‘limiga keladi; siz tasdiqlasangiz — quvvat sarflanadi."
+msgstr "Ученики собирают энергию ⚡️ и запрашивают эти награды. Запрос приходит в раздел «Запросы»; если вы одобрите — энергия будет потрачена."
 
 #: templates/academy/shop/rewards.html
 msgid "Sovg‘a yo‘q — o‘ngdagi formadan qo‘shing."
@@ -4519,12 +4519,8 @@ msgid "%(name)s: profil amallari"
 msgstr "%(name)s: действия с профилем"
 
 #: templates/academy/students/_profile_menu.html templates/academy/students/detail.html
-msgid "%(name)sga {n} coin sovg‘a qilinsinmi?"
-msgstr "Подарить %(name)s {n} коинов?"
-
-#: templates/academy/students/_profile_menu.html templates/academy/students/detail.html
-msgid "Coin sovg‘a qilish"
-msgstr "Подарить коины"
+msgid "%(name)sga {n} ⚡️ quvvat sovg‘a qilinsinmi?"
+msgstr "Подарить %(name)s {n} ⚡️ энергии?"
 
 #: templates/academy/students/_profile_menu.html
 msgid "Muddatni yangilash"
@@ -4549,6 +4545,10 @@ msgstr "Открыть доступ к профилю"
 #: templates/academy/students/_profile_menu.html
 msgid "Profilni o‘chirib qo‘yish"
 msgstr "Закрыть доступ к профилю"
+
+#: templates/academy/students/_profile_menu.html templates/academy/students/detail.html
+msgid "Quvvat sovg‘a qilish"
+msgstr "Подарить энергию"
 
 #: templates/academy/students/_profile_menu.html
 msgid "So‘rovni rad etish"
@@ -4687,8 +4687,8 @@ msgid "· %(error_n)s ta qatorda muammo"
 msgstr "· проблемы в строках: %(error_n)s"
 
 #: templates/academy/students/detail.html
-msgid "%(amount)s coinlik sovg‘a bekor qilinsinmi?"
-msgstr "Отменить подарок на %(amount)s коинов?"
+msgid "%(amount)s ⚡️ quvvatlik sovg‘a bekor qilinsinmi?"
+msgstr "Отменить подарок на %(amount)s ⚡️ энергии?"
 
 #: templates/academy/students/detail.html
 msgid "%(full_name)s · Minar Test"
@@ -4711,8 +4711,8 @@ msgid "%(n)s ta test · oxirgi 3 tasi: %(recent_pct)s%%"
 msgstr "тестов: %(n)s · последние 3: %(recent_pct)s%%"
 
 #: templates/academy/students/detail.html
-msgid "%(name)sdan “A’lochi” unvoni olib qo‘yilsinmi? (coin qaytarilmaydi)"
-msgstr "Снять с %(name)s звание «Отличник»? (коины не возвращаются)"
+msgid "%(name)sdan “A’lochi” unvoni olib qo‘yilsinmi? (quvvat qaytarilmaydi)"
+msgstr "Снять с %(name)s звание «Отличник»? (энергия не возвращается)"
 
 #: templates/academy/students/detail.html
 msgid "%(present)s / %(total)s dars"
@@ -4731,16 +4731,12 @@ msgid "<strong>Test uchun mavzular: %(allowed_n)s ta</strong>"
 msgstr "<strong>Темы для теста: %(allowed_n)s</strong>"
 
 #: templates/academy/students/detail.html
-msgid "<strong>🪙 Coinlar: %(coin_balance)s</strong>"
-msgstr "<strong>🪙 Coin: %(coin_balance)s</strong>"
+msgid "<strong>⚡️ Quvvat: %(coin_balance)s</strong>"
+msgstr "<strong>⚡️ Энергия: %(coin_balance)s</strong>"
 
 #: templates/academy/students/detail.html templates/academy/students/list.html
 msgid "Aloqa"
 msgstr "Контакты"
-
-#: templates/academy/students/detail.html
-msgid "Coin soni"
-msgstr "Количество коинов"
 
 #: templates/academy/students/detail.html
 msgid "Darslar bo‘yicha ballar"
@@ -4755,8 +4751,8 @@ msgid "Guruhda o‘tilgan mavzular profilda o‘zi chiqadi. Bu yerda qo‘shimch
 msgstr "Пройденные в группе темы появляются в профиле сами. Здесь можно отметить дополнительные темы."
 
 #: templates/academy/students/detail.html
-msgid "Hali coin yo‘q — test yechgach beriladi."
-msgstr "Coin пока нет — начисляются после тестов."
+msgid "Hali quvvat yo‘q — test yechgach beriladi."
+msgstr "Энергии пока нет — она начисляется после тестов."
 
 #: templates/academy/students/detail.html
 msgid "Hali test yuborilmagan."
@@ -4797,6 +4793,10 @@ msgstr "Средний балл"
 #: templates/academy/students/detail.html
 msgid "Profil: kirish va testlar"
 msgstr "Профиль: вход и тесты"
+
+#: templates/academy/students/detail.html
+msgid "Quvvat miqdori"
+msgstr "Количество энергии"
 
 #: templates/academy/students/detail.html
 msgid "Sertifikat"

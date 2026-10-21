@@ -178,7 +178,7 @@ class ProfileFlowTests(TestCase):
         self.assertContains(self.ask(self.other), "ruxsat berilmagan")
         attempt = self.solve(self.start(self.topic))
         self.assertEqual(coins.balance(self.ali), 10)
-        self.assertContains(self.teacher.get(self.ali.get_absolute_url()), "Coinlar: 10")
+        self.assertContains(self.teacher.get(self.ali.get_absolute_url()), "Quvvat: 10")
         self.assertEqual(attempt.test_request.kind, TestRequest.Kind.FIRST)
 
     def test_russian_material(self, notify):

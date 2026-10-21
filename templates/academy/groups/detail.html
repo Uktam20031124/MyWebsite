@@ -167,10 +167,10 @@
     </section>
 
     <section class="card" id="coin-board" aria-labelledby="coin-h">
-      <div class="card-head"><h2 id="coin-h">{% translate "🏆 Haftaning eng faollari" %}</h2><span class="meta">{% translate "coin · dushanbadan" %}</span></div>
+      <div class="card-head"><h2 id="coin-h">{% translate "🏆 Haftaning eng faollari" %}</h2><span class="meta">{% translate "⚡️ quvvat · dushanbadan" %}</span></div>
       <div class="card-body">
         <ol class="board">
-          {% for r in coin_board %}<li><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><a class="grow" href="{{ r.student.get_absolute_url }}">{{ r.student|person_name }}</a><strong>{{ r.coins }} 🪙</strong></li>{% empty %}<li class="meta">{% translate "Faol o‘quvchi yo‘q." %}</li>{% endfor %}
+          {% for r in coin_board %}<li><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><a class="grow" href="{{ r.student.get_absolute_url }}">{{ r.student|person_name }}</a><strong>{{ r.coins }} ⚡️</strong></li>{% empty %}<li class="meta">{% translate "Faol o‘quvchi yo‘q." %}</li>{% endfor %}
         </ol>
       </div>
     </section>

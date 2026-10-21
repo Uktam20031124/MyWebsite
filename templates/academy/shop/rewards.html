@@ -1,9 +1,9 @@
 {% extends "academy/base.html" %}
 {% load i18n ui %}
-{% block title %}{% translate "Coin do‘koni · Minar Test" %}{% endblock %}
+{% block title %}{% translate "Mukofotlar · Minar Test" %}{% endblock %}
 {% block kicker %}{% icon "trophy" 15 %} {% translate "Motivatsiya" %}{% endblock %}
-{% block heading %}{% translate "Coin do‘koni" %}{% endblock %}
-{% block subheading %}<p class="page-sub">{% translate "O‘quvchilar coin yig‘ib, shu sovg‘alarni so‘raydi. So‘rov “So‘rovlar” bo‘limiga keladi; siz tasdiqlasangiz — coin yechiladi." %}</p>{% endblock %}
+{% block heading %}{% translate "Mukofotlar" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "O‘quvchilar quvvat ⚡️ yig‘ib, shu mukofotlarni so‘raydi. So‘rov “So‘rovlar” bo‘limiga keladi; siz tasdiqlasangiz — quvvat sarflanadi." %}</p>{% endblock %}
 {% block actions %}<a class="btn soft" href="{% url 'quiz_review_requests' %}">{% icon "shield" 16 %} {% translate "So‘rovlar" %}</a>{% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
         {% for r in rewards %}
           <a class="row" href="{% url 'reward_edit' r.pk %}">
             <span class="grow truncate"><span class="person-name block truncate">{% if r.perk == 'honor' %}{% honor_medal 14 %} {% endif %}{{ r.title }}{% if not r.is_active %} <span class="badge plain">{% translate "yashirin" %}</span>{% endif %}</span><span class="person-meta">{% blocktranslate with description=r.description|default:"—" given=r.given trimmed %}{{ description }} · berilgan: {{ given }}{% endblocktranslate %}{% if r.waiting %} {% blocktranslate with waiting=r.waiting trimmed %}· kutilmoqda: {{ waiting }}{% endblocktranslate %}{% endif %}</span></span>
-            <strong>{{ r.cost }} 🪙</strong>
+            <strong>{{ r.cost }} ⚡️</strong>
           </a>
         {% empty %}
           <div class="empty compact"><p>{% translate "Sovg‘a yo‘q — o‘ngdagi formadan qo‘shing." %}</p></div>
@@ -41,7 +41,7 @@
   <div class="card-head"><h2>{% icon "clock" 18 %} {% translate "Oxirgi so‘rovlar" %}</h2></div>
   <div class="card-body flush"><div class="rows">
     {% for p in recent %}
-      <div class="row"><span class="grow truncate"><span class="person-name block truncate">{{ p.student|person_name }} — {{ p.title }}</span><span class="person-meta">{{ p.created_at|date:"d.m H:i" }} · {{ p.cost }} 🪙</span></span><span class="badge {% if p.status == 'approved' %}ok{% elif p.status == 'rejected' %}plain{% else %}warn{% endif %}">{{ p.get_status_display }}</span></div>
+      <div class="row"><span class="grow truncate"><span class="person-name block truncate">{{ p.student|person_name }} — {{ p.title }}</span><span class="person-meta">{{ p.created_at|date:"d.m H:i" }} · {{ p.cost }} ⚡️</span></span><span class="badge {% if p.status == 'approved' %}ok{% elif p.status == 'rejected' %}plain{% else %}warn{% endif %}">{{ p.get_status_display }}</span></div>
     {% endfor %}
   </div></div>
 </section>

@@ -22,7 +22,7 @@ class CoinGiftTests(TestCase):
 
     def test_gift_adds_coins_and_shows_in_history(self):
         page = self.client.get(self.ali.get_absolute_url())
-        self.assertContains(page, "Coin sovg‘a qilish")
+        self.assertContains(page, "Quvvat sovg‘a qilish")
         self.assertContains(page, 'name="nonce"')
         response = self.gift(300, note="  olimpiada   uchun ")
         self.assertRedirects(response, f"{self.ali.get_absolute_url()}#coins", fetch_redirect_response=False)

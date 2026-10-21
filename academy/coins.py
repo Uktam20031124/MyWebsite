@@ -17,10 +17,10 @@ PREVIEW_BONUS = 5
 RETAKE_BONUS = 3
 
 RULES = [
-    _("90% va undan yuqori — 10 coin"),
-    _("75–89% — 7 coin"),
-    _("60–74% — 5 coin"),
-    _("60% dan past — 1 coin (urinish uchun)"),
+    _("90% va undan yuqori — 10 ⚡️"),
+    _("75–89% — 7 ⚡️"),
+    _("60–74% — 5 ⚡️"),
+    _("60% dan past — 1 ⚡️ (urinish uchun)"),
     _("Mustahkamlab, qayta topshirib o‘tsangiz ({PASS_PERCENT}%+) — yana +{RETAKE_BONUS}").format(
         PASS_PERCENT=PASS_PERCENT, RETAKE_BONUS=RETAKE_BONUS
     ),
