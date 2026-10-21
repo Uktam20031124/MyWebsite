@@ -96,6 +96,12 @@
           <span>{% blocktranslate with days=streak.days trimmed %}🔥 <strong>{{ days }}</strong> kun streak{% endblocktranslate %}</span>
           <span>{% blocktranslate with open_mistakes_n=open_mistakes_n trimmed %}💪 <strong>{{ open_mistakes_n }}</strong> ta xato savol{% endblocktranslate %}</span>
         </div>
+        {% if topic_unlocks %}
+          <div class="unlocked-topics">
+            <span class="meta strong">{% translate "🔓 Quvvat bilan ochgan mavzulari:" %}</span>
+            {% for u in topic_unlocks %}<span class="badge unlock-badge" title="{{ u.created_at|date:'d.m.Y H:i' }} · {{ u.cost }} ⚡️">{{ u.topic|topic_title }}</span>{% endfor %}
+          </div>
+        {% endif %}
 
         <details class="profile-topics" style="margin-top:14px">
           <summary>{% blocktranslate with allowed_n=allowed_n trimmed %}<strong>Test uchun mavzular: {{ allowed_n }} ta</strong>{% endblocktranslate %} <span class="meta">{% blocktranslate with taught_n=taught_n trimmed %}· o‘tilgan {{ taught_n }} tasi avtomatik{% endblocktranslate %}</span></summary>

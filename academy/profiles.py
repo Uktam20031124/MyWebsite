@@ -9,7 +9,9 @@ Oqim:
    Bir mavzu bo'yicha kuniga ko'pi bilan ``TestRequest.DAILY_LIMIT`` ta.
 4. Natija 60% dan past bo'lsa — "Darsni qayta mustahkamlash" o'zi ochiladi; material
    ochilgandan 20 daqiqa o'tib qayta topshirish mumkin.
-5. Har bir yakunlangan test uchun coinlar (``academy.coins``).
+5. Har bir yakunlangan test uchun quvvat ⚡️ (``academy.coins``).
+6. Quvvat sarflab guruh dasturidagi navbatdagi mavzularni oldindan ochish (``unlock_topic``):
+   material va test ochiladi, 70%+ natijada "oldindan o'zlashtirdi" bonusi.
 """
 
 import logging
@@ -25,7 +27,17 @@ from django.utils.translation import gettext_lazy as _
 
 from . import telegram_sender as tg
 from .coins import PASS_PERCENT
-from .models import QuizAttempt, QuizBatch, Student, StudySession, SyllabusItem, TestRequest, Topic
+from .models import (
+    CoinTransaction,
+    QuizAttempt,
+    QuizBatch,
+    Student,
+    StudySession,
+    SyllabusItem,
+    TestRequest,
+    Topic,
+    TopicUnlock,
+)
 from .services import create_quiz_batch
 
 log = logging.getLogger(__name__)
@@ -104,6 +116,7 @@ class TopicRow:
     used: int  # bugun
     session: StudySession | None  # tegishli mustahkamlash/tayyorlanish
     now: datetime
+    unlocked: bool = False  # quvvat bilan oldindan ochilgan (guruhda hali o'tilmagan)
 
     @property
     def left_today(self) -> int:
@@ -138,11 +151,13 @@ class TopicRow:
 
 
 def topic_rows(student: Student, now=None) -> list[TopicRow]:
-    """Guruhda o'tilgan mavzular (avtomatik) + ustoz qo'shimcha ruxsat bergan mavzular."""
+    """Guruhda o'tilgan mavzular (avtomatik) + ustoz ruxsat bergan + quvvat bilan ochilgan mavzular."""
     now = now or timezone.now()
     allowed = set(student.allowed_topics.values_list("pk", flat=True))
+    taught = taught_topic_ids(student)
+    unlocked = unlocked_topic_ids(student)
     topics = list(
-        Topic.objects.filter(pk__in=allowed | taught_topic_ids(student))
+        Topic.objects.filter(pk__in=allowed | taught | unlocked)
         .select_related("module", "quiz")
         .order_by("module__order", "module__title", "order", "title")
     )
@@ -181,6 +196,7 @@ def topic_rows(student: Student, now=None) -> list[TopicRow]:
             used=used.get(t.pk, 0),
             session=None,
             now=now,
+            unlocked=t.pk in unlocked and t.pk not in taught,
         )
         if row.gate:
             s = sessions.get((t.pk, row.gate))
@@ -228,7 +244,12 @@ def begin_test(student: Student, topic: Topic) -> TestRequest:
                 raise ProfileError(_("Avval materialni oching: mustahkamlash vaqti shundan boshlanadi."))
             at = timezone.localtime(row.unlocks_at)
             raise ProfileError(_("Mustahkamlash {at:%H:%M} da tugaydi — keyin test ochiladi.").format(at=at))
-        kind = TestRequest.Kind.RETAKE if row.gate else TestRequest.Kind.FIRST
+        if row.gate:
+            kind = TestRequest.Kind.RETAKE
+        elif row.unlocked and not row.last:
+            kind = TestRequest.Kind.PREVIEW  # 70%+ bo'lsa — "oldindan o'zlashtirdi" bonusi
+        else:
+            kind = TestRequest.Kind.FIRST
         return TestRequest.objects.create(
             student=student,
             topic=topic,
@@ -262,6 +283,67 @@ def start_test(req: TestRequest, questions: int, minutes: int) -> QuizAttempt:
         req.status, req.attempt = TestRequest.Status.USED, attempt
         req.save(update_fields=["status", "attempt"])
     return attempt
+
+
+# --- Quvvat bilan mavzu ochish ------------------------------------------------------
+
+UNLOCK_COST = 30  # ⚡️ — bitta mavzu
+UNLOCK_AHEAD = 3  # guruh dasturida navbatdagi nechta mavzu ochishga taklif qilinadi
+UNLOCK_REASON = "🔓 Mavzu ochildi: {title}"
+
+
+def unlocked_topic_ids(student: Student) -> set[int]:
+    return set(student.topic_unlocks.values_list("topic_id", flat=True))
+
+
+def unlock_offers(student: Student) -> list[Topic]:
+    """Guruh dasturidagi navbatdagi (hali o'tilmagan va profilda yo'q) mavzular — material yoki
+    test savollari bori."""
+    available = (
+        set(student.allowed_topics.values_list("pk", flat=True))
+        | taught_topic_ids(student)
+        | unlocked_topic_ids(student)
+    )
+    items = (
+        SyllabusItem.objects.filter(group_id=student.group_id, status=SyllabusItem.Status.PLANNED)
+        .exclude(topic_id__in=available)
+        .select_related("topic__module", "topic__quiz")
+        .order_by("order", "pk")
+    )
+    offers = []
+    for item in items:
+        topic = item.topic
+        quiz = getattr(topic, "quiz", None)
+        if topic.study or (quiz and quiz.questions.exists()):
+            offers.append(topic)
+        if len(offers) == UNLOCK_AHEAD:
+            break
+    return offers
+
+
+def unlock_topic(student: Student, topic: Topic) -> TopicUnlock:
+    """Quvvat sarflab mavzuni ochish. Sabab bilan rad etilsa — ProfileError."""
+    from .engagement import available
+
+    if not is_open(student):
+        raise ProfileError(_("Profilga kirish vaqti tugagan — ustozdan qayta ruxsat so‘rang."))
+    with transaction.atomic():
+        Student.objects.select_for_update().filter(pk=student.pk).first()  # bir vaqtda ikki so'rov bo'lmasin
+        if TopicUnlock.objects.filter(student=student, topic=topic).exists():
+            raise ProfileError(_("Bu mavzu allaqachon ochilgan."))
+        if topic.pk not in {t.pk for t in unlock_offers(student)}:
+            raise ProfileError(_("Bu mavzuni hozir ochib bo‘lmaydi — navbatdagi mavzulardan birini tanlang."))
+        have = available(student)
+        if have < UNLOCK_COST:
+            raise ProfileError(
+                _("Quvvat yetmaydi: kerak {cost} ⚡️, sizda {available} ⚡️.").format(cost=UNLOCK_COST, available=have)
+            )
+        tx = CoinTransaction.objects.create(
+            student=student, amount=-UNLOCK_COST, reason=UNLOCK_REASON.format(title=topic.title)[:120]
+        )
+        unlock = TopicUnlock.objects.create(student=student, topic=topic, cost=UNLOCK_COST, transaction=tx)
+    notify(f"🔓 {student.full_name} ({student.group.code}): “{topic.title}” mavzusini {UNLOCK_COST} ⚡️ ga ochdi.")
+    return unlock
 
 
 # --- Ustozga ---------------------------------------------------------------------

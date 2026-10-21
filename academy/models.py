@@ -1445,6 +1445,7 @@ class CoinTransaction(models.Model):
         (re.compile(r"^Xato tuzatildi: (?P<t>.+)$"), gettext_noop("Xato tuzatildi: {t}")),
         (re.compile(r"^🔥 (?P<n>\d+) kun ketma-ket faol$"), gettext_noop("🔥 {n} kun ketma-ket faol")),
         (re.compile(r"^Do‘kon: (?P<t>.+)$"), gettext_noop("🎁 Mukofot: {t}")),
+        (re.compile(r"^🔓 Mavzu ochildi: (?P<t>.+)$"), gettext_noop("🔓 Mavzu ochildi: {t}")),
         (re.compile(r"^🎁 Ustozdan sovg‘a$"), gettext_noop("🎁 Ustozdan sovg‘a")),
         (re.compile(r"^🎁 Ustozdan sovg‘a: (?P<t>.+)$"), gettext_noop("🎁 Ustozdan sovg‘a: {t}")),
     ]
@@ -1517,6 +1518,29 @@ class DailyActivity(models.Model):
 
     def __str__(self) -> str:
         return f"{self.student} · {self.day:%d.%m.%Y}"
+
+
+class TopicUnlock(models.Model):
+    """O'quvchi quvvat ⚡️ sarflab guruhdan oldin ochgan mavzu (material va test ochiladi)."""
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="topic_unlocks", verbose_name=_("O'quvchi")
+    )
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name="unlocks", verbose_name=_("Mavzu"))
+    cost = models.PositiveIntegerField(_("Narxi (⚡️ quvvat)"))
+    transaction = models.OneToOneField(
+        CoinTransaction, on_delete=models.SET_NULL, null=True, blank=True, related_name="topic_unlock"
+    )
+    created_at = models.DateTimeField(_("Ochilgan"), auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = _("Ochilgan mavzu")
+        verbose_name_plural = _("Ochilgan mavzular")
+        constraints = [models.UniqueConstraint(fields=["student", "topic"], name="uniq_topic_unlock")]
+
+    def __str__(self) -> str:
+        return f"{self.student} — {self.topic}"
 
 
 class Reward(models.Model):
