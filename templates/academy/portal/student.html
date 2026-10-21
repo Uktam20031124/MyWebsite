@@ -79,14 +79,15 @@
         <div class="portal-topic{% if r.needs_review %} weak{% endif %}{% if r.gate %} gated{% endif %}" id="t{{ r.topic.pk }}">
           <span class="pt-ring {% if r.last %}tone-{{ r.last.percent|quiz_tone }}{% else %}tone-none{% endif %}">{% if r.last %}{% ring r.last.percent 46 5 %}{% else %}{% icon "target" 18 %}{% endif %}</span>
           <div class="grow">
-            <strong>{{ r.topic|topic_title }}</strong>
+            <strong>{{ r.topic|topic_title }}</strong>{% if r.unlocked %} <span class="badge unlock-badge">🔓 {% translate "quvvat bilan ochilgan" %}</span>{% endif %}
             <span class="meta block">{% if r.last %}{% blocktranslate with percent=r.last.percent correct=r.last.correct total=r.last.total trimmed %}oxirgi natija: <strong>{{ percent }}%</strong> ({{ correct }}/{{ total }}){% endblocktranslate %}{% else %}{% translate "hali topshirilmagan" %}{% endif %} {% blocktranslate with used=r.used daily_limit=daily_limit trimmed %}· bugun {{ used }}/{{ daily_limit }}{% endblocktranslate %}</span>
             {% if r.gate == "review" %}
               <span class="pt-note">{% blocktranslate with pass_percent=pass_percent trimmed %}📘 Natija {{ pass_percent }}% dan past — mavzuni mustahkamlashni tavsiya qilamiz.{% endblocktranslate %}{% if r.locked and r.session %} {% blocktranslate with seconds=r.seconds_left trimmed %}Qayta topshirish <span data-countdown="{{ seconds }}"></span> dan keyin.{% endblocktranslate %}{% elif not r.session %} {% translate "Material ochilgach 20 daqiqadan keyin qayta topshirasiz." %}{% endif %}</span>
             {% endif %}
           </div>
           <div class="portal-topic-actions">
-            {% if r.gate %}<a class="btn sm soft" href="{% url 'portal_study' student.portal_token r.topic.pk %}">{% translate "📘 Mustahkamlash" %}</a>{% endif %}
+            {% if r.gate %}<a class="btn sm soft" href="{% url 'portal_study' student.portal_token r.topic.pk %}">{% translate "📘 Mustahkamlash" %}</a>
+            {% elif r.unlocked %}<a class="btn sm soft" href="{% url 'portal_study' student.portal_token r.topic.pk %}">{% translate "📘 Material" %}</a>{% endif %}
             {% if not r.bank %}
               <span class="meta">{% translate "savollar yo‘q" %}</span>
             {% elif r.request %}
@@ -105,6 +106,31 @@
         <div class="empty compact"><span class="empty-icon">{% icon "book" 22 %}</span><p>{% translate "Hozircha ustozingiz test uchun mavzu belgilamagan." %}</p></div>
       {% endfor %}
       </div>
+    </section>
+
+    <section class="card pad unlock-card" id="unlock">
+      <h2>{% icon "bolt" 18 %} {% translate "Yangi mavzularni ochish" %}</h2>
+      <p class="meta">{% blocktranslate with cost=unlock_cost trimmed %}Guruhdan oldinga o‘ting: navbatdagi mavzuni {{ cost }} ⚡️ ga oching — material va test darhol ochiladi. 70% dan yuqori natijaga bonus ⚡️.{% endblocktranslate %}</p>
+      {% if unlock_offers %}
+        <div class="unlock-list">
+          {% for t in unlock_offers %}
+            <div class="unlock-item{% if not unlock_need %} can{% endif %}">
+              <span class="unlock-icon" aria-hidden="true">{% icon "lock" 18 %}</span>
+              <div class="grow"><strong>{{ t|topic_title }}</strong>{% if t.module %}<span class="meta block">{{ t.module.title }}</span>{% endif %}</div>
+              {% if not unlock_need %}
+                <form method="post" action="{% url 'portal_unlock' student.portal_token t.pk %}">
+                  {% csrf_token %}
+                  <button class="btn sm primary" type="submit" data-confirm="{% blocktranslate with title=t|topic_title cost=unlock_cost trimmed %}“{{ title }}” mavzusini {{ cost }} ⚡️ ga ochasizmi?{% endblocktranslate %}">{% blocktranslate with cost=unlock_cost trimmed %}Ochish · {{ cost }} ⚡️{% endblocktranslate %}</button>
+                </form>
+              {% else %}
+                <span class="unlock-need">{% blocktranslate with need=unlock_need trimmed %}yana {{ need }} ⚡️ kerak{% endblocktranslate %}</span>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="meta">{% translate "Hozircha ochiladigan yangi mavzu yo‘q — guruh dasturidagi navbatdagi mavzular sizda bor." %}</p>
+      {% endif %}
     </section>
 
     {% if stats.recent|length > 1 %}

@@ -47,6 +47,7 @@ urlpatterns = [
     path("men/<str:token>/test/<int:topic_id>/", profile_views.portal_test_request, name="portal_test_request"),
     path("men/<str:token>/boshlash/<int:pk>/", profile_views.portal_test_start, name="portal_test_start"),
     path("men/<str:token>/mavzu/<int:topic_id>/", profile_views.portal_study, name="portal_study"),
+    path("men/<str:token>/ochish/<int:topic_id>/", profile_views.portal_unlock, name="portal_unlock"),
     path("men/<str:token>/xatolar/", profile_views.portal_practice, name="portal_practice"),
     path("men/<str:token>/dokon/<int:reward_id>/", profile_views.portal_buy, name="portal_buy"),
     path("dokon/", profile_views.rewards, name="rewards"),

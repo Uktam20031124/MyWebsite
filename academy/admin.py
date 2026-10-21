@@ -19,6 +19,7 @@ from .models import (
     Student,
     SyllabusItem,
     Topic,
+    TopicUnlock,
 )
 
 
@@ -190,3 +191,10 @@ class RegistrationAdmin(admin.ModelAdmin):
     search_fields = ("full_name", "phone", "telegram")
     list_select_related = ("link",)
     readonly_fields = ("ip", "created_at", "reviewed_at")
+
+
+@admin.register(TopicUnlock)
+class TopicUnlockAdmin(admin.ModelAdmin):
+    list_display = ("student", "topic", "cost", "created_at")
+    search_fields = ("student__full_name", "topic__title")
+    list_select_related = ("student", "topic")

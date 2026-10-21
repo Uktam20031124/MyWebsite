@@ -2161,6 +2161,7 @@ def student_portal(request, token):
     stats = quiz_stats([student.pk], timeline=12).get(student.pk, QuizStats())
     rank, ranked_n = motivation.group_rank(student)
     board = engagement.weekly_board(student.group_id)
+    coin_available = engagement.available(student)
     response = render(
         request,
         "academy/portal/student.html",
@@ -2173,12 +2174,15 @@ def student_portal(request, token):
             "pending": pending,
             "attendance": student_attendance_rate(student),
             "topic_rows": profiles.topic_rows(student),
+            "unlock_offers": profiles.unlock_offers(student),
+            "unlock_cost": profiles.UNLOCK_COST,
             "daily_limit": TestRequest.DAILY_LIMIT,
             "pass_percent": profiles.PASS_PERCENT,
             "coin_balance": coins.balance(student),
             "coin_history": student.coins.select_related("attempt__quiz__topic")[:10],
             "coin_rules": coins.RULES,
-            "coin_available": engagement.available(student),
+            "coin_available": coin_available,
+            "unlock_need": max(0, profiles.UNLOCK_COST - coin_available),
             "streak": engagement.streak_info(student),
             "streak_every": engagement.STREAK_BONUS_EVERY,
             "streak_bonus": engagement.STREAK_BONUS,

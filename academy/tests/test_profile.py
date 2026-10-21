@@ -174,7 +174,9 @@ class ProfileFlowTests(TestCase):
         self.allow(self.topic)
         page = self.client.get(self.portal)
         self.assertNotContains(page, "yangi mavzu")
-        self.assertNotContains(page, "Funksiyalar")  # navbatdagi mavzu ruxsatsiz ko'rinmaydi
+        # Navbatdagi mavzu test ro'yxatida yo'q — faqat quvvat bilan ochish taklifida (qulf bilan).
+        self.assertNotContains(page, f'id="t{self.other.pk}"')
+        self.assertContains(page, "Yangi mavzularni ochish")
         self.assertContains(self.ask(self.other), "ruxsat berilmagan")
         attempt = self.solve(self.start(self.topic))
         self.assertEqual(coins.balance(self.ali), 10)

@@ -11,6 +11,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import get_language
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
@@ -123,6 +124,26 @@ def portal_test_start(request, token, pk):
         },
         status=422 if error else 200,
     )
+
+
+@never_cache
+@require_POST
+def portal_unlock(request, token, topic_id):
+    """Quvvat ⚡️ sarflab guruh dasturidagi navbatdagi mavzuni ochish → material sahifasi."""
+    student = _student(request, token)
+    topic = get_object_or_404(Topic, pk=topic_id)
+    try:
+        profiles.unlock_topic(student, topic)
+    except profiles.ProfileError as exc:
+        messages.error(request, str(exc))
+        return redirect(_portal_url(token, "unlock"))
+    messages.success(
+        request,
+        _("🔓 “{title}” ochildi! Materialni o‘qing va testni topshiring — 70% dan yuqori natijaga bonus ⚡️.").format(
+            title=topic.title_in(get_language())
+        ),
+    )
+    return redirect("portal_study", token=token, topic_id=topic.pk)
 
 
 @never_cache
@@ -305,6 +326,7 @@ def profile_context(student) -> dict:
         "coin_balance": coins.balance(student),
         "coin_history": student.coins.select_related("attempt__quiz__topic")[:8],
         "profile_attempts_n": QuizAttempt.objects.filter(student=student, batch__from_profile=True).count(),
+        "topic_unlocks": student.topic_unlocks.select_related("topic")[:12],
         "gift_presets": coins.GIFT_PRESETS,
         "gift_max": coins.GIFT_MAX,
     }
