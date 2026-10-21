@@ -69,13 +69,19 @@ def record_mistakes(attempt: QuizAttempt) -> None:
             if m:
                 _count_correct(m, now)
             continue
-        m, created = Mistake.objects.get_or_create(
-            student_id=attempt.student_id, question_id=qid, defaults={"last_wrong_at": now}
-        )
-        if not created:
-            m.streak, m.resolved_at, m.last_wrong_at = 0, None, now
-            m.wrong_count += 1
-            m.save(update_fields=["streak", "resolved_at", "last_wrong_at", "wrong_count"])
+        add_mistake(attempt.student_id, qid, now)
+
+
+def add_mistake(student_id: int, question_id: int, now=None) -> None:
+    """Xato javob: savol "Xatolar ustida ishlash"ga tushadi (o'zlashtirilgan bo'lsa — qayta ochiladi)."""
+    now = now or timezone.now()
+    m, created = Mistake.objects.get_or_create(
+        student_id=student_id, question_id=question_id, defaults={"last_wrong_at": now}
+    )
+    if not created:
+        m.streak, m.resolved_at, m.last_wrong_at = 0, None, now
+        m.wrong_count += 1
+        m.save(update_fields=["streak", "resolved_at", "last_wrong_at", "wrong_count"])
 
 
 def _count_correct(m: Mistake, now) -> bool:

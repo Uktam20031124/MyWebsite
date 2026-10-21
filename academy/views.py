@@ -33,7 +33,7 @@ from django.views.generic import (
 )
 from django.views.static import serve as static_serve
 
-from . import coins, delivery, engagement, mailer, motivation, profiles, review_access, telegram_sender
+from . import bonus, coins, delivery, engagement, mailer, motivation, profiles, review_access, telegram_sender
 from .contacts import apply_contacts, has_contact, has_telegram, preview_contacts
 from .delivery import quiz_message  # noqa: F401 — eski import yo'llari uchun
 from .forms import (
@@ -2198,6 +2198,8 @@ def student_portal(request, token):
             "streak": engagement.streak_info(student),
             "streak_every": engagement.STREAK_BONUS_EVERY,
             "streak_bonus": engagement.STREAK_BONUS,
+            "bonus": bonus.summary(student),
+            "bonus_topics": bonus.topics(student),
             "mistake_topics": engagement.mistakes_by_topic(student),
             "open_mistakes_n": engagement.open_mistakes(student).count(),
             "board": board[: engagement.LEADERBOARD_SIZE],

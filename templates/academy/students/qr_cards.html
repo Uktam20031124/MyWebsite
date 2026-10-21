@@ -1,0 +1,45 @@
+{% load i18n static ui %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% blocktranslate with title=title trimmed %}QR kartalar · {{ title }}{% endblocktranslate %}</title>
+  {% include "academy/includes/head.html" %}
+  <link rel="stylesheet" href="{% static 'css/qr.css' %}">
+</head>
+<body class="qr-body">
+{% include "academy/includes/icons.html" %}
+<header class="qr-toolbar">
+  <a class="btn ghost sm" href="{{ back }}">{% icon "left" 15 %} {% translate "Orqaga" %}</a>
+  <div class="grow">
+    <strong>{% blocktranslate with title=title n=cards|length trimmed %}{{ title }} · {{ n }} ta karta{% endblocktranslate %}</strong>
+    <span class="meta block">{% translate "Har bir o‘quvchiga o‘z kartasini bering: kod shaxsiy — boshqalarga ko‘rsatmaslik kerak. Savollar o‘quvchi profili ochiq bo‘lganda ishlaydi." %}</span>
+  </div>
+  <button class="btn primary sm" type="button" onclick="window.print()">{% icon "print" 15 %} {% translate "Chop etish" %}</button>
+</header>
+
+<main class="qr-sheet">
+  {% for c in cards %}
+    <article class="qr-card">
+      <div class="qr-card-head">
+        {% include "academy/includes/brand_mark.html" %}
+        <span class="qr-title">{% translate "Qo‘shimcha savollar" %}</span>
+        <b>⚡️</b>
+      </div>
+      <div class="qr-code" role="img" aria-label="{% blocktranslate with name=c.student.full_name trimmed %}{{ name }} uchun QR kod{% endblocktranslate %}">{{ c.svg }}</div>
+      <strong class="qr-name">{{ c.student.full_name }}</strong>
+      <span class="qr-group">{{ c.student.group.name }}</span>
+      <span class="qr-url">{{ c.url }}</span>
+      <ol class="qr-steps">
+        <li>{% translate "Telefon kamerasi bilan skanerlang" %}</li>
+        <li>{% translate "O‘tilgan mavzulardan savollarni yeching" %}</li>
+        <li>{% blocktranslate with n=daily_limit trimmed %}To‘g‘ri javobga 1–5 ⚡️ · kuniga {{ n }} ta savol{% endblocktranslate %}</li>
+      </ol>
+    </article>
+  {% empty %}
+    <p class="meta">{% translate "Guruhda faol o‘quvchi yo‘q." %}</p>
+  {% endfor %}
+</main>
+</body>
+</html>

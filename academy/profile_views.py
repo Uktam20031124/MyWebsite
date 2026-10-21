@@ -16,10 +16,10 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
-from . import coins, engagement, profiles
+from . import bonus, coins, engagement, motivation, profiles, qr
 from .forms import RewardForm
 from .middleware import PORTAL_LANG_COOKIE, activate_portal_language
-from .models import Purchase, QuizAttempt, Reward, Student, TestRequest, Topic
+from .models import Group, Purchase, QuizAttempt, Reward, Student, TestRequest, Topic
 
 
 def _student(request, token) -> Student:
@@ -223,6 +223,50 @@ def portal_practice(request, token):
 
 
 @never_cache
+def portal_bonus(request, token):
+    """"Qo'shimcha savollar": o'tilgan mavzulardan savol — javob — natija (to'g'ri variant ochilmaydi)."""
+    student = _student(request, token)
+    if not profiles.is_open(student):
+        return redirect(_portal_url(token))
+    topic_id = request.GET.get("mavzu", "")
+    topic_id = int(topic_id) if topic_id.isdigit() else None
+    key = f"bonus_{student.pk}"
+    if request.method == "POST":
+        try:
+            result = bonus.answer(
+                student, int(request.POST.get("question", 0)), int(request.POST.get("choice", 0) or 0)
+            )
+        except (ValueError, bonus.BonusError) as exc:
+            messages.error(request, str(exc) if isinstance(exc, bonus.BonusError) else _("Javobni tanlang."))
+        else:
+            request.session[key] = {"correct": result.correct, "coins": result.coins}
+        return redirect(request.get_full_path())
+    summary = bonus.summary(student)
+    question = bonus.next_question(student, topic_id) if summary["left_today"] else None
+    lang = student.quiz_language
+    view = choices = None
+    if question:
+        title, _sep, code = question.text_in(lang).partition("\n")
+        view = {"title": title, "code": code, "image": question.image.url if question.image else ""}
+        choices = [{"pk": c.pk, "text": c.text_in(lang)} for c in bonus.shuffled_choices(student, question)]
+    return _page(
+        request,
+        "bonus",
+        {
+            "student": student,
+            "question": question,
+            "view": view,
+            "choices": choices,
+            "feedback": request.session.pop(key, None),
+            "summary": summary,
+            "topics": bonus.topics(student),
+            "topic_id": topic_id,
+            "coin_balance": coins.balance(student),
+        },
+    )
+
+
+@never_cache
 @require_POST
 def portal_buy(request, token, reward_id):
     student = _student(request, token)
@@ -385,6 +429,35 @@ def student_coin_undo(request, pk, tx_pk):
     else:
         messages.error(request, _("Bu yozuvni bekor qilib bo‘lmaydi (faqat 24 soat ichidagi ustoz sovg‘asi)."))
     return redirect(local_next(request) or f"{student.get_absolute_url()}#coins")
+
+
+def _qr_cards(request, students, title, back):
+    base = motivation.site_url(request)
+    cards = []
+    for s in students:
+        motivation.portal_url(s)  # kalit bo'lmasa — yaratiladi
+        url = base + reverse("portal_bonus", args=[s.portal_token])
+        cards.append({"student": s, "url": url, "svg": qr.svg(url)})
+    return render(
+        request,
+        "academy/students/qr_cards.html",
+        {"cards": cards, "title": title, "back": back, "daily_limit": bonus.DAILY_LIMIT},
+    )
+
+
+@login_required
+def student_qr(request, pk):
+    """Ustoz: o'quvchining "Qo'shimcha savollar" QR kartasi (chop etish uchun)."""
+    student = get_object_or_404(Student.objects.select_related("group"), pk=pk)
+    return _qr_cards(request, [student], student.full_name, student.get_absolute_url())
+
+
+@login_required
+def group_qr(request, pk):
+    """Ustoz: guruhdagi faol o'quvchilarning QR kartalari — bitta varaqda, chop etib tarqatish uchun."""
+    group = get_object_or_404(Group, pk=pk)
+    students = group.students.filter(status=Student.Status.ACTIVE).select_related("group")
+    return _qr_cards(request, list(students), group.name, group.get_absolute_url())
 
 
 @login_required

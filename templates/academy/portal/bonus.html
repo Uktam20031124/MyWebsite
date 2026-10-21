@@ -1,0 +1,57 @@
+{% extends "academy/portal/_base.html" %}
+{% load i18n ui %}
+{% block title %}{% blocktranslate with full_name=student.full_name trimmed %}Qo‘shimcha savollar · {{ full_name }}{% endblocktranslate %}{% endblock %}
+{% block main %}
+<header class="portal-head">
+  <p class="kicker"><a href="{% url 'student_portal' student.portal_token %}#bonus">{% translate "← Profilga qaytish" %}</a></p>
+  <h1>{% translate "Qo‘shimcha savollar ⚡️" %}</h1>
+  <p class="muted">{% blocktranslate with today=summary.today limit=summary.limit coins=summary.coins balance=coin_balance trimmed %}Bugun: <strong>{{ today }}/{{ limit }}</strong> · shu yerda yig‘ildi: <strong>{{ coins }} ⚡️</strong> · balans: <strong>{{ balance }} ⚡️</strong>{% endblocktranslate %}</p>
+</header>
+
+{% if feedback %}
+  <div class="callout {% if feedback.correct %}next{% else %}warn{% endif %} practice-feedback" role="status">
+    <div class="grow">
+      {% if feedback.correct %}{% blocktranslate with coins=feedback.coins trimmed %}✅ <strong>To‘g‘ri!</strong> +{{ coins }} ⚡️ quvvat.{% endblocktranslate %}
+      {% else %}{% blocktranslate trimmed %}❌ <strong>Xato.</strong> Bu savol “Xatolar ustida ishlash”ga tushdi — mavzu materialini qarab chiqing.{% endblocktranslate %}{% endif %}
+    </div>
+  </div>
+{% endif %}
+
+{% if topics|length > 1 %}
+  <nav class="mistake-topics" aria-label="{% translate "Mavzu bo‘yicha" %}">
+    <a class="chip-link{% if not topic_id %} on{% endif %}" href="{% url 'portal_bonus' student.portal_token %}">{% blocktranslate with n=summary.remaining trimmed %}Hammasi <b>{{ n }}</b>{% endblocktranslate %}</a>
+    {% for t in topics %}<a class="chip-link{% if topic_id == t.topic_id %} on{% endif %}" href="?mavzu={{ t.topic_id }}">{{ t.title }} <b>{{ t.n }}</b></a>{% endfor %}
+  </nav>
+{% endif %}
+
+{% if question %}
+  <form method="post" class="card quiz-question practice-card">
+    {% csrf_token %}
+    <input type="hidden" name="question" value="{{ question.pk }}">
+    <p class="meta practice-meta"><span class="grow">{{ question.quiz.topic|topic_title }}</span> <span class="bonus-badge">+{{ question.quiz.bonus_quvvat }} ⚡️</span></p>
+    <legend>{{ view.title }}</legend>
+    {% if view.code %}<pre class="quiz-code">{{ view.code }}</pre>{% endif %}
+    {% if view.image %}<img class="quiz-image" src="{{ view.image }}" alt="{% translate "Savol rasmi" %}" loading="lazy">{% endif %}
+    {% for c in choices %}
+      <label class="quiz-choice"><input type="radio" name="choice" value="{{ c.pk }}" required> <span>{{ c.text }}</span></label>
+    {% endfor %}
+    <p class="meta">{% translate "Diqqat: har bir savolga faqat bir marta javob berasiz." %}</p>
+    <div class="practice-actions">
+      <a class="btn ghost" href="{% url 'portal_study' student.portal_token question.quiz.topic_id %}">{% translate "📘 Material" %}</a>
+      <button class="btn primary" type="submit">{% translate "Javob berish" %}</button>
+    </div>
+  </form>
+{% elif not summary.left_today %}
+  <section class="card pad">
+    <h2>{% translate "🌙 Bugungi savollar tugadi" %}</h2>
+    <p class="muted">{% blocktranslate with limit=summary.limit trimmed %}Kuniga {{ limit }} ta qo‘shimcha savol. Ertaga yangi savollar bilan davom eting!{% endblocktranslate %}</p>
+    <a class="btn primary block" href="{% url 'student_portal' student.portal_token %}#bonus">{% translate "Profilga qaytish" %}</a>
+  </section>
+{% else %}
+  <section class="card pad">
+    <h2>{% translate "🎉 Hamma savollar yechildi!" %}</h2>
+    <p class="muted">{% translate "O‘tilgan mavzulardagi barcha savollarga javob berdingiz. Yangi mavzu o‘tilgach, bu yerda yangi savollar paydo bo‘ladi." %}</p>
+    <a class="btn primary block" href="{% url 'student_portal' student.portal_token %}#topics">{% translate "Testlarga o‘tish" %}</a>
+  </section>
+{% endif %}
+{% endblock %}

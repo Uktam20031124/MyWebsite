@@ -198,6 +198,7 @@
               <button class="btn sm primary" type="submit" data-confirm="{% translate "Haftalik reyting guruh chatiga hozir yuborilsinmi?" %}">{% icon "trophy" 14 %} {% translate "Hozir yuborish" %}</button>
             </form>
           {% endif %}
+          <a class="btn sm ghost" href="{% url 'group_qr' group.pk %}" target="_blank" rel="noopener" data-turbo="false">{% icon "print" 14 %} {% translate "QR kartalar — qo‘shimcha savollar" %}</a>
           {% if telegram_ready %}
             <form method="post" action="{% url 'group_portal_send' group.pk %}">
               {% csrf_token %}

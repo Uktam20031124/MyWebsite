@@ -237,6 +237,7 @@
           {% if can_telegram %}<button class="btn sm primary" type="submit" name="action" value="send">{% icon "send" 14 %} {% translate "Telegram’da yuborish" %}</button>{% endif %}
           {% if can_email %}<button class="btn sm {% if can_telegram %}soft{% else %}primary{% endif %}" type="submit" name="channel" value="email">{% icon "mail" 14 %} {% translate "Emailga yuborish" %}</button>{% endif %}
           <button class="btn sm ghost" type="submit" name="action" value="reset" data-confirm="{% translate "Eski havola ishlamay qoladi. Yangisi yaratilsinmi?" %}">{% icon "undo" 14 %} {% translate "Yangilash" %}</button>
+          <a class="btn sm ghost" href="{% url 'student_qr' student.pk %}" target="_blank" rel="noopener" data-turbo="false">{% icon "print" 14 %} {% translate "QR kod — qo‘shimcha savollar" %}</a>
         </form>
       </div>
     </section>
