@@ -16,7 +16,7 @@ from academy.models import (
     SyllabusItem,
     Topic,
 )
-from academy.quiz_bank import seed_quizzes, seed_study, seed_translations, validate_bank
+from academy.quiz_bank import seed_quizzes, seed_slides, seed_study, seed_translations, validate_bank
 from academy.school_data import GroupData, ModuleData, all_groups, all_modules
 
 
@@ -102,6 +102,7 @@ class Command(BaseCommand):
             quizzes_new, questions_new = seed_quizzes(Topic, Quiz, Question, Choice)
             _titles_ru, questions_ru = seed_translations(Topic, Question, Choice)
             study_new = seed_study(Topic)
+            slides_new = seed_slides(Topic)
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -109,7 +110,8 @@ class Command(BaseCommand):
                 f"{sum(len(g.students) for g in groups)} o'quvchi; "
                 f"testlar: {quizzes_new} yangi, {questions_new} ta savol qo'shildi; "
                 f"ruscha tarjima: {questions_ru} ta savol; "
-                f"mustahkamlash materiali: {study_new} ta mavzu."
+                f"mustahkamlash materiali: {study_new} ta mavzu; "
+                f"taqdimot: {slides_new} ta mavzu."
             )
         )
 

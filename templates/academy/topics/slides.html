@@ -1,0 +1,63 @@
+{% load i18n static ui %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a1633">
+  <meta name="robots" content="noindex">
+  <title>🎬 {{ topic|topic_title }} · {% translate "Taqdimot" %}</title>
+  {% include "academy/includes/head.html" %}
+  <link rel="stylesheet" href="{% static 'css/deck.css' %}">
+  <script src="{% static 'js/deck.js' %}" defer></script>
+</head>
+<body class="deck-body">
+<main class="deck" id="deck" tabindex="-1"
+      data-label-start="{% translate "Boshlash" %}" data-label-pause="{% translate "Pauza" %}"
+      data-label-done="{% translate "Vaqt tugadi!" %}"
+      aria-roledescription="{% translate "taqdimot" %}" aria-label="{{ topic|topic_title }}">
+  <header class="deck-bar">
+    <a class="deck-brand" href="{% url 'topic_detail' topic.pk %}" title="{% translate "Mavzuga qaytish" %}">
+      {% include "academy/includes/brand_mark.html" %}
+      <span class="deck-brand-text">{% if topic.module %}{{ topic.module.title }}{% else %}{% translate "Minar Test" %}{% endif %}</span>
+    </a>
+    <span class="deck-count" aria-live="polite"><b data-current>1</b> / {{ slides|length }}</span>
+  </header>
+
+  <div class="deck-stage">
+    {% for slide in slides %}
+      <section class="slide{% if slide.is_title %} slide-title{% endif %}{% if forloop.first %} is-active{% endif %}"
+               id="s{{ forloop.counter }}" aria-roledescription="{% translate "slayd" %}"
+               aria-label="{{ forloop.counter }} / {{ slides|length }}"{% if not forloop.first %} hidden{% endif %}
+               {% if slide.timer %}data-timer="{{ slide.timer }}"{% endif %}>
+        <div class="slide-inner">
+          {% if slide.is_title %}{% if forloop.first and topic.module %}<span class="slide-kicker">{{ topic.module.title }}</span>{% endif %}<h1>{{ slide.title }}</h1>{% endif %}
+          <div class="slide-body">{{ slide.html }}</div>
+          {% if slide.timer %}
+            <div class="timer" data-seconds="{{ slide.timer|stringformat:'d' }}">
+              <svg class="timer-ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="52"/><circle class="bar" cx="60" cy="60" r="52" pathLength="100"/></svg>
+              <div class="timer-face">
+                <output class="timer-time">{{ slide.timer|stringformat:'02d' }}:00</output>
+                <div class="timer-actions">
+                  <button type="button" class="timer-btn" data-timer-toggle>▶ {% translate "Boshlash" %}</button>
+                  <button type="button" class="timer-btn ghost" data-timer-reset title="{% translate "Qaytadan" %}" aria-label="{% translate "Qaytadan" %}">↺</button>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+
+  <footer class="deck-foot">
+    <div class="deck-progress" aria-hidden="true"><span data-progress></span></div>
+    <nav class="deck-nav" aria-label="{% translate "Taqdimotni boshqarish" %}">
+      <button type="button" data-prev title="{% translate "Oldingi (←)" %}" aria-label="{% translate "Oldingi (←)" %}">←</button>
+      <button type="button" data-next title="{% translate "Keyingi (→ / Space)" %}" aria-label="{% translate "Keyingi (→ / Space)" %}">→</button>
+      <button type="button" data-fullscreen title="{% translate "To‘liq ekran (F)" %}" aria-label="{% translate "To‘liq ekran (F)" %}">⛶</button>
+      <a href="{% url 'topic_detail' topic.pk %}" title="{% translate "Yopish (Esc)" %}" aria-label="{% translate "Yopish (Esc)" %}">✕</a>
+    </nav>
+  </footer>
+</main>
+</body>
+</html>

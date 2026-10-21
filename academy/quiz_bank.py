@@ -50,6 +50,12 @@ def bank_study_ru() -> dict[str, str]:
     return {**STARTER, **PYTHON, **AI}
 
 
+def bank_slides() -> dict[str, str]:
+    from .school_data.slides_ai import SLIDES as AI
+
+    return dict(AI)
+
+
 def bank_titles_ru() -> dict[str, str]:
     from .school_data.titles_ru import TITLES
 
@@ -202,4 +208,20 @@ def seed_study(Topic, only=None) -> int:
                 filled += Topic.objects.filter(study="", **same).update(study=texts[t.key].strip())
             if texts_ru.get(t.key):
                 Topic.objects.filter(study_ru="", **same).update(study_ru=texts_ru[t.key].strip())
+    return filled
+
+
+def seed_slides(Topic, only=None) -> int:
+    """Dars taqdimotlarini mavzularga yozadi — faqat bo'shlariga (ustoz tahrirlagan slaydlarga
+    tegilmaydi). Natija: taqdimot yozilgan mavzular soni."""
+    if not any(f.name == "slides" for f in Topic._meta.get_fields()):
+        return 0
+    texts = bank_slides()
+    filled = 0
+    for module in all_modules():
+        for t in module.topics:
+            if t.key not in texts or (only is not None and t.key not in only):
+                continue
+            same = {"module__title__iexact": module.title, "title__iexact": t.title}
+            filled += Topic.objects.filter(slides="", **same).update(slides=texts[t.key])
     return filled

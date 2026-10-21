@@ -7,7 +7,7 @@
 <section class="card pad form-card">
   <form method="post" novalidate data-dirty-guard>
     {% csrf_token %}
-    {% include "academy/includes/form_fields.html" with wide="title,description,homework,resources,study,study_ru" %}
+    {% include "academy/includes/form_fields.html" with wide="title,description,homework,resources,study,study_ru,slides" %}
     <div class="form-actions">
       <button class="btn primary" type="submit">{% icon "check" 16 %} {% translate "Saqlash" %}</button>
       <a class="btn ghost" href="{% if form.instance.pk %}{{ form.instance.get_absolute_url }}{% else %}{% url 'topic_list' %}{% endif %}">{% translate "Bekor" %}</a>

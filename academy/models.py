@@ -280,6 +280,14 @@ class Topic(models.Model):
         blank=True,
         help_text=_("Ruscha test tanlagan o'quvchilarga ko'rsatiladi (bo'sh — o'zbekchasi)."),
     )
+    slides = models.TextField(
+        _("Taqdimot slaydlari"),
+        blank=True,
+        help_text=_(
+            "Dars paytida ekranga chiqariladi. Slaydlar orasida --- qatori; # sarlavha slaydi; "
+            "!! katta ibora; :: timer 25 — 25 daqiqalik taymer; qolgani — material formati."
+        ),
+    )
     duration_minutes = models.PositiveIntegerField(_("Davomiyligi (daq.)"), default=90)
     order = models.PositiveIntegerField(_("Tartib"), default=0, db_index=True)
     is_active = models.BooleanField(_("Faol"), default=True)

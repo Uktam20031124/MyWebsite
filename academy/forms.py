@@ -179,6 +179,7 @@ class TopicForm(StyledFormMixin, forms.ModelForm):
             "resources",
             "study",
             "study_ru",
+            "slides",
             "duration_minutes",
             "order",
             "is_active",
@@ -188,6 +189,7 @@ class TopicForm(StyledFormMixin, forms.ModelForm):
             "homework": forms.Textarea(attrs={"rows": 3}),
             "study": forms.Textarea(attrs={"rows": 18, "spellcheck": "false"}),
             "study_ru": forms.Textarea(attrs={"rows": 18, "spellcheck": "false"}),
+            "slides": forms.Textarea(attrs={"rows": 18, "spellcheck": "false"}),
             "resources": forms.Textarea(
                 attrs={"rows": 3, "placeholder": "https://docs.python.org/3/tutorial/"}
             ),
