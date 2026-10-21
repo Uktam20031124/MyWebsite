@@ -5,6 +5,7 @@ starter.py / python.py dagi mavzularga mos keladi.
 """
 
 from . import GroupData as G
+from .ai import TRACK as AI_TRACK
 
 # Barcha guruhlar seshanba, juma va shanba kunlari, ketma-ket soatlarda.
 TUE_FRI_SAT = (1, 4, 5)
@@ -107,5 +108,14 @@ GROUPS = [
             "PY27", "PY28", "PY29",  # 9. OOP
             "PY31", "PY32", "PY33", "PY34",  # 10. Yakuniy loyihalar
         ],  # fmt: skip
+    ),
+    # Minar AI Creator (8 hafta, 24 dars). O'quvchilar va jadval saytda kiritiladi (days bo'sh —
+    # load_school guruh jadvaliga tegmaydi).
+    G(
+        code="AI 00-1",
+        name="Suniy intelekt AI",
+        students=[],
+        taught=[],
+        planned=AI_TRACK,
     ),
 ]

@@ -39,10 +39,11 @@ class GroupData:
 
 
 def all_modules() -> list[ModuleData]:
+    from .ai import MODULES as AI
     from .python import MODULES as PYTHON
     from .starter import MODULES as STARTER
 
-    return [*STARTER, *PYTHON]
+    return [*STARTER, *PYTHON, *AI]
 
 
 def all_groups() -> list[GroupData]:

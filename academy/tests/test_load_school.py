@@ -45,7 +45,7 @@ class LoadSchoolCommandTests(TestCase):
         load()
         self.assertEqual(
             {g.code: g.students.count() for g in Group.objects.all()},
-            {"S-009": 12, "S005": 7, "P-006": 5},
+            {"S-009": 12, "S005": 7, "P-006": 5, "AI 00-1": 0},
         )
         # Bir xil ismli o'quvchi ikki guruhda — ikki alohida yozuv.
         self.assertEqual(Student.objects.filter(full_name="Muxammadov Imron").count(), 2)
@@ -81,7 +81,7 @@ class LoadSchoolCommandTests(TestCase):
         f.lesson(old, days=-1)
         users = get_user_model().objects.count()
         load(reset=True, yes=True)
-        self.assertEqual(set(Group.objects.values_list("code", flat=True)), {"S-009", "S005", "P-006"})
+        self.assertEqual(set(Group.objects.values_list("code", flat=True)), {"S-009", "S005", "P-006", "AI 00-1"})
         self.assertFalse(Student.objects.filter(full_name="Begona O'quvchi").exists())
         self.assertFalse(Lesson.objects.exists())
         self.assertEqual(get_user_model().objects.count(), users)
@@ -98,8 +98,8 @@ class BankTranslationTests(TestCase):
         from academy.models import Question
 
         out = load()
-        self.assertIn("ruscha tarjima: 636 ta savol", out)
-        self.assertIn("mustahkamlash materiali: 53 ta mavzu", out)
+        self.assertIn("ruscha tarjima: 924 ta savol", out)
+        self.assertIn("mustahkamlash materiali: 77 ta mavzu", out)
         self.assertFalse(Topic.objects.filter(study="").exists())
         self.assertFalse(Topic.objects.filter(study_ru="").exists())
         self.assertFalse(Question.objects.filter(text_ru="").exists())
