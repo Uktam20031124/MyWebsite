@@ -170,7 +170,7 @@ class BootstrapCommandTests(TestCase):
         self.assertTrue(user.check_password("my-own-secret-pass"))
         self.assertEqual(Topic.objects.count(), topics)
         self.assertEqual(
-            set(Group.objects.values_list("code", flat=True)), {"S-009", "S005", "P-006"}
+            set(Group.objects.values_list("code", flat=True)), {"S-009", "S005", "P-006", "AI 00-1"}
         )
         self.assertEqual(Student.objects.count(), 24)
 
