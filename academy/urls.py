@@ -37,6 +37,8 @@ urlpatterns = [
     path("shogirdlar/<int:pk>/sertifikat/", views.student_certificate, name="student_certificate"),
     path("shogirdlar/<int:pk>/sertifikat/yuborish/", views.student_certificate_send, name="student_certificate_send"),
     path("guruhlar/<int:pk>/sahifalar/", views.group_portal_send, name="group_portal_send"),
+    path("guruhlar/<int:pk>/qr/", profile_views.group_qr, name="group_qr"),
+    path("shogirdlar/<int:pk>/qr/", profile_views.student_qr, name="student_qr"),
     path("guruhlar/<int:pk>/reyting/", views.group_leaderboard_send, name="group_leaderboard_send"),
     path("guruhlar/<int:pk>/telegram-chat/", views.group_telegram_chat, name="group_telegram_chat"),
     # O'quvchining shaxsiy sahifasi (login talab qilinmaydi, maxfiy havola)
@@ -49,6 +51,7 @@ urlpatterns = [
     path("men/<str:token>/mavzu/<int:topic_id>/", profile_views.portal_study, name="portal_study"),
     path("men/<str:token>/ochish/<int:topic_id>/", profile_views.portal_unlock, name="portal_unlock"),
     path("men/<str:token>/xatolar/", profile_views.portal_practice, name="portal_practice"),
+    path("men/<str:token>/qoshimcha/", profile_views.portal_bonus, name="portal_bonus"),
     path("men/<str:token>/dokon/<int:reward_id>/", profile_views.portal_buy, name="portal_buy"),
     path("dokon/", profile_views.rewards, name="rewards"),
     path("dokon/<int:pk>/", profile_views.rewards, name="reward_edit"),

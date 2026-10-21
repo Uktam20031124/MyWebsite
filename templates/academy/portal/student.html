@@ -65,6 +65,7 @@
   <nav class="p-tabs" role="tablist" aria-label="{% translate "Profil bo‘limlari" %}" data-tabs hidden>
     <button type="button" role="tab" aria-controls="tab-tests" aria-selected="true">{% icon "target" 16 %}<span>{% translate "Testlar" %}</span></button>
     <button type="button" role="tab" aria-controls="tab-mistakes" aria-selected="false">{% icon "undo" 16 %}<span>{% translate "Xatolar" %}</span>{% if open_mistakes_n %}<b class="p-tab-n">{{ open_mistakes_n }}</b>{% endif %}</button>
+    <button type="button" role="tab" aria-controls="tab-bonus" aria-selected="false">{% icon "bolt" 16 %}<span>{% translate "Qo‘shimcha" %}</span>{% if bonus.left_today and bonus.remaining %}<b class="p-tab-n">{{ bonus.left_today }}</b>{% endif %}</button>
     <button type="button" role="tab" aria-controls="tab-board" aria-selected="false">{% icon "trophy" 16 %}<span>{% translate "Reyting" %}</span></button>
     <button type="button" role="tab" aria-controls="tab-shop" aria-selected="false">{% icon "gift" 16 %}<span>{% translate "Mukofotlar" %}</span></button>
     <button type="button" role="tab" aria-controls="tab-history" aria-selected="false">{% icon "chart" 16 %}<span>{% translate "Tarix" %}</span></button>
@@ -155,6 +156,31 @@
         <a class="btn primary block" href="{% url 'portal_practice' student.portal_token %}">{% translate "💪 Mashqni boshlash" %}</a>
       {% else %}
         <div class="empty compact"><span class="empty-icon">{% icon "check" 22 %}</span><p>{% translate "Hozircha xato savollar yo‘q — zo‘r! Testda xato qilsangiz, ular shu yerga tushadi." %}</p></div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="p-panel" id="tab-bonus" role="tabpanel">
+    <section class="card pad bonus-card" id="bonus">
+      <h2>{% icon "bolt" 18 %} {% translate "Qo‘shimcha savollar" %}</h2>
+      <p class="meta">{% blocktranslate with limit=bonus.limit trimmed %}O‘tilgan mavzulardan savollar. Har bir savolga bir marta javob berasiz: to‘g‘ri bo‘lsa — ustoz shu test uchun belgilagan <strong>1–5 ⚡️</strong> quvvat. Kuniga {{ limit }} ta savol.{% endblocktranslate %}</p>
+      <div class="bonus-stats">
+        <div><b>{{ bonus.today }}/{{ bonus.limit }}</b><span>{% translate "bugun" %}</span></div>
+        <div><b>{{ bonus.remaining }}</b><span>{% translate "savol qoldi" %}</span></div>
+        <div><b>{{ bonus.correct }}/{{ bonus.answered }}</b><span>{% translate "to‘g‘ri" %}</span></div>
+        <div class="gold"><b>{{ bonus.coins }} ⚡️</b><span>{% translate "yig‘ildi" %}</span></div>
+      </div>
+      {% if bonus_topics %}
+        <div class="mistake-topics">
+          {% for t in bonus_topics %}<a class="chip-link" href="{% url 'portal_bonus' student.portal_token %}?mavzu={{ t.topic_id }}">{{ t.title }} <b>{{ t.n }}</b> <small>+{{ t.bonus }} ⚡️</small></a>{% endfor %}
+        </div>
+      {% endif %}
+      {% if not bonus.remaining %}
+        <div class="empty compact"><span class="empty-icon">{% icon "check" 22 %}</span><p>{% translate "Hozircha qo‘shimcha savol yo‘q — yangi mavzu o‘tilgach shu yerda paydo bo‘ladi." %}</p></div>
+      {% elif not bonus.left_today %}
+        <p class="badge plain">{% translate "Bugungi limit tugadi — ertaga davom eting 🌙" %}</p>
+      {% else %}
+        <a class="btn primary block" href="{% url 'portal_bonus' student.portal_token %}">{% translate "⚡️ Savollarni boshlash" %}</a>
       {% endif %}
     </section>
   </div>

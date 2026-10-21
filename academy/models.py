@@ -549,6 +549,14 @@ class Quiz(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(180)],
         help_text=_("Jo'natishda taklif qilinadigan vaqt. Har bir jo'natmada o'zgartirish mumkin."),
     )
+    BONUS_CHOICES = [(n, f"{n} ⚡️") for n in range(1, 6)]
+    bonus_quvvat = models.PositiveSmallIntegerField(
+        _("Qo‘shimcha savol uchun quvvat"),
+        choices=BONUS_CHOICES,
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text=_("O‘quvchi profilidagi “Qo‘shimcha savollar”da shu testning savoliga to‘g‘ri javob uchun."),
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -1456,6 +1464,7 @@ class CoinTransaction(models.Model):
         (re.compile(r"^🔓 Mavzu ochildi: (?P<t>.+)$"), gettext_noop("🔓 Mavzu ochildi: {t}")),
         (re.compile(r"^🎁 Ustozdan sovg‘a$"), gettext_noop("🎁 Ustozdan sovg‘a")),
         (re.compile(r"^🎁 Ustozdan sovg‘a: (?P<t>.+)$"), gettext_noop("🎁 Ustozdan sovg‘a: {t}")),
+        (re.compile(r"^➕ Qo‘shimcha savol: (?P<t>.+)$"), gettext_noop("➕ Qo‘shimcha savol: {t}")),
     ]
 
     @property
@@ -1506,6 +1515,32 @@ class Mistake(models.Model):
 
     def __str__(self) -> str:
         return f"{self.student} — {self.question}"
+
+
+class BonusAnswer(models.Model):
+    """"Qo'shimcha savollar": o'tilgan mavzulardan savolga javob — har savolga bir marta.
+    To'g'ri bo'lsa — test uchun ustoz belgilagan quvvat (``Quiz.bonus_quvvat``)."""
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="bonus_answers", verbose_name=_("O'quvchi")
+    )
+    question = models.ForeignKey(
+        Question, on_delete=models.CASCADE, related_name="bonus_answers", verbose_name=_("Savol")
+    )
+    is_correct = models.BooleanField(_("To'g'ri"), default=False)
+    coins = models.PositiveSmallIntegerField(_("Quvvat ⚡️"), default=0)
+    answered_at = models.DateTimeField(_("Javob berilgan"), default=timezone.now, db_index=True)
+
+    class Meta:
+        ordering = ["-answered_at", "-pk"]
+        verbose_name = _("Qo‘shimcha savol javobi")
+        verbose_name_plural = _("Qo‘shimcha savollar javoblari")
+        constraints = [
+            models.UniqueConstraint(fields=["student", "question"], name="uniq_bonus_student_question"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.student} — {self.question} ({'+' if self.is_correct else '-'})"
 
 
 class DailyActivity(models.Model):

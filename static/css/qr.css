@@ -1,0 +1,92 @@
+/* O'quvchilar uchun QR kartalar (guruhlar/<pk>/qr/): ekranda — ko'rib chiqish, chop etishda — A4 da 3×3. */
+
+.qr-body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+
+.qr-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+}
+.qr-toolbar .grow { flex: 1; min-width: 0; }
+.qr-toolbar .meta { font-size: 13px; }
+
+.qr-sheet {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+.qr-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: #fff;
+  color: #141824;
+  text-align: center;
+  break-inside: avoid;
+  overflow: hidden;
+}
+.qr-card::before { /* lojuvard bosh qism */
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 46px;
+  background: linear-gradient(135deg, #1b3768, #10244c);
+}
+.qr-card-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  margin-bottom: 14px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+}
+.qr-card-head .brand-mark { flex: none; width: 28px; height: 28px; border-radius: 8px; }
+.qr-card-head .qr-title { flex: 1; text-align: left; line-height: 1.2; }
+.qr-card-head b { color: #e9c27a; }
+
+.qr-code { width: 150px; height: 150px; }
+.qr-code svg { width: 100%; height: 100%; display: block; }
+.qr-code svg path { fill: #10244c; }
+
+.qr-name { margin-top: 6px; font-size: 15px; font-weight: 700; line-height: 1.25; }
+.qr-group { color: #4a5163; font-size: 12px; }
+.qr-url { max-width: 100%; color: #80879a; font-family: var(--font-mono); font-size: 9px; overflow-wrap: anywhere; }
+.qr-steps {
+  margin: 8px 0 0;
+  padding: 8px 0 0 18px;
+  border-top: 1px dashed #d4ccbd;
+  width: 100%;
+  text-align: left;
+  color: #4a5163;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+@media print {
+  @page { size: A4; margin: 10mm; }
+  .qr-body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .qr-toolbar { display: none; }
+  .qr-sheet { grid-template-columns: repeat(3, 1fr); gap: 6mm; max-width: none; padding: 0; }
+  .qr-card { border-color: #bbb; border-style: dashed; box-shadow: none; }
+}

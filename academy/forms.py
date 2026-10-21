@@ -305,7 +305,7 @@ class QuizForm(StyledFormMixin, forms.ModelForm):
 
     class Meta:
         model = Quiz
-        fields = ["time_limit_minutes", "text", "text_ru"]
+        fields = ["time_limit_minutes", "bonus_quvvat", "text", "text_ru"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -316,6 +316,11 @@ class QuizForm(StyledFormMixin, forms.ModelForm):
         if self.instance.pk:
             self.fields["text"].initial = self.instance.as_text()
             self.fields["text_ru"].initial = self.instance.as_text_ru()
+        # Yuborilmasa — testdagi joriy qiymat qoladi.
+        self.fields["bonus_quvvat"].required = False
+
+    def clean_bonus_quvvat(self):
+        return self.cleaned_data.get("bonus_quvvat") or self.instance.bonus_quvvat
 
     def clean_text(self):
         parsed, errors = parse_quiz(self.cleaned_data["text"])
