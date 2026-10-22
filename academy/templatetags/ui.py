@@ -266,17 +266,35 @@ def honor_medal(size: int = 16):
     return format_html(_MEDAL, s=size, label=gettext("A’lochi"))
 
 
+PODIUM_TITLES = {
+    1: gettext_noop("Guruh reytingida 1-o‘rin"),
+    2: gettext_noop("Guruh reytingida 2-o‘rin"),
+    3: gettext_noop("Guruh reytingida 3-o‘rin"),
+}
+
+
 @register.filter
 def person_name(person):
-    """O'quvchi ismi; "A'lochi" bo'lsa — oltin rangda va medal bilan (hamma ko'radigan joylarda)."""
+    """O'quvchi ismi. "A'lochi" — medal bilan; guruh quvvat reytingida 1–3-o'rin — oltin,
+    kumush, bronza rangda (bo'lmasa "A'lochi" oltini). Hamma ko'radigan joylarda bir xil."""
+    from academy.engagement import podium_places
+
     if isinstance(person, dict):
-        name, honor = person.get("full_name", ""), person.get("honor_since")
+        name, honor, pk = person.get("full_name", ""), person.get("honor_since"), person.get("id")
     else:
-        name, honor = getattr(person, "full_name", "") or str(person or ""), getattr(person, "honor_since", None)
+        name = getattr(person, "full_name", "") or str(person or "")
+        honor = getattr(person, "honor_since", None)
+        pk = getattr(person, "pk", None) if hasattr(person, "group_id") else None
+    place = podium_places().get(pk) if pk else None
+    medal = honor_medal(15) if honor else ""
+    if place:
+        title = gettext(PODIUM_TITLES[place])
+        classes = f"{'honor-name ' if honor else ''}podium-name podium-{place}"
+        return format_html('{}<span class="{}" title="{}">{}</span>', medal, classes, title, name)
     if not honor:
         return name
     # Medal ism oldida: uzun ism qisqartirilganda (…) ham ko'rinib turadi.
-    return format_html('{}<span class="honor-name">{}</span>', honor_medal(15), name)
+    return format_html('{}<span class="honor-name">{}</span>', medal, name)
 
 
 @register.simple_tag

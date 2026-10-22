@@ -34,12 +34,14 @@ class HonorTests(TestCase):
         self.assertIsNotNone(self.ali.honor_since)
         self.assertContains(response, "“A’lochi” unvoni berildi")
         students = self.teacher.get(reverse("student_list"))
-        self.assertContains(students, '<span class="honor-name">Ibrahimov Muxammadali</span>')
+        # A'lochi oltini (reytingda o'rni bo'lsa — o'rin rangi ham qo'shiladi).
+        golden = r'<span class="honor-name[^"]*"[^>]*>Ibrahimov Muxammadali</span>'
+        self.assertRegex(students.content.decode(), golden)
         self.assertContains(students, "honor-medal")
         self.assertNotContains(students, '<span class="honor-name">Valiyev Sardor</span>')
         self.assertContains(self.teacher.get(self.ali.get_absolute_url()), "honor-badge")
         group_page = self.teacher.get(self.group.get_absolute_url())
-        self.assertContains(group_page, '<span class="honor-name">Ibrahimov Muxammadali</span>')
+        self.assertRegex(group_page.content.decode(), golden)
 
         motivation.portal_url(self.ali)
         profiles.grant_access(self.ali, 2)

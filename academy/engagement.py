@@ -11,6 +11,7 @@ import random
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Count, F, Sum
 from django.utils import timezone
@@ -18,6 +19,7 @@ from django.utils.translation import gettext_lazy as _
 
 from . import coins
 from .models import (
+    PODIUM_CACHE_KEY,
     CoinTransaction,
     DailyActivity,
     Mistake,
@@ -230,6 +232,16 @@ def week_start(now=None):
     return timezone.make_aware(datetime.combine(monday, time.min), timezone.get_current_timezone())
 
 
+def _ranked(rows):
+    """[(o'quvchi, balans)] → [(o'quvchi, balans, o'rin)]; teng balans — bir xil o'rin."""
+    out, place, prev = [], 0, None
+    for i, (student, balance) in enumerate(rows, start=1):
+        if balance != prev:
+            place, prev = i, balance
+        out.append((student, balance, place))
+    return out
+
+
 def quvvat_board(group_id: int) -> list[dict]:
     """Guruh reytingi joriy quvvat ⚡️ balansi bo'yicha — profildagi raqam bilan bir xil
     (yig'ilgani − sarflangani va jarimalar)."""
@@ -238,13 +250,37 @@ def quvvat_board(group_id: int) -> list[dict]:
         .annotate(balance=Sum("coins__amount"))
         .order_by(F("balance").desc(nulls_last=True), "full_name")
     )
-    board, place, prev = [], 0, None
-    for i, s in enumerate(rows, start=1):
-        b = s.balance or 0
-        if b != prev:
-            place, prev = i, b
-        board.append({"student": s, "coins": b, "place": place})
-    return board
+    return [
+        {"student": s, "coins": b, "place": p} for s, b, p in _ranked((s, s.balance or 0) for s in rows)
+    ]
+
+
+PODIUM_TTL = 60  # soniya; quvvat yoki o'quvchi o'zgarsa kesh darhol tozalanadi (models.py)
+
+
+def podium_places() -> dict[int, int]:
+    """Har bir guruh reytingida 1–3-o'rindagi o'quvchilar: {o'quvchi id: o'rin}.
+    Ism rangi uchun (``ui.person_name``) — bitta so'rov, qisqa keshlanadi. 0 ⚡️ — o'rin yo'q."""
+    places = cache.get(PODIUM_CACHE_KEY)
+    if places is not None:
+        return places
+    rows = (
+        Student.objects.filter(status=Student.Status.ACTIVE)
+        .annotate(balance=Sum("coins__amount"))
+        .order_by("group_id", F("balance").desc(nulls_last=True), "full_name")
+        .values_list("pk", "group_id", "balance")
+    )
+    groups: dict[int, list] = {}
+    for pk, group_id, balance in rows:
+        groups.setdefault(group_id, []).append((pk, balance or 0))
+    places = {
+        pk: place
+        for members in groups.values()
+        for pk, balance, place in _ranked(members)
+        if place <= 3 and balance > 0
+    }
+    cache.set(PODIUM_CACHE_KEY, places, PODIUM_TTL)
+    return places
 
 
 # --- Coin do'koni ------------------------------------------------------------------
