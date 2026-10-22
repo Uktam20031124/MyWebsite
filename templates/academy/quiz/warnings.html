@@ -1,0 +1,49 @@
+{% extends "academy/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Ogohlantirishlar · Testlar" %}{% endblock %}
+{% block kicker %}<a href="{% url 'quiz_batches' %}">{% translate "Testlar" %}</a><span class="sep">/</span>{% translate "Ogohlantirishlar" %}{% endblock %}
+{% block heading %}{% translate "Ogohlantirishlar" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Test paytida boshqa oyna yoki ilovaga o‘tgan, nusxalash yoki qo‘yishga uringan o‘quvchilar — profildan boshlangan va siz jo‘natgan testlar birga. Javoblarini ko‘rib chiqing va kerak bo‘lsa 1–5 ⚡️ quvvat ayiring yoki kechiring." %}</p>{% endblock %}
+
+{% block actions %}
+{% if pending_n %}
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn soft" type="submit" name="action" value="forgive_all" data-confirm="{% blocktranslate with n=pending_n trimmed %}Ko‘rib chiqilmagan {{ n }} ta ogohlantirishning hammasi quvvat ayirmasdan kechirilsinmi?{% endblocktranslate %}">{% icon "check" 16 %} {% blocktranslate with n=pending_n trimmed %}Hammasini kechirish ({{ n }}){% endblocktranslate %}</button>
+  </form>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <nav class="seg-tabs" aria-label="{% translate "Ko‘rinish" %}">
+    <a href="?" {% if not show_all %}aria-current="true"{% endif %}>{% blocktranslate with n=pending_n trimmed %}Ko‘rib chiqilmagan ({{ n }}){% endblocktranslate %}</a>
+    <a href="?hammasi=1" {% if show_all %}aria-current="true"{% endif %}>{% translate "Hammasi" %}</a>
+  </nav>
+</div>
+
+<section class="card">
+  <div class="card-body flush">
+    <div class="rows">
+      {% for a in attempts %}
+        <div class="row quiz-row warning-row">
+          <a class="person grow" href="{% url 'quiz_attempt_review' a.pk %}">
+            <span class="avatar sm{% if a.student.honor_since %} honor{% endif %}" style="--h: {{ a.student.full_name|hue }}" aria-hidden="true">{{ a.student.initials }}</span>
+            <span class="truncate">
+              <span class="person-name block truncate">{{ a.student|person_name }}</span>
+              <span class="person-meta">{{ a.student.group.code }} · {{ a.quiz.topic|topic_title }} · {{ a.finished_at|date:"d.m H:i" }} · {{ a.percent }}%{% if a.batch.from_profile %} · {% translate "profildan" %}{% endif %}</span>
+            </span>
+          </a>
+          <span class="warning-facts">
+            {% if a.leave_count %}<span class="badge warn" title="{% blocktranslate with s=a.away_seconds trimmed %}tashqarida jami {{ s }} s{% endblocktranslate %}">🚪 {% blocktranslate with n=a.leave_count trimmed %}{{ n }} marta chiqdi{% endblocktranslate %}</span>{% endif %}
+            {% if a.copy_count %}<span class="badge warn">📋 {% blocktranslate with n=a.copy_count trimmed %}{{ n }} marta nusxalash{% endblocktranslate %}</span>{% endif %}
+          </span>
+          {% include "academy/quiz/_penalty_form.html" with attempt=a next=request.get_full_path %}
+        </div>
+      {% empty %}
+        <div class="empty"><span class="empty-icon">{% icon "check" 22 %}</span><p>{% if show_all %}{% translate "Hali hech kim test paytida ogohlantirish olmagan." %}{% else %}{% translate "Ko‘rib chiqilmagan ogohlantirish yo‘q." %}{% endif %}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -2256,3 +2256,9 @@ h1 .honor-medal, .page-head .honor-medal, .p-hero h1 .honor-medal { width: 0.78e
 .badge.unlock-badge { background: var(--gold-soft); color: var(--gold); }
 .badge.unlock-badge::before { display: none; }
 .unlocked-topics { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
+
+/* --- Test ogohlantirishlari va jarima ------------------------------------------- */
+.warning-row { flex-wrap: wrap; row-gap: 8px; }
+.warning-facts { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.penalty-form { margin-left: auto; }
+.callout .penalty-form { justify-content: flex-start; margin: 10px 0 0; }

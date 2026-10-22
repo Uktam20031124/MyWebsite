@@ -62,6 +62,10 @@
         <a href="{% url 'rewards' %}" {% if url_name == 'rewards' or url_name == 'reward_edit' %}aria-current="page"{% endif %}>
           {% icon "trophy" %} {% translate "Mukofotlar" %}
         </a>
+        <a href="{% url 'quiz_warnings' %}" {% if url_name == 'quiz_warnings' %}aria-current="page"{% endif %}>
+          {% icon "alert" %} {% translate "Ogohlantirishlar" %}
+          {% if nav_warnings %}<span class="count hot" title="{% translate "Test paytida ogohlantirish olgan, hali ko‘rib chiqilmagan o‘quvchilar" %}">{{ nav_warnings }}</span>{% endif %}
+        </a>
         <a href="{% url 'quiz_review_requests' %}" {% if url_name == 'quiz_review_requests' %}aria-current="page"{% endif %}>
           {% icon "shield" %} {% translate "So‘rovlar" %}
           {% if nav_review_requests %}<span class="count hot" title="{% translate "Javoblarini ko‘rish uchun ruxsat so‘ragan o‘quvchilar" %}">{{ nav_review_requests }}</span>{% endif %}

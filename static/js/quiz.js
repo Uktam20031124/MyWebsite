@@ -18,8 +18,10 @@
   // --- Test oynasidan chiqib ketishlar (boshqa tab, oyna yoki ilova) — ustozga ko'rinadi.
   const leavesInput = form.querySelector("[data-quiz-leaves]");
   const awayInput = form.querySelector("[data-quiz-away]");
+  const copiesInput = form.querySelector("[data-quiz-copies]");
   const leaveNotice = document.querySelector("[data-quiz-leave-notice]");
   let leaves = Number(leavesInput?.value || 0);
+  let copies = Number(copiesInput?.value || 0);
   let awayMs = Number(awayInput?.value || 0) * 1000;
   let awaySince = null;
   let ownDialog = false; // o'zimizning confirm() oynamiz chiqib ketish hisoblanmaydi
@@ -27,6 +29,17 @@
   const syncLeaveInputs = () => {
     if (leavesInput) leavesInput.value = String(leaves);
     if (awayInput) awayInput.value = String(Math.round(awayMs / 1000));
+    if (copiesInput) copiesInput.value = String(copies);
+  };
+  // Ogohlantirish xabari: sababi (oynadan chiqish yoki nusxalash) va jami soni.
+  const showNotice = (reason) => {
+    if (!leaveNotice) return;
+    leaveNotice.hidden = false;
+    leaveNotice.querySelectorAll("[data-reason]").forEach((el) => {
+      el.hidden = el.dataset.reason !== reason;
+      const n = el.querySelector("[data-count]");
+      if (n) n.textContent = String(leaves + copies);
+    });
   };
   const leave = () => {
     if (awaySince !== null || submitted || ownDialog) return;
@@ -40,15 +53,28 @@
     awayMs += Date.now() - awaySince;
     awaySince = null;
     syncLeaveInputs();
-    if (leaveNotice) {
-      leaveNotice.hidden = false;
-      leaveNotice.querySelector("[data-count]").textContent = String(leaves);
-    }
+    showNotice("leave");
     save();
   };
   document.addEventListener("visibilitychange", () => (document.hidden ? leave() : back()));
   window.addEventListener("blur", leave);
   window.addEventListener("focus", back);
+
+  // Nusxalash, kesish, qo'yish va sichqonchaning o'ng tugmasi — bloklanadi va qayd qilinadi
+  // (bir harakatdagi ketma-ket hodisalar bitta urinish hisoblanadi).
+  let lastCopyAt = 0;
+  const copyAttempt = (e) => {
+    if (submitted) return;
+    e.preventDefault();
+    const now = Date.now();
+    if (now - lastCopyAt < 800) return;
+    lastCopyAt = now;
+    copies += 1;
+    syncLeaveInputs();
+    showNotice("copy");
+    save();
+  };
+  ["copy", "cut", "paste", "contextmenu"].forEach((type) => document.addEventListener(type, copyAttempt));
 
   const answered = () => form.querySelectorAll('input[type="radio"]:checked').length;
 

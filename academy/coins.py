@@ -6,6 +6,7 @@ Har bir yakunlangan test uchun natijaga qarab coin (bir marta), qo'shimcha:
 
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .models import CoinTransaction, QuizAttempt, Student
@@ -80,6 +81,34 @@ def undo_gift(tx: CoinTransaction) -> bool:
         return False
     tx.delete()
     return True
+
+
+# --- Test qoidasini buzish (oynadan chiqish, nusxalash) uchun jarima ----------------------
+PENALTY_PREFIX = "⚠️ Test qoidasi buzildi"
+PENALTY_MAX = 5
+
+
+def penalize(attempt: QuizAttempt, amount: int) -> int:
+    """Ustoz ogohlantirishlarni ko'rib chiqadi: 1–5 ⚡️ ayiradi yoki 0 — kechiradi.
+
+    Qayta qaror avvalgisini almashtiradi (jarima ikki marta olinmaydi); balansdan ko'p
+    ayirilmaydi. Natija: haqiqatda ayirilgan quvvat."""
+    if not 0 <= amount <= PENALTY_MAX:
+        raise ValueError(amount)
+    with transaction.atomic():
+        CoinTransaction.objects.filter(attempt=attempt, reason__startswith=PENALTY_PREFIX).delete()
+        taken = min(amount, max(0, balance(attempt.student)))
+        if taken:
+            CoinTransaction.objects.create(
+                student_id=attempt.student_id,
+                attempt=attempt,
+                amount=-taken,
+                reason=f"{PENALTY_PREFIX}: {attempt.quiz.topic.title}"[:120],
+            )
+        attempt.penalty = taken
+        attempt.warning_checked_at = timezone.now()
+        attempt.save(update_fields=["penalty", "warning_checked_at"])
+    return taken
 
 
 def balance(student: Student) -> int:

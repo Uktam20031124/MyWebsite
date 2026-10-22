@@ -1,7 +1,11 @@
-{% load i18n ui %}{% if attempt.leave_count %}
+{% load i18n ui %}{% if attempt.warning_count %}
 <div class="callout warn" style="margin-bottom:16px">
   <span class="callout-icon">{% icon "alert" 18 %}</span>
-  <div class="grow">{% blocktranslate with leave_count=attempt.leave_count trimmed %}<strong>Test paytida {{ leave_count }} marta boshqa oyna yoki ilovaga o‘tgan</strong> — tashqarida jami{% endblocktranslate %} {% if attempt.away_seconds >= 60 %}{% widthratio attempt.away_seconds 60 1 %} {% translate "daqiqa" %}{% else %}{% blocktranslate with away_seconds=attempt.away_seconds trimmed %}{{ away_seconds }} soniya{% endblocktranslate %}{% endif %}{% translate ". Javoblarni boshqa joydan qidirgan bo‘lishi mumkin." %}</div>
+  <div class="grow">
+    {% if attempt.leave_count %}{% blocktranslate with leave_count=attempt.leave_count trimmed %}<strong>Test paytida {{ leave_count }} marta boshqa oyna yoki ilovaga o‘tgan</strong> — tashqarida jami{% endblocktranslate %} {% if attempt.away_seconds >= 60 %}{% widthratio attempt.away_seconds 60 1 %} {% translate "daqiqa" %}{% else %}{% blocktranslate with away_seconds=attempt.away_seconds trimmed %}{{ away_seconds }} soniya{% endblocktranslate %}{% endif %}{% translate ". Javoblarni boshqa joydan qidirgan bo‘lishi mumkin." %}{% endif %}
+    {% if attempt.copy_count %}<div>{% blocktranslate with n=attempt.copy_count trimmed %}<strong>{{ n }} marta nusxalash, qo‘yish yoki o‘ng tugmaga urinish</strong> (bloklangan).{% endblocktranslate %}</div>{% endif %}
+    {% if penalty_choices %}{% include "academy/quiz/_penalty_form.html" with next=request.get_full_path %}{% endif %}
+  </div>
 </div>
 {% endif %}
 <div class="toolbar">

@@ -22,8 +22,10 @@
     <input type="hidden" name="timeout" value="0" data-quiz-timeout>
     <input type="hidden" name="leave_count" value="{{ attempt.leave_count }}" data-quiz-leaves>
     <input type="hidden" name="away_seconds" value="{{ attempt.away_seconds }}" data-quiz-away>
+    <input type="hidden" name="copy_count" value="{{ attempt.copy_count }}" data-quiz-copies>
     <div class="callout warn quiz-leave" role="alert" hidden data-quiz-leave-notice>
-      <div class="grow">{{ t.leave_notice|safe }}</div>
+      <div class="grow" data-reason="leave">{{ t.leave_notice|safe }}</div>
+      <div class="grow" data-reason="copy" hidden>{{ t.copy_notice|safe }}</div>
     </div>
     {% for q in questions %}
       <fieldset class="card quiz-question">

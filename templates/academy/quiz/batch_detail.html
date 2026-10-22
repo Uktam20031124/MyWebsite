@@ -90,7 +90,7 @@
           </a>
           <div class="quiz-actions">
             {% if a.status == 'finished' %}
-              {% if a.timed_out %}<span class="meta">{% translate "vaqt tugadi" %}</span>{% endif %}{% if a.leave_count %}<span class="badge warn" title="{% blocktranslate with leave_count=a.leave_count away_seconds=a.away_seconds trimmed %}Test oynasidan chiqib ketgan: {{ leave_count }} marta, jami {{ away_seconds }} s{% endblocktranslate %}">⚠️ {{ a.leave_count }}</span>{% endif %}
+              {% if a.timed_out %}<span class="meta">{% translate "vaqt tugadi" %}</span>{% endif %}{% if a.warning_count %}<span class="badge warn" title="{% blocktranslate with leave_count=a.leave_count away_seconds=a.away_seconds copy_count=a.copy_count trimmed %}Test oynasidan chiqib ketgan: {{ leave_count }} marta, jami {{ away_seconds }} s; nusxalash urinishlari: {{ copy_count }}{% endblocktranslate %}">⚠️ {{ a.warning_count }}{% if a.penalty %} · −{{ a.penalty }} ⚡️{% endif %}</span>{% endif %}
               <span class="meta">{{ a.finished_at|date:"d.m H:i" }}</span>
               <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
               <a class="btn xs soft" href="{% url 'quiz_attempt_review' a.pk %}" title="{% translate "Qaysi savollarda xato qilgani (faqat siz ko‘rasiz)" %}">{% icon "search" 13 %} {% translate "Javoblar" %}</a>

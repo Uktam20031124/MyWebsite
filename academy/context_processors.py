@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from .models import Group, Lesson, Purchase, QuizAttempt, Registration, Student, TestRequest, Topic
+from .models import Group, Lesson, Purchase, QuizAttempt, Registration, Student, TestRequest, Topic, warning_attempts
 
 
 def nav_counts(request):
@@ -25,6 +25,8 @@ def nav_counts(request):
         + Student.objects.filter(profile_requested_at__isnull=False).count()
         + TestRequest.objects.filter(status=TestRequest.Status.PENDING).count()
         + Purchase.objects.filter(status=Purchase.Status.PENDING).count(),
+        # Ogohlantirishli (oynadan chiqqan / nusxalagan), ustoz hali ko'rib chiqmagan testlar.
+        "nav_warnings": warning_attempts().filter(warning_checked_at__isnull=True).count(),
         "nav_registrations": Registration.objects.filter(
             status=Registration.Status.PENDING
         ).count(),

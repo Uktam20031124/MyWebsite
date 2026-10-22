@@ -71,6 +71,7 @@ from .models import (
     TestRequest,
     Topic,
     new_attempt_token,
+    warning_attempts,
 )
 from .profile_views import local_next, profile_context
 from .quiz_i18n import attempt_texts
@@ -1412,6 +1413,62 @@ def quiz_batch_detail(request, pk):
 
 
 @login_required
+def quiz_warnings(request):
+    """Ustoz: test paytida ogohlantirish olgan o'quvchilar — ko'rib chiqish va jarima (1–5 ⚡️)."""
+    if request.method == "POST" and request.POST.get("action") == "forgive_all":
+        pending = list(
+            warning_attempts().filter(warning_checked_at__isnull=True).select_related("student", "quiz__topic")
+        )
+        for a in pending:
+            coins.penalize(a, 0)
+        messages.info(request, _("{n} ta ogohlantirish kechirildi.").format(n=len(pending)))
+        return redirect("quiz_warnings")
+    show_all = request.GET.get("hammasi") == "1"
+    attempts = warning_attempts().select_related("student__group", "quiz__topic", "batch")
+    pending_n = attempts.filter(warning_checked_at__isnull=True).count()
+    if not show_all:
+        attempts = attempts.filter(warning_checked_at__isnull=True)
+    return render(
+        request,
+        "academy/quiz/warnings.html",
+        {
+            "attempts": attempts.order_by("-finished_at")[:200],
+            "show_all": show_all,
+            "pending_n": pending_n,
+            "penalty_choices": range(1, coins.PENALTY_MAX + 1),
+        },
+    )
+
+
+@login_required
+@require_POST
+def attempt_penalty(request, pk):
+    """Ustoz qarori: ogohlantirishlar uchun N ⚡️ ayirish (0 — kechirish)."""
+    attempt = get_object_or_404(
+        warning_attempts().select_related("student", "quiz__topic"), pk=pk
+    )
+    raw = request.POST.get("amount", "")
+    amount = int(raw) if raw.isdigit() else -1
+    if not 0 <= amount <= coins.PENALTY_MAX:
+        messages.error(request, _("Jarima 0 dan {max} gacha bo‘lishi kerak.").format(max=coins.PENALTY_MAX))
+    else:
+        taken = coins.penalize(attempt, amount)
+        name = attempt.student.full_name
+        if not amount:
+            messages.info(request, _("{name}: ogohlantirishlar kechirildi — quvvat ayirilmadi.").format(name=name))
+        elif taken < amount:
+            messages.warning(
+                request,
+                _("{name}: balans yetmadi — {taken} ⚡️ ayirildi ({amount} o‘rniga).").format(
+                    name=name, taken=taken, amount=amount
+                ),
+            )
+        else:
+            messages.success(request, _("{name}: {taken} ⚡️ quvvat ayirildi.").format(name=name, taken=taken))
+    return redirect(local_next(request) or reverse("quiz_warnings"))
+
+
+@login_required
 def quiz_attempt_review(request, pk):
     """Faqat ustoz uchun: o'quvchining har bir savolga bergan javobi va to'g'ri javob.
 
@@ -1450,6 +1507,7 @@ def quiz_attempt_review(request, pk):
             "duration": divmod(duration, 60) if duration is not None else None,
             "prev": others[index - 1] if index > 0 else None,
             "next": others[index + 1] if index + 1 < len(others) else None,
+            "penalty_choices": range(1, coins.PENALTY_MAX + 1),
         },
     )
 
@@ -1793,7 +1851,7 @@ def _attempt_args(attempt) -> list:
 
 
 def _record_leaves(request, attempt) -> None:
-    """Brauzerdan kelgan "test oynasidan chiqishlar" soni va vaqti — faqat oshadi
+    """Brauzerdan kelgan ogohlantirishlar (oynadan chiqish soni va vaqti, nusxalash urinishlari) — faqat oshadi
     (o'quvchi kamaytira olmaydi); vaqt test muddatidan oshmaydi."""
 
     def posted(name, cap):
@@ -1802,9 +1860,10 @@ def _record_leaves(request, attempt) -> None:
 
     leaves = max(attempt.leave_count, posted("leave_count", 999))
     away = max(attempt.away_seconds, posted("away_seconds", attempt.time_limit_minutes * 60))
-    if (leaves, away) != (attempt.leave_count, attempt.away_seconds):
-        type(attempt).objects.filter(pk=attempt.pk).update(leave_count=leaves, away_seconds=away)
-        attempt.leave_count, attempt.away_seconds = leaves, away
+    copies = max(attempt.copy_count, posted("copy_count", 999))
+    if (leaves, away, copies) != (attempt.leave_count, attempt.away_seconds, attempt.copy_count):
+        type(attempt).objects.filter(pk=attempt.pk).update(leave_count=leaves, away_seconds=away, copy_count=copies)
+        attempt.leave_count, attempt.away_seconds, attempt.copy_count = leaves, away, copies
 
 
 @never_cache
