@@ -3,7 +3,7 @@
 - **Xatolar ustida ishlash** — xato qilingan savollar yig'iladi; mashqda 3 marta ketma-ket
   to'g'ri yechilsa ro'yxatdan chiqadi (+coin). Keyingi testlarda ular ko'proq tushadi.
 - **Streak** — ketma-ket faol kunlar (test yoki mashq); har 7 kunda bonus coin.
-- **Haftalik reyting** — guruhda shu hafta (dushanbadan) eng ko'p coin yig'ganlar.
+- **Quvvat reytingi** — guruhda joriy quvvat balansi bo'yicha (profildagi raqam bilan bir xil).
 - **Coin do'koni** — sovg'a so'rovi; ustoz tasdiqlasa coin yechiladi.
 """
 
@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
 from django.db import transaction
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, F, Sum
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -230,21 +230,20 @@ def week_start(now=None):
     return timezone.make_aware(datetime.combine(monday, time.min), timezone.get_current_timezone())
 
 
-def weekly_board(group_id: int, now=None) -> list[dict]:
-    """Guruhda shu hafta (dushanbadan) yig'ilgan coinlar (sarflanganlari hisoblanmaydi)."""
+def quvvat_board(group_id: int) -> list[dict]:
+    """Guruh reytingi joriy quvvat ⚡️ balansi bo'yicha — profildagi raqam bilan bir xil
+    (yig'ilgani − sarflangani va jarimalar)."""
     rows = (
         Student.objects.filter(group_id=group_id, status=Student.Status.ACTIVE)
-        .annotate(
-            week=Sum("coins__amount", filter=Q(coins__amount__gt=0, coins__created_at__gte=week_start(now)))
-        )
-        .order_by("-week", "full_name")
+        .annotate(balance=Sum("coins__amount"))
+        .order_by(F("balance").desc(nulls_last=True), "full_name")
     )
     board, place, prev = [], 0, None
     for i, s in enumerate(rows, start=1):
-        w = s.week or 0
-        if w != prev:
-            place, prev = i, w
-        board.append({"student": s, "coins": w, "place": place})
+        b = s.balance or 0
+        if b != prev:
+            place, prev = i, b
+        board.append({"student": s, "coins": b, "place": place})
     return board
 
 

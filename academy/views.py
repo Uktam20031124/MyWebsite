@@ -337,7 +337,7 @@ class GroupDetailView(AuthMixin, DetailView):
         ctx["board"] = board
         ctx["board_text"] = motivation.leaderboard_text(group, board)
         ctx["telegram_ready"] = telegram_sender.is_configured()
-        ctx["coin_board"] = engagement.weekly_board(self.object.pk)[: engagement.LEADERBOARD_SIZE]
+        ctx["coin_board"] = engagement.quvvat_board(self.object.pk)[: engagement.LEADERBOARD_SIZE]
         ctx["email_ready"] = mailer.is_configured()
         return ctx
 
@@ -2231,7 +2231,7 @@ def student_portal(request, token):
     )
     stats = quiz_stats([student.pk], timeline=12).get(student.pk, QuizStats())
     rank, ranked_n = motivation.group_rank(student)
-    board = engagement.weekly_board(student.group_id)
+    board = engagement.quvvat_board(student.group_id)
     coin_available = engagement.available(student)
     response = render(
         request,

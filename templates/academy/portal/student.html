@@ -187,14 +187,14 @@
 
   <div class="p-panel" id="tab-board" role="tabpanel">
     <section class="card pad" id="board">
-      <h2>{% translate "Haftaning eng faollari 🏆" %}</h2>
-      <p class="meta">{% blocktranslate with name=student.group.name trimmed %}{{ name }} · shu hafta (dushanbadan) yig‘ilgan quvvat ⚡️. Har dushanba yangidan boshlanadi.{% endblocktranslate %}</p>
+      <h2>{% translate "Quvvat reytingi 🏆" %}</h2>
+      <p class="meta">{% blocktranslate with name=student.group.name trimmed %}{{ name }} · har bir o‘quvchining hozirgi quvvati ⚡️ — profilida qancha bo‘lsa, shu yerda ham shuncha.{% endblocktranslate %}</p>
       <ol class="board">
         {% for r in board %}
           <li class="{% if r.student.pk == student.pk %}me{% endif %} p{{ r.place }}"><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><span class="avatar sm{% if r.student.honor_since %} honor{% endif %}" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span><span class="grow">{{ r.student|person_name }}</span><strong>{{ r.coins }} ⚡️</strong></li>
         {% endfor %}
       </ol>
-      {% if my_board and my_board.place > board|length %}<p class="meta">{% blocktranslate with place=my_board.place coins=my_board.coins trimmed %}Siz: {{ place }}-o‘rin · {{ coins }} ⚡️ bu hafta.{% endblocktranslate %}</p>{% endif %}
+      {% if my_board and my_board.place > board|length %}<p class="meta">{% blocktranslate with place=my_board.place coins=my_board.coins trimmed %}Siz: {{ place }}-o‘rin · {{ coins }} ⚡️.{% endblocktranslate %}</p>{% endif %}
     </section>
   </div>
 

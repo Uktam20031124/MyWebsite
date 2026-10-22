@@ -54,19 +54,19 @@ msgstr "Каждые 7 дней активности подряд (🔥 сери
 msgid "Bu savol allaqachon o‘zlashtirilgan yoki topilmadi."
 msgstr "Этот вопрос уже усвоен или не найден."
 
-#: academy/engagement.py:265
+#: academy/engagement.py:264
 msgid "Bu sovg'a hozir do‘konda yo‘q."
 msgstr "Этого подарка сейчас нет в магазине."
 
-#: academy/engagement.py:267
+#: academy/engagement.py:266
 msgid "Bu sovg'a uchun so‘rovingiz ustozda kutilmoqda."
 msgstr "Ваш запрос на этот подарок ждёт решения учителя."
 
-#: academy/engagement.py:269
+#: academy/engagement.py:268
 msgid "Sizda “A’lochi” unvoni allaqachon bor."
 msgstr "У вас уже есть звание «Отличник»."
 
-#: academy/engagement.py:272 academy/profiles.py:339
+#: academy/engagement.py:271 academy/profiles.py:339
 msgid "Quvvat yetmaydi: kerak {cost} ⚡️, sizda {available} ⚡️."
 msgstr "Не хватает энергии: нужно {cost} ⚡️, у вас {available} ⚡️."
 
@@ -2403,6 +2403,10 @@ msgid "holat"
 msgstr "статус"
 
 #: templates/academy/groups/detail.html
+msgid "joriy ⚡️ — profildagi bilan bir xil"
+msgstr "текущая ⚡️ — как в профиле"
+
+#: templates/academy/groups/detail.html
 msgid "oxirgi 7 kun · testlar"
 msgstr "последние 7 дней · тесты"
 
@@ -2439,12 +2443,8 @@ msgid "“%(title)s” dasturdan olib tashlansinmi?"
 msgstr "Убрать «%(title)s» из программы?"
 
 #: templates/academy/groups/detail.html
-msgid "⚡️ quvvat · dushanbadan"
-msgstr "⚡️ энергия · с понедельника"
-
-#: templates/academy/groups/detail.html
-msgid "🏆 Haftaning eng faollari"
-msgstr "🏆 Самые активные за неделю"
+msgid "🏆 Quvvat reytingi"
+msgstr "🏆 Рейтинг энергии"
 
 #: templates/academy/groups/form.html
 msgid "Dars kunlari va vaqtini kiriting — guruh jadvalda, bosh sahifada va “Boshlash” tugmasida paydo bo‘ladi."
@@ -3095,8 +3095,8 @@ msgid "Test · %(title)s"
 msgstr "Тест · %(title)s"
 
 #: templates/academy/portal/student.html
-msgid "%(name)s · shu hafta (dushanbadan) yig‘ilgan quvvat ⚡️. Har dushanba yangidan boshlanadi."
-msgstr "%(name)s · энергия ⚡️, набранная на этой неделе (с понедельника). Каждый понедельник всё начинается заново."
+msgid "%(name)s · har bir o‘quvchining hozirgi quvvati ⚡️ — profilida qancha bo‘lsa, shu yerda ham shuncha."
+msgstr "%(name)s · текущая энергия ⚡️ каждого ученика — столько же, сколько в его профиле."
 
 #: templates/academy/portal/student.html
 msgid "%(present)s/%(total)s dars"
@@ -3137,10 +3137,6 @@ msgstr "Ваше место в группе"
 #: templates/academy/portal/student.html
 msgid "Guruhdan oldinga o‘ting: navbatdagi mavzuni %(cost)s ⚡️ ga oching — material va test darhol ochiladi. 70%% dan yuqori natijaga bonus ⚡️."
 msgstr "Опередите группу: откройте следующую тему за %(cost)s ⚡️ — материал и тест откроются сразу. За результат выше 70%% бонус ⚡️."
-
-#: templates/academy/portal/student.html
-msgid "Haftaning eng faollari 🏆"
-msgstr "Самые активные за неделю 🏆"
 
 #: templates/academy/portal/student.html
 msgid "Hali test yechmagansiz."
@@ -3251,6 +3247,10 @@ msgid "Quvvat qanday beriladi?"
 msgstr "Как начисляется энергия?"
 
 #: templates/academy/portal/student.html
+msgid "Quvvat reytingi 🏆"
+msgstr "Рейтинг энергии 🏆"
+
+#: templates/academy/portal/student.html
 msgid "Quvvat tarixi"
 msgstr "История энергии"
 
@@ -3263,8 +3263,8 @@ msgid "Quvvatingiz"
 msgstr "Ваша энергия"
 
 #: templates/academy/portal/student.html
-msgid "Siz: %(place)s-o‘rin · %(coins)s ⚡️ bu hafta."
-msgstr "Вы: %(place)s-е место · %(coins)s ⚡️ на этой неделе."
+msgid "Siz: %(place)s-o‘rin · %(coins)s ⚡️."
+msgstr "Вы: %(place)s-е место · %(coins)s ⚡️."
 
 #: templates/academy/portal/student.html
 msgid "Streak"

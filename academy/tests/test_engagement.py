@@ -129,18 +129,23 @@ class EngagementTests(TestCase):
 
     # --- Haftalik reyting -----------------------------------------------------------
 
-    def test_weekly_board_counts_only_this_week_earnings(self, notify):
+    def test_board_matches_profile_balance(self, notify):
         CoinTransaction.objects.create(student=self.ali, amount=20, reason="test")
         CoinTransaction.objects.create(student=self.vali, amount=30, reason="test")
-        CoinTransaction.objects.create(student=self.vali, amount=-25, reason="Do‘kon")  # sarflash hisoblanmaydi
+        CoinTransaction.objects.create(student=self.vali, amount=-25, reason="Do‘kon")  # sarflangani ayiriladi
         old = CoinTransaction.objects.create(student=self.ali, amount=100, reason="eski")
-        CoinTransaction.objects.filter(pk=old.pk).update(created_at=engagement.week_start() - timedelta(days=1))
-        board = engagement.weekly_board(self.group.pk)
-        self.assertEqual([(r["student"].full_name, r["coins"], r["place"]) for r in board],
-                         [("Vali Karimov", 30, 1), ("Ali Valiyev", 20, 2)])
+        CoinTransaction.objects.filter(pk=old.pk).update(created_at=engagement.week_start() - timedelta(days=30))
+        board = engagement.quvvat_board(self.group.pk)
+        self.assertEqual(
+            [(r["student"].full_name, r["coins"], r["place"]) for r in board],
+            [("Ali Valiyev", 120, 1), ("Vali Karimov", 5, 2)],
+        )
+        for r in board:
+            self.assertEqual(r["coins"], coins.balance(r["student"]))  # profildagi raqam bilan bir xil
         page = self.client.get(reverse("student_portal", args=[self.token]))
-        self.assertContains(page, "Haftaning eng faollari")
-        self.assertContains(self.teacher.get(self.group.get_absolute_url()), "Haftaning eng faollari")
+        self.assertContains(page, "Quvvat reytingi")
+        self.assertContains(page, "<strong>120 ⚡️</strong>", html=False)
+        self.assertContains(self.teacher.get(self.group.get_absolute_url()), "Quvvat reytingi")
 
     # --- Coin do'koni ---------------------------------------------------------------
 
