@@ -1,0 +1,10 @@
+{% load i18n %}<form method="post" action="{% url 'attempt_penalty' attempt.pk %}" class="quiz-actions penalty-form">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
+  {% if attempt.warning_checked_at %}
+    <span class="badge {% if attempt.penalty %}warn{% else %}ok{% endif %}">{% if attempt.penalty %}−{{ attempt.penalty }} ⚡️{% else %}{% translate "kechirildi" %}{% endif %}</span>
+  {% endif %}
+  <span class="meta">{% translate "Ayirish:" %}</span>
+  {% for n in penalty_choices %}<button class="btn xs {% if attempt.penalty == n %}danger{% else %}soft{% endif %}" type="submit" name="amount" value="{{ n }}" title="{% blocktranslate with n=n trimmed %}{{ n }} ⚡️ quvvat ayirish{% endblocktranslate %}">−{{ n }}</button>{% endfor %}
+  <button class="btn xs ghost" type="submit" name="amount" value="0">{% translate "Kechirish" %}</button>
+</form>

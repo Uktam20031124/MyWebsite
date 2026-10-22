@@ -110,7 +110,7 @@
               {% endif %}
             </td>
             <td class="nowrap tabular">{{ a.duration_text|default:"—" }}</td>
-            <td class="center">{% if a.leave_count %}<span class="badge warn" title="{% blocktranslate with s=a.away_seconds trimmed %}tashqarida {{ s }} s{% endblocktranslate %}">{{ a.leave_count }}</span>{% else %}<span class="meta">0</span>{% endif %}</td>
+            <td class="center">{% if a.warning_count %}<span class="badge warn" title="{% blocktranslate with s=a.away_seconds trimmed %}tashqarida {{ s }} s{% endblocktranslate %}">{{ a.warning_count }}</span>{% else %}<span class="meta">0</span>{% endif %}</td>
             <td class="nowrap meta">{{ a.started_at|date:"d.m H:i" }}</td>
             <td class="right nowrap">
               {% if a.status == "finished" %}<a class="btn xs soft" href="{% url 'open_attempt_review' oq.pk a.pk %}">{% icon "eye" 13 %} {% translate "Javoblar" %}</a>{% endif %}

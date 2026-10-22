@@ -793,6 +793,11 @@ class AttemptScoringMixin:
     GRACE_SECONDS = 15
 
     @property
+    def warning_count(self) -> int:
+        """Test paytidagi ogohlantirishlar: oynadan chiqish + nusxalash urinishlari."""
+        return self.leave_count + self.copy_count
+
+    @property
     def percent(self):
         if not self.total:
             return None
@@ -950,6 +955,11 @@ class QuizAttempt(AttemptScoringMixin, models.Model):
     # Test paytida boshqa oyna/ilovaga o'tishlar (ko'chirishga qarshi qayd) — faqat ustozga.
     leave_count = models.PositiveSmallIntegerField(_("Chiqib ketishlar"), default=0)
     away_seconds = models.PositiveIntegerField(_("Tashqarida (s)"), default=0)
+    # Nusxalash/qo'yish/sichqoncha o'ng tugmasi urinishlari (bloklanadi va qayd qilinadi).
+    copy_count = models.PositiveSmallIntegerField(_("Nusxalash urinishlari"), default=0)
+    # Ustoz ogohlantirishlarni ko'rib chiqdi: jarima (0 — kechirildi) va qachon.
+    penalty = models.PositiveSmallIntegerField(_("Jarima ⚡️"), default=0)
+    warning_checked_at = models.DateTimeField(_("Ogohlantirish ko'rib chiqilgan"), null=True, blank=True)
     answers = models.JSONField(_("Javoblar"), default=dict, blank=True)
     # Yakunlanganda: savollar, variantlar, tanlangani va to'g'ri javob nusxasi — faqat
     # ustoz ko'radi; test keyinchalik tahrirlansa ham natija tahlili o'zgarmaydi.
@@ -1081,6 +1091,13 @@ def name_key(full_name: str) -> str:
     return " ".join(text.lower().split())
 
 
+def warning_attempts():
+    """Yakunlangan, ogohlantirishi bor testlar (profil va ustoz jo'natgan — farqsiz)."""
+    return QuizAttempt.objects.filter(status=QuizAttempt.Status.FINISHED).filter(
+        models.Q(leave_count__gt=0) | models.Q(copy_count__gt=0)
+    )
+
+
 class OpenQuiz(models.Model):
     """Umumiy test havolasi: bitta havola — ko'p qatnashchi. Har biri F.I.Sh. kiritib boshlaydi.
 
@@ -1164,6 +1181,7 @@ class OpenAttempt(AttemptScoringMixin, models.Model):
     question_ids = models.JSONField(_("Savollar"), default=list, blank=True, editable=False)
     leave_count = models.PositiveSmallIntegerField(_("Chiqib ketishlar"), default=0)
     away_seconds = models.PositiveIntegerField(_("Tashqarida (s)"), default=0)
+    copy_count = models.PositiveSmallIntegerField(_("Nusxalash urinishlari"), default=0)
     answers = models.JSONField(_("Javoblar"), default=dict, blank=True)
     snapshot = models.JSONField(_("Javoblar tahlili"), default=list, blank=True, editable=False)
     started_at = models.DateTimeField(_("Boshlangan"), default=timezone.now)
@@ -1465,6 +1483,7 @@ class CoinTransaction(models.Model):
         (re.compile(r"^🎁 Ustozdan sovg‘a$"), gettext_noop("🎁 Ustozdan sovg‘a")),
         (re.compile(r"^🎁 Ustozdan sovg‘a: (?P<t>.+)$"), gettext_noop("🎁 Ustozdan sovg‘a: {t}")),
         (re.compile(r"^➕ Qo‘shimcha savol: (?P<t>.+)$"), gettext_noop("➕ Qo‘shimcha savol: {t}")),
+        (re.compile(r"^⚠️ Test qoidasi buzildi: (?P<t>.+)$"), gettext_noop("⚠️ Test qoidasi buzildi: {t}")),
     ]
 
     @property

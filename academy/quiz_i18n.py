@@ -22,7 +22,9 @@ _TEXTS = {
         "start": "Testni boshlash",
         "time_left": "Qolgan vaqt",
         "leave_notice": "<strong>Test oynasidan chiqdingiz</strong> — bu qayd qilindi va ustozingizga "
-        "ko‘rinadi (jami: <span data-count>0</span> marta).",
+        "ko‘rinadi (jami ogohlantirish: <span data-count>0</span>).",
+        "copy_notice": "<strong>Nusxalash va qo‘yish taqiqlangan</strong> — urinish qayd qilindi va "
+        "ustozingizga ko‘rinadi (jami ogohlantirish: <span data-count>0</span>).",
         "image_alt": "Savol rasmi",
         "finish": "Testni yakunlash",
         "progress": "{answered} / {total} ta savolga javob berildi",
@@ -104,7 +106,9 @@ _TEXTS = {
         "start": "Начать тест",
         "time_left": "Осталось времени",
         "leave_notice": "<strong>Вы вышли из окна теста</strong> — это зафиксировано и видно учителю "
-        "(всего: <span data-count>0</span> раз).",
+        "(всего предупреждений: <span data-count>0</span>).",
+        "copy_notice": "<strong>Копирование и вставка запрещены</strong> — попытка зафиксирована и видна "
+        "учителю (всего предупреждений: <span data-count>0</span>).",
         "image_alt": "Изображение к вопросу",
         "finish": "Завершить тест",
         "progress": "Отвечено: {answered} из {total}",
