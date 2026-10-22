@@ -6,7 +6,7 @@ from datetime import date, time, timedelta
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import Max
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
@@ -523,6 +523,17 @@ def resync_syllabus_item(group_id, topic_id) -> None:
         items.filter(status=SyllabusItem.Status.TAUGHT).update(
             status=SyllabusItem.Status.PLANNED, taught_on=None
         )
+
+
+# Guruh reytingidagi 1–3-o'rinlar keshi (``engagement.podium_places``): quvvat yoki o'quvchi
+# (guruh, holat) o'zgarsa — darhol yangilanadi.
+PODIUM_CACHE_KEY = "academy:podium"
+
+
+def _podium_changed(sender, **kwargs):
+    from django.core.cache import cache
+
+    cache.delete(PODIUM_CACHE_KEY)
 
 
 @receiver(post_delete, sender=Lesson)
@@ -1666,3 +1677,8 @@ class Purchase(models.Model):
 
     def __str__(self) -> str:
         return f"{self.student} — {self.title} ({self.get_status_display()})"
+
+
+for _model in (CoinTransaction, Student):
+    post_save.connect(_podium_changed, sender=_model, dispatch_uid=f"podium_{_model.__name__}_save")
+    post_delete.connect(_podium_changed, sender=_model, dispatch_uid=f"podium_{_model.__name__}_delete")
