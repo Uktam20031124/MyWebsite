@@ -98,8 +98,8 @@ class BankTranslationTests(TestCase):
         from academy.models import Question
 
         out = load()
-        self.assertIn("ruscha tarjima: 924 ta savol", out)
-        self.assertIn("mustahkamlash materiali: 77 ta mavzu", out)
+        self.assertIn("ruscha tarjima: 999 ta savol", out)
+        self.assertIn("mustahkamlash materiali: 82 ta mavzu", out)
         self.assertFalse(Topic.objects.filter(study="").exists())
         self.assertFalse(Topic.objects.filter(study_ru="").exists())
         self.assertFalse(Question.objects.filter(text_ru="").exists())

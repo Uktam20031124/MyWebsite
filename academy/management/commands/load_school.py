@@ -18,6 +18,8 @@ from academy.models import (
 )
 from academy.quiz_bank import seed_quizzes, seed_slides, seed_study, seed_translations, validate_bank
 from academy.school_data import GroupData, ModuleData, all_groups, all_modules
+from academy.school_data.iq import MODULES as IQ_MODULES
+from academy.school_data.iq import TIME_LIMIT as IQ_TIME_LIMIT
 
 
 def validate(modules: list[ModuleData], groups: list[GroupData]) -> list[str]:
@@ -103,6 +105,9 @@ class Command(BaseCommand):
             _titles_ru, questions_ru = seed_translations(Topic, Question, Choice)
             study_new = seed_study(Topic)
             slides_new = seed_slides(Topic)
+            Quiz.objects.filter(topic__module__title=IQ_MODULES[0].title, time_limit_minutes=10).update(
+                time_limit_minutes=IQ_TIME_LIMIT
+            )
 
         self.stdout.write(
             self.style.SUCCESS(
