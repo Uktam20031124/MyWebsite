@@ -1485,6 +1485,7 @@ class CoinTransaction(models.Model):
     # Bazadagi sabab matnlari (o'zbekcha) — interfeys tilida ko'rsatish uchun andozalar.
     REASON_PATTERNS = [
         (re.compile(r"^Test: (?P<p>\d+)%$"), gettext_noop("Test: {p}%")),
+        (re.compile(r"^Takroriy test: (?P<p>\d+)%$"), gettext_noop("Takroriy test: {p}%")),
         (re.compile(r"^Mustahkamlab, qayta topshirdi$"), gettext_noop("Mustahkamlab, qayta topshirdi")),
         (re.compile(r"^Yangi mavzuni oldindan o‘zlashtirdi$"), gettext_noop("Yangi mavzuni oldindan o‘zlashtirdi")),
         (re.compile(r"^Xato tuzatildi: (?P<t>.+)$"), gettext_noop("Xato tuzatildi: {t}")),

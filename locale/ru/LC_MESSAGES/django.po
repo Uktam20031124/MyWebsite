@@ -14,7 +14,7 @@ msgstr "Лимит на сегодня исчерпан ({n} вопросов). 
 msgid "Bu savolga javob berib bo‘lmaydi — keyingisiga o‘ting."
 msgstr "На этот вопрос нельзя ответить — переходите к следующему."
 
-#: academy/bonus.py:74 academy/engagement.py:213 academy/profile_views.py:187 academy/profile_views.py:240
+#: academy/bonus.py:74 academy/engagement.py:213 academy/profile_views.py:188 academy/profile_views.py:241
 msgid "Javobni tanlang."
 msgstr "Выберите ответ."
 
@@ -22,31 +22,35 @@ msgstr "Выберите ответ."
 msgid "Bu savolga allaqachon javob bergansiz."
 msgstr "Вы уже ответили на этот вопрос."
 
-#: academy/coins.py:21
+#: academy/coins.py:26
 msgid "90% va undan yuqori — 10 ⚡️"
 msgstr "90% и выше — 10 ⚡️"
 
-#: academy/coins.py:22
+#: academy/coins.py:27
 msgid "75–89% — 7 ⚡️"
 msgstr "75–89% — 7 ⚡️"
 
-#: academy/coins.py:23
+#: academy/coins.py:28
 msgid "60–74% — 5 ⚡️"
 msgstr "60–74% — 5 ⚡️"
 
-#: academy/coins.py:24
+#: academy/coins.py:29
 msgid "60% dan past — 1 ⚡️ (urinish uchun)"
 msgstr "Ниже 60% — 1 ⚡️ (за попытку)"
 
-#: academy/coins.py:25
+#: academy/coins.py:30
 msgid "Mustahkamlab, qayta topshirib o‘tsangiz ({PASS_PERCENT}%+) — yana +{RETAKE_BONUS}"
 msgstr "Закрепили тему и пересдали ({PASS_PERCENT}%+) — ещё +{RETAKE_BONUS}"
 
-#: academy/coins.py:28
+#: academy/coins.py:33
+msgid "Profildan bitta testni {n} martadan ko‘p topshirsangiz — faqat {p}%+ natijaga {c} ⚡️"
+msgstr "Если сдаёте один тест из профиля больше {n} раз — только за результат {p}%+ даётся {c} ⚡️"
+
+#: academy/coins.py:36
 msgid "Xatolar mashqida savolni 3 marta ketma-ket to‘g‘ri yechsangiz — +2"
 msgstr "Решили вопрос в разборе ошибок 3 раза подряд правильно — +2"
 
-#: academy/coins.py:29
+#: academy/coins.py:37
 msgid "Har 7 kun ketma-ket faol bo‘lsangiz (🔥 streak) — +10"
 msgstr "Каждые 7 дней активности подряд (🔥 серия) — +10"
 
@@ -366,7 +370,7 @@ msgstr "Общая ссылка"
 msgid "F.I.Sh."
 msgstr "Ф.И.О."
 
-#: academy/models.py:1189 academy/models.py:1347 academy/models.py:1400 academy/models.py:1665
+#: academy/models.py:1189 academy/models.py:1347 academy/models.py:1400 academy/models.py:1666
 msgid "Holat"
 msgstr "Статус"
 
@@ -454,7 +458,7 @@ msgstr "Ссылка для записи"
 msgid "Ro'yxat havolalari"
 msgstr "Ссылки для записи"
 
-#: academy/models.py:1330 academy/models.py:1382 academy/models.py:1652
+#: academy/models.py:1330 academy/models.py:1382 academy/models.py:1653
 msgid "Kutilmoqda"
 msgstr "Ожидает"
 
@@ -502,7 +506,7 @@ msgstr "Пересдача"
 msgid "Yangi mavzu (oldindan)"
 msgstr "Новая тема (заранее)"
 
-#: academy/models.py:1396 academy/models.py:1438 academy/models.py:1602 academy/models.py:255
+#: academy/models.py:1396 academy/models.py:1438 academy/models.py:1603 academy/models.py:255
 msgid "Mavzu"
 msgstr "Тема"
 
@@ -510,11 +514,11 @@ msgstr "Тема"
 msgid "Turi"
 msgstr "Тип"
 
-#: academy/models.py:1402 academy/models.py:1667
+#: academy/models.py:1402 academy/models.py:1668
 msgid "So'ralgan"
 msgstr "Запрошено"
 
-#: academy/models.py:1403 academy/models.py:1668 academy/models.py:996
+#: academy/models.py:1403 academy/models.py:1669 academy/models.py:996
 msgid "Ustoz qarori"
 msgstr "Решение учителя"
 
@@ -538,7 +542,7 @@ msgstr "Подготовка к новой теме"
 msgid "Mustahkamlashlar"
 msgstr "Закрепления"
 
-#: academy/models.py:1462 academy/models.py:1561
+#: academy/models.py:1462 academy/models.py:1562
 msgid "Quvvat ⚡️"
 msgstr "Энергия ⚡️"
 
@@ -559,42 +563,46 @@ msgid "Test: {p}%"
 msgstr "Тест: {p}%"
 
 #: academy/models.py:1488
+msgid "Takroriy test: {p}%"
+msgstr "Повторный тест: {p}%"
+
+#: academy/models.py:1489
 msgid "Mustahkamlab, qayta topshirdi"
 msgstr "Закрепил тему и пересдал"
 
-#: academy/models.py:1489
+#: academy/models.py:1490
 msgid "Yangi mavzuni oldindan o‘zlashtirdi"
 msgstr "Заранее освоил новую тему"
 
-#: academy/models.py:1490
+#: academy/models.py:1491
 msgid "Xato tuzatildi: {t}"
 msgstr "Ошибка исправлена: {t}"
 
-#: academy/models.py:1491
+#: academy/models.py:1492
 msgid "🔥 {n} kun ketma-ket faol"
 msgstr "🔥 {n} дн. активности подряд"
 
-#: academy/models.py:1492
+#: academy/models.py:1493
 msgid "🎁 Mukofot: {t}"
 msgstr "🎁 Награда: {t}"
 
-#: academy/models.py:1493
+#: academy/models.py:1494
 msgid "🔓 Mavzu ochildi: {t}"
 msgstr "🔓 Тема открыта: {t}"
 
-#: academy/models.py:1494
+#: academy/models.py:1495
 msgid "🎁 Ustozdan sovg‘a"
 msgstr "🎁 Подарок от учителя"
 
-#: academy/models.py:1495
+#: academy/models.py:1496
 msgid "🎁 Ustozdan sovg‘a: {t}"
 msgstr "🎁 Подарок от учителя: {t}"
 
-#: academy/models.py:1496
+#: academy/models.py:1497
 msgid "➕ Qo‘shimcha savol: {t}"
 msgstr "➕ Дополнительный вопрос: {t}"
 
-#: academy/models.py:1497
+#: academy/models.py:1498
 msgid "⚠️ Test qoidasi buzildi: {t}"
 msgstr "⚠️ Нарушение правил теста: {t}"
 
@@ -602,27 +610,27 @@ msgstr "⚠️ Нарушение правил теста: {t}"
 msgid "O‘zbekcha"
 msgstr "O‘zbekcha"
 
-#: academy/models.py:1531 academy/models.py:1558 academy/models.py:667 academy/models.py:675
+#: academy/models.py:1532 academy/models.py:1559 academy/models.py:667 academy/models.py:675
 msgid "Savol"
 msgstr "Вопрос"
 
-#: academy/models.py:1533
+#: academy/models.py:1534
 msgid "Ketma-ket to'g'ri"
 msgstr "Подряд верно"
 
-#: academy/models.py:1534
+#: academy/models.py:1535
 msgid "Xato soni"
 msgstr "Ошибок"
 
-#: academy/models.py:1535
+#: academy/models.py:1536
 msgid "Oxirgi xato"
 msgstr "Последняя ошибка"
 
-#: academy/models.py:1536
+#: academy/models.py:1537
 msgid "Oxirgi mashq"
 msgstr "Последняя тренировка"
 
-#: academy/models.py:1537
+#: academy/models.py:1538
 msgid "O'zlashtirildi"
 msgstr "Усвоено"
 
@@ -630,39 +638,39 @@ msgstr "Усвоено"
 msgid "Русский"
 msgstr "Русский"
 
-#: academy/models.py:1540
+#: academy/models.py:1541
 msgid "Xato savol"
 msgstr "Вопрос с ошибкой"
 
-#: academy/models.py:1541
+#: academy/models.py:1542
 msgid "Xato savollar"
 msgstr "Вопросы с ошибками"
 
-#: academy/models.py:1560 academy/models.py:705
+#: academy/models.py:1561 academy/models.py:705
 msgid "To'g'ri"
 msgstr "Верный"
 
-#: academy/models.py:1562
+#: academy/models.py:1563
 msgid "Javob berilgan"
 msgstr "Время ответа"
 
-#: academy/models.py:1566
+#: academy/models.py:1567
 msgid "Qo‘shimcha savol javobi"
 msgstr "Ответ на дополнительный вопрос"
 
-#: academy/models.py:1567
+#: academy/models.py:1568
 msgid "Qo‘shimcha savollar javoblari"
 msgstr "Ответы на дополнительные вопросы"
 
-#: academy/models.py:1582
+#: academy/models.py:1583
 msgid "Kun"
 msgstr "День"
 
-#: academy/models.py:1586
+#: academy/models.py:1587
 msgid "Faol kun"
 msgstr "Активный день"
 
-#: academy/models.py:1587
+#: academy/models.py:1588
 msgid "Faol kunlar"
 msgstr "Активные дни"
 
@@ -670,11 +678,11 @@ msgstr "Активные дни"
 msgid "Tanaffus"
 msgstr "Перерыв"
 
-#: academy/models.py:1603 academy/models.py:1635 academy/models.py:1663
+#: academy/models.py:1604 academy/models.py:1636 academy/models.py:1664
 msgid "Narxi (⚡️ quvvat)"
 msgstr "Цена (⚡️ энергия)"
 
-#: academy/models.py:1607
+#: academy/models.py:1608
 msgid "Ochilgan"
 msgstr "Открыта"
 
@@ -682,11 +690,11 @@ msgstr "Открыта"
 msgid "Bitirgan"
 msgstr "Окончил"
 
-#: academy/models.py:1611
+#: academy/models.py:1612
 msgid "Ochilgan mavzu"
 msgstr "Открытая тема"
 
-#: academy/models.py:1612
+#: academy/models.py:1613
 msgid "Ochilgan mavzular"
 msgstr "Открытые темы"
 
@@ -694,55 +702,55 @@ msgstr "Открытые темы"
 msgid "Ketgan"
 msgstr "Ушёл"
 
-#: academy/models.py:1625
+#: academy/models.py:1626
 msgid "Oddiy — ustoz o‘zi beradi"
 msgstr "Обычный — учитель выдаёт сам"
 
-#: academy/models.py:1626
+#: academy/models.py:1627
 msgid "A’lochi unvoni — oltin medal va sertifikatda belgi"
 msgstr "Звание «Отличник» — золотая медаль и знак в сертификате"
 
-#: academy/models.py:1628 academy/models.py:1641 academy/models.py:1660 academy/models.py:1662
+#: academy/models.py:1629 academy/models.py:1642 academy/models.py:1661 academy/models.py:1663
 msgid "Sovg'a"
 msgstr "Подарок"
 
-#: academy/models.py:1630
+#: academy/models.py:1631
 msgid "Avtomatik ta’sir"
 msgstr "Автоматическое действие"
 
-#: academy/models.py:1631
+#: academy/models.py:1632
 msgid "“A’lochi unvoni”: tasdiqlanishi bilan o‘quvchi ismi hamma joyda oltin rangda, medal bilan ko‘rinadi va sertifikatga “A’lochi” muhri tushadi."
 msgstr "«Звание Отличник»: сразу после одобрения имя ученика везде показывается золотым цветом с медалью, а в сертификат добавляется печать «Отличник»."
 
-#: academy/models.py:1634 academy/models.py:193 academy/models.py:485 academy/models.py:72
+#: academy/models.py:1635 academy/models.py:193 academy/models.py:485 academy/models.py:72
 msgid "Izoh"
 msgstr "Описание"
 
-#: academy/models.py:1636
+#: academy/models.py:1637
 msgid "Do'konda ko'rinadi"
 msgstr "Показывать в магазине"
 
-#: academy/models.py:1637 academy/models.py:231 academy/models.py:292 academy/models.py:347
+#: academy/models.py:1638 academy/models.py:231 academy/models.py:292 academy/models.py:347
 msgid "Tartib"
 msgstr "Порядок"
 
-#: academy/models.py:1642
+#: academy/models.py:1643
 msgid "Sovg'alar"
 msgstr "Подарки"
 
-#: academy/models.py:1653
+#: academy/models.py:1654
 msgid "Berildi"
 msgstr "Выдан"
 
-#: academy/models.py:1654
+#: academy/models.py:1655
 msgid "Rad etildi"
 msgstr "Отклонён"
 
-#: academy/models.py:1675
+#: academy/models.py:1676
 msgid "Sovg'a so'rovi"
 msgstr "Запрос подарка"
 
-#: academy/models.py:1676
+#: academy/models.py:1677
 msgid "Sovg'a so'rovlari"
 msgstr "Запросы подарков"
 
@@ -1186,79 +1194,79 @@ msgstr "Ссылка отправлена на адресов: {sent}."
 msgid "Yuborilmadi: {failed}"
 msgstr "Не отправлено: {failed}"
 
-#: academy/profile_views.py:142
+#: academy/profile_views.py:143
 msgid "🔓 “{title}” ochildi! Materialni o‘qing va testni topshiring — 70% dan yuqori natijaga bonus ⚡️."
 msgstr "🔓 «{title}» открыта! Прочитайте материал и сдайте тест — за результат выше 70% бонус ⚡️."
 
-#: academy/profile_views.py:282
+#: academy/profile_views.py:283
 msgid "“{title}” so‘rovi ustozga yuborildi. Tasdiqlansa, {cost} ⚡️ quvvat sarflanadi."
 msgstr "Запрос «{title}» отправлен учителю. Если он одобрит, будет потрачено {cost} ⚡️ энергии."
 
-#: academy/profile_views.py:316
+#: academy/profile_views.py:317
 msgid "{full_name}: profil {action} soatga ochildi."
 msgstr "{full_name}: профиль открыт на {action} ч."
 
-#: academy/profile_views.py:320
+#: academy/profile_views.py:321
 msgid "{full_name}: profilga kirish yopildi."
 msgstr "{full_name}: вход в профиль закрыт."
 
-#: academy/profile_views.py:331
+#: academy/profile_views.py:332
 msgid "O‘tilgan {n} ta mavzu qo‘shildi."
 msgstr "Добавлено пройденных тем: {n}."
 
-#: academy/profile_views.py:335
+#: academy/profile_views.py:336
 msgid "Test uchun ruxsat etilgan mavzular: {n} ta."
 msgstr "Темы, разрешённые для теста: {n}."
 
-#: academy/profile_views.py:348 academy/profile_views.py:475
+#: academy/profile_views.py:349 academy/profile_views.py:476
 msgid "rad etildi."
 msgstr "отклонено."
 
-#: academy/profile_views.py:348
+#: academy/profile_views.py:349
 msgid "ruxsat berildi."
 msgstr "разрешено."
 
-#: academy/profile_views.py:401
+#: academy/profile_views.py:402
 msgid "Quvvat miqdori 1 dan {max} gacha bo‘lishi kerak."
 msgstr "Количество энергии — от 1 до {max}."
 
-#: academy/profile_views.py:404
+#: academy/profile_views.py:405
 msgid "Bu sovg‘a allaqachon berilgan — takror yuborilmadi."
 msgstr "Этот подарок уже отправлен — повторно не отправлено."
 
-#: academy/profile_views.py:409
+#: academy/profile_views.py:410
 msgid "{full_name}ga {amount} ⚡️ quvvat sovg‘a qilindi 🎁 Jami: {balance} ⚡️."
 msgstr "{full_name}: подарено {amount} ⚡️ энергии 🎁 Всего: {balance} ⚡️."
 
-#: academy/profile_views.py:425
+#: academy/profile_views.py:426
 msgid "{amount} ⚡️ quvvatlik sovg‘a bekor qilindi. Jami: {balance} ⚡️."
 msgstr "Подарок на {amount} ⚡️ энергии отменён. Всего: {balance} ⚡️."
 
-#: academy/profile_views.py:430
+#: academy/profile_views.py:431
 msgid "Bu yozuvni bekor qilib bo‘lmaydi (faqat 24 soat ichidagi ustoz sovg‘asi)."
 msgstr "Эту запись нельзя отменить (только подарок учителя за последние 24 часа)."
 
-#: academy/profile_views.py:472
+#: academy/profile_views.py:473
 msgid "{full_name}: quvvat yetmaydi — so‘rov rad etildi."
 msgstr "{full_name}: не хватает энергии — запрос отклонён."
 
-#: academy/profile_views.py:475
+#: academy/profile_views.py:476
 msgid "berildi, quvvat sarflandi."
 msgstr "выдано, энергия потрачена."
 
-#: academy/profile_views.py:480
+#: academy/profile_views.py:481
 msgid "{full_name}: “A’lochi” unvoni berildi — ismi hamma joyda oltin medal bilan ko‘rinadi."
 msgstr "{full_name}: присвоено звание «Отличник» — имя везде показывается с золотой медалью."
 
-#: academy/profile_views.py:494
+#: academy/profile_views.py:495
 msgid "{full_name}: “A’lochi” unvoni olib qo‘yildi."
 msgstr "{full_name}: звание «Отличник» снято."
 
-#: academy/profile_views.py:497
+#: academy/profile_views.py:498
 msgid "{full_name}: “A’lochi” unvoni berildi 🏅"
 msgstr "{full_name}: присвоено звание «Отличник» 🏅"
 
-#: academy/profile_views.py:508
+#: academy/profile_views.py:509
 msgid "Sovg'a saqlandi."
 msgstr "Подарок сохранён."
 
@@ -3077,6 +3085,10 @@ msgstr "%(n)s вопросов"
 #: templates/academy/portal/start.html
 msgid "Bankda %(bank)s ta savol bor — ko‘pi bilan shuncha tushadi."
 msgstr "В банке %(bank)s вопросов — больше не попадётся."
+
+#: templates/academy/portal/start.html
+msgid "Bu testni profildan %(n)s marta topshirgansiz. Endi faqat <strong>%(p)s%% va undan yuqori</strong> natijaga <strong>%(c)s ⚡️</strong> beriladi, pastroq natijaga — quvvat berilmaydi."
+msgstr "Вы уже сдавали этот тест из профиля %(n)s раз(а). Теперь <strong>%(c)s ⚡️</strong> даётся только за результат <strong>%(p)s%% и выше</strong>, за более низкий — энергия не начисляется."
 
 #: templates/academy/portal/start.html templates/academy/portal/student.html templates/academy/portal/study.html
 msgid "Davom etish"
