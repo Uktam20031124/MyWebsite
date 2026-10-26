@@ -16,6 +16,11 @@ PASS_PERCENT = 70  # bundan past natijada mustahkamlash taklif qilinadi
 SCORE_COINS = ((90, 10), (75, 7), (60, 5), (0, 1))
 PREVIEW_BONUS = 5
 RETAKE_BONUS = 3
+# Profildan bitta testni shuncha marta topshirgandan keyin — takroriy urinish: faqat
+# REPEAT_PERCENT% va undan yuqori natijaga REPEAT_COINS, past natijaga — hech narsa.
+REPEAT_AFTER = 2
+REPEAT_PERCENT = 90
+REPEAT_COINS = 1
 
 RULES = [
     _("90% va undan yuqori — 10 ⚡️"),
@@ -24,6 +29,9 @@ RULES = [
     _("60% dan past — 1 ⚡️ (urinish uchun)"),
     _("Mustahkamlab, qayta topshirib o‘tsangiz ({PASS_PERCENT}%+) — yana +{RETAKE_BONUS}").format(
         PASS_PERCENT=PASS_PERCENT, RETAKE_BONUS=RETAKE_BONUS
+    ),
+    _("Profildan bitta testni {n} martadan ko‘p topshirsangiz — faqat {p}%+ natijaga {c} ⚡️").format(
+        n=REPEAT_AFTER, p=REPEAT_PERCENT, c=REPEAT_COINS
     ),
     _("Xatolar mashqida savolni 3 marta ketma-ket to‘g‘ri yechsangiz — +2"),
     _("Har 7 kun ketma-ket faol bo‘lsangiz (🔥 streak) — +10"),
@@ -44,10 +52,40 @@ def _give(attempt, amount, reason) -> None:
         pass  # shu test uchun shu sabab bilan allaqachon berilgan
 
 
+def is_repeat(attempt: QuizAttempt) -> bool:
+    """Profildan shu testni avval ``REPEAT_AFTER`` marta (yoki ko'proq) yakunlagan bo'lsa."""
+    if not attempt.batch.from_profile:
+        return False
+    earlier = QuizAttempt.objects.filter(
+        student_id=attempt.student_id,
+        quiz_id=attempt.quiz_id,
+        status=QuizAttempt.Status.FINISHED,
+        batch__from_profile=True,
+    ).exclude(pk=attempt.pk)
+    if attempt.finished_at:
+        earlier = earlier.filter(finished_at__lt=attempt.finished_at)
+    return earlier.count() >= REPEAT_AFTER
+
+
+def repeat_info(student: Student, quiz_id: int) -> dict | None:
+    """Profil testini boshlashdan oldin: takroriy urinish bo'lsa — qoida (o'quvchiga ko'rsatish uchun)."""
+    done = QuizAttempt.objects.filter(
+        student=student, quiz_id=quiz_id, status=QuizAttempt.Status.FINISHED, batch__from_profile=True
+    ).count()
+    if done < REPEAT_AFTER:
+        return None
+    return {"done": done, "after": REPEAT_AFTER, "percent": REPEAT_PERCENT, "coins": REPEAT_COINS}
+
+
 def award_for_attempt(attempt: QuizAttempt) -> None:
     if attempt.status != QuizAttempt.Status.FINISHED or not attempt.total:
         return
     percent = attempt.percent
+    if is_repeat(attempt):
+        # Takroriy urinish: bonuslar yo'q, faqat a'lo natijaga ramziy quvvat.
+        if percent >= REPEAT_PERCENT:
+            _give(attempt, REPEAT_COINS, f"Takroriy test: {percent}%")
+        return
     _give(attempt, score_coins(percent), f"Test: {percent}%")
     if percent < PASS_PERCENT:
         return

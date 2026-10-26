@@ -7,6 +7,7 @@
   <h1>{{ req.topic|topic_title }}</h1>
   <p class="muted">{% translate "Savollar soni va vaqtni tanlang, keyin testni boshlang." %}</p>
   {% if error %}<div class="callout warn" role="alert"><div class="grow">{{ error }}</div></div>{% endif %}
+  {% if repeat %}<div class="callout warn" role="note"><div class="grow">{% blocktranslate with n=repeat.done after=repeat.after p=repeat.percent c=repeat.coins trimmed %}Bu testni profildan {{ n }} marta topshirgansiz. Endi faqat <strong>{{ p }}% va undan yuqori</strong> natijaga <strong>{{ c }} ⚡️</strong> beriladi, pastroq natijaga — quvvat berilmaydi.{% endblocktranslate %}</div></div>{% endif %}
   <form method="post" class="start-form">
     {% csrf_token %}
     <fieldset class="channel-field">

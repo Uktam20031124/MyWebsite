@@ -118,6 +118,7 @@ def portal_test_start(request, token, pk):
             "student": student,
             "req": req,
             "bank": req.topic.quiz.questions.count(),
+            "repeat": coins.repeat_info(student, req.topic.quiz.pk),
             "question_choices": TestRequest.QUESTION_CHOICES,
             "minute_choices": TestRequest.MINUTE_CHOICES,
             "error": error,
