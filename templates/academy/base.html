@@ -36,6 +36,11 @@
         <a href="{% url 'quiz_send' %}" {% if url_name == 'quiz_send' %}aria-current="page"{% endif %}>
           {% icon "send" %} {% translate "Test jo‘natish" %}
         </a>
+        {% if 'timetable' in teacher_sections %}
+        <a href="{% url 'timetable' %}" {% if url_name == 'timetable' %}aria-current="page"{% endif %}>
+          {% icon "calendar" %} {% translate "Dars jadvali" %}
+        </a>
+        {% endif %}
       </div>
       {% else %}
       <div class="nav-label">{% translate "Bugun" %}</div>
@@ -49,7 +54,7 @@
         </a>
       </div>
       {% endif %}
-      {% if not is_teacher or teacher_sections %}
+      {% if not is_teacher or teacher_center %}
       <div class="nav-label">{% translate "O‘quv markazi" %}</div>
       <div class="nav">
         {% if not is_teacher or 'groups' in teacher_sections %}

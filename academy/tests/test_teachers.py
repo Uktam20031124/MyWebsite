@@ -184,6 +184,33 @@ class TeacherAccessTests(TeacherTestsMixin, TestCase):
         for name in ("rewards", "topic_list", "registrations", "group_create", "teacher_list", "dashboard"):
             self.assertRedirects(self.client.get(reverse(name)), reverse("teacher_home"))
 
+    def test_timetable_permission_shows_only_own_groups(self, start_link):
+        from datetime import time
+
+        every_day = {"days": "0,1,2,3,4,5,6", "starts_at": time(9), "ends_at": time(10)}
+        Group.objects.filter(pk__in=[self.mine.pk, self.other.pk]).update(**every_day)
+        teacher = self.make_teacher()
+        self.client.force_login(teacher)
+        url = reverse("timetable")
+        self.assertRedirects(self.client.get(url), reverse("teacher_home"))  # ruxsat berilmagan
+        self.assertNotContains(self.client.get(reverse("teacher_home")), url)
+
+        account = teacher.teacher_account
+        account.permissions = ["timetable"]
+        account.save()
+        home = self.client.get(reverse("teacher_home"))
+        self.assertContains(home, url)
+        self.assertNotContains(home, "O‘quv markazi")  # boshqa bo'lim ochilmagan
+        page = self.client.get(url)
+        self.assertEqual(page.status_code, 200)
+        groups = {item["session"].group for day in page.context["days"] for item in day["items"]}
+        self.assertEqual(groups, {self.mine})
+
+        self.client.force_login(self.admin)  # bosh ustoz — hamma guruhlar
+        page = self.client.get(url)
+        groups = {item["session"].group for day in page.context["days"] for item in day["items"]}
+        self.assertEqual(groups, {self.mine, self.other})
+
     def test_topics_are_read_only_for_teacher(self, start_link):
         teacher = self.make_teacher()
         account = teacher.teacher_account

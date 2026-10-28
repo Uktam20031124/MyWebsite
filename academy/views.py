@@ -99,6 +99,7 @@ from .services import (
     start_session,
     student_attendance_rate,
     students_with_stats,
+    timetable_groups,
     week_start,
     week_timetable,
 )
@@ -221,10 +222,10 @@ def timetable(request):
         day = date.fromisoformat(request.GET.get("hafta", ""))
     except ValueError:
         day = timezone.localdate()
-    ctx = week_timetable(week_start(day))
-    ctx["unscheduled"] = Group.objects.filter(status=Group.Status.ACTIVE).filter(
-        Q(days="") | Q(starts_at=None)
-    )
+    active = teachers.teacher_groups(request.user).filter(status=Group.Status.ACTIVE)  # o'qituvchi — o'z guruhlari
+    groups = timetable_groups(active) if teachers.is_teacher(request.user) else None
+    ctx = week_timetable(week_start(day), groups)
+    ctx["unscheduled"] = active.filter(Q(days="") | Q(starts_at=None))
     ctx["this_week"] = week_start(timezone.localdate())
     return render(request, "academy/timetable.html", ctx)
 
