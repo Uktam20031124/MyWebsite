@@ -138,7 +138,9 @@ def _save_teacher(form: TeacherForm, user=None):
         if data.get("password"):
             user.set_password(data["password"])
         user.save()
-        teachers.account_of(user)
+        account = teachers.account_of(user)
+        account.permissions = [key for key in teachers.SECTION_KEYS if key in set(data.get("permissions") or [])]
+        account.save(update_fields=["permissions"])
         chosen = {g.pk for g in data["groups"]}
         Group.objects.filter(teacher=user).exclude(pk__in=chosen).update(teacher=None)
         Group.objects.filter(pk__in=chosen).update(teacher=user)
@@ -165,7 +167,15 @@ def teacher_list(request):
     groups_by_teacher: dict[int, list] = {}
     for g in Group.objects.filter(teacher__isnull=False).order_by("name"):
         groups_by_teacher.setdefault(g.teacher_id, []).append(g)
-    teachers_list = [{"account": a, "groups": groups_by_teacher.get(a.user_id, [])} for a in rows]
+    labels = {key: label for key, label, _pages in teachers.SECTIONS}
+    teachers_list = [
+        {
+            "account": a,
+            "groups": groups_by_teacher.get(a.user_id, []),
+            "sections": [labels[k] for k in teachers.SECTION_KEYS if k in set(a.permissions or [])],
+        }
+        for a in rows
+    ]
     return render(request, "academy/teachers/list.html", {"form": form, "teachers": teachers_list})
 
 

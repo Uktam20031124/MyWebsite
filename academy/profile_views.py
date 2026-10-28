@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
-from . import bonus, coins, engagement, motivation, profiles, qr
+from . import bonus, coins, engagement, motivation, profiles, qr, teachers
 from .forms import RewardForm
 from .middleware import PORTAL_LANG_COOKIE, activate_portal_language
 from .models import Group, Purchase, QuizAttempt, Reward, Student, TestRequest, Topic
@@ -515,5 +515,12 @@ def rewards(request, pk=None):
     return render(
         request,
         "academy/shop/rewards.html",
-        {"form": form, "editing": reward, "rewards": items, "recent": Purchase.objects.select_related("student")[:15]},
+        {
+            "form": form,
+            "editing": reward,
+            "rewards": items,
+            "recent": teachers.scope(
+                request.user, Purchase.objects.select_related("student"), "student__group__teacher"
+            )[:15],
+        },
     )

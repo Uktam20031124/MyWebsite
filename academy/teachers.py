@@ -21,11 +21,159 @@ from django.shortcuts import redirect
 from django.urls import Resolver404, resolve
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from . import telegram_sender as tg
-from .models import Group, TeacherAccount
+from .models import (
+    Group,
+    Lesson,
+    Purchase,
+    QuizAttempt,
+    QuizBatch,
+    Registration,
+    RegistrationLink,
+    Student,
+    TeacherAccount,
+    TestRequest,
+)
 
-# O'qituvchi kira oladigan sahifalar (Telegram ulangandan keyin).
+# Bosh ustoz o'qituvchiga ochadigan bo'limlar: (kalit, nomi, sahifalar). Har bir bo'limda
+# o'qituvchi faqat o'z guruhlariga tegishli ma'lumotni ko'radi (``OBJECT_SCOPES`` va ro'yxatlarda
+# ``scope``). Guruh/shogird yaratish-o'chirish va "O'qituvchilar" — faqat bosh ustozda.
+SECTIONS = [
+    (
+        "groups",
+        gettext_lazy("Guruhlar"),
+        {
+            "group_list",
+            "group_detail",
+            "group_update",
+            "group_journal",
+            "start_lesson",
+            "syllabus_add",
+            "syllabus_toggle",
+            "group_contact_link",
+            "group_portal_send",
+            "group_qr",
+            "group_leaderboard_send",
+            "group_telegram_chat",
+        },
+    ),
+    (
+        "students",
+        gettext_lazy("Shogirdlar"),
+        {
+            "student_list",
+            "student_create",
+            "student_export",
+            "student_detail",
+            "student_update",
+            "student_portal_action",
+            "student_portal_open",
+            "student_certificate",
+            "student_certificate_send",
+            "student_qr",
+            "student_profile_access",
+            "student_honor",
+            "student_coin_gift",
+            "student_coin_undo",
+            "student_allowed_topics",
+        },
+    ),
+    (
+        "registrations",
+        gettext_lazy("Arizalar"),
+        {"registrations", "registration_action", "registration_approve_all", "registration_link_action"},
+    ),
+    (
+        "lessons",
+        gettext_lazy("Darslar"),
+        {
+            "lesson_list",
+            "lesson_create",
+            "lesson_detail",
+            "lesson_update",
+            "lesson_delete",
+            "lesson_complete",
+            "attendance",
+        },
+    ),
+    ("topics", gettext_lazy("Mavzular (ko‘rish va taqdimot)"), {"topic_list", "topic_detail", "topic_slides"}),
+    (
+        "tests",
+        gettext_lazy("Testlar (jo‘natmalar ro‘yxati)"),
+        {"quiz_batches", "quiz_batch_retake", "quiz_batch_delete", "quiz_attempt_renew"},
+    ),
+    ("rewards", gettext_lazy("Mukofotlar"), {"rewards", "reward_edit", "purchase_decide"}),
+    ("warnings", gettext_lazy("Ogohlantirishlar"), {"quiz_warnings", "attempt_penalty"}),
+    (
+        "requests",
+        gettext_lazy("So‘rovlar"),
+        {
+            "quiz_review_requests",
+            "quiz_review_decide",
+            "quiz_review_approve_all",
+            "test_request_decide",
+            "purchase_decide",
+            "student_profile_access",
+        },
+    ),
+]
+SECTION_KEYS = [key for key, _label, _pages in SECTIONS]
+
+# ``pk`` bilan ochiladigan sahifalar: obyekt o'qituvchi guruhiga tegishli bo'lmasa — 404.
+OBJECT_SCOPES = {
+    **dict.fromkeys(
+        [
+            "group_detail",
+            "group_update",
+            "group_journal",
+            "start_lesson",
+            "syllabus_add",
+            "syllabus_toggle",
+            "group_contact_link",
+            "group_portal_send",
+            "group_qr",
+            "group_leaderboard_send",
+            "group_telegram_chat",
+        ],
+        (Group, "teacher"),
+    ),
+    **dict.fromkeys(
+        [
+            "student_detail",
+            "student_update",
+            "student_portal_action",
+            "student_portal_open",
+            "student_certificate",
+            "student_certificate_send",
+            "student_qr",
+            "student_profile_access",
+            "student_honor",
+            "student_coin_gift",
+            "student_coin_undo",
+            "student_allowed_topics",
+        ],
+        (Student, "group__teacher"),
+    ),
+    **dict.fromkeys(
+        ["lesson_detail", "lesson_update", "lesson_delete", "lesson_complete", "attendance"],
+        (Lesson, "group__teacher"),
+    ),
+    **dict.fromkeys(
+        ["quiz_batch", "quiz_batch_send", "quiz_batch_retake", "quiz_batch_delete"], (QuizBatch, "group__teacher")
+    ),
+    **dict.fromkeys(
+        ["quiz_attempt_review", "attempt_penalty", "quiz_review_decide", "quiz_attempt_renew"],
+        (QuizAttempt, "student__group__teacher"),
+    ),
+    "test_request_decide": (TestRequest, "student__group__teacher"),
+    "purchase_decide": (Purchase, "student__group__teacher"),
+    "registration_action": (Registration, "link__group__teacher"),
+    "registration_link_action": (RegistrationLink, "group__teacher"),
+}
+
+# O'qituvchi doim kira oladigan sahifalar (Telegram ulangandan keyin).
 TEACHER_PAGES = {
     "teacher_home",
     "quiz_send",
@@ -101,16 +249,41 @@ def teacher_groups(user):
     return Group.objects.filter(teacher=user)
 
 
+def scope(user, qs, path: str = "group__teacher"):
+    """Ro'yxatni o'qituvchining guruhlari bilan cheklaydi (bosh ustoz — o'zgarishsiz)."""
+    return qs.filter(**{path: user}) if is_teacher(user) else qs
+
+
+def permissions_of(user) -> set[str]:
+    """Foydalanuvchiga ochiq bo'limlar (bosh ustoz — hammasi)."""
+    if not is_teacher(user):
+        return set(SECTION_KEYS)
+    return set(user.teacher_account.permissions or []) & set(SECTION_KEYS)
+
+
 def check_group(user, group_id) -> None:
     """O'qituvchi boshqa guruhga tegishli narsani ochmoqchi bo'lsa — 404 (borligini ham bildirmaymiz)."""
     if is_teacher(user) and not (group_id and Group.objects.filter(pk=group_id, teacher=user).exists()):
         raise Http404
 
 
-def allowed_for_teacher(url_name: str, linked: bool) -> bool:
+def allowed_for_teacher(url_name: str, linked: bool, permissions=()) -> bool:
     if url_name in PUBLIC_PAGES or url_name in LINK_PAGES:
         return True
-    return linked and url_name in TEACHER_PAGES
+    if not linked:
+        return False
+    if url_name in TEACHER_PAGES:
+        return True
+    return any(url_name in pages for key, _label, pages in SECTIONS if key in permissions)
+
+
+def owns_object(user, url_name: str, kwargs: dict) -> bool:
+    """``pk`` bilan ochilgan obyekt o'qituvchi guruhiga tegishlimi (``OBJECT_SCOPES`` dagi sahifalar)."""
+    target = OBJECT_SCOPES.get(url_name)
+    if target is None or "pk" not in kwargs:
+        return True
+    model, path = target
+    return model.objects.filter(pk=kwargs["pk"], **{path: user}).exists()
 
 
 class TeacherAccessMiddleware:
@@ -124,11 +297,15 @@ class TeacherAccessMiddleware:
         user = getattr(request, "user", None)
         if is_teacher(user) and not request.path.startswith("/static/"):
             try:
-                url_name = resolve(request.path_info).url_name or ""
+                match = resolve(request.path_info)
             except Resolver404:
                 return self.get_response(request)
-            linked = account_of(user).is_linked
-            if not allowed_for_teacher(url_name, linked):
+            url_name = match.url_name or ""
+            account = account_of(user)
+            linked = account.is_linked
+            if linked and not owns_object(user, url_name, match.kwargs):
+                raise Http404
+            if not allowed_for_teacher(url_name, linked, set(account.permissions or [])):
                 if not linked:
                     return redirect("teacher_telegram")
                 if url_name != "dashboard":

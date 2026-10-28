@@ -119,7 +119,12 @@ def choice_param(request, name, choices):
 
 
 class AuthMixin(LoginRequiredMixin):
-    pass
+    def get_form(self, form_class=None):
+        """O'qituvchi formada faqat o'z guruhlarini tanlay oladi (shogird, dars)."""
+        form = super().get_form(form_class)
+        if "group" in form.fields and teachers.is_teacher(self.request.user):
+            form.fields["group"].queryset = teachers.teacher_groups(self.request.user)
+        return form
 
 
 class DeleteMessageMixin:
@@ -245,7 +250,7 @@ class GroupListView(AuthMixin, ListView):
     context_object_name = "groups"
 
     def get_queryset(self):
-        qs = groups_with_stats()
+        qs = teachers.scope(self.request.user, groups_with_stats(), "teacher")
         status = choice_param(self.request, "status", Group.Status)
         if status:
             qs = qs.filter(status=status)
@@ -472,11 +477,11 @@ class StudentListView(AuthMixin, ListView):
     paginate_by = 40
 
     def get_queryset(self):
-        return students_with_stats(filter_students(self.request.GET))
+        return students_with_stats(teachers.scope(self.request.user, filter_students(self.request.GET)))
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["groups"] = Group.objects.filter(status=Group.Status.ACTIVE)
+        ctx["groups"] = teachers.teacher_groups(self.request.user).filter(status=Group.Status.ACTIVE)
         ctx["statuses"] = Student.Status.choices
         ctx["access_hours"] = profiles.ACCESS_HOURS
         ctx["gift_presets"] = coins.GIFT_PRESETS[:3]
@@ -498,7 +503,7 @@ def student_export(request):
             f"{s.joined_at:%d.%m.%Y}",
             percent(s.att_present, s.att_total) if s.att_total else "",
         ]
-        for s in students_with_stats(filter_students(request.GET))
+        for s in students_with_stats(teachers.scope(request.user, filter_students(request.GET)))
     )
     header = ["F.I.Sh.", "Guruh", "Telefon", "Telegram", "Email", "Holat", "Qo‘shilgan", "Davomat %"]
     stamp = timezone.localdate().isoformat()
@@ -770,6 +775,7 @@ class LessonListView(AuthMixin, ListView):
             .annotate(marked=Count("attendances"))
             .order_by(*Lesson._meta.ordering)
         )
+        qs = teachers.scope(self.request.user, qs)
         group = int_param(self.request, "group")
         status = choice_param(self.request, "status", Lesson.Status)
         if group:
@@ -780,7 +786,7 @@ class LessonListView(AuthMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["groups"] = Group.objects.filter(status=Group.Status.ACTIVE)
+        ctx["groups"] = teachers.teacher_groups(self.request.user).filter(status=Group.Status.ACTIVE)
         ctx["statuses"] = Lesson.Status.choices
         ctx["today"] = timezone.localdate()
         return ctx
@@ -1362,7 +1368,7 @@ class QuizBatchListView(AuthMixin, ListView):
     paginate_by = 30
 
     def get_queryset(self):
-        qs = QuizBatch.objects.all()
+        qs = teachers.scope(self.request.user, QuizBatch.objects.all())
         group = int_param(self.request, "group")
         if group:
             qs = qs.filter(group_id=group)
@@ -1370,7 +1376,8 @@ class QuizBatchListView(AuthMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["groups"] = Group.objects.filter(quiz_batches__isnull=False).distinct().order_by("name")
+        groups = teachers.teacher_groups(self.request.user)
+        ctx["groups"] = groups.filter(quiz_batches__isnull=False).distinct().order_by("name")
         return ctx
 
 
@@ -1424,16 +1431,15 @@ def quiz_batch_detail(request, pk):
 @login_required
 def quiz_warnings(request):
     """Ustoz: test paytida ogohlantirish olgan o'quvchilar — ko'rib chiqish va jarima (1–5 ⚡️)."""
+    mine = teachers.scope(request.user, warning_attempts(), "student__group__teacher")
     if request.method == "POST" and request.POST.get("action") == "forgive_all":
-        pending = list(
-            warning_attempts().filter(warning_checked_at__isnull=True).select_related("student", "quiz__topic")
-        )
+        pending = list(mine.filter(warning_checked_at__isnull=True).select_related("student", "quiz__topic"))
         for a in pending:
             coins.penalize(a, 0)
         messages.info(request, _("{n} ta ogohlantirish kechirildi.").format(n=len(pending)))
         return redirect("quiz_warnings")
     show_all = request.GET.get("hammasi") == "1"
-    attempts = warning_attempts().select_related("student__group", "quiz__topic", "batch")
+    attempts = mine.select_related("student__group", "quiz__topic", "batch")
     pending_n = attempts.filter(warning_checked_at__isnull=True).count()
     if not show_all:
         attempts = attempts.filter(warning_checked_at__isnull=True)
@@ -1525,8 +1531,9 @@ def quiz_attempt_review(request, pk):
 @login_required
 def quiz_review_requests(request):
     """O'quvchilarning "javoblarimni ko'rsam bo'ladimi?" so'rovlari."""
+    user = request.user
     decided = (
-        QuizAttempt.objects.filter(reveal_decided_at__isnull=False)
+        teachers.scope(user, QuizAttempt.objects.filter(reveal_decided_at__isnull=False), "student__group__teacher")
         .select_related("student__group", "quiz__topic", "batch")
         .order_by("-reveal_decided_at")[:20]
     )
@@ -1534,11 +1541,11 @@ def quiz_review_requests(request):
         request,
         "academy/quiz/review_requests.html",
         {
-            "pending": list(review_access.pending_requests()),
+            "pending": list(teachers.scope(user, review_access.pending_requests(), "student__group__teacher")),
             "decided": decided,
-            "access_requests": list(profiles.pending_access()),
-            "purchase_requests": list(engagement.pending_purchases()),
-            "test_requests": list(profiles.pending_tests()),
+            "access_requests": list(teachers.scope(user, profiles.pending_access())),
+            "purchase_requests": list(teachers.scope(user, engagement.pending_purchases(), "student__group__teacher")),
+            "test_requests": list(teachers.scope(user, profiles.pending_tests(), "student__group__teacher")),
             "access_hours": profiles.ACCESS_HOURS,
         },
     )
@@ -1573,7 +1580,9 @@ def quiz_review_decide(request, pk):
 @require_POST
 def quiz_review_approve_all(request):
     """Kutilayotgan barcha so'rovlarga (yoki bitta jo'natmadagilariga) ruxsat."""
-    qs = QuizAttempt.objects.filter(reveal=QuizAttempt.Reveal.REQUESTED)
+    qs = teachers.scope(
+        request.user, QuizAttempt.objects.filter(reveal=QuizAttempt.Reveal.REQUESTED), "student__group__teacher"
+    )
     batch_id = request.POST.get("batch", "")
     if batch_id.isdigit():
         qs = qs.filter(batch_id=batch_id)
@@ -2047,36 +2056,36 @@ REGISTRATION_LIMIT = 8  # bir IP'dan soatiga shuncha ariza
 @login_required
 def registrations(request):
     """Havolalar va arizalar: kutilayotganlarni tekshirib, bazaga qo'shish."""
+    user = request.user
+    link_form = RegistrationLinkForm(request.POST or None)
+    if teachers.is_teacher(user):
+        # O'qituvchi — faqat o'z guruhiga havola (guruhsiz havola unga ko'rinmaydi).
+        link_form.fields["group"].queryset = teachers.teacher_groups(user).filter(status=Group.Status.ACTIVE)
+        link_form.fields["group"].required = True
     if request.method == "POST":
-        link_form = RegistrationLinkForm(request.POST)
         if link_form.is_valid():
             link = link_form.save()
             messages.success(
                 request, _("“{title}” havolasi yaratildi — nusxalab guruhga tashlang.").format(title=link.title)
             )
             return redirect(f"{reverse('registrations')}#links")
-    else:
-        link_form = RegistrationLinkForm()
 
     status = choice_param(request, "status", Registration.Status) or Registration.Status.PENDING
     pending = Q(registrations__status=Registration.Status.PENDING)
     links = list(
-        RegistrationLink.objects.select_related("group").annotate(
+        teachers.scope(user, RegistrationLink.objects.select_related("group"), "group__teacher").annotate(
             total_n=Count("registrations"), pending_n=Count("registrations", filter=pending)
         )
     )
     for link in links:
         link.url = request.build_absolute_uri(link.get_absolute_url())
-    regs = list(
-        Registration.objects.filter(status=status).select_related(
-            "link__group", "student__group"
-        )[:300]
-    )
+    my_regs = teachers.scope(user, Registration.objects.all(), "link__group__teacher")
+    regs = list(my_regs.filter(status=status).select_related("link__group", "student__group")[:300])
     if status == Registration.Status.PENDING:
         for reg in regs:
             reg.suggested = suggestions(reg)
             reg.default_group_id = reg.link.group_id if reg.link_id else None
-    counts = dict(Registration.objects.values_list("status").annotate(n=Count("pk")))
+    counts = dict(my_regs.values_list("status").annotate(n=Count("pk")))
     return render(
         request,
         "academy/registrations/list.html",
@@ -2086,8 +2095,8 @@ def registrations(request):
             "regs": regs,
             "status": status,
             "statuses": [(v, label, counts.get(v, 0)) for v, label in Registration.Status.choices],
-            "groups": Group.objects.filter(status=Group.Status.ACTIVE).order_by("name"),
-            "students": Student.objects.select_related("group").order_by("full_name"),
+            "groups": teachers.teacher_groups(user).filter(status=Group.Status.ACTIVE).order_by("name"),
+            "students": teachers.scope(user, Student.objects.select_related("group")).order_by("full_name"),
             "auto_n": sum(_auto_target(r) is not None for r in regs)
             if status == Registration.Status.PENDING
             else 0,
@@ -2121,7 +2130,7 @@ def registration_action(request, pk):
         reject(reg)
         messages.info(request, _("{full_name} — ariza rad etildi.").format(full_name=reg.full_name))
     elif action == "attach":
-        student = Student.objects.filter(pk=request.POST.get("student") or 0).first()
+        student = teachers.scope(request.user, Student.objects.filter(pk=request.POST.get("student") or 0)).first()
         if student is None:
             messages.error(request, _("Biriktirish uchun o‘quvchini tanlang."))
         else:
@@ -2130,7 +2139,7 @@ def registration_action(request, pk):
                 request, _("{full_name}: telefon va Telegram yangilandi.").format(full_name=student.full_name)
             )
     elif action == "create":
-        group = Group.objects.filter(pk=request.POST.get("group") or 0).first()
+        group = teachers.teacher_groups(request.user).filter(pk=request.POST.get("group") or 0).first()
         if group is None:
             messages.error(request, _("Yangi o‘quvchi uchun guruhni tanlang."))
         else:
@@ -2147,13 +2156,16 @@ def registration_action(request, pk):
 def registration_approve_all(request):
     """Ishonchli arizalarni bir bosishda tasdiqlash (qolganlari ustozga qoladi)."""
     attached = created = 0
-    for reg in Registration.objects.filter(status=Registration.Status.PENDING).select_related(
-        "link__group"
-    ):
+    user = request.user
+    regs = teachers.scope(user, Registration.objects.filter(status=Registration.Status.PENDING), "link__group__teacher")
+    my_groups = set(teachers.teacher_groups(user).values_list("pk", flat=True))
+    for reg in regs.select_related("link__group"):
         target = _auto_target(reg)
         if target is None:
             continue
         kind, obj = target
+        if (obj.group_id if kind == "attach" else obj.pk) not in my_groups:
+            continue  # o'qituvchi — faqat o'z guruhlariga
         if kind == "attach":
             approve_existing(reg, obj)
             attached += 1
