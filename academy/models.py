@@ -3,6 +3,7 @@ import re
 import secrets
 from datetime import date, time, timedelta
 
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import Max
@@ -78,6 +79,16 @@ class Group(models.Model):
         max_length=100,
         blank=True,
         help_text=_("@guruh_nomi, t.me/guruh_nomi yoki raqamli ID (manage.py telegram_chats)."),
+    )
+    # Guruh o'qituvchisi (bo'sh — bosh ustoz). O'qituvchi faqat o'z guruhlarini ko'radi va ularga
+    # testlarni o'z Telegramidan yuboradi.
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="teaching_groups",
+        verbose_name=_("O‘qituvchi"),
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -756,6 +767,15 @@ class QuizBatch(models.Model):
     channels = models.CharField(_("Kanallar"), max_length=32, default="telegram", blank=True)
     # O'quvchi profilidan (ustoz ruxsati bilan) o'zi boshlagan test.
     from_profile = models.BooleanField(_("Profildan"), default=False)
+    # Kim jo'natgan: havolalar (rejalashtirilganlari ham) o'sha o'qituvchining Telegramidan ketadi.
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="quiz_batches",
+        verbose_name=_("Jo‘natgan"),
+    )
     retake_of = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,
@@ -1683,3 +1703,46 @@ class Purchase(models.Model):
 for _model in (CoinTransaction, Student):
     post_save.connect(_podium_changed, sender=_model, dispatch_uid=f"podium_{_model.__name__}_save")
     post_delete.connect(_podium_changed, sender=_model, dispatch_uid=f"podium_{_model.__name__}_delete")
+
+
+class TeacherAccount(models.Model):
+    """O'qituvchi (bosh ustoz yaratgan login): Telegram akkaunti va QR orqali ulash holati.
+
+    Telegram sessiyasi bazada emas — ``TELEGRAM_SESSIONS_DIR/<user id>.session`` faylida (0600),
+    shuning uchun baza zaxiralariga tushmaydi.
+    """
+
+    class Link(models.TextChoices):
+        NONE = "", _("Ulanmagan")
+        STARTING = "starting", _("Tayyorlanmoqda")
+        QR = "qr", _("QR kutilmoqda")
+        PASSWORD = "password", _("2 bosqichli parol kutilmoqda")
+        DONE = "done", _("Ulangan")
+        ERROR = "error", _("Xato")
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="teacher_account"
+    )
+    telegram_id = models.BigIntegerField(_("Telegram ID"), null=True, blank=True)
+    telegram_name = models.CharField(_("Telegram nomi"), max_length=120, blank=True)
+    telegram_username = models.CharField(_("Telegram username"), max_length=64, blank=True)
+    linked_at = models.DateTimeField(_("Telegram ulangan"), null=True, blank=True)
+    # QR orqali ulash jarayoni (fon oqimi yozadi, sahifa har 2 soniyada o'qiydi).
+    link_status = models.CharField(max_length=12, choices=Link.choices, default=Link.NONE, blank=True)
+    link_url = models.CharField(max_length=255, blank=True)
+    link_error = models.CharField(max_length=255, blank=True)
+    link_updated_at = models.DateTimeField(null=True, blank=True)
+    # 2 bosqichli parol: sahifadan fon oqimiga uzatiladi va darhol o'chiriladi.
+    link_password = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("O‘qituvchi")
+        verbose_name_plural = _("O‘qituvchilar")
+
+    def __str__(self) -> str:
+        return self.user.get_full_name() or self.user.username
+
+    @property
+    def is_linked(self) -> bool:
+        return bool(self.linked_at and self.telegram_id)

@@ -1,11 +1,15 @@
 from django.utils import timezone
 
 from .models import Group, Lesson, Purchase, QuizAttempt, Registration, Student, TestRequest, Topic, warning_attempts
+from .teachers import is_teacher
 
 
 def nav_counts(request):
     if not request.user.is_authenticated:
         return {}
+    if is_teacher(request.user):
+        # O'qituvchi: umumiy hisoblagichlar (boshqa guruhlar haqida) ko'rsatilmaydi.
+        return {"is_teacher": True}
     weekday = str(timezone.localdate().weekday())
     today_groups = Group.objects.filter(
         status=Group.Status.ACTIVE, days__contains=weekday

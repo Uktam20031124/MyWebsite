@@ -14,6 +14,7 @@ from django.db.models import Count, Q
 from django.utils import timezone
 
 from . import delivery, mailer
+from . import telegram_sender as tg
 from .contacts import has_contact
 from .models import QuizAttempt, QuizBatch, Registration, Student
 from .quiz_i18n import message_parts
@@ -174,7 +175,9 @@ def send_scheduled(now=None, sender=None, mail_sender=None) -> ReminderResult:
     jo'natmada tanlangan kanallar orqali yuboradi."""
     now = now or timezone.now()
     batches = list(
-        QuizBatch.objects.filter(scheduled_at__lte=now, scheduled_sent_at__isnull=True)
+        QuizBatch.objects.filter(scheduled_at__lte=now, scheduled_sent_at__isnull=True).select_related(
+            "sent_by__teacher_account"
+        )
     )
     if not batches:
         return ReminderResult()
@@ -198,7 +201,8 @@ def send_scheduled(now=None, sender=None, mail_sender=None) -> ReminderResult:
             )
             if not attempts:
                 continue
-            for out in delivery.deliver_links(attempts, [channel], link_of, now, senders):
+            account = tg.account_for(batch.sent_by)  # jo'natgan o'qituvchining Telegrami
+            for out in delivery.deliver_links(attempts, [channel], link_of, now, senders, account=account):
                 if out.error:
                     # Yuborilganlar takrorlanmaydi (sent_field), qolganlari keyingi safar.
                     retry = True

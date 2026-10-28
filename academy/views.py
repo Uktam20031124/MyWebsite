@@ -33,7 +33,7 @@ from django.views.generic import (
 )
 from django.views.static import serve as static_serve
 
-from . import bonus, coins, delivery, engagement, mailer, motivation, profiles, review_access, telegram_sender
+from . import bonus, coins, delivery, engagement, mailer, motivation, profiles, review_access, teachers, telegram_sender
 from .contacts import apply_contacts, has_contact, has_telegram, preview_contacts
 from .delivery import quiz_message  # noqa: F401 — eski import yo'llari uchun
 from .forms import (
@@ -1140,21 +1140,23 @@ def report_outcome(request, out: delivery.Outcome, names_of=lambda a: a.student.
 def ready_channels(request, channels) -> list[str]:
     """Tanlangan kanallardan ulanganlari; ulanmaganlari haqida ogohlantiradi."""
     ready = []
+    account = telegram_sender.account_for(request.user)
     for channel in delivery.parse_channels(channels):
-        if delivery.is_ready(channel):
+        if delivery.is_ready(channel, account):
             ready.append(channel)
         else:
             messages.warning(
                 request,
                 _("{CHANNEL_LABELS} ulanmagan — yuborilmadi. ").format(CHANNEL_LABELS=delivery.CHANNEL_LABELS[channel])
-                + delivery.setup_hint(channel),
+                + delivery.setup_hint(channel, account),
             )
     return ready
 
 
 def send_quiz_links(request, attempts: list[QuizAttempt], channels=(delivery.TELEGRAM,)) -> None:
     """Havolalarni tanlangan kanallar (Telegram / email) orqali yuboradi va natijani xabar qiladi."""
-    for out in delivery.deliver_links(attempts, channels, link_of=lambda a: a.link):
+    account = telegram_sender.account_for(request.user)  # o'qituvchi — o'z Telegramidan
+    for out in delivery.deliver_links(attempts, channels, link_of=lambda a: a.link, account=account):
         report_outcome(request, out)
 
 
@@ -1235,7 +1237,10 @@ def quiz_send(request):
         if lesson_id
         else None
     )
-    groups = list(Group.objects.filter(status=Group.Status.ACTIVE).order_by("name"))
+    if lesson:
+        teachers.check_group(request.user, lesson.group_id)
+    # O'qituvchi — faqat o'z guruhlari.
+    groups = list(teachers.teacher_groups(request.user).filter(status=Group.Status.ACTIVE).order_by("name"))
     group_id = int_param(request, "group")
     group = lesson.group if lesson else next((g for g in groups if g.pk == group_id), None)
 
@@ -1253,6 +1258,9 @@ def quiz_send(request):
         in_syllabus = set(topic.syllabus_items.values_list("group_id", flat=True))
         group = next((g for g in groups if g.pk in in_syllabus), groups[0] if groups else None)
     if group is None:
+        if teachers.is_teacher(request.user):
+            messages.warning(request, _("Sizga hali guruh biriktirilmagan — bosh ustozga murojaat qiling."))
+            return redirect("teacher_home")
         messages.warning(request, _("Faol guruh yo‘q — avval guruh va shogird qo‘shing."))
         return redirect("group_list")
 
@@ -1285,7 +1293,7 @@ def quiz_send(request):
         scheduled_at = form.cleaned_data.get("scheduled_at")
         channels = delivery.parse_channels(form.cleaned_data["channels"])
         QuizBatch.objects.filter(pk=batch.pk).update(
-            scheduled_at=scheduled_at, channels=",".join(channels)
+            scheduled_at=scheduled_at, channels=",".join(channels), sent_by=request.user
         )
         if scheduled_at:
             labels = " va ".join(delivery.CHANNEL_LABELS[c] for c in channels)
@@ -1336,8 +1344,8 @@ def quiz_send(request):
             ],
             "rows": rows,
             "has_attendance": bool(attendance),
-            "sender_id": telegram_sender.sender_id(),
-            "telegram_ready": telegram_sender.is_configured(),
+            "sender_id": telegram_sender.account_for(request.user).expected_id,
+            "telegram_ready": telegram_sender.is_configured(telegram_sender.account_for(request.user)),
             "email_ready": mailer.is_configured(),
             "change_topic_url": _send_url(lesson=lesson and lesson.pk, group=None if lesson else group.pk),
             "count_presets": [n for n in (5, 10, 15, 20) if n <= form.bank_size],
@@ -1371,6 +1379,7 @@ def quiz_batch_detail(request, pk):
     batch = get_object_or_404(
         QuizBatch.objects.select_related("quiz__topic__module", "lesson__group", "group"), pk=pk
     )
+    teachers.check_group(request.user, batch.group_id)
     finalize_expired_attempts(batch.attempts.all())
     attempts = attempts_with_links(request, batch.attempts.all())
     finished = [a for a in attempts if a.status == QuizAttempt.Status.FINISHED]
@@ -1400,11 +1409,11 @@ def quiz_batch_detail(request, pk):
             "retake_n": sum(a.percent < RETAKE_BELOW for a in finished),
             "review_requested_n": sum(a.reveal == QuizAttempt.Reveal.REQUESTED for a in finished),
             "retake_below": RETAKE_BELOW,
-            "telegram_ready": telegram_sender.is_configured(),
-            "telegram_hint": telegram_sender.setup_hint(),
+            "telegram_ready": telegram_sender.is_configured(telegram_sender.account_for(request.user)),
+            "telegram_hint": telegram_sender.setup_hint(telegram_sender.account_for(request.user)),
             "email_ready": mailer.is_configured(),
             "email_hint": mailer.setup_hint(),
-            "sender_id": telegram_sender.sender_id(),
+            "sender_id": telegram_sender.account_for(request.user).expected_id,
             "again_url": _send_url(
                 lesson=batch.lesson_id, group=batch.group_id, topic=batch.quiz.topic_id
             ),
@@ -1480,6 +1489,7 @@ def quiz_attempt_review(request, pk):
         pk=pk,
         status=QuizAttempt.Status.FINISHED,
     )
+    teachers.check_group(request.user, attempt.batch.group_id)
     items = review_in_shown_order(attempt)
     wrong = [i for i in items if not i["is_correct"]]
     others = list(
@@ -1507,7 +1517,7 @@ def quiz_attempt_review(request, pk):
             "duration": divmod(duration, 60) if duration is not None else None,
             "prev": others[index - 1] if index > 0 else None,
             "next": others[index + 1] if index + 1 < len(others) else None,
-            "penalty_choices": range(1, coins.PENALTY_MAX + 1),
+            "penalty_choices": () if teachers.is_teacher(request.user) else range(1, coins.PENALTY_MAX + 1),
         },
     )
 
@@ -1620,6 +1630,7 @@ def quiz_batch_send(request, pk):
     orqali hali yuborilmagan barcha ochilmagan havolalarga.
     """
     batch = get_object_or_404(QuizBatch, pk=pk)
+    teachers.check_group(request.user, batch.group_id)
     channel = (delivery.parse_channels(request.POST.get("channel", "")) or [delivery.TELEGRAM])[0]
     qs = batch.attempts.filter(status=QuizAttempt.Status.PENDING)
     attempt_id = request.POST.get("attempt", "")

@@ -1,0 +1,59 @@
+{% extends "academy/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Mening guruhlarim" %}{% endblock %}
+{% block kicker %}{% translate "O‘qituvchi" %}{% endblock %}
+{% block heading %}{% blocktranslate with name=request.user.first_name|default:request.user.username trimmed %}Salom, {{ name }}!{% endblocktranslate %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Bu yerda faqat sizga biriktirilgan guruhlar. Testlar o‘quvchilarga sizning Telegramingizdan yuboriladi." %}</p>{% endblock %}
+{% block actions %}<a class="btn primary" href="{% url 'quiz_send' %}">{% icon "send" 16 %} {% translate "Test jo‘natish" %}</a>{% endblock %}
+
+{% block content %}
+<div class="split">
+  <section class="card" aria-labelledby="tg-groups">
+    <div class="card-head"><h2 id="tg-groups">{% icon "layers" 18 %} {% translate "Guruhlarim" %}</h2><span class="meta">{{ groups|length }}</span></div>
+    <div class="card-body flush">
+      <div class="rows">
+        {% for g in groups %}
+          <div class="row quiz-row">
+            <span class="grow">
+              <strong class="block">{{ g.name }}</strong>
+              <span class="meta">{{ g.code }}{% if g.schedule %} · {{ g.schedule }}{% endif %} · {% translate "o‘quvchilar" %}: {{ g.students.all|length }}</span>
+            </span>
+            <a class="btn sm primary" href="{% url 'quiz_send' %}?group={{ g.pk }}">{% icon "send" 14 %} {% translate "Test jo‘natish" %}</a>
+          </div>
+        {% empty %}
+          <div class="empty"><span class="empty-icon">{% icon "layers" 22 %}</span><p>{% translate "Sizga hali guruh biriktirilmagan — bosh ustozga murojaat qiling." %}</p></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <aside class="stack">
+    <section class="card pad" aria-labelledby="tg-h">
+      <h2 id="tg-h">{% icon "send" 18 %} {% translate "Telegram" %}</h2>
+      {% if account.is_linked %}
+        <p><span class="badge ok">{% translate "ulangan" %}</span> <strong>{{ account.telegram_name|default:account.telegram_id }}</strong>{% if account.telegram_username %} · @{{ account.telegram_username }}{% endif %}</p>
+        <p class="meta">{% blocktranslate with d=account.linked_at|date:"d.m.Y" trimmed %}{{ d }} dan beri. Testlar shu akkauntdan yuboriladi.{% endblocktranslate %}</p>
+      {% endif %}
+    </section>
+  </aside>
+</div>
+
+<section class="card" style="margin-top:18px" aria-labelledby="tg-batches">
+  <div class="card-head"><h2 id="tg-batches">{% icon "target" 18 %} {% translate "So‘nggi testlar" %}</h2></div>
+  <div class="card-body flush">
+    <div class="rows">
+      {% for b in batches %}
+        <a class="row quiz-row" href="{{ b.get_absolute_url }}">
+          <span class="grow">
+            <strong class="block">{{ b.quiz.topic|topic_title }}</strong>
+            <span class="meta">{{ b.group.name }} · {{ b.created_at|date:"d.m H:i" }} · {% blocktranslate with q=b.question_count m=b.time_limit_minutes trimmed %}{{ q }} savol, {{ m }} daq.{% endblocktranslate %}</span>
+          </span>
+          {% icon "right" 16 %}
+        </a>
+      {% empty %}
+        <div class="empty compact"><p>{% translate "Hali test jo‘natilmagan." %}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

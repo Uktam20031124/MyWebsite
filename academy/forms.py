@@ -2,6 +2,7 @@ import re
 from datetime import timedelta
 
 from django import forms
+from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.validators import MaxValueValidator, validate_email
 from django.db.models import Count, Q
@@ -672,3 +673,63 @@ class OpenQuizInviteForm(StyledFormMixin, forms.Form):
         help_text=EMAILS_HELP,
         widget=forms.Textarea(attrs={"rows": 4, "placeholder": "ali@gmail.com, vali@mail.ru"}),
     )
+
+
+class TeacherForm(StyledFormMixin, forms.Form):
+    """Bosh ustoz: o'qituvchi logini, paroli va guruhlari."""
+
+    first_name = forms.CharField(label=_("Ism"), max_length=150)
+    last_name = forms.CharField(label=_("Familiya"), max_length=150, required=False)
+    username = forms.RegexField(
+        label=_("Login"),
+        regex=r"^[A-Za-z0-9_.-]{3,40}$",
+        error_messages={"invalid": _("Login: 3–40 ta lotin harfi, raqam yoki _ . - belgisi.")},
+    )
+    password = forms.CharField(
+        label=_("Parol"),
+        required=False,
+        widget=forms.PasswordInput(render_value=False, attrs={"autocomplete": "new-password"}),
+        help_text=_("Kamida 8 belgi. Tahrirlashda bo‘sh qoldirilsa — eski parol qoladi."),
+    )
+    groups = forms.ModelMultipleChoiceField(
+        label=_("Guruhlari"),
+        queryset=Group.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text=_("O‘qituvchi faqat shu guruhlarni ko‘radi va ularga test yuboradi."),
+    )
+    is_active = forms.BooleanField(label=_("Faol (tizimga kira oladi)"), required=False, initial=True)
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        if user is not None:
+            kwargs.setdefault(
+                "initial",
+                {
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "username": user.username,
+                    "groups": list(Group.objects.filter(teacher=user)),
+                    "is_active": user.is_active,
+                },
+            )
+        super().__init__(*args, **kwargs)
+        self.fields["groups"].queryset = Group.objects.exclude(status=Group.Status.ARCHIVED).order_by("name")
+        if user is None:
+            self.fields["password"].required = True
+            del self.fields["is_active"]
+
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+        clash = get_user_model().objects.filter(username__iexact=username)
+        if self.user is not None:
+            clash = clash.exclude(pk=self.user.pk)
+        if clash.exists():
+            raise forms.ValidationError(_("Bu login band — boshqasini tanlang."))
+        return username
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        if password:
+            password_validation.validate_password(password, self.user)
+        return password
