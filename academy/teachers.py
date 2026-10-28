@@ -41,6 +41,7 @@ from .models import (
 # o'qituvchi faqat o'z guruhlariga tegishli ma'lumotni ko'radi (``OBJECT_SCOPES`` va ro'yxatlarda
 # ``scope``). Guruh/shogird yaratish-o'chirish va "O'qituvchilar" — faqat bosh ustozda.
 SECTIONS = [
+    ("timetable", gettext_lazy("Dars jadvali"), {"timetable"}),
     (
         "groups",
         gettext_lazy("Guruhlar"),

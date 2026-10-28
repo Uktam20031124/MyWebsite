@@ -382,9 +382,9 @@ def week_start(day: date) -> date:
     return day - timedelta(days=day.weekday())
 
 
-def week_timetable(monday: date) -> dict:
+def week_timetable(monday: date, groups: list[Group] | None = None) -> dict:
     """Haftalik kalendar: 7 ustun, soatlar shkalasi va har bir dars blokining o'rni (%)."""
-    sessions = sessions_between(monday, monday + timedelta(days=6))
+    sessions = sessions_between(monday, monday + timedelta(days=6), groups)
     if sessions:
         first = min(s.starts_at.hour for s in sessions) - 1
         ends = [s.ends_at or s.starts_at for s in sessions]
