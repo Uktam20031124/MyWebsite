@@ -658,18 +658,20 @@ class TopicDetailView(AuthMixin, DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         topic = self.object
-        ctx["syllabus_items"] = topic.syllabus_items.select_related("group")
-        ctx["lessons"] = topic.lessons.select_related("group")[:20]
+        user = self.request.user  # o'qituvchi — faqat o'z guruhlari bo'yicha
+        ctx["syllabus_items"] = teachers.scope(user, topic.syllabus_items.select_related("group"))
+        ctx["lessons"] = teachers.scope(user, topic.lessons.select_related("group"))[:20]
         quiz = getattr(topic, "quiz", None)
         if quiz:
             ctx["quiz"] = quiz
             ctx["question_n"] = quiz.questions.count()
-            ctx["quiz_stats"] = quiz.attempts.filter(
-                status=QuizAttempt.Status.FINISHED
-            ).aggregate(n=Count("pk"), correct=Sum("correct"), total=Sum("total"))
+            finished = quiz.attempts.filter(status=QuizAttempt.Status.FINISHED)
+            ctx["quiz_stats"] = teachers.scope(user, finished, "student__group__teacher").aggregate(
+                n=Count("pk"), correct=Sum("correct"), total=Sum("total")
+            )
             stats = ctx["quiz_stats"]
             stats["avg"] = percent(stats["correct"] or 0, stats["total"] or 0)
-            ctx["batches"] = annotate_batches(quiz.batches.all())[:5]
+            ctx["batches"] = annotate_batches(teachers.scope(user, quiz.batches.all()))[:5]
             ctx["send_url"] = _send_url(topic=topic.pk)
             ctx["hard_n"] = sum(r["flag"] == "hard" for r in question_quality(quiz))
         siblings = list(

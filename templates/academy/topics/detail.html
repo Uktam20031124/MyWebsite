@@ -5,8 +5,8 @@
 {% block heading %}{{ topic|topic_title }}{% endblock %}
 {% block actions %}
 {% if topic.slides %}<a class="btn dark" href="{% url 'topic_slides' topic.pk %}" data-turbo="false" target="_blank" rel="noopener">🎬 {% translate "Taqdimot" %}</a>{% endif %}
-<a class="btn soft" href="{% url 'topic_update' topic.pk %}">{% icon "edit" 16 %} {% translate "Tahrirlash" %}</a>
-<a class="btn primary" href="{% url 'lesson_create' %}?topic={{ topic.pk }}">{% icon "plus" 16 %} {% translate "Dars yozish" %}</a>
+{% if not is_teacher %}<a class="btn soft" href="{% url 'topic_update' topic.pk %}">{% icon "edit" 16 %} {% translate "Tahrirlash" %}</a>{% endif %}
+{% if not is_teacher or 'lessons' in teacher_sections %}<a class="btn primary" href="{% url 'lesson_create' %}?topic={{ topic.pk }}">{% icon "plus" 16 %} {% translate "Dars yozish" %}</a>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -58,12 +58,12 @@
     <section class="card quiz-card" id="quiz" aria-labelledby="quiz-h">
       <div class="card-head">
         <h2 id="quiz-h">{% icon "target" 18 %} {% translate "Test" %}</h2>
-        {% if quiz %}<a class="btn xs ghost" href="{% url 'quiz_edit' topic.pk %}">{% icon "edit" 14 %} {% translate "Tahrirlash" %}</a>{% endif %}
+        {% if quiz and not is_teacher %}<a class="btn xs ghost" href="{% url 'quiz_edit' topic.pk %}">{% icon "edit" 14 %} {% translate "Tahrirlash" %}</a>{% endif %}
       </div>
       <div class="card-body">
         {% if quiz and question_n %}
           <div class="strong">{% blocktranslate with question_n=question_n trimmed %}Savollar banki: {{ question_n }} ta savol{% endblocktranslate %}</div>
-          {% if hard_n %}<a class="badge bad" href="{% url 'quiz_edit' topic.pk %}#savollar" title="{% translate "Ko‘pchilik xato qilgan — matnini tekshiring" %}">{% blocktranslate with hard_n=hard_n trimmed %}{{ hard_n }} ta savol juda qiyin{% endblocktranslate %}</a>{% endif %}
+          {% if hard_n and not is_teacher %}<a class="badge bad" href="{% url 'quiz_edit' topic.pk %}#savollar" title="{% translate "Ko‘pchilik xato qilgan — matnini tekshiring" %}">{% blocktranslate with hard_n=hard_n trimmed %}{{ hard_n }} ta savol juda qiyin{% endblocktranslate %}</a>{% endif %}
           {% if quiz_stats.n %}
             <p class="meta">{% blocktranslate with n=quiz_stats.n avg=quiz_stats.avg trimmed %}{{ n }} marta yechilgan · o‘rtacha {{ avg }}%{% endblocktranslate %}</p>
           {% else %}
@@ -73,7 +73,7 @@
           <p class="meta" style="margin:8px 0 0">{% translate "Shogirdlar, savollar soni va vaqtni keyingi qadamda tanlaysiz." %}</p>
         {% else %}
           <p class="meta">{% translate "Mavzu o‘zlashtirilganini tekshirish uchun test qo‘shing — har bir o‘quvchiga Telegram orqali bir martalik havola yuboriladi." %}</p>
-          <a class="btn sm primary" href="{% url 'quiz_edit' topic.pk %}">{% icon "plus" 14 %} {% translate "Test yaratish" %}</a>
+          {% if not is_teacher %}<a class="btn sm primary" href="{% url 'quiz_edit' topic.pk %}">{% icon "plus" 14 %} {% translate "Test yaratish" %}</a>{% endif %}
         {% endif %}
       </div>
       {% if batches %}

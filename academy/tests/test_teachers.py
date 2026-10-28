@@ -184,6 +184,33 @@ class TeacherAccessTests(TeacherTestsMixin, TestCase):
         for name in ("rewards", "topic_list", "registrations", "group_create", "teacher_list", "dashboard"):
             self.assertRedirects(self.client.get(reverse(name)), reverse("teacher_home"))
 
+    def test_topics_are_read_only_for_teacher(self, start_link):
+        teacher = self.make_teacher()
+        account = teacher.teacher_account
+        account.permissions = ["topics"]
+        account.save()
+        f.lesson(self.other, topic=self.topic)  # boshqa guruh darsi
+        self.client.force_login(teacher)
+
+        page = self.client.get(reverse("topic_list"))
+        self.assertEqual(page.status_code, 200)
+        for name in ("topic_export", "topic_import", "topic_create", "module_create", "lesson_create"):
+            self.assertNotContains(page, reverse(name))
+        self.assertNotContains(page, reverse("topic_update", args=[self.topic.pk]))
+        self.assertNotContains(page, reverse("quiz_edit", args=[self.topic.pk]))
+        self.assertContains(page, reverse("quiz_send"))
+
+        detail = self.client.get(reverse("topic_detail", args=[self.topic.pk]))
+        self.assertNotContains(detail, reverse("topic_update", args=[self.topic.pk]))
+        self.assertNotContains(detail, reverse("quiz_edit", args=[self.topic.pk]))
+        self.assertNotContains(detail, "Boshqa guruh")  # boshqa guruh darslari ko'rinmaydi
+
+        # Bosh ustozda hammasi joyida.
+        self.client.force_login(self.admin)
+        page = self.client.get(reverse("topic_list"))
+        for name in ("topic_export", "topic_import", "topic_create"):
+            self.assertContains(page, reverse(name))
+
     @mock.patch("academy.telegram_sender.send_messages", side_effect=ok_results)
     def test_teacher_sends_from_own_telegram(self, send, start_link):
         teacher = self.make_teacher()
