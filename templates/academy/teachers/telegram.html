@@ -1,0 +1,44 @@
+{% extends "academy/base.html" %}
+{% load i18n static ui %}
+{% block title %}{% translate "Telegramni ulash" %}{% endblock %}
+{% block head_extra %}<script src="{% static 'js/teacher_link.js' %}" defer></script>{% endblock %}
+{% block kicker %}{% translate "Birinchi kirish · bir marta" %}{% endblock %}
+{% block heading %}{% translate "Telegramingizni ulang" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Testlar o‘quvchilaringizga sizning Telegram akkauntingizdan yuboriladi. Buni faqat bir marta qilasiz — keyingi kirishlarda so‘ralmaydi." %}</p>{% endblock %}
+
+{% block content %}
+<div class="split tg-link" data-tg-link data-status-url="{% url 'teacher_telegram_status' %}" data-password-url="{% url 'teacher_telegram_password' %}">
+  <section class="card pad tg-link-card">
+    <div class="tg-qr" data-tg-qr aria-live="polite">
+      {% if state.qr %}{{ state.qr|safe }}{% else %}<span class="tg-qr-wait">{% translate "QR-kod tayyorlanmoqda…" %}</span>{% endif %}
+    </div>
+    <p class="meta center" data-tg-hint>{% translate "QR-kod har 25 soniyada yangilanadi." %}</p>
+
+    <form class="tg-password" data-tg-password {% if state.status != "password" %}hidden{% endif %}>
+      {% csrf_token %}
+      <label class="label" for="tg-pass">{% translate "Akkauntingizda 2 bosqichli parol yoqilgan — uni kiriting" %}</label>
+      <div class="contact-link">
+        <input class="input" id="tg-pass" type="password" name="password" autocomplete="off" required>
+        <button class="btn primary" type="submit">{% translate "Tasdiqlash" %}</button>
+      </div>
+    </form>
+
+    <div class="callout warn" data-tg-error {% if not state.error %}hidden{% endif %}><div class="grow" data-tg-error-text>{{ state.error }}</div></div>
+    <form method="post" action="{% url 'teacher_telegram_restart' %}" data-tg-restart {% if state.status != "error" %}hidden{% endif %}>
+      {% csrf_token %}
+      <button class="btn soft block" type="submit">{% icon "undo" 15 %} {% translate "Yangi QR-kod" %}</button>
+    </form>
+  </section>
+
+  <aside class="card pad">
+    <h2>{% translate "Qanday ulanadi?" %}</h2>
+    <ol class="tg-steps">
+      <li>{% translate "Telefoningizda Telegram ilovasini oching." %}</li>
+      <li>{% translate "Sozlamalar → Qurilmalar → “Kompyuterni ulash” (Link Desktop Device)." %}</li>
+      <li>{% translate "Chapdagi QR-kodni skanerlang (telefon kamerasi emas — aynan Telegram ichidan)." %}</li>
+      <li>{% translate "2 bosqichli parol so‘ralsa — shu sahifada kiriting." %}</li>
+    </ol>
+    <p class="meta">{% translate "Akkauntingiz faqat sizning guruhlaringizga test havolalarini yuborish uchun ishlatiladi. Kirish kaliti serverda alohida, faqat tizim o‘qiy oladigan faylda saqlanadi." %}</p>
+  </aside>
+</div>
+{% endblock %}

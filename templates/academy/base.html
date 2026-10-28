@@ -18,7 +18,7 @@
 <a class="skip-link" href="#content">{% translate "Asosiy qismga o‘tish" %}</a>
 <div class="app">
   <aside class="sidebar" id="sidebar" aria-label="{% translate "Yon menyu" %}">
-    <a class="brand" href="{% url 'dashboard' %}">
+    <a class="brand" href="{% if is_teacher %}{% url 'teacher_home' %}{% else %}{% url 'dashboard' %}{% endif %}">
       {% include "academy/includes/brand_mark.html" %}
       <span>
         <span class="brand-name">{% translate "Minar Test" %}</span>
@@ -26,6 +26,19 @@
       </span>
     </a>
 
+    {% if is_teacher %}
+    <nav aria-label="{% translate "Asosiy menyu" %}">
+      <div class="nav-label">{% translate "O‘qituvchi" %}</div>
+      <div class="nav">
+        <a href="{% url 'teacher_home' %}" {% if url_name == 'teacher_home' %}aria-current="page"{% endif %}>
+          {% icon "layers" %} {% translate "Mening guruhlarim" %}
+        </a>
+        <a href="{% url 'quiz_send' %}" {% if url_name == 'quiz_send' or 'quiz_batch' in url_name %}aria-current="page"{% endif %}>
+          {% icon "send" %} {% translate "Test jo‘natish" %}
+        </a>
+      </div>
+    </nav>
+    {% else %}
     <nav aria-label="{% translate "Asosiy menyu" %}">
       <div class="nav-label">{% translate "Bugun" %}</div>
       <div class="nav">
@@ -66,12 +79,18 @@
           {% icon "alert" %} {% translate "Ogohlantirishlar" %}
           {% if nav_warnings %}<span class="count hot" title="{% translate "Test paytida ogohlantirish olgan, hali ko‘rib chiqilmagan o‘quvchilar" %}">{{ nav_warnings }}</span>{% endif %}
         </a>
+        {% if request.user.is_superuser %}
+        <a href="{% url 'teacher_list' %}" {% if 'teacher_' in url_name %}aria-current="page"{% endif %}>
+          {% icon "users" %} {% translate "O‘qituvchilar" %}
+        </a>
+        {% endif %}
         <a href="{% url 'quiz_review_requests' %}" {% if url_name == 'quiz_review_requests' %}aria-current="page"{% endif %}>
           {% icon "shield" %} {% translate "So‘rovlar" %}
           {% if nav_review_requests %}<span class="count hot" title="{% translate "Javoblarini ko‘rish uchun ruxsat so‘ragan o‘quvchilar" %}">{{ nav_review_requests }}</span>{% endif %}
         </a>
       </div>
     </nav>
+    {% endif %}
 
     <div class="sidebar-foot">
       {% include "academy/includes/lang_switch.html" %}
@@ -80,7 +99,7 @@
           <span class="avatar sm" style="--h: {{ me|hue }}" aria-hidden="true">{{ me|slice:":1"|upper }}</span>
           <span class="truncate">
             <span class="me-name block truncate">{{ me }}</span>
-            <span class="me-role">{% translate "Ustoz" %}</span>
+            <span class="me-role">{% if is_teacher %}{% translate "O‘qituvchi" %}{% else %}{% translate "Ustoz" %}{% endif %}</span>
           </span>
         {% endwith %}
       </div>
@@ -101,11 +120,13 @@
     <div class="page">
       <div class="topbar">
         <button class="btn soft square mobile-menu" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="{% translate "Menyu" %}" data-nav-toggle>{% icon "menu" %}</button>
+        {% if not is_teacher %}
         <button class="cmd-trigger" type="button" data-palette-open aria-haspopup="dialog">
           {% icon "search" 17 %}
           <span>{% translate "Qidirish yoki buyruq…" %}</span>
           <kbd data-mod-key>{% blocktranslate trimmed %}Ctrl</kbd><kbd>K</kbd>{% endblocktranslate %}
         </button>
+        {% endif %}
         <span class="spacer"></span>
         {% block topbar_extra %}{% endblock %}
       </div>
@@ -136,6 +157,7 @@
 </div>
 {% endif %}
 
+{% if not is_teacher %}
 <dialog class="palette" id="palette" aria-label="{% translate "Buyruqlar paneli" %}" data-search-url="{% url 'search' %}">
   <div class="palette-input">
     {% icon "search" 20 %}
@@ -165,5 +187,6 @@
     ]
   </script>
 </dialog>
+{% endif %}
 </body>
 </html>{% endwith %}

@@ -1,13 +1,21 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import open_quiz_views, profile_views, views
+from . import open_quiz_views, profile_views, teacher_views, views
 
 urlpatterns = [
     path("kirish/", views.ThrottledLoginView.as_view(), name="login"),
     path("chiqish/", auth_views.LogoutView.as_view(), name="logout"),
     path("healthz/", views.healthz, name="healthz"),
     path("", views.dashboard, name="dashboard"),
+    path("oqituvchi/", teacher_views.teacher_home, name="teacher_home"),
+    path("oqituvchi/telegram/", teacher_views.teacher_telegram, name="teacher_telegram"),
+    path("oqituvchi/telegram/holat/", teacher_views.teacher_telegram_status, name="teacher_telegram_status"),
+    path("oqituvchi/telegram/parol/", teacher_views.teacher_telegram_password, name="teacher_telegram_password"),
+    path("oqituvchi/telegram/qayta/", teacher_views.teacher_telegram_restart, name="teacher_telegram_restart"),
+    path("oqituvchilar/", teacher_views.teacher_list, name="teacher_list"),
+    path("oqituvchilar/<int:pk>/", teacher_views.teacher_edit, name="teacher_edit"),
+    path("oqituvchilar/<int:pk>/telegram-uzish/", teacher_views.teacher_unlink, name="teacher_unlink"),
     path("qidiruv/", views.search, name="search"),
     path("jadval/", views.timetable, name="timetable"),
     # Guruhlar

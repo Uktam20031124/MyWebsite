@@ -67,11 +67,61 @@ def save_session(value: str) -> None:
         f.write(value)
 
 
-def is_configured() -> bool:
-    return bool(settings.TELEGRAM_API_ID and settings.TELEGRAM_API_HASH and load_session())
+@dataclass(frozen=True)
+class Account:
+    """Xabar yuboriladigan Telegram akkaunti: sessiya va kutilgan akkaunt ID'si.
+    ``teacher`` — o'qituvchi akkaunti (bo'lmasa — bosh ustoz, ``manage.py telegram_login``)."""
+
+    session: str
+    expected_id: int
+    teacher: bool = False
 
 
-def setup_hint() -> str:
+def owner_account() -> Account:
+    return Account(load_session(), sender_id())
+
+
+def teacher_session_path(user_id: int) -> Path:
+    return Path(settings.TELEGRAM_SESSIONS_DIR) / f"{int(user_id)}.session"
+
+
+def save_teacher_session(user_id: int, value: str) -> None:
+    path = teacher_session_path(user_id)
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(value)
+
+
+def delete_teacher_session(user_id: int) -> None:
+    teacher_session_path(user_id).unlink(missing_ok=True)
+
+
+def account_for(user) -> Account:
+    """Foydalanuvchi qaysi akkauntdan yuboradi: bosh ustoz (superuser) — o'ziniki, o'qituvchi —
+    o'zi ulagan Telegram (ulanmagan bo'lsa — bo'sh sessiya, yuborishda tushunarli xato)."""
+    from .teachers import is_teacher
+
+    if user is None or not is_teacher(user):
+        return owner_account()
+    account = user.teacher_account
+    if not account.is_linked:
+        return Account("", 0, teacher=True)
+    try:
+        session = teacher_session_path(user.pk).read_text().strip()
+    except FileNotFoundError:
+        session = ""
+    return Account(session, account.telegram_id, teacher=True)
+
+
+def is_configured(account: Account | None = None) -> bool:
+    account = account or owner_account()
+    return bool(settings.TELEGRAM_API_ID and settings.TELEGRAM_API_HASH and account.session)
+
+
+def setup_hint(account: Account | None = None) -> str:
+    if account is not None and account.teacher:
+        return gettext("Telegramingizni “Telegram” sahifasida QR-kod orqali ulang.")
     if not (settings.TELEGRAM_API_ID and settings.TELEGRAM_API_HASH):
         return gettext(
             ".env faylga TELEGRAM_API_ID va TELEGRAM_API_HASH yozing (my.telegram.org → "
@@ -120,15 +170,16 @@ async def connected(client):
         await client.disconnect()
 
 
-async def check_account(client) -> object:
+async def check_account(client, account: Account | None = None) -> object:
     """Ulangan akkaunt aynan ruxsat etilgan akkauntmi — aks holda TelegramError."""
+    expected = account.expected_id if account else sender_id()
     if not await client.is_user_authorized():
-        raise TelegramError(_("Telegram sessiyasi eskirgan. ") + setup_hint())
+        raise TelegramError(_("Telegram sessiyasi eskirgan. ") + setup_hint(account))
     me = await client.get_me()
-    if me.id != sender_id():
+    if me.id != expected:
         raise TelegramError(
             _("Ulangan akkaunt ({id}) ruxsat etilganidan ({sender_id}) farq qiladi — xabar yuborilmadi.").format(
-                id=me.id, sender_id=sender_id()
+                id=me.id, sender_id=expected
             )
         )
     return me
@@ -167,10 +218,10 @@ def _error_text(exc: Exception) -> str:
     return f"Telegram xatosi: {type(exc).__name__}"
 
 
-async def _send_all(client, items: list[Outgoing], delay: float) -> list[Result]:
+async def _send_all(client, items: list[Outgoing], delay: float, account: Account | None = None) -> list[Result]:
     from telethon import errors
 
-    await check_account(client)
+    await check_account(client, account)
     results = []
     stopped = ""
     for n, item in enumerate(items):
@@ -245,16 +296,16 @@ async def _chat_entity(client, chat: str):
     raise TelegramError(_("Guruhning Telegram chati ko‘rsatilmagan."))
 
 
-def send_to_chat(chat: str, text: str, client_factory=None) -> None:
+def send_to_chat(chat: str, text: str, client_factory=None, account: Account | None = None) -> None:
     """Guruh chatiga xabar (masalan, haftalik reyting) — ustozning akkauntidan."""
 
     async def action(client):
         await client.send_message(await _chat_entity(client, chat), text, link_preview=False)
 
-    _run_on_self(action, client_factory)
+    _run_on_self(action, client_factory, account)
 
 
-def send_file_to(item: Outgoing, path, caption: str = "", client_factory=None) -> None:
+def send_file_to(item: Outgoing, path, caption: str = "", client_factory=None, account: Account | None = None) -> None:
     """O'quvchiga fayl (masalan, sertifikat PDF) — username yoki telefon orqali."""
 
     async def action(client):
@@ -268,10 +319,10 @@ def send_file_to(item: Outgoing, path, caption: str = "", client_factory=None) -
         except Exception as exc:  # noqa: BLE001 — foydalanuvchiga tushunarli matn
             raise TelegramError(_error_text(exc)) from exc
 
-    _run_on_self(action, client_factory)
+    _run_on_self(action, client_factory, account)
 
 
-def list_chats(client_factory=None) -> list[dict]:
+def list_chats(client_factory=None, account: Account | None = None) -> list[dict]:
     """Akkaunt a'zo bo'lgan guruh va kanallar: [{id, title, username}] — chatni tanlash uchun."""
 
     async def action(client):
@@ -282,21 +333,21 @@ def list_chats(client_factory=None) -> list[dict]:
                 chats.append({"id": dialog.id, "title": dialog.name, "username": username})
         return chats
 
-    return _run_on_self(action, client_factory)
+    return _run_on_self(action, client_factory, account)
 
 
-def _run_on_self(action, client_factory=None):
+def _run_on_self(action, client_factory=None, account: Account | None = None):
     if client_factory is None:
-        if not is_configured():
-            raise TelegramError(_("Telegram ulanmagan. ") + setup_hint())
-        session = load_session()
+        acc = account or owner_account()
+        if not is_configured(acc):
+            raise TelegramError(_("Telegram ulanmagan. ") + setup_hint(account))
 
         def client_factory():
-            return make_client(session)
+            return make_client(acc.session)
 
     async def run():
         async with connected(client_factory()) as client:
-            await check_account(client)
+            await check_account(client, account)
             return await action(client)
 
     try:
@@ -308,22 +359,26 @@ def _run_on_self(action, client_factory=None):
 
 
 def send_messages(
-    items: list[Outgoing], client_factory=None, delay: float = SEND_DELAY_SECONDS
+    items: list[Outgoing],
+    client_factory=None,
+    delay: float = SEND_DELAY_SECONDS,
+    account: Account | None = None,
 ) -> list[Result]:
-    """Xabarlarni ruxsat etilgan akkauntdan yuboradi. Sozlanmagan bo'lsa — TelegramError."""
+    """Xabarlarni ruxsat etilgan akkauntdan (``account`` — o'qituvchi; bo'lmasa bosh ustoz)
+    yuboradi. Sozlanmagan bo'lsa — TelegramError."""
     if client_factory is None:
-        if not is_configured():
-            raise TelegramError(_("Telegram ulanmagan. ") + setup_hint())
-        session = load_session()
+        acc = account or owner_account()
+        if not is_configured(acc):
+            raise TelegramError(_("Telegram ulanmagan. ") + setup_hint(account))
 
         def client_factory():
-            return make_client(session)
+            return make_client(acc.session)
 
     async def run():
         # Client o'zi ishlaydigan event loop ichida yaratiladi. `async with client` emas:
         # u sessiya yaroqsiz bo'lsa telefon raqamini so'rab, serverni osib qo'yadi.
         async with connected(client_factory()) as client:
-            return await _send_all(client, items, delay)
+            return await _send_all(client, items, delay, account)
 
     try:
         return asyncio.run(run())

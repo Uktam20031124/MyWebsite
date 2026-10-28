@@ -1,0 +1,35 @@
+{% extends "academy/base.html" %}
+{% load i18n ui %}
+{% block title %}{{ teacher.get_full_name|default:teacher.username }} · {% translate "O‘qituvchilar" %}{% endblock %}
+{% block kicker %}<a href="{% url 'teacher_list' %}">{% translate "O‘qituvchilar" %}</a>{% endblock %}
+{% block heading %}{{ teacher.get_full_name|default:teacher.username }}{% endblock %}
+
+{% block content %}
+<div class="split">
+  <section class="card pad">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "academy/includes/form_fields.html" %}
+      <div class="form-actions">
+        <button class="btn primary" type="submit">{% icon "check" 16 %} {% translate "Saqlash" %}</button>
+        <a class="btn ghost" href="{% url 'teacher_list' %}">{% translate "Bekor" %}</a>
+      </div>
+    </form>
+  </section>
+
+  <aside class="card pad">
+    <h2>{% icon "send" 18 %} {% translate "Telegram" %}</h2>
+    {% if account.is_linked %}
+      <p><span class="badge ok">{% translate "ulangan" %}</span> <strong>{{ account.telegram_name|default:account.telegram_id }}</strong>{% if account.telegram_username %} · @{{ account.telegram_username }}{% endif %}</p>
+      <p class="meta">{% blocktranslate with d=account.linked_at|date:"d.m.Y H:i" trimmed %}Ulangan: {{ d }}. O‘qituvchi o‘z guruhlariga testlarni shu akkauntdan yuboradi.{% endblocktranslate %}</p>
+      <form method="post" action="{% url 'teacher_unlink' teacher.pk %}">
+        {% csrf_token %}
+        <button class="btn danger-ghost sm" type="submit" data-confirm="{% translate "Telegram uzilsinmi? O‘qituvchi keyingi kirishda QR-kod orqali qayta ulaydi." %}">{% icon "x" 14 %} {% translate "Telegramni uzish" %}</button>
+      </form>
+    {% else %}
+      <p><span class="badge warn">{% translate "ulanmagan" %}</span></p>
+      <p class="meta">{% translate "O‘qituvchi birinchi kirishda Telegramini QR-kod orqali ulaydi." %}</p>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

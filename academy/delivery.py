@@ -7,6 +7,7 @@ Telegram natijasi ``sent_at``/``send_error``ga, email natijasi
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from functools import partial
 
 from django.utils import timezone
 
@@ -41,12 +42,12 @@ def parse_channels(value) -> list[str]:
     return [c for c in CHANNELS if c in chosen]
 
 
-def is_ready(channel: str) -> bool:
-    return tg.is_configured() if channel == TELEGRAM else mailer.is_configured()
+def is_ready(channel: str, account: tg.Account | None = None) -> bool:
+    return tg.is_configured(account) if channel == TELEGRAM else mailer.is_configured()
 
 
-def setup_hint(channel: str) -> str:
-    return tg.setup_hint() if channel == TELEGRAM else mailer.setup_hint()
+def setup_hint(channel: str, account: tg.Account | None = None) -> str:
+    return tg.setup_hint(account) if channel == TELEGRAM else mailer.setup_hint()
 
 
 def quiz_message(link: str, attempt: QuizAttempt) -> str:
@@ -81,6 +82,7 @@ def send_via(
     text_of: Callable[[str, QuizAttempt], str] = quiz_message,
     mail_of: Callable[[str, QuizAttempt], mailer.Mail] = quiz_mail,
     sender=None,
+    account: tg.Account | None = None,
 ) -> Outcome:
     """Bitta kanal orqali yuboradi (bazaga yozmaydi)."""
     out = Outcome(channel)
@@ -93,7 +95,7 @@ def send_via(
                 items.append(
                     tg.Outgoing(a.pk, username, phone, a.student.full_name, text_of(link_of(a), a))
                 )
-            results = (sender or tg.send_messages)(items) if items else []
+            results = (sender or partial(tg.send_messages, account=account))(items) if items else []
         else:
             out.no_contact = [a for a in attempts if not mailer.valid_email(a.student.email)]
             mails = [mail_of(link_of(a), a) for a in attempts if a not in out.no_contact]
@@ -110,13 +112,14 @@ def send_via(
 
 
 def deliver_links(
-    attempts: list[QuizAttempt], channels, link_of, now=None, senders=None
+    attempts: list[QuizAttempt], channels, link_of, now=None, senders=None, account: tg.Account | None = None
 ) -> list[Outcome]:
-    """Test havolalarini tanlangan kanallar orqali yuboradi va natijani saqlaydi."""
+    """Test havolalarini tanlangan kanallar orqali yuboradi va natijani saqlaydi.
+    ``account`` — Telegram akkaunti (o'qituvchi); bo'lmasa — bosh ustoz."""
     now = now or timezone.now()
     outcomes = []
     for channel in parse_channels(channels):
-        out = send_via(channel, attempts, link_of, sender=(senders or {}).get(channel))
+        out = send_via(channel, attempts, link_of, sender=(senders or {}).get(channel), account=account)
         sent_field, error_field = FIELDS[channel]
         for a in out.sent:
             setattr(a, sent_field, now)

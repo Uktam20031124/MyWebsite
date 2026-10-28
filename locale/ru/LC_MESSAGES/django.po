@@ -74,217 +74,249 @@ msgstr "У вас уже есть звание «Отличник»."
 msgid "Quvvat yetmaydi: kerak {cost} ⚡️, sizda {available} ⚡️."
 msgstr "Не хватает энергии: нужно {cost} ⚡️, у вас {available} ⚡️."
 
-#: academy/forms.py:137 academy/forms.py:512
+#: academy/forms.py:138 academy/forms.py:513
 msgid "ali@gmail.com"
 msgstr "ali@gmail.com"
 
-#: academy/forms.py:159
+#: academy/forms.py:160
 msgid "Telefon raqami noto‘g‘ri."
 msgstr "Неверный номер телефона."
 
-#: academy/forms.py:267
+#: academy/forms.py:268
 msgid "Mavzular matni"
 msgstr "Текст тем"
 
-#: academy/forms.py:271
+#: academy/forms.py:272
 msgid "Guruh dasturiga ham qo‘shish"
 msgstr "Добавить и в программу группы"
 
-#: academy/forms.py:277
+#: academy/forms.py:278
 msgid "Standart davomiylik (daq.)"
 msgstr "Длительность по умолчанию (мин)"
 
-#: academy/forms.py:283
+#: academy/forms.py:284
 msgid "Matndan birorta ham mavzu topilmadi."
 msgstr "В тексте не найдено ни одной темы."
 
-#: academy/forms.py:290 academy/models.py:1192 academy/models.py:676 academy/models.py:965
+#: academy/forms.py:291 academy/models.py:1212 academy/models.py:687 academy/models.py:985
 msgid "Savollar"
 msgstr "Вопросы"
 
-#: academy/forms.py:292
+#: academy/forms.py:293
 msgid "“?” — savol, “+” — to‘g‘ri javob, “-” — noto‘g‘ri javob. Savollar orasida bo‘sh qator qoldirish mumkin."
 msgstr "«?» — вопрос, «+» — правильный ответ, «-» — неправильный ответ. Между вопросами можно оставлять пустую строку."
 
-#: academy/forms.py:297
+#: academy/forms.py:298
 msgid "Ruscha tarjima (ixtiyoriy)"
 msgstr "Перевод на русский (необязательно)"
 
-#: academy/forms.py:300
+#: academy/forms.py:301
 msgid "Xuddi o‘sha savollar xuddi o‘sha tartibda, to‘g‘ri javob (“+”) xuddi o‘sha o‘rinda. Tarjima qilinmagan savolni o‘zbekcha qoldiring. Bo‘sh — testni faqat o‘zbekcha yechish mumkin."
 msgstr "Те же вопросы в том же порядке, правильный ответ («+») на том же месте. Непереведённый вопрос оставьте на узбекском. Пусто — тест можно решать только на узбекском."
 
-#: academy/forms.py:330
+#: academy/forms.py:331
 msgid "Kamida bitta savol yozing."
 msgstr "Напишите хотя бы один вопрос."
 
-#: academy/forms.py:35 templates/academy/login.html
+#: academy/forms.py:36 academy/forms.py:684 templates/academy/login.html
 msgid "Login"
 msgstr "Логин"
 
-#: academy/forms.py:361
+#: academy/forms.py:362
 msgid "Email (Gmail)"
 msgstr "Email (Gmail)"
 
-#: academy/forms.py:361 academy/models.py:1344 academy/models.py:172 templates/academy/quiz/batch_detail.html
+#: academy/forms.py:362 academy/models.py:1364 academy/models.py:183 templates/academy/quiz/batch_detail.html
 msgid "Telegram"
 msgstr "Telegram"
 
-#: academy/forms.py:368 academy/models.py:203 academy/templatetags/ui.py:228 templates/academy/base.html
+#: academy/forms.py:369 academy/models.py:214 academy/templatetags/ui.py:228 templates/academy/base.html
 msgid "Shogirdlar"
 msgstr "Ученики"
 
-#: academy/forms.py:371
+#: academy/forms.py:372
 msgid "Kamida bitta shogirdni tanlang."
 msgstr "Выберите хотя бы одного ученика."
 
-#: academy/forms.py:373 academy/models.py:1131 academy/models.py:1203 academy/models.py:746
+#: academy/forms.py:374 academy/models.py:1003 academy/models.py:1151 academy/models.py:1223
 msgid "Savollar soni"
 msgstr "Количество вопросов"
 
-#: academy/forms.py:375
+#: academy/forms.py:376
 msgid "Vaqt (daqiqa)"
 msgstr "Время (мин)"
 
-#: academy/forms.py:378
+#: academy/forms.py:379
 msgid "Qachon yuborilsin?"
 msgstr "Когда отправить?"
 
-#: academy/forms.py:38 templates/academy/login.html
-msgid "Parol"
-msgstr "Пароль"
-
-#: academy/forms.py:382
+#: academy/forms.py:383
 msgid "Bo‘sh — darhol. Vaqt ko‘rsatilsa, havolalar o‘sha paytda avtomatik yuboriladi."
 msgstr "Пусто — сразу. Если указать время, ссылки отправятся автоматически в это время."
 
-#: academy/forms.py:385
+#: academy/forms.py:386
 msgid "Qayerga yuborilsin?"
 msgstr "Куда отправить?"
 
-#: academy/forms.py:389
+#: academy/forms.py:39 academy/forms.py:689 templates/academy/login.html
+msgid "Parol"
+msgstr "Пароль"
+
+#: academy/forms.py:390
 msgid "Hech biri tanlanmasa — havolalar faqat yaratiladi, o‘zingiz tarqatasiz."
 msgstr "Если ничего не выбрано — ссылки только создаются, раздаёте их сами."
 
-#: academy/forms.py:398
+#: academy/forms.py:399
 msgid "Kelajakdagi vaqtni tanlang (yoki bo‘sh qoldiring — darhol)."
 msgstr "Выберите время в будущем (или оставьте пустым — сразу)."
 
-#: academy/forms.py:401
+#: academy/forms.py:402
 msgid "Ko‘pi bilan {SCHEDULE_MAX_DAYS} kun oldinga."
 msgstr "Не более чем на {SCHEDULE_MAX_DAYS} дн. вперёд."
 
-#: academy/forms.py:434 templates/academy/groups/detail.html
+#: academy/forms.py:435 templates/academy/groups/detail.html
 msgid "Ro‘yxat"
 msgstr "Список"
 
-#: academy/forms.py:438 academy/models.py:1307 academy/models.py:168 academy/models.py:339
+#: academy/forms.py:439 academy/models.py:1327 academy/models.py:179 academy/models.py:350
 msgid "Guruh"
 msgstr "Группа"
 
-#: academy/forms.py:441 templates/academy/lessons/list.html templates/academy/students/list.html
+#: academy/forms.py:442 templates/academy/lessons/list.html templates/academy/students/list.html
 msgid "Barcha guruhlar"
 msgstr "Все группы"
 
-#: academy/forms.py:442
+#: academy/forms.py:443
 msgid "Bir xil ismli o‘quvchilar boshqa guruhda bo‘lsa, guruhni tanlang."
 msgstr "Если ученики с таким же именем есть в другой группе, выберите группу."
 
-#: academy/forms.py:450
+#: academy/forms.py:451
 msgid "Ismingiz"
 msgstr "Ваше имя"
 
-#: academy/forms.py:450
+#: academy/forms.py:451
 msgid "— ismingizni tanlang —"
 msgstr "— выберите своё имя —"
 
-#: academy/forms.py:452 academy/forms.py:502 templates/academy/contacts/self.html
+#: academy/forms.py:453 academy/forms.py:503 academy/models.py:1728 templates/academy/contacts/self.html
 msgid "Telegram username"
 msgstr "Username в Telegram"
 
-#: academy/forms.py:453 academy/forms.py:501
+#: academy/forms.py:454 academy/forms.py:502
 msgid "Telefon raqami"
 msgstr "Номер телефона"
 
-#: academy/forms.py:454 academy/models.py:1272 academy/models.py:1345 academy/models.py:173
+#: academy/forms.py:455 academy/models.py:1292 academy/models.py:1365 academy/models.py:184
 msgid "Email"
 msgstr "Email"
 
-#: academy/forms.py:477 academy/forms.py:534
+#: academy/forms.py:478 academy/forms.py:535
 msgid "Username noto‘g‘ri: 5–32 ta lotin harf, raqam yoki “_” (masalan, @ali_2010)."
 msgstr "Неверный username: 5–32 латинские буквы, цифры или «_» (например, @ali_2010)."
 
-#: academy/forms.py:485 academy/forms.py:527
+#: academy/forms.py:486 academy/forms.py:528
 msgid "Telefon raqami noto‘g‘ri (masalan, +998 90 123 45 67)."
 msgstr "Неверный номер телефона (например, +998 90 123 45 67)."
 
-#: academy/forms.py:493
+#: academy/forms.py:494
 msgid "Telegram username, telefon yoki emailni kiriting."
 msgstr "Укажите username в Telegram, телефон или email."
 
-#: academy/forms.py:500
+#: academy/forms.py:501
 msgid "Familiya, ism, otasining ismi"
 msgstr "Фамилия, имя, отчество"
 
-#: academy/forms.py:503
+#: academy/forms.py:504
 msgid "Email (ixtiyoriy)"
 msgstr "Email (необязательно)"
 
-#: academy/forms.py:509
+#: academy/forms.py:510
 msgid "Aliyev Sardor Akmalovich"
 msgstr "Aliyev Sardor Akmalovich"
 
-#: academy/forms.py:511
+#: academy/forms.py:512
 msgid "@username"
 msgstr "@username"
 
-#: academy/forms.py:520
+#: academy/forms.py:521
 msgid "Familiya va ismingizni to‘liq yozing."
 msgstr "Напишите фамилию и имя полностью."
 
-#: academy/forms.py:596
+#: academy/forms.py:597
 msgid "Noto‘g‘ri email: {emails}"
 msgstr "Неверный email: {emails}"
 
-#: academy/forms.py:598
+#: academy/forms.py:599
 msgid "Kamida bitta email manzil kiriting."
 msgstr "Введите хотя бы один email."
 
-#: academy/forms.py:600
+#: academy/forms.py:601
 msgid "Bir martada ko‘pi bilan {n} ta manzil."
 msgstr "За один раз — не более {n} адресов."
 
-#: academy/forms.py:609
+#: academy/forms.py:610
 msgid "Vergul bilan yoki har birini yangi qatordan yozing. Har biriga alohida xat boradi — manzillar bir-biriga ko‘rinmaydi."
 msgstr "Через запятую или каждый с новой строки. Каждому придёт отдельное письмо — адреса не видны друг другу."
 
-#: academy/forms.py:619 templates/academy/quiz/open_detail.html templates/academy/students/_profile_menu.html templates/academy/students/detail.html
+#: academy/forms.py:620 templates/academy/quiz/open_detail.html templates/academy/students/_profile_menu.html templates/academy/students/detail.html
 msgid "Emailga yuborish"
 msgstr "Отправить на email"
 
-#: academy/forms.py:62 academy/models.py:56
+#: academy/forms.py:63 academy/models.py:57
 msgid "Dars kunlari"
 msgstr "Дни занятий"
 
-#: academy/forms.py:643
+#: academy/forms.py:644
 msgid "Mavzu testi"
 msgstr "Тест по теме"
 
-#: academy/forms.py:644
+#: academy/forms.py:645
 msgid "{topic} · {n} ta savol"
 msgstr "{topic} · вопросов: {n}"
 
-#: academy/forms.py:655
+#: academy/forms.py:656
 msgid "Kelajakdagi vaqtni tanlang (yoki bo‘sh qoldiring)."
 msgstr "Выберите время в будущем (или оставьте пустым)."
 
-#: academy/forms.py:664
+#: academy/forms.py:665
 msgid "Bu testda {n} ta savol bor — ko‘pi bilan shuncha."
 msgstr "В этом тесте {n} вопросов — не больше этого числа."
 
-#: academy/forms.py:671
+#: academy/forms.py:672
 msgid "Email manzillar"
 msgstr "Email-адреса"
+
+#: academy/forms.py:681 templates/academy/quiz/open_detail.html
+msgid "Ism"
+msgstr "Имя"
+
+#: academy/forms.py:682
+msgid "Familiya"
+msgstr "Фамилия"
+
+#: academy/forms.py:686
+msgid "Login: 3–40 ta lotin harfi, raqam yoki _ . - belgisi."
+msgstr "Логин: 3–40 латинских букв, цифр или символов _ . -"
+
+#: academy/forms.py:692
+msgid "Kamida 8 belgi. Tahrirlashda bo‘sh qoldirilsa — eski parol qoladi."
+msgstr "Минимум 8 символов. Если при редактировании оставить пустым — останется старый пароль."
+
+#: academy/forms.py:695
+msgid "Guruhlari"
+msgstr "Группы"
+
+#: academy/forms.py:699
+msgid "O‘qituvchi faqat shu guruhlarni ko‘radi va ularga test yuboradi."
+msgstr "Преподаватель видит только эти группы и отправляет им тесты."
+
+#: academy/forms.py:701
+msgid "Faol (tizimga kira oladi)"
+msgstr "Активен (может входить в систему)"
+
+#: academy/forms.py:728
+msgid "Bu login band — boshqasini tanlang."
+msgstr "Этот логин занят — выберите другой."
 
 #: academy/mailer.py:116
 msgid "Gmail login yoki App Password noto‘g‘ri (oddiy parol ishlamaydi). "
@@ -302,869 +334,913 @@ msgstr "Укажите в файле .env DARSXONA_GMAIL_USER (адрес Gmail)
 msgid "Gmail ulanmagan. "
 msgstr "Gmail не подключён."
 
-#: academy/models.py:1004
-msgid "Test havolasi"
-msgstr "Ссылка на тест"
-
-#: academy/models.py:1005
-msgid "Test havolalari"
-msgstr "Ссылки на тест"
-
-#: academy/models.py:1120 academy/models.py:1183 academy/models.py:1388 academy/models.py:1410
-msgid "Test"
-msgstr "Тест"
-
-#: academy/models.py:1123 academy/models.py:1300 academy/models.py:47
-msgid "Nomi"
-msgstr "Название"
-
-#: academy/models.py:1124
-msgid "Masalan: “Saralash bosqichi” yoki “Ochiq dars”. Bo‘sh — mavzu nomi."
-msgstr "Например: «Отборочный этап» или «Открытый урок». Пусто — название темы."
-
-#: academy/models.py:1128 academy/models.py:176
-msgid "Test tili"
-msgstr "Язык теста"
-
-#: academy/models.py:1129
-msgid "Qatnashchi boshlashdan oldin tilni o‘zi ham tanlashi mumkin."
-msgstr "Участник может сам выбрать язык перед началом."
-
-#: academy/models.py:1133 academy/models.py:558 academy/models.py:749
-msgid "Vaqt (daq.)"
-msgstr "Время (мин)"
-
-#: academy/models.py:1136 academy/models.py:1311 academy/models.py:159 academy/models.py:293
-msgid "Faol"
-msgstr "Активен"
-
-#: academy/models.py:1138
-msgid "Yopilish vaqti"
-msgstr "Время закрытия"
-
-#: academy/models.py:1139
-msgid "Bo‘sh — qo‘lda yopguningizcha ochiq."
-msgstr "Пусто — открыт, пока вы не закроете вручную."
-
-#: academy/models.py:1145
-msgid "Umumiy test havolasi"
-msgstr "Общая ссылка на тест"
-
-#: academy/models.py:1146
-msgid "Umumiy test havolalari"
-msgstr "Общие ссылки на тест"
-
-#: academy/models.py:1177 academy/models.py:933
-msgid "Yechilmoqda"
-msgstr "Решается"
-
-#: academy/models.py:1178 academy/models.py:934
-msgid "Tugatgan"
-msgstr "Завершён"
-
-#: academy/models.py:1181 academy/models.py:1270 templates/academy/quiz/open_detail.html
-msgid "Umumiy havola"
-msgstr "Общая ссылка"
-
-#: academy/models.py:1184 academy/models.py:1342 academy/models.py:170 templates/academy/quiz/open_detail.html
-msgid "F.I.Sh."
-msgstr "Ф.И.О."
-
-#: academy/models.py:1189 academy/models.py:1347 academy/models.py:1400 academy/models.py:1666
-msgid "Holat"
-msgstr "Статус"
-
-#: academy/models.py:1191 academy/models.py:960 templates/academy/includes/lang_switch.html
-msgid "Til"
-msgstr "Язык"
-
-#: academy/models.py:1193 academy/models.py:967
-msgid "Chiqib ketishlar"
-msgstr "Выходы из окна"
-
-#: academy/models.py:1194 academy/models.py:968
-msgid "Tashqarida (s)"
-msgstr "Вне окна (с)"
-
-#: academy/models.py:1195 academy/models.py:970
-msgid "Nusxalash urinishlari"
-msgstr "Попытки копирования"
-
-#: academy/models.py:1196 academy/models.py:974 templates/academy/quiz/batch_detail.html templates/academy/quiz/open_detail.html
-msgid "Javoblar"
-msgstr "Ответы"
-
-#: academy/models.py:1197 academy/models.py:977
-msgid "Javoblar tahlili"
-msgstr "Разбор ответов"
-
-#: academy/models.py:1198 academy/models.py:1385 academy/models.py:1441 academy/models.py:978
-msgid "Boshlangan"
-msgstr "Начат"
-
-#: academy/models.py:1199 academy/models.py:62 academy/models.py:979
-msgid "Tugash vaqti"
-msgstr "Время окончания"
-
-#: academy/models.py:1200 academy/models.py:980
+#: academy/models.py:1000 academy/models.py:1220
 msgid "Tugagan"
 msgstr "Завершён"
 
-#: academy/models.py:1201 academy/models.py:981
+#: academy/models.py:1001 academy/models.py:1221
 msgid "Vaqt tugadi"
 msgstr "Время вышло"
 
-#: academy/models.py:1202 academy/models.py:982
+#: academy/models.py:1002 academy/models.py:1222
 msgid "To'g'ri javoblar"
 msgstr "Правильные ответы"
 
-#: academy/models.py:1207
-msgid "Umumiy test natijasi"
-msgstr "Результат общего теста"
-
-#: academy/models.py:1208
-msgid "Umumiy test natijalari"
-msgstr "Результаты общего теста"
-
-#: academy/models.py:1273 academy/models.py:1358
-msgid "Yuborilgan"
-msgstr "Отправлено"
-
-#: academy/models.py:1274 templates/academy/quiz/_review_items.html templates/academy/quiz/open_review.html templates/academy/quiz/review.html
-msgid "Xato"
-msgstr "Неверно"
-
-#: academy/models.py:1279
-msgid "Email taklif"
-msgstr "Email-приглашение"
-
-#: academy/models.py:1280
-msgid "Email takliflar"
-msgstr "Email-приглашения"
-
-#: academy/models.py:1300
-msgid "Masalan: S-009 Telegram guruhi"
-msgstr "Например: S-009 группа в Telegram"
-
-#: academy/models.py:1308
-msgid "Arizalar shu guruhga taklif qilinadi (bo'sh — tasdiqlashda tanlaysiz)."
-msgstr "Заявки будут предложены этой группе (пусто — выберете при подтверждении)."
-
-#: academy/models.py:1316
-msgid "Ro'yxat havolasi"
-msgstr "Ссылка для записи"
-
-#: academy/models.py:1317
-msgid "Ro'yxat havolalari"
-msgstr "Ссылки для записи"
-
-#: academy/models.py:1330 academy/models.py:1382 academy/models.py:1653
-msgid "Kutilmoqda"
-msgstr "Ожидает"
-
-#: academy/models.py:1331
-msgid "Qabul qilingan"
-msgstr "Принята"
-
-#: academy/models.py:1332 academy/models.py:1384 academy/models.py:944
-msgid "Rad etilgan"
-msgstr "Отклонена"
-
-#: academy/models.py:1340 templates/academy/groups/detail.html templates/academy/registrations/list.html
-msgid "Havola"
-msgstr "Ссылка"
-
-#: academy/models.py:1343 academy/models.py:171 templates/academy/students/contacts_import.html
-msgid "Telefon"
-msgstr "Телефон"
-
-#: academy/models.py:1355 academy/models.py:1393 academy/models.py:1435 academy/models.py:1460
-msgid "O'quvchi"
-msgstr "Ученик"
-
-#: academy/models.py:1359
-msgid "Ko'rib chiqilgan"
-msgstr "Рассмотрено"
-
-#: academy/models.py:1363
-msgid "Ariza"
-msgstr "Заявка"
-
-#: academy/models.py:1364 templates/academy/base.html templates/academy/registrations/list.html
-msgid "Arizalar"
-msgstr "Заявки"
-
-#: academy/models.py:1383 academy/models.py:943
-msgid "Ruxsat berilgan"
-msgstr "Разрешено"
-
-#: academy/models.py:1389 templates/academy/portal/student.html templates/academy/portal/study.html
-msgid "Qayta topshirish"
-msgstr "Пересдача"
-
-#: academy/models.py:1390
-msgid "Yangi mavzu (oldindan)"
-msgstr "Новая тема (заранее)"
-
-#: academy/models.py:1396 academy/models.py:1438 academy/models.py:1603 academy/models.py:255
-msgid "Mavzu"
-msgstr "Тема"
-
-#: academy/models.py:1398 academy/models.py:1440
-msgid "Turi"
-msgstr "Тип"
-
-#: academy/models.py:1402 academy/models.py:1668
-msgid "So'ralgan"
-msgstr "Запрошено"
-
-#: academy/models.py:1403 academy/models.py:1669 academy/models.py:996
-msgid "Ustoz qarori"
-msgstr "Решение учителя"
-
-#: academy/models.py:1415
-msgid "Test so'rovi"
-msgstr "Запрос на тест"
-
-#: academy/models.py:1416
-msgid "Test so'rovlari"
-msgstr "Запросы на тест"
-
-#: academy/models.py:1429 academy/models.py:1445
-msgid "Mustahkamlash"
-msgstr "Закрепление"
-
-#: academy/models.py:1430
-msgid "Yangi mavzuga tayyorlanish"
-msgstr "Подготовка к новой теме"
-
-#: academy/models.py:1446
-msgid "Mustahkamlashlar"
-msgstr "Закрепления"
-
-#: academy/models.py:1462 academy/models.py:1562
-msgid "Quvvat ⚡️"
-msgstr "Энергия ⚡️"
-
-#: academy/models.py:1463
-msgid "Sabab"
-msgstr "Причина"
-
-#: academy/models.py:1476
-msgid "Quvvat"
-msgstr "Энергия"
-
-#: academy/models.py:1477
-msgid "Quvvat harakatlari"
-msgstr "Движения энергии"
-
-#: academy/models.py:1487
-msgid "Test: {p}%"
-msgstr "Тест: {p}%"
-
-#: academy/models.py:1488
-msgid "Takroriy test: {p}%"
-msgstr "Повторный тест: {p}%"
-
-#: academy/models.py:1489
-msgid "Mustahkamlab, qayta topshirdi"
-msgstr "Закрепил тему и пересдал"
-
-#: academy/models.py:1490
-msgid "Yangi mavzuni oldindan o‘zlashtirdi"
-msgstr "Заранее освоил новую тему"
-
-#: academy/models.py:1491
-msgid "Xato tuzatildi: {t}"
-msgstr "Ошибка исправлена: {t}"
-
-#: academy/models.py:1492
-msgid "🔥 {n} kun ketma-ket faol"
-msgstr "🔥 {n} дн. активности подряд"
-
-#: academy/models.py:1493
-msgid "🎁 Mukofot: {t}"
-msgstr "🎁 Награда: {t}"
-
-#: academy/models.py:1494
-msgid "🔓 Mavzu ochildi: {t}"
-msgstr "🔓 Тема открыта: {t}"
-
-#: academy/models.py:1495
-msgid "🎁 Ustozdan sovg‘a"
-msgstr "🎁 Подарок от учителя"
-
-#: academy/models.py:1496
-msgid "🎁 Ustozdan sovg‘a: {t}"
-msgstr "🎁 Подарок от учителя: {t}"
-
-#: academy/models.py:1497
-msgid "➕ Qo‘shimcha savol: {t}"
-msgstr "➕ Дополнительный вопрос: {t}"
-
-#: academy/models.py:1498
-msgid "⚠️ Test qoidasi buzildi: {t}"
-msgstr "⚠️ Нарушение правил теста: {t}"
-
-#: academy/models.py:153
-msgid "O‘zbekcha"
-msgstr "O‘zbekcha"
-
-#: academy/models.py:1532 academy/models.py:1559 academy/models.py:667 academy/models.py:675
-msgid "Savol"
-msgstr "Вопрос"
-
-#: academy/models.py:1534
-msgid "Ketma-ket to'g'ri"
-msgstr "Подряд верно"
-
-#: academy/models.py:1535
-msgid "Xato soni"
-msgstr "Ошибок"
-
-#: academy/models.py:1536
-msgid "Oxirgi xato"
-msgstr "Последняя ошибка"
-
-#: academy/models.py:1537
-msgid "Oxirgi mashq"
-msgstr "Последняя тренировка"
-
-#: academy/models.py:1538
-msgid "O'zlashtirildi"
-msgstr "Усвоено"
-
-#: academy/models.py:154
-msgid "Русский"
-msgstr "Русский"
-
-#: academy/models.py:1541
-msgid "Xato savol"
-msgstr "Вопрос с ошибкой"
-
-#: academy/models.py:1542
-msgid "Xato savollar"
-msgstr "Вопросы с ошибками"
-
-#: academy/models.py:1561 academy/models.py:705
-msgid "To'g'ri"
-msgstr "Верный"
-
-#: academy/models.py:1563
-msgid "Javob berilgan"
-msgstr "Время ответа"
-
-#: academy/models.py:1567
-msgid "Qo‘shimcha savol javobi"
-msgstr "Ответ на дополнительный вопрос"
-
-#: academy/models.py:1568
-msgid "Qo‘shimcha savollar javoblari"
-msgstr "Ответы на дополнительные вопросы"
-
-#: academy/models.py:1583
-msgid "Kun"
-msgstr "День"
-
-#: academy/models.py:1587
-msgid "Faol kun"
-msgstr "Активный день"
-
-#: academy/models.py:1588
-msgid "Faol kunlar"
-msgstr "Активные дни"
-
-#: academy/models.py:160
-msgid "Tanaffus"
-msgstr "Перерыв"
-
-#: academy/models.py:1604 academy/models.py:1636 academy/models.py:1664
-msgid "Narxi (⚡️ quvvat)"
-msgstr "Цена (⚡️ энергия)"
-
-#: academy/models.py:1608
-msgid "Ochilgan"
-msgstr "Открыта"
-
-#: academy/models.py:161
-msgid "Bitirgan"
-msgstr "Окончил"
-
-#: academy/models.py:1612
-msgid "Ochilgan mavzu"
-msgstr "Открытая тема"
-
-#: academy/models.py:1613
-msgid "Ochilgan mavzular"
-msgstr "Открытые темы"
-
-#: academy/models.py:162
-msgid "Ketgan"
-msgstr "Ушёл"
-
-#: academy/models.py:1626
-msgid "Oddiy — ustoz o‘zi beradi"
-msgstr "Обычный — учитель выдаёт сам"
-
-#: academy/models.py:1627
-msgid "A’lochi unvoni — oltin medal va sertifikatda belgi"
-msgstr "Звание «Отличник» — золотая медаль и знак в сертификате"
-
-#: academy/models.py:1629 academy/models.py:1642 academy/models.py:1661 academy/models.py:1663
-msgid "Sovg'a"
-msgstr "Подарок"
-
-#: academy/models.py:1631
-msgid "Avtomatik ta’sir"
-msgstr "Автоматическое действие"
-
-#: academy/models.py:1632
-msgid "“A’lochi unvoni”: tasdiqlanishi bilan o‘quvchi ismi hamma joyda oltin rangda, medal bilan ko‘rinadi va sertifikatga “A’lochi” muhri tushadi."
-msgstr "«Звание Отличник»: сразу после одобрения имя ученика везде показывается золотым цветом с медалью, а в сертификат добавляется печать «Отличник»."
-
-#: academy/models.py:1635 academy/models.py:193 academy/models.py:485 academy/models.py:72
-msgid "Izoh"
-msgstr "Описание"
-
-#: academy/models.py:1637
-msgid "Do'konda ko'rinadi"
-msgstr "Показывать в магазине"
-
-#: academy/models.py:1638 academy/models.py:231 academy/models.py:292 academy/models.py:347
-msgid "Tartib"
-msgstr "Порядок"
-
-#: academy/models.py:1643
-msgid "Sovg'alar"
-msgstr "Подарки"
-
-#: academy/models.py:1654
-msgid "Berildi"
-msgstr "Выдан"
-
-#: academy/models.py:1655
-msgid "Rad etildi"
-msgstr "Отклонён"
-
-#: academy/models.py:1676
-msgid "Sovg'a so'rovi"
-msgstr "Запрос подарка"
-
-#: academy/models.py:1677
-msgid "Sovg'a so'rovlari"
-msgstr "Запросы подарков"
-
-#: academy/models.py:179
-msgid "Profilga kirish so'ralgan"
-msgstr "Запрошен вход в профиль"
-
-#: academy/models.py:180
-msgid "Profil ochiq (gacha)"
-msgstr "Профиль открыт (до)"
-
-#: academy/models.py:183
-msgid "Test uchun ruxsat etilgan mavzular"
-msgstr "Темы, разрешённые для теста"
-
-#: academy/models.py:192
-msgid "Qo'shilgan"
-msgstr "Добавлен"
-
-#: academy/models.py:197
-msgid "A’lochi (berilgan sana)"
-msgstr "Отличник (дата присвоения)"
-
-#: academy/models.py:20
-msgid "Du"
-msgstr "Пн"
-
-#: academy/models.py:20
-msgid "Dushanba"
-msgstr "Понедельник"
-
-#: academy/models.py:202 academy/models.py:477 academy/models.py:953 templates/academy/groups/detail.html
-msgid "Shogird"
-msgstr "Ученик"
-
-#: academy/models.py:21
-msgid "Se"
-msgstr "Вт"
-
-#: academy/models.py:21
-msgid "Seshanba"
-msgstr "Вторник"
-
-#: academy/models.py:22
-msgid "Chor"
-msgstr "Ср"
-
-#: academy/models.py:22
-msgid "Chorshanba"
-msgstr "Среда"
-
-#: academy/models.py:229 academy/models.py:236 academy/models.py:251
-msgid "Bo'lim"
-msgstr "Раздел"
-
-#: academy/models.py:23
-msgid "Pay"
-msgstr "Чт"
-
-#: academy/models.py:23
-msgid "Payshanba"
-msgstr "Четверг"
-
-#: academy/models.py:230 academy/models.py:259
-msgid "Tavsif"
-msgstr "Описание"
-
-#: academy/models.py:237
-msgid "Bo'limlar"
-msgstr "Разделы"
-
-#: academy/models.py:24
-msgid "Ju"
-msgstr "Пт"
-
-#: academy/models.py:24
-msgid "Juma"
-msgstr "Пятница"
-
-#: academy/models.py:25
-msgid "Sha"
-msgstr "Сб"
-
-#: academy/models.py:25
-msgid "Shanba"
-msgstr "Суббота"
-
-#: academy/models.py:257
-msgid "Mavzu (ruscha)"
-msgstr "Тема (на русском)"
-
-#: academy/models.py:257
-msgid "Ruscha testlarda ko'rsatiladi."
-msgstr "Показывается в тестах на русском."
-
-#: academy/models.py:26
-msgid "Ya"
-msgstr "Вс"
-
-#: academy/models.py:26
-msgid "Yakshanba"
-msgstr "Воскресенье"
-
-#: academy/models.py:261
-msgid "Uyga vazifa (shablon)"
-msgstr "Домашнее задание (шаблон)"
-
-#: academy/models.py:263
-msgid "Shu mavzuda dars yaratilganda avtomatik qo'yiladi."
-msgstr "Ставится автоматически при создании урока по этой теме."
-
-#: academy/models.py:266 templates/academy/topics/detail.html
-msgid "Materiallar"
-msgstr "Материалы"
-
-#: academy/models.py:268
-msgid "Har qatorda bitta havola yoki manba."
-msgstr "По одной ссылке или источнику в строке."
-
-#: academy/models.py:271 templates/academy/topics/detail.html
-msgid "Mustahkamlash materiali"
-msgstr "Материал для закрепления"
-
-#: academy/models.py:273
-msgid "O'quvchi testdan past natija olsa, profilida ko'rinadi: tushuntirish, bajarilgan misollar. Format: ## sarlavha, - ro'yxat, ``` kod ```, **qalin**, `kod`."
-msgstr "Видит ученик в профиле, если получил низкий результат: объяснение, решённые примеры. Формат: ## заголовок, - список, ``` код ```, **жирный**, `код`."
-
-#: academy/models.py:279
-msgid "Mustahkamlash materiali (ruscha)"
-msgstr "Материал для закрепления (на русском)"
-
-#: academy/models.py:281
-msgid "Ruscha test tanlagan o'quvchilarga ko'rsatiladi (bo'sh — o'zbekchasi)."
-msgstr "Показывается ученикам, выбравшим тест на русском (пусто — узбекский вариант)."
-
-#: academy/models.py:284
-msgid "Taqdimot slaydlari"
-msgstr "Слайды презентации"
-
-#: academy/models.py:286
-msgid "Dars paytida ekranga chiqariladi. Slaydlar orasida --- qatori; # sarlavha slaydi; !! katta ibora; :: timer 25 — 25 daqiqalik taymer; qolgani — material formati."
-msgstr "Показывается на экране во время урока. Слайды разделяются строкой ---; # титульный слайд; !! крупная фраза; :: timer 25 — таймер на 25 минут; остальное — формат материала."
-
-#: academy/models.py:291
-msgid "Davomiyligi (daq.)"
-msgstr "Длительность (мин)"
-
-#: academy/models.py:299 academy/templatetags/ui.py:230 templates/academy/base.html templates/academy/quiz/form.html
-msgid "Mavzular"
-msgstr "Темы"
-
-#: academy/models.py:331 academy/models.py:388 templates/academy/groups/detail.html
-msgid "Rejada"
-msgstr "В плане"
-
-#: academy/models.py:332 academy/models.py:389
-msgid "O'tildi"
-msgstr "Пройдена"
-
-#: academy/models.py:333
-msgid "O'tkazib yuborildi"
-msgstr "Пропущена"
-
-#: academy/models.py:355
-msgid "O'tilgan sana"
-msgstr "Дата прохождения"
-
-#: academy/models.py:359
-msgid "Guruh mavzusi"
-msgstr "Тема группы"
-
-#: academy/models.py:360
-msgid "Guruh mavzulari"
-msgstr "Темы группы"
-
-#: academy/models.py:390 templates/academy/confirm_delete.html templates/academy/groups/form.html templates/academy/includes/session.html
-msgid "Bekor"
-msgstr "Отменён"
-
-#: academy/models.py:406 templates/academy/lessons/list.html templates/academy/students/detail.html
-msgid "Sana"
-msgstr "Дата"
-
-#: academy/models.py:407 academy/models.py:64
-msgid "Boshlanish"
-msgstr "Начало"
-
-#: academy/models.py:415 templates/academy/lessons/detail.html
-msgid "Uyga vazifa"
-msgstr "Домашнее задание"
-
-#: academy/models.py:416
-msgid "Dars izohi"
-msgstr "Комментарий к уроку"
-
-#: academy/models.py:421 academy/models.py:471 academy/models.py:735 templates/academy/groups/detail.html
-msgid "Dars"
-msgstr "Урок"
-
-#: academy/models.py:422 academy/templatetags/ui.py:231 templates/academy/base.html templates/academy/lessons/detail.html
-msgid "Darslar"
-msgstr "Уроки"
-
-#: academy/models.py:428 academy/views.py:976
-msgid "Mavzusiz dars"
-msgstr "Урок без темы"
-
-#: academy/models.py:44
-msgid "To'xtatilgan"
-msgstr "Приостановлена"
-
-#: academy/models.py:45
-msgid "Arxiv"
-msgstr "Архив"
-
-#: academy/models.py:459 templates/academy/groups/journal.html templates/academy/lessons/detail.html
-msgid "Keldi"
-msgstr "Пришёл"
-
-#: academy/models.py:460 templates/academy/groups/journal.html templates/academy/lessons/detail.html
-msgid "Kelmadi"
-msgstr "Не пришёл"
-
-#: academy/models.py:461 templates/academy/groups/journal.html templates/academy/lessons/detail.html
-msgid "Kechikdi"
-msgstr "Опоздал"
-
-#: academy/models.py:462 templates/academy/groups/journal.html
-msgid "Sababli"
-msgstr "По уважительной причине"
-
-#: academy/models.py:48
-msgid "Kod"
-msgstr "Код"
-
-#: academy/models.py:487
-msgid "Ball (0–100)"
-msgstr "Балл (0–100)"
-
-#: academy/models.py:491
-msgid "Darsdagi faollik va uy vazifasi uchun baho. Bo'sh — baholanmagan."
-msgstr "Оценка за активность на уроке и домашнее задание. Пусто — без оценки."
-
-#: academy/models.py:495
-msgid "Yo'qlama"
-msgstr "Посещаемость"
-
-#: academy/models.py:496
-msgid "Yo'qlamalar"
-msgstr "Посещаемость"
-
-#: academy/models.py:50 templates/academy/dashboard.html templates/academy/groups/list.html templates/academy/lessons/list.html
-msgid "Jadval"
-msgstr "Расписание"
-
-#: academy/models.py:53
-msgid "Dars kunlari va vaqti tanlansa, avtomatik to'ldiriladi."
-msgstr "Заполняется автоматически, если выбраны дни и время занятий."
-
-#: academy/models.py:561
-msgid "Jo'natishda taklif qilinadigan vaqt. Har bir jo'natmada o'zgartirish mumkin."
-msgstr "Время, предлагаемое при отправке. Можно менять в каждой отправке."
-
-#: academy/models.py:565
-msgid "Qo‘shimcha savol uchun quvvat"
-msgstr "Энергия за дополнительный вопрос"
-
-#: academy/models.py:569
-msgid "O‘quvchi profilidagi “Qo‘shimcha savollar”da shu testning savoliga to‘g‘ri javob uchun."
-msgstr "За правильный ответ на вопрос этого теста в разделе «Дополнительные вопросы» профиля ученика."
-
-#: academy/models.py:575 templates/academy/base.html templates/academy/lessons/detail.html templates/academy/portal/student.html
-msgid "Testlar"
-msgstr "Тесты"
-
-#: academy/models.py:59
-msgid "Hafta kunlari raqamlari (0 — dushanba), vergul bilan: 1,4,5"
-msgstr "Номера дней недели (0 — понедельник) через запятую: 1,4,5"
-
-#: academy/models.py:61
-msgid "Boshlanish vaqti"
-msgstr "Время начала"
-
-#: academy/models.py:63
-msgid "Xona"
-msgstr "Кабинет"
-
-#: academy/models.py:669
-msgid "Savol (ruscha)"
-msgstr "Вопрос (на русском)"
-
-#: academy/models.py:671
-msgid "Rasm"
-msgstr "Изображение"
-
-#: academy/models.py:703
-msgid "Javob"
-msgstr "Ответ"
-
-#: academy/models.py:704
-msgid "Javob (ruscha)"
-msgstr "Ответ (на русском)"
-
-#: academy/models.py:710
-msgid "Javob varianti"
-msgstr "Вариант ответа"
-
-#: academy/models.py:711
-msgid "Javob variantlari"
-msgstr "Варианты ответа"
-
-#: academy/models.py:751
-msgid "Jo'natilgan"
-msgstr "Отправлено"
-
-#: academy/models.py:753
-msgid "Yuborish vaqti"
-msgstr "Время отправки"
-
-#: academy/models.py:754
-msgid "Rejali yuborilgan"
-msgstr "Отправлено по расписанию"
-
-#: academy/models.py:756
-msgid "Kanallar"
-msgstr "Каналы"
-
-#: academy/models.py:758
-msgid "Profildan"
-msgstr "Из профиля"
-
-#: academy/models.py:765
-msgid "Qayta topshirish (asosiy jo'natma)"
-msgstr "Пересдача (исходная отправка)"
-
-#: academy/models.py:77
-msgid "Telegram guruh chati"
-msgstr "Чат группы в Telegram"
-
-#: academy/models.py:770
-msgid "Test jo'natmasi"
-msgstr "Отправка теста"
-
-#: academy/models.py:771
-msgid "Test jo'natmalari"
-msgstr "Отправки тестов"
-
-#: academy/models.py:80
-msgid "@guruh_nomi, t.me/guruh_nomi yoki raqamli ID (manage.py telegram_chats)."
-msgstr "@имя_группы, t.me/имя_группы или числовой ID (manage.py telegram_chats)."
-
-#: academy/models.py:87 academy/templatetags/ui.py:229 templates/academy/base.html templates/academy/dashboard.html
-msgid "Guruhlar"
-msgstr "Группы"
-
-#: academy/models.py:932 templates/academy/quiz/batch_detail.html
-msgid "Ochilmagan"
-msgstr "Не открыт"
-
-#: academy/models.py:940
-msgid "So‘ralmagan"
-msgstr "Не запрошено"
-
-#: academy/models.py:941 templates/academy/quiz/batch_detail.html
-msgid "1 daqiqa ko‘rdi"
-msgstr "Смотрел 1 минуту"
-
-#: academy/models.py:942
-msgid "So‘ralgan"
-msgstr "Запрошено"
-
-#: academy/models.py:947
-msgid "Jo'natma"
-msgstr "Отправка"
-
-#: academy/models.py:972
-msgid "Jarima ⚡️"
-msgstr "Штраф ⚡️"
-
-#: academy/models.py:973
-msgid "Ogohlantirish ko'rib chiqilgan"
-msgstr "Предупреждение рассмотрено"
-
-#: academy/models.py:985
+#: academy/models.py:1005
 msgid "Telegramda yuborilgan"
 msgstr "Отправлено в Telegram"
 
-#: academy/models.py:987
+#: academy/models.py:1007
 msgid "Eslatma yuborilgan"
 msgstr "Напоминание отправлено"
 
-#: academy/models.py:989 templates/academy/quiz/open_list.html
+#: academy/models.py:1009 templates/academy/quiz/open_list.html
 msgid "Emailga yuborilgan"
 msgstr "Отправлено на email"
 
-#: academy/models.py:990
+#: academy/models.py:1010
 msgid "Email xatosi"
 msgstr "Ошибка email"
 
-#: academy/models.py:992
+#: academy/models.py:1012
 msgid "Javoblarni ko'rish"
 msgstr "Просмотр ответов"
 
-#: academy/models.py:995
+#: academy/models.py:1015
 msgid "Ko'rish so'ralgan"
 msgstr "Запрошен просмотр"
 
-#: academy/models.py:998
+#: academy/models.py:1016 academy/models.py:1423 academy/models.py:1689
+msgid "Ustoz qarori"
+msgstr "Решение учителя"
+
+#: academy/models.py:1018
 msgid "Ko'rish (gacha)"
 msgstr "Просмотр (до)"
 
-#: academy/models.py:999
+#: academy/models.py:1019
 msgid "Yuborish xatosi"
 msgstr "Ошибка отправки"
+
+#: academy/models.py:1024
+msgid "Test havolasi"
+msgstr "Ссылка на тест"
+
+#: academy/models.py:1025
+msgid "Test havolalari"
+msgstr "Ссылки на тест"
+
+#: academy/models.py:1140 academy/models.py:1203 academy/models.py:1408 academy/models.py:1430
+msgid "Test"
+msgstr "Тест"
+
+#: academy/models.py:1143 academy/models.py:1320 academy/models.py:48
+msgid "Nomi"
+msgstr "Название"
+
+#: academy/models.py:1144
+msgid "Masalan: “Saralash bosqichi” yoki “Ochiq dars”. Bo‘sh — mavzu nomi."
+msgstr "Например: «Отборочный этап» или «Открытый урок». Пусто — название темы."
+
+#: academy/models.py:1148 academy/models.py:187
+msgid "Test tili"
+msgstr "Язык теста"
+
+#: academy/models.py:1149
+msgid "Qatnashchi boshlashdan oldin tilni o‘zi ham tanlashi mumkin."
+msgstr "Участник может сам выбрать язык перед началом."
+
+#: academy/models.py:1153 academy/models.py:569 academy/models.py:760
+msgid "Vaqt (daq.)"
+msgstr "Время (мин)"
+
+#: academy/models.py:1156 academy/models.py:1331 academy/models.py:170 academy/models.py:304
+msgid "Faol"
+msgstr "Активен"
+
+#: academy/models.py:1158
+msgid "Yopilish vaqti"
+msgstr "Время закрытия"
+
+#: academy/models.py:1159
+msgid "Bo‘sh — qo‘lda yopguningizcha ochiq."
+msgstr "Пусто — открыт, пока вы не закроете вручную."
+
+#: academy/models.py:1165
+msgid "Umumiy test havolasi"
+msgstr "Общая ссылка на тест"
+
+#: academy/models.py:1166
+msgid "Umumiy test havolalari"
+msgstr "Общие ссылки на тест"
+
+#: academy/models.py:1197 academy/models.py:953
+msgid "Yechilmoqda"
+msgstr "Решается"
+
+#: academy/models.py:1198 academy/models.py:954
+msgid "Tugatgan"
+msgstr "Завершён"
+
+#: academy/models.py:1201 academy/models.py:1290 templates/academy/quiz/open_detail.html
+msgid "Umumiy havola"
+msgstr "Общая ссылка"
+
+#: academy/models.py:1204 academy/models.py:1362 academy/models.py:181 templates/academy/quiz/open_detail.html
+msgid "F.I.Sh."
+msgstr "Ф.И.О."
+
+#: academy/models.py:1209 academy/models.py:1367 academy/models.py:1420 academy/models.py:1686
+msgid "Holat"
+msgstr "Статус"
+
+#: academy/models.py:1211 academy/models.py:980 templates/academy/includes/lang_switch.html
+msgid "Til"
+msgstr "Язык"
+
+#: academy/models.py:1213 academy/models.py:987
+msgid "Chiqib ketishlar"
+msgstr "Выходы из окна"
+
+#: academy/models.py:1214 academy/models.py:988
+msgid "Tashqarida (s)"
+msgstr "Вне окна (с)"
+
+#: academy/models.py:1215 academy/models.py:990
+msgid "Nusxalash urinishlari"
+msgstr "Попытки копирования"
+
+#: academy/models.py:1216 academy/models.py:994 templates/academy/quiz/batch_detail.html templates/academy/quiz/open_detail.html
+msgid "Javoblar"
+msgstr "Ответы"
+
+#: academy/models.py:1217 academy/models.py:997
+msgid "Javoblar tahlili"
+msgstr "Разбор ответов"
+
+#: academy/models.py:1218 academy/models.py:1405 academy/models.py:1461 academy/models.py:998
+msgid "Boshlangan"
+msgstr "Начат"
+
+#: academy/models.py:1219 academy/models.py:63 academy/models.py:999
+msgid "Tugash vaqti"
+msgstr "Время окончания"
+
+#: academy/models.py:1227
+msgid "Umumiy test natijasi"
+msgstr "Результат общего теста"
+
+#: academy/models.py:1228
+msgid "Umumiy test natijalari"
+msgstr "Результаты общего теста"
+
+#: academy/models.py:1293 academy/models.py:1378
+msgid "Yuborilgan"
+msgstr "Отправлено"
+
+#: academy/models.py:1294 academy/models.py:1721 templates/academy/quiz/_review_items.html templates/academy/quiz/open_review.html
+msgid "Xato"
+msgstr "Неверно"
+
+#: academy/models.py:1299
+msgid "Email taklif"
+msgstr "Email-приглашение"
+
+#: academy/models.py:1300
+msgid "Email takliflar"
+msgstr "Email-приглашения"
+
+#: academy/models.py:1320
+msgid "Masalan: S-009 Telegram guruhi"
+msgstr "Например: S-009 группа в Telegram"
+
+#: academy/models.py:1328
+msgid "Arizalar shu guruhga taklif qilinadi (bo'sh — tasdiqlashda tanlaysiz)."
+msgstr "Заявки будут предложены этой группе (пусто — выберете при подтверждении)."
+
+#: academy/models.py:1336
+msgid "Ro'yxat havolasi"
+msgstr "Ссылка для записи"
+
+#: academy/models.py:1337
+msgid "Ro'yxat havolalari"
+msgstr "Ссылки для записи"
+
+#: academy/models.py:1350 academy/models.py:1402 academy/models.py:1673
+msgid "Kutilmoqda"
+msgstr "Ожидает"
+
+#: academy/models.py:1351
+msgid "Qabul qilingan"
+msgstr "Принята"
+
+#: academy/models.py:1352 academy/models.py:1404 academy/models.py:964
+msgid "Rad etilgan"
+msgstr "Отклонена"
+
+#: academy/models.py:1360 templates/academy/groups/detail.html templates/academy/registrations/list.html
+msgid "Havola"
+msgstr "Ссылка"
+
+#: academy/models.py:1363 academy/models.py:182 templates/academy/students/contacts_import.html
+msgid "Telefon"
+msgstr "Телефон"
+
+#: academy/models.py:1375 academy/models.py:1413 academy/models.py:1455 academy/models.py:1480
+msgid "O'quvchi"
+msgstr "Ученик"
+
+#: academy/models.py:1379
+msgid "Ko'rib chiqilgan"
+msgstr "Рассмотрено"
+
+#: academy/models.py:1383
+msgid "Ariza"
+msgstr "Заявка"
+
+#: academy/models.py:1384 templates/academy/base.html templates/academy/registrations/list.html
+msgid "Arizalar"
+msgstr "Заявки"
+
+#: academy/models.py:1403 academy/models.py:963
+msgid "Ruxsat berilgan"
+msgstr "Разрешено"
+
+#: academy/models.py:1409 templates/academy/portal/student.html templates/academy/portal/study.html
+msgid "Qayta topshirish"
+msgstr "Пересдача"
+
+#: academy/models.py:1410
+msgid "Yangi mavzu (oldindan)"
+msgstr "Новая тема (заранее)"
+
+#: academy/models.py:1416 academy/models.py:1458 academy/models.py:1623 academy/models.py:266
+msgid "Mavzu"
+msgstr "Тема"
+
+#: academy/models.py:1418 academy/models.py:1460
+msgid "Turi"
+msgstr "Тип"
+
+#: academy/models.py:1422 academy/models.py:1688
+msgid "So'ralgan"
+msgstr "Запрошено"
+
+#: academy/models.py:1435
+msgid "Test so'rovi"
+msgstr "Запрос на тест"
+
+#: academy/models.py:1436
+msgid "Test so'rovlari"
+msgstr "Запросы на тест"
+
+#: academy/models.py:1449 academy/models.py:1465
+msgid "Mustahkamlash"
+msgstr "Закрепление"
+
+#: academy/models.py:1450
+msgid "Yangi mavzuga tayyorlanish"
+msgstr "Подготовка к новой теме"
+
+#: academy/models.py:1466
+msgid "Mustahkamlashlar"
+msgstr "Закрепления"
+
+#: academy/models.py:1482 academy/models.py:1582
+msgid "Quvvat ⚡️"
+msgstr "Энергия ⚡️"
+
+#: academy/models.py:1483
+msgid "Sabab"
+msgstr "Причина"
+
+#: academy/models.py:1496
+msgid "Quvvat"
+msgstr "Энергия"
+
+#: academy/models.py:1497
+msgid "Quvvat harakatlari"
+msgstr "Движения энергии"
+
+#: academy/models.py:1507
+msgid "Test: {p}%"
+msgstr "Тест: {p}%"
+
+#: academy/models.py:1508
+msgid "Takroriy test: {p}%"
+msgstr "Повторный тест: {p}%"
+
+#: academy/models.py:1509
+msgid "Mustahkamlab, qayta topshirdi"
+msgstr "Закрепил тему и пересдал"
+
+#: academy/models.py:1510
+msgid "Yangi mavzuni oldindan o‘zlashtirdi"
+msgstr "Заранее освоил новую тему"
+
+#: academy/models.py:1511
+msgid "Xato tuzatildi: {t}"
+msgstr "Ошибка исправлена: {t}"
+
+#: academy/models.py:1512
+msgid "🔥 {n} kun ketma-ket faol"
+msgstr "🔥 {n} дн. активности подряд"
+
+#: academy/models.py:1513
+msgid "🎁 Mukofot: {t}"
+msgstr "🎁 Награда: {t}"
+
+#: academy/models.py:1514
+msgid "🔓 Mavzu ochildi: {t}"
+msgstr "🔓 Тема открыта: {t}"
+
+#: academy/models.py:1515
+msgid "🎁 Ustozdan sovg‘a"
+msgstr "🎁 Подарок от учителя"
+
+#: academy/models.py:1516
+msgid "🎁 Ustozdan sovg‘a: {t}"
+msgstr "🎁 Подарок от учителя: {t}"
+
+#: academy/models.py:1517
+msgid "➕ Qo‘shimcha savol: {t}"
+msgstr "➕ Дополнительный вопрос: {t}"
+
+#: academy/models.py:1518
+msgid "⚠️ Test qoidasi buzildi: {t}"
+msgstr "⚠️ Нарушение правил теста: {t}"
+
+#: academy/models.py:1552 academy/models.py:1579 academy/models.py:678 academy/models.py:686
+msgid "Savol"
+msgstr "Вопрос"
+
+#: academy/models.py:1554
+msgid "Ketma-ket to'g'ri"
+msgstr "Подряд верно"
+
+#: academy/models.py:1555
+msgid "Xato soni"
+msgstr "Ошибок"
+
+#: academy/models.py:1556
+msgid "Oxirgi xato"
+msgstr "Последняя ошибка"
+
+#: academy/models.py:1557
+msgid "Oxirgi mashq"
+msgstr "Последняя тренировка"
+
+#: academy/models.py:1558
+msgid "O'zlashtirildi"
+msgstr "Усвоено"
+
+#: academy/models.py:1561
+msgid "Xato savol"
+msgstr "Вопрос с ошибкой"
+
+#: academy/models.py:1562
+msgid "Xato savollar"
+msgstr "Вопросы с ошибками"
+
+#: academy/models.py:1581 academy/models.py:716
+msgid "To'g'ri"
+msgstr "Верный"
+
+#: academy/models.py:1583
+msgid "Javob berilgan"
+msgstr "Время ответа"
+
+#: academy/models.py:1587
+msgid "Qo‘shimcha savol javobi"
+msgstr "Ответ на дополнительный вопрос"
+
+#: academy/models.py:1588
+msgid "Qo‘shimcha savollar javoblari"
+msgstr "Ответы на дополнительные вопросы"
+
+#: academy/models.py:1603
+msgid "Kun"
+msgstr "День"
+
+#: academy/models.py:1607
+msgid "Faol kun"
+msgstr "Активный день"
+
+#: academy/models.py:1608
+msgid "Faol kunlar"
+msgstr "Активные дни"
+
+#: academy/models.py:1624 academy/models.py:1656 academy/models.py:1684
+msgid "Narxi (⚡️ quvvat)"
+msgstr "Цена (⚡️ энергия)"
+
+#: academy/models.py:1628
+msgid "Ochilgan"
+msgstr "Открыта"
+
+#: academy/models.py:1632
+msgid "Ochilgan mavzu"
+msgstr "Открытая тема"
+
+#: academy/models.py:1633
+msgid "Ochilgan mavzular"
+msgstr "Открытые темы"
+
+#: academy/models.py:164
+msgid "O‘zbekcha"
+msgstr "O‘zbekcha"
+
+#: academy/models.py:1646
+msgid "Oddiy — ustoz o‘zi beradi"
+msgstr "Обычный — учитель выдаёт сам"
+
+#: academy/models.py:1647
+msgid "A’lochi unvoni — oltin medal va sertifikatda belgi"
+msgstr "Звание «Отличник» — золотая медаль и знак в сертификате"
+
+#: academy/models.py:1649 academy/models.py:1662 academy/models.py:1681 academy/models.py:1683
+msgid "Sovg'a"
+msgstr "Подарок"
+
+#: academy/models.py:165
+msgid "Русский"
+msgstr "Русский"
+
+#: academy/models.py:1651
+msgid "Avtomatik ta’sir"
+msgstr "Автоматическое действие"
+
+#: academy/models.py:1652
+msgid "“A’lochi unvoni”: tasdiqlanishi bilan o‘quvchi ismi hamma joyda oltin rangda, medal bilan ko‘rinadi va sertifikatga “A’lochi” muhri tushadi."
+msgstr "«Звание Отличник»: сразу после одобрения имя ученика везде показывается золотым цветом с медалью, а в сертификат добавляется печать «Отличник»."
+
+#: academy/models.py:1655 academy/models.py:204 academy/models.py:496 academy/models.py:73
+msgid "Izoh"
+msgstr "Описание"
+
+#: academy/models.py:1657
+msgid "Do'konda ko'rinadi"
+msgstr "Показывать в магазине"
+
+#: academy/models.py:1658 academy/models.py:242 academy/models.py:303 academy/models.py:358
+msgid "Tartib"
+msgstr "Порядок"
+
+#: academy/models.py:1663
+msgid "Sovg'alar"
+msgstr "Подарки"
+
+#: academy/models.py:1674
+msgid "Berildi"
+msgstr "Выдан"
+
+#: academy/models.py:1675
+msgid "Rad etildi"
+msgstr "Отклонён"
+
+#: academy/models.py:1696
+msgid "Sovg'a so'rovi"
+msgstr "Запрос подарка"
+
+#: academy/models.py:1697
+msgid "Sovg'a so'rovlari"
+msgstr "Запросы подарков"
+
+#: academy/models.py:171
+msgid "Tanaffus"
+msgstr "Перерыв"
+
+#: academy/models.py:1716
+msgid "Ulanmagan"
+msgstr "Не подключён"
+
+#: academy/models.py:1717
+msgid "Tayyorlanmoqda"
+msgstr "Подготовка"
+
+#: academy/models.py:1718
+msgid "QR kutilmoqda"
+msgstr "Ожидается QR"
+
+#: academy/models.py:1719
+msgid "2 bosqichli parol kutilmoqda"
+msgstr "Ожидается пароль двухэтапной проверки"
+
+#: academy/models.py:172
+msgid "Bitirgan"
+msgstr "Окончил"
+
+#: academy/models.py:1720
+msgid "Ulangan"
+msgstr "Подключён"
+
+#: academy/models.py:1726
+msgid "Telegram ID"
+msgstr "Telegram ID"
+
+#: academy/models.py:1727
+msgid "Telegram nomi"
+msgstr "Имя в Telegram"
+
+#: academy/models.py:1729 templates/academy/teachers/list.html
+msgid "Telegram ulangan"
+msgstr "Telegram подключён"
+
+#: academy/models.py:173
+msgid "Ketgan"
+msgstr "Ушёл"
+
+#: academy/models.py:1740 academy/models.py:91 templates/academy/base.html templates/academy/teachers/home.html
+msgid "O‘qituvchi"
+msgstr "Преподаватель"
+
+#: academy/models.py:1741 templates/academy/base.html templates/academy/teachers/edit.html templates/academy/teachers/list.html
+msgid "O‘qituvchilar"
+msgstr "Преподаватели"
+
+#: academy/models.py:190
+msgid "Profilga kirish so'ralgan"
+msgstr "Запрошен вход в профиль"
+
+#: academy/models.py:191
+msgid "Profil ochiq (gacha)"
+msgstr "Профиль открыт (до)"
+
+#: academy/models.py:194
+msgid "Test uchun ruxsat etilgan mavzular"
+msgstr "Темы, разрешённые для теста"
+
+#: academy/models.py:203
+msgid "Qo'shilgan"
+msgstr "Добавлен"
+
+#: academy/models.py:208
+msgid "A’lochi (berilgan sana)"
+msgstr "Отличник (дата присвоения)"
+
+#: academy/models.py:21
+msgid "Du"
+msgstr "Пн"
+
+#: academy/models.py:21
+msgid "Dushanba"
+msgstr "Понедельник"
+
+#: academy/models.py:213 academy/models.py:488 academy/models.py:973 templates/academy/groups/detail.html
+msgid "Shogird"
+msgstr "Ученик"
+
+#: academy/models.py:22
+msgid "Se"
+msgstr "Вт"
+
+#: academy/models.py:22
+msgid "Seshanba"
+msgstr "Вторник"
+
+#: academy/models.py:23
+msgid "Chor"
+msgstr "Ср"
+
+#: academy/models.py:23
+msgid "Chorshanba"
+msgstr "Среда"
+
+#: academy/models.py:24
+msgid "Pay"
+msgstr "Чт"
+
+#: academy/models.py:24
+msgid "Payshanba"
+msgstr "Четверг"
+
+#: academy/models.py:240 academy/models.py:247 academy/models.py:262
+msgid "Bo'lim"
+msgstr "Раздел"
+
+#: academy/models.py:241 academy/models.py:270
+msgid "Tavsif"
+msgstr "Описание"
+
+#: academy/models.py:248
+msgid "Bo'limlar"
+msgstr "Разделы"
+
+#: academy/models.py:25
+msgid "Ju"
+msgstr "Пт"
+
+#: academy/models.py:25
+msgid "Juma"
+msgstr "Пятница"
+
+#: academy/models.py:26
+msgid "Sha"
+msgstr "Сб"
+
+#: academy/models.py:26
+msgid "Shanba"
+msgstr "Суббота"
+
+#: academy/models.py:268
+msgid "Mavzu (ruscha)"
+msgstr "Тема (на русском)"
+
+#: academy/models.py:268
+msgid "Ruscha testlarda ko'rsatiladi."
+msgstr "Показывается в тестах на русском."
+
+#: academy/models.py:27
+msgid "Ya"
+msgstr "Вс"
+
+#: academy/models.py:27
+msgid "Yakshanba"
+msgstr "Воскресенье"
+
+#: academy/models.py:272
+msgid "Uyga vazifa (shablon)"
+msgstr "Домашнее задание (шаблон)"
+
+#: academy/models.py:274
+msgid "Shu mavzuda dars yaratilganda avtomatik qo'yiladi."
+msgstr "Ставится автоматически при создании урока по этой теме."
+
+#: academy/models.py:277 templates/academy/topics/detail.html
+msgid "Materiallar"
+msgstr "Материалы"
+
+#: academy/models.py:279
+msgid "Har qatorda bitta havola yoki manba."
+msgstr "По одной ссылке или источнику в строке."
+
+#: academy/models.py:282 templates/academy/topics/detail.html
+msgid "Mustahkamlash materiali"
+msgstr "Материал для закрепления"
+
+#: academy/models.py:284
+msgid "O'quvchi testdan past natija olsa, profilida ko'rinadi: tushuntirish, bajarilgan misollar. Format: ## sarlavha, - ro'yxat, ``` kod ```, **qalin**, `kod`."
+msgstr "Видит ученик в профиле, если получил низкий результат: объяснение, решённые примеры. Формат: ## заголовок, - список, ``` код ```, **жирный**, `код`."
+
+#: academy/models.py:290
+msgid "Mustahkamlash materiali (ruscha)"
+msgstr "Материал для закрепления (на русском)"
+
+#: academy/models.py:292
+msgid "Ruscha test tanlagan o'quvchilarga ko'rsatiladi (bo'sh — o'zbekchasi)."
+msgstr "Показывается ученикам, выбравшим тест на русском (пусто — узбекский вариант)."
+
+#: academy/models.py:295
+msgid "Taqdimot slaydlari"
+msgstr "Слайды презентации"
+
+#: academy/models.py:297
+msgid "Dars paytida ekranga chiqariladi. Slaydlar orasida --- qatori; # sarlavha slaydi; !! katta ibora; :: timer 25 — 25 daqiqalik taymer; qolgani — material formati."
+msgstr "Показывается на экране во время урока. Слайды разделяются строкой ---; # титульный слайд; !! крупная фраза; :: timer 25 — таймер на 25 минут; остальное — формат материала."
+
+#: academy/models.py:302
+msgid "Davomiyligi (daq.)"
+msgstr "Длительность (мин)"
+
+#: academy/models.py:310 academy/templatetags/ui.py:230 templates/academy/base.html templates/academy/quiz/form.html
+msgid "Mavzular"
+msgstr "Темы"
+
+#: academy/models.py:342 academy/models.py:399 templates/academy/groups/detail.html
+msgid "Rejada"
+msgstr "В плане"
+
+#: academy/models.py:343 academy/models.py:400
+msgid "O'tildi"
+msgstr "Пройдена"
+
+#: academy/models.py:344
+msgid "O'tkazib yuborildi"
+msgstr "Пропущена"
+
+#: academy/models.py:366
+msgid "O'tilgan sana"
+msgstr "Дата прохождения"
+
+#: academy/models.py:370
+msgid "Guruh mavzusi"
+msgstr "Тема группы"
+
+#: academy/models.py:371
+msgid "Guruh mavzulari"
+msgstr "Темы группы"
+
+#: academy/models.py:401 templates/academy/confirm_delete.html templates/academy/groups/form.html templates/academy/includes/session.html
+msgid "Bekor"
+msgstr "Отменён"
+
+#: academy/models.py:417 templates/academy/lessons/list.html templates/academy/students/detail.html
+msgid "Sana"
+msgstr "Дата"
+
+#: academy/models.py:418 academy/models.py:65
+msgid "Boshlanish"
+msgstr "Начало"
+
+#: academy/models.py:426 templates/academy/lessons/detail.html
+msgid "Uyga vazifa"
+msgstr "Домашнее задание"
+
+#: academy/models.py:427
+msgid "Dars izohi"
+msgstr "Комментарий к уроку"
+
+#: academy/models.py:432 academy/models.py:482 academy/models.py:746 templates/academy/groups/detail.html
+msgid "Dars"
+msgstr "Урок"
+
+#: academy/models.py:433 academy/templatetags/ui.py:231 templates/academy/base.html templates/academy/lessons/detail.html
+msgid "Darslar"
+msgstr "Уроки"
+
+#: academy/models.py:439 academy/views.py:976
+msgid "Mavzusiz dars"
+msgstr "Урок без темы"
+
+#: academy/models.py:45
+msgid "To'xtatilgan"
+msgstr "Приостановлена"
+
+#: academy/models.py:46
+msgid "Arxiv"
+msgstr "Архив"
+
+#: academy/models.py:470 templates/academy/groups/journal.html templates/academy/lessons/detail.html
+msgid "Keldi"
+msgstr "Пришёл"
+
+#: academy/models.py:471 templates/academy/groups/journal.html templates/academy/lessons/detail.html
+msgid "Kelmadi"
+msgstr "Не пришёл"
+
+#: academy/models.py:472 templates/academy/groups/journal.html templates/academy/lessons/detail.html
+msgid "Kechikdi"
+msgstr "Опоздал"
+
+#: academy/models.py:473 templates/academy/groups/journal.html
+msgid "Sababli"
+msgstr "По уважительной причине"
+
+#: academy/models.py:49
+msgid "Kod"
+msgstr "Код"
+
+#: academy/models.py:498
+msgid "Ball (0–100)"
+msgstr "Балл (0–100)"
+
+#: academy/models.py:502
+msgid "Darsdagi faollik va uy vazifasi uchun baho. Bo'sh — baholanmagan."
+msgstr "Оценка за активность на уроке и домашнее задание. Пусто — без оценки."
+
+#: academy/models.py:506
+msgid "Yo'qlama"
+msgstr "Посещаемость"
+
+#: academy/models.py:507
+msgid "Yo'qlamalar"
+msgstr "Посещаемость"
+
+#: academy/models.py:51 templates/academy/dashboard.html templates/academy/groups/list.html templates/academy/lessons/list.html
+msgid "Jadval"
+msgstr "Расписание"
+
+#: academy/models.py:54
+msgid "Dars kunlari va vaqti tanlansa, avtomatik to'ldiriladi."
+msgstr "Заполняется автоматически, если выбраны дни и время занятий."
+
+#: academy/models.py:572
+msgid "Jo'natishda taklif qilinadigan vaqt. Har bir jo'natmada o'zgartirish mumkin."
+msgstr "Время, предлагаемое при отправке. Можно менять в каждой отправке."
+
+#: academy/models.py:576
+msgid "Qo‘shimcha savol uchun quvvat"
+msgstr "Энергия за дополнительный вопрос"
+
+#: academy/models.py:580
+msgid "O‘quvchi profilidagi “Qo‘shimcha savollar”da shu testning savoliga to‘g‘ri javob uchun."
+msgstr "За правильный ответ на вопрос этого теста в разделе «Дополнительные вопросы» профиля ученика."
+
+#: academy/models.py:586 templates/academy/base.html templates/academy/lessons/detail.html templates/academy/portal/student.html
+msgid "Testlar"
+msgstr "Тесты"
+
+#: academy/models.py:60
+msgid "Hafta kunlari raqamlari (0 — dushanba), vergul bilan: 1,4,5"
+msgstr "Номера дней недели (0 — понедельник) через запятую: 1,4,5"
+
+#: academy/models.py:62
+msgid "Boshlanish vaqti"
+msgstr "Время начала"
+
+#: academy/models.py:64
+msgid "Xona"
+msgstr "Кабинет"
+
+#: academy/models.py:680
+msgid "Savol (ruscha)"
+msgstr "Вопрос (на русском)"
+
+#: academy/models.py:682
+msgid "Rasm"
+msgstr "Изображение"
+
+#: academy/models.py:714
+msgid "Javob"
+msgstr "Ответ"
+
+#: academy/models.py:715
+msgid "Javob (ruscha)"
+msgstr "Ответ (на русском)"
+
+#: academy/models.py:721
+msgid "Javob varianti"
+msgstr "Вариант ответа"
+
+#: academy/models.py:722
+msgid "Javob variantlari"
+msgstr "Варианты ответа"
+
+#: academy/models.py:762
+msgid "Jo'natilgan"
+msgstr "Отправлено"
+
+#: academy/models.py:764
+msgid "Yuborish vaqti"
+msgstr "Время отправки"
+
+#: academy/models.py:765
+msgid "Rejali yuborilgan"
+msgstr "Отправлено по расписанию"
+
+#: academy/models.py:767
+msgid "Kanallar"
+msgstr "Каналы"
+
+#: academy/models.py:769
+msgid "Profildan"
+msgstr "Из профиля"
+
+#: academy/models.py:777
+msgid "Jo‘natgan"
+msgstr "Отправил"
+
+#: academy/models.py:78
+msgid "Telegram guruh chati"
+msgstr "Чат группы в Telegram"
+
+#: academy/models.py:785
+msgid "Qayta topshirish (asosiy jo'natma)"
+msgstr "Пересдача (исходная отправка)"
+
+#: academy/models.py:790
+msgid "Test jo'natmasi"
+msgstr "Отправка теста"
+
+#: academy/models.py:791
+msgid "Test jo'natmalari"
+msgstr "Отправки тестов"
+
+#: academy/models.py:81
+msgid "@guruh_nomi, t.me/guruh_nomi yoki raqamli ID (manage.py telegram_chats)."
+msgstr "@имя_группы, t.me/имя_группы или числовой ID (manage.py telegram_chats)."
+
+#: academy/models.py:952 templates/academy/quiz/batch_detail.html
+msgid "Ochilmagan"
+msgstr "Не открыт"
+
+#: academy/models.py:960
+msgid "So‘ralmagan"
+msgstr "Не запрошено"
+
+#: academy/models.py:961 templates/academy/quiz/batch_detail.html
+msgid "1 daqiqa ko‘rdi"
+msgstr "Смотрел 1 минуту"
+
+#: academy/models.py:962
+msgid "So‘ralgan"
+msgstr "Запрошено"
+
+#: academy/models.py:967
+msgid "Jo'natma"
+msgstr "Отправка"
+
+#: academy/models.py:98 academy/templatetags/ui.py:229 templates/academy/base.html templates/academy/dashboard.html
+msgid "Guruhlar"
+msgstr "Группы"
+
+#: academy/models.py:992
+msgid "Jarima ⚡️"
+msgstr "Штраф ⚡️"
+
+#: academy/models.py:993
+msgid "Ogohlantirish ko'rib chiqilgan"
+msgstr "Предупреждение рассмотрено"
 
 #: academy/open_quiz_views.py:115
 msgid "Umumiy havola yaratildi."
@@ -1310,45 +1386,85 @@ msgstr "Эта тема уже открыта."
 msgid "Bu mavzuni hozir ochib bo‘lmaydi — navbatdagi mavzulardan birini tanlang."
 msgstr "Эту тему сейчас открыть нельзя — выберите одну из следующих тем."
 
+#: academy/teacher_views.py:155
+msgid "O‘qituvchi yaratildi: login “{username}”. Birinchi kirishda Telegramini QR-kod orqali ulaydi."
+msgstr "Преподаватель создан: логин «{username}». При первом входе он подключит свой Telegram через QR-код."
+
+#: academy/teacher_views.py:179
+msgid "O‘qituvchi saqlandi."
+msgstr "Преподаватель сохранён."
+
+#: academy/teacher_views.py:191
+msgid "{name}: Telegram uzildi — keyingi kirishda QR-kod orqali qayta ulaydi."
+msgstr "{name}: Telegram отключён — при следующем входе нужно подключить заново через QR-код."
+
+#: academy/teachers.py:135
+msgid "Bu bo‘lim faqat bosh ustoz uchun."
+msgstr "Этот раздел доступен только главному учителю."
+
+#: academy/teachers.py:176
+msgid "Telegram serveriga ulanib bo‘lmadi — keyinroq qayta urinib ko‘ring."
+msgstr "Не удалось подключиться к серверу Telegram — попробуйте позже."
+
+#: academy/teachers.py:177
+msgid "Telegramni ulashda xato: {name}"
+msgstr "Ошибка подключения Telegram: {name}"
+
+#: academy/teachers.py:224
+msgid "QR-kod skanerlanmadi — “Yangi QR-kod” tugmasini bosing."
+msgstr "QR-код не отсканирован — нажмите «Новый QR-код»."
+
+#: academy/teachers.py:250
+msgid "2 bosqichli parol noto‘g‘ri — qayta kiriting."
+msgstr "Неверный пароль двухэтапной проверки — введите снова."
+
+#: academy/teachers.py:251
+msgid "Parol kiritilmadi — “Yangi QR-kod” tugmasini bosib qayta urinib ko‘ring."
+msgstr "Пароль не введён — нажмите «Новый QR-код» и попробуйте снова."
+
+#: academy/telegram_sender.py:124
+msgid "Telegramingizni “Telegram” sahifasida QR-kod orqali ulang."
+msgstr "Подключите свой Telegram через QR-код на странице «Telegram»."
+
 #: academy/telegram_sender.py:126
-msgid "Telegram sessiyasi eskirgan. "
-msgstr "Сессия Telegram устарела."
-
-#: academy/telegram_sender.py:130
-msgid "Ulangan akkaunt ({id}) ruxsat etilganidan ({sender_id}) farq qiladi — xabar yuborilmadi."
-msgstr "Подключённый аккаунт ({id}) отличается от разрешённого ({sender_id}) — сообщение не отправлено."
-
-#: academy/telegram_sender.py:150
-msgid "bu raqamda Telegram yo‘q yoki raqam yashirilgan"
-msgstr "у этого номера нет Telegram или номер скрыт"
-
-#: academy/telegram_sender.py:243
-msgid "Telegram chat topilmadi — akkauntingiz shu guruhda a’zo ekanini va nom/ID to‘g‘riligini tekshiring."
-msgstr "Чат Telegram не найден — проверьте, что ваш аккаунт состоит в этой группе и имя/ID указаны верно."
-
-#: academy/telegram_sender.py:245
-msgid "Guruhning Telegram chati ko‘rsatilmagan."
-msgstr "Не указан чат группы в Telegram."
-
-#: academy/telegram_sender.py:262
-msgid "O‘quvchida Telegram username ham, telefon ham yo‘q."
-msgstr "У ученика нет ни username в Telegram, ни телефона."
-
-#: academy/telegram_sender.py:291 academy/telegram_sender.py:316
-msgid "Telegram ulanmagan. "
-msgstr "Telegram не подключён."
-
-#: academy/telegram_sender.py:307 academy/telegram_sender.py:333
-msgid "Telegram serveriga ulanib bo‘lmadi — internetni tekshiring."
-msgstr "Не удалось подключиться к серверу Telegram — проверьте интернет."
-
-#: academy/telegram_sender.py:76
 msgid ".env faylga TELEGRAM_API_ID va TELEGRAM_API_HASH yozing (my.telegram.org → API development tools), so‘ng `python manage.py telegram_login`."
 msgstr "Укажите в файле .env TELEGRAM_API_ID и TELEGRAM_API_HASH (my.telegram.org → API development tools), затем выполните `python manage.py telegram_login`."
 
-#: academy/telegram_sender.py:80
+#: academy/telegram_sender.py:130
 msgid "`python manage.py telegram_login` buyrug‘i bilan akkauntga ulaning."
 msgstr "Подключите аккаунт командой `python manage.py telegram_login`."
+
+#: academy/telegram_sender.py:177
+msgid "Telegram sessiyasi eskirgan. "
+msgstr "Сессия Telegram устарела."
+
+#: academy/telegram_sender.py:181
+msgid "Ulangan akkaunt ({id}) ruxsat etilganidan ({sender_id}) farq qiladi — xabar yuborilmadi."
+msgstr "Подключённый аккаунт ({id}) отличается от разрешённого ({sender_id}) — сообщение не отправлено."
+
+#: academy/telegram_sender.py:201
+msgid "bu raqamda Telegram yo‘q yoki raqam yashirilgan"
+msgstr "у этого номера нет Telegram или номер скрыт"
+
+#: academy/telegram_sender.py:294
+msgid "Telegram chat topilmadi — akkauntingiz shu guruhda a’zo ekanini va nom/ID to‘g‘riligini tekshiring."
+msgstr "Чат Telegram не найден — проверьте, что ваш аккаунт состоит в этой группе и имя/ID указаны верно."
+
+#: academy/telegram_sender.py:296
+msgid "Guruhning Telegram chati ko‘rsatilmagan."
+msgstr "Не указан чат группы в Telegram."
+
+#: academy/telegram_sender.py:313
+msgid "O‘quvchida Telegram username ham, telefon ham yo‘q."
+msgstr "У ученика нет ни username в Telegram, ни телефона."
+
+#: academy/telegram_sender.py:343 academy/telegram_sender.py:372
+msgid "Telegram ulanmagan. "
+msgstr "Telegram не подключён."
+
+#: academy/telegram_sender.py:358 academy/telegram_sender.py:388
+msgid "Telegram serveriga ulanib bo‘lmadi — internetni tekshiring."
+msgstr "Не удалось подключиться к серверу Telegram — проверьте интернет."
 
 #: academy/templatetags/ui.py:222 templates/academy/base.html templates/academy/login.html
 msgid "Tungi rejim"
@@ -1482,195 +1598,199 @@ msgstr " и ещё {n}"
 msgid "Emaili kiritilmagan {n} ta shogird: {names}{more}."
 msgstr "Учеников без email: {n} — {names}{more}."
 
-#: academy/views.py:1149
+#: academy/views.py:1150
 msgid "{CHANNEL_LABELS} ulanmagan — yuborilmadi. "
 msgstr "{CHANNEL_LABELS} не подключён — не отправлено."
 
-#: academy/views.py:1248
+#: academy/views.py:1253
 msgid "Bu mavzuda hali test savollari yo‘q — avval testni yarating."
 msgstr "В этой теме пока нет вопросов теста — сначала создайте тест."
 
-#: academy/views.py:1256
+#: academy/views.py:1262 templates/academy/teachers/home.html
+msgid "Sizga hali guruh biriktirilmagan — bosh ustozga murojaat qiling."
+msgstr "Вам ещё не назначена группа — обратитесь к главному учителю."
+
+#: academy/views.py:1264
 msgid "Faol guruh yo‘q — avval guruh va shogird qo‘shing."
 msgstr "Нет активных групп — сначала добавьте группу и учеников."
 
-#: academy/views.py:1279
+#: academy/views.py:1287
 msgid "{n} ta shogird uchun havola tayyor: {question_count} ta savol, {time_limit_minutes} daqiqa."
 msgstr "Ссылки готовы для учеников: {n} · вопросов: {question_count} · время: {time_limit_minutes} мин."
 
-#: academy/views.py:1294
+#: academy/views.py:1302
 msgid "Havolalar {localtime:%d.%m %H:%M} da {labels} orqali avtomatik yuboriladi."
 msgstr "Ссылки будут автоматически отправлены {localtime:%d.%m %H:%M} через {labels}."
 
-#: academy/views.py:1424
+#: academy/views.py:1433
 msgid "{n} ta ogohlantirish kechirildi."
 msgstr "Прощено предупреждений: {n}."
 
-#: academy/views.py:1453
+#: academy/views.py:1462
 msgid "Jarima 0 dan {max} gacha bo‘lishi kerak."
 msgstr "Штраф должен быть от 0 до {max}."
 
-#: academy/views.py:1458
+#: academy/views.py:1467
 msgid "{name}: ogohlantirishlar kechirildi — quvvat ayirilmadi."
 msgstr "{name}: предупреждения прощены — энергия не списана."
 
-#: academy/views.py:1462
+#: academy/views.py:1471
 msgid "{name}: balans yetmadi — {taken} ⚡️ ayirildi ({amount} o‘rniga)."
 msgstr "{name}: не хватило баланса — списано {taken} ⚡️ (вместо {amount})."
 
-#: academy/views.py:1467
+#: academy/views.py:1476
 msgid "{name}: {taken} ⚡️ quvvat ayirildi."
 msgstr "{name}: списано {taken} ⚡️ энергии."
 
-#: academy/views.py:1555
+#: academy/views.py:1565
 msgid "{full_name}: javoblarini ko‘rishga ruxsat berildi."
 msgstr "{full_name}: просмотр ответов разрешён."
 
-#: academy/views.py:1557
+#: academy/views.py:1567
 msgid "{full_name}: javoblarini ko‘rish rad etildi."
 msgstr "{full_name}: просмотр ответов отклонён."
 
-#: academy/views.py:1571
+#: academy/views.py:1581
 msgid "Kutilayotgan so‘rov yo‘q."
 msgstr "Нет ожидающих запросов."
 
-#: academy/views.py:1571
+#: academy/views.py:1581
 msgid "{n} ta so‘rovga ruxsat berildi."
 msgstr "Разрешено запросов: {n}."
 
-#: academy/views.py:1592
+#: academy/views.py:1602
 msgid "{RETAKE_BELOW}% dan past natija olgan o‘quvchi yo‘q."
 msgstr "Нет учеников с результатом ниже {RETAKE_BELOW}%."
 
-#: academy/views.py:1605
+#: academy/views.py:1615
 msgid "Qayta topshirish: {n} ta o‘quvchi uchun yangi havolalar tayyor."
 msgstr "Пересдача: новые ссылки готовы для учеников ({n})."
 
-#: academy/views.py:1640
+#: academy/views.py:1651
 msgid "Yuboriladigan ochilmagan havola yo‘q."
 msgstr "Нет неоткрытых ссылок для отправки."
 
-#: academy/views.py:1664
+#: academy/views.py:1675
 msgid "Test yakunlangan — natijani o‘chirib bo‘lmaydi."
 msgstr "Тест завершён — результат удалить нельзя."
 
-#: academy/views.py:1675
+#: academy/views.py:1686
 msgid "{student} uchun yangi havola yaratildi — uni qayta yuboring."
 msgstr "Для {student} создана новая ссылка — отправьте её снова."
 
-#: academy/views.py:1946
+#: academy/views.py:1957
 msgid "{updated} ta o‘quvchining aloqa ma’lumotlari yangilandi."
 msgstr "Обновлены контакты учеников: {updated}."
 
-#: academy/views.py:1974
+#: academy/views.py:1985
 msgid "Havola o‘chirildi — endi u ishlamaydi."
 msgstr "Ссылка удалена — больше не работает."
 
-#: academy/views.py:1980
+#: academy/views.py:1991
 msgid "Havola yaratildi."
 msgstr "Ссылка создана."
 
-#: academy/views.py:1980
+#: academy/views.py:1991
 msgid "Yangi havola yaratildi (eskisi ishlamaydi)."
 msgstr "Создана новая ссылка (старая не работает)."
 
-#: academy/views.py:2044
+#: academy/views.py:2055
 msgid "“{title}” havolasi yaratildi — nusxalab guruhga tashlang."
 msgstr "Ссылка «{title}» создана — скопируйте и отправьте в группу."
 
-#: academy/views.py:2111
+#: academy/views.py:2122
 msgid "{full_name} — ariza rad etildi."
 msgstr "{full_name} — заявка отклонена."
 
-#: academy/views.py:2115
+#: academy/views.py:2126
 msgid "Biriktirish uchun o‘quvchini tanlang."
 msgstr "Выберите ученика для привязки."
 
-#: academy/views.py:2119
+#: academy/views.py:2130
 msgid "{full_name}: telefon va Telegram yangilandi."
 msgstr "{full_name}: телефон и Telegram обновлены."
 
-#: academy/views.py:2124
+#: academy/views.py:2135
 msgid "Yangi o‘quvchi uchun guruhni tanlang."
 msgstr "Выберите группу для нового ученика."
 
-#: academy/views.py:2129
+#: academy/views.py:2140
 msgid "{full_name} — {name} guruhiga qo‘shildi."
 msgstr "{full_name} — добавлен в группу {name}."
 
-#: academy/views.py:2154
+#: academy/views.py:2165
 msgid "Tasdiqlandi: {attached} ta mavjud o‘quvchiga biriktirildi, {created} ta yangi qo‘shildi."
 msgstr "Подтверждено: привязано к существующим ученикам — {attached}, добавлено новых — {created}."
 
-#: academy/views.py:2168
+#: academy/views.py:2179
 msgid "“{title}” havolasi o‘chirildi (arizalar saqlanadi)."
 msgstr "Ссылка «{title}» удалена (заявки сохранены)."
 
-#: academy/views.py:2173
+#: academy/views.py:2184
 msgid "“{title}” havolasi yoqildi."
 msgstr "Ссылка «{title}» включена."
 
-#: academy/views.py:2177
+#: academy/views.py:2188
 msgid "“{title}” havolasi to‘xtatildi — endi ariza qabul qilmaydi."
 msgstr "Ссылка «{title}» приостановлена — заявки больше не принимаются."
 
-#: academy/views.py:2338 academy/views.py:2470
+#: academy/views.py:2349 academy/views.py:2481
 msgid "Yuborilmadi: {exc}"
 msgstr "Не отправлено: {exc}"
-
-#: academy/views.py:2346
-msgid "Shaxsiy sahifa havolasi {label} orqali {ok} ta o‘quvchiga yuborildi."
-msgstr "Ссылка на личную страницу отправлена через {label} ученикам: {ok}."
 
 #: academy/views.py:235
 msgid "Dars boshlandi: {topic}. Yo‘qlamani belgilang."
 msgstr "Урок начат: {topic}. Отметьте посещаемость."
 
-#: academy/views.py:2351
+#: academy/views.py:2357
+msgid "Shaxsiy sahifa havolasi {label} orqali {ok} ta o‘quvchiga yuborildi."
+msgstr "Ссылка на личную страницу отправлена через {label} ученикам: {ok}."
+
+#: academy/views.py:2362
 msgid "{n} ta o‘quvchiga yuborilmadi: "
 msgstr "Не отправлено ученикам ({n}):"
 
-#: academy/views.py:2368
+#: academy/views.py:2379
 msgid "Yangi havola yaratildi — eskisi endi ishlamaydi."
 msgstr "Создана новая ссылка — старая больше не работает."
 
-#: academy/views.py:2388
+#: academy/views.py:2399
 msgid "Bu guruhda emaili kiritilgan faol o‘quvchi yo‘q."
 msgstr "В этой группе нет активных учеников с email."
 
-#: academy/views.py:2391
+#: academy/views.py:2402
 msgid "Bu guruhda Telegram yoki telefoni bor faol o‘quvchi yo‘q."
 msgstr "В этой группе нет активных учеников с Telegram или телефоном."
 
-#: academy/views.py:2433 academy/views.py:2449
+#: academy/views.py:2444 academy/views.py:2460
 msgid "Sertifikat yuborilmadi: {exc}"
 msgstr "Сертификат не отправлен: {exc}"
 
-#: academy/views.py:2436
+#: academy/views.py:2447
 msgid "Sertifikat {full_name}ga email orqali yuborildi."
 msgstr "Сертификат отправлен ученику {full_name} по email."
 
-#: academy/views.py:2452
+#: academy/views.py:2463
 msgid "Sertifikat {full_name}ga Telegram orqali yuborildi."
 msgstr "Сертификат отправлен ученику {full_name} в Telegram."
 
-#: academy/views.py:2463
+#: academy/views.py:2474
 msgid "Avval guruhning Telegram chatini tanlang."
 msgstr "Сначала выберите чат группы в Telegram."
 
-#: academy/views.py:2465
+#: academy/views.py:2476
 msgid "Oxirgi 7 kunda bu guruhda test yechilmagan — yuboriladigan reyting yo‘q."
 msgstr "За последние 7 дней в этой группе не решали тесты — рейтинг отправлять не из чего."
 
-#: academy/views.py:2472
+#: academy/views.py:2483
 msgid "Haftalik reyting guruh chatiga yuborildi."
 msgstr "Недельный рейтинг отправлен в чат группы."
 
-#: academy/views.py:2485
+#: academy/views.py:2496
 msgid "Telegram chat olib tashlandi."
 msgstr "Чат Telegram удалён."
 
-#: academy/views.py:2485
+#: academy/views.py:2496
 msgid "Telegram chat saqlandi."
 msgstr "Чат Telegram сохранён."
 
@@ -1830,6 +1950,10 @@ msgstr "Каталог тем"
 msgid "Mavzularni import qilish"
 msgstr "Импорт тем"
 
+#: templates/academy/base.html templates/academy/teachers/home.html
+msgid "Mening guruhlarim"
+msgstr "Мои группы"
+
 #: templates/academy/base.html
 msgid "Menyu"
 msgstr "Меню"
@@ -1877,6 +2001,10 @@ msgstr "Запросы"
 #: templates/academy/base.html
 msgid "Tekshirilishi kutilayotgan arizalar"
 msgstr "Заявки, ожидающие проверки"
+
+#: templates/academy/base.html templates/academy/lessons/attendance.html templates/academy/lessons/detail.html templates/academy/quiz/batch_list.html
+msgid "Test jo‘natish"
+msgstr "Отправить тест"
 
 #: templates/academy/base.html
 msgid "Test paytida ogohlantirish olgan, hali ko‘rib chiqilmagan o‘quvchilar"
@@ -2757,10 +2885,6 @@ msgstr "Сохранить и отправить тест"
 #: templates/academy/lessons/attendance.html templates/academy/quiz/send.html
 msgid "Shogird qo‘shish"
 msgstr "Добавить ученика"
-
-#: templates/academy/lessons/attendance.html templates/academy/lessons/detail.html templates/academy/quiz/batch_list.html templates/academy/quiz/send.html
-msgid "Test jo‘natish"
-msgstr "Отправить тест"
 
 #: templates/academy/lessons/attendance.html
 msgid "Yo‘qlama · %(code)s · Minar Test"
@@ -4066,10 +4190,6 @@ msgstr "Отправьте ссылку на email или в Telegram-групп
 msgid "Hozir yechmoqda"
 msgstr "Сейчас решают"
 
-#: templates/academy/quiz/open_detail.html
-msgid "Ism"
-msgstr "Имя"
-
 #: templates/academy/quiz/open_detail.html templates/academy/quiz/open_list.html
 msgid "Muddati tugagan"
 msgstr "Срок истёк"
@@ -5313,6 +5433,158 @@ msgstr "Отсканируйте камерой телефона"
 #: templates/academy/students/qr_cards.html
 msgid "To‘g‘ri javobga 1–5 ⚡️ · kuniga %(n)s ta savol"
 msgstr "За правильный ответ 1–5 ⚡️ · %(n)s вопросов в день"
+
+#: templates/academy/teachers/edit.html
+msgid "O‘qituvchi birinchi kirishda Telegramini QR-kod orqali ulaydi."
+msgstr "Преподаватель подключит Telegram через QR-код при первом входе."
+
+#: templates/academy/teachers/edit.html
+msgid "Telegram uzilsinmi? O‘qituvchi keyingi kirishda QR-kod orqali qayta ulaydi."
+msgstr "Отключить Telegram? При следующем входе преподаватель подключит его заново через QR-код."
+
+#: templates/academy/teachers/edit.html
+msgid "Telegramni uzish"
+msgstr "Отключить Telegram"
+
+#: templates/academy/teachers/edit.html
+msgid "Ulangan: %(d)s. O‘qituvchi o‘z guruhlariga testlarni shu akkauntdan yuboradi."
+msgstr "Подключён: %(d)s. Преподаватель отправляет тесты своим группам с этого аккаунта."
+
+#: templates/academy/teachers/edit.html templates/academy/teachers/home.html
+msgid "ulangan"
+msgstr "подключён"
+
+#: templates/academy/teachers/edit.html
+msgid "ulanmagan"
+msgstr "не подключён"
+
+#: templates/academy/teachers/home.html
+msgid "%(d)s dan beri. Testlar shu akkauntdan yuboriladi."
+msgstr "С %(d)s. Тесты отправляются с этого аккаунта."
+
+#: templates/academy/teachers/home.html
+msgid "%(q)s savol, %(m)s daq."
+msgstr "%(q)s вопросов, %(m)s мин."
+
+#: templates/academy/teachers/home.html
+msgid "Bu yerda faqat sizga biriktirilgan guruhlar. Testlar o‘quvchilarga sizning Telegramingizdan yuboriladi."
+msgstr "Здесь только назначенные вам группы. Тесты отправляются ученикам с вашего Telegram."
+
+#: templates/academy/teachers/home.html
+msgid "Guruhlarim"
+msgstr "Мои группы"
+
+#: templates/academy/teachers/home.html
+msgid "Hali test jo‘natilmagan."
+msgstr "Тесты ещё не отправлялись."
+
+#: templates/academy/teachers/home.html
+msgid "Salom, %(name)s!"
+msgstr "Здравствуйте, %(name)s!"
+
+#: templates/academy/teachers/home.html
+msgid "So‘nggi testlar"
+msgstr "Последние тесты"
+
+#: templates/academy/teachers/home.html
+msgid "o‘quvchilar"
+msgstr "ученики"
+
+#: templates/academy/teachers/list.html
+msgid "Bosh ustoz"
+msgstr "Главный учитель"
+
+#: templates/academy/teachers/list.html
+msgid "Hali o‘qituvchi yo‘q — o‘ngdagi forma orqali qo‘shing."
+msgstr "Преподавателей пока нет — добавьте через форму справа."
+
+#: templates/academy/teachers/list.html
+msgid "Har bir o‘qituvchiga login va parol yarating, guruhlarini belgilang. Birinchi kirishda o‘qituvchi Telegramini QR-kod orqali ulaydi va o‘z guruhlariga testlarni o‘z Telegramidan yuboradi."
+msgstr "Создайте каждому преподавателю логин и пароль и отметьте его группы. При первом входе преподаватель подключает свой Telegram через QR-код и отправляет тесты своим группам со своего Telegram."
+
+#: templates/academy/teachers/list.html
+msgid "Telegram ulanmagan"
+msgstr "Telegram не подключён"
+
+#: templates/academy/teachers/list.html
+msgid "Yangi o‘qituvchi"
+msgstr "Новый преподаватель"
+
+#: templates/academy/teachers/list.html
+msgid "Yaratish"
+msgstr "Создать"
+
+#: templates/academy/teachers/list.html
+msgid "guruh yo‘q"
+msgstr "нет групп"
+
+#: templates/academy/teachers/list.html
+msgid "login"
+msgstr "логин"
+
+#: templates/academy/teachers/list.html
+msgid "o‘chirilgan"
+msgstr "отключён"
+
+#: templates/academy/teachers/telegram.html
+msgid "2 bosqichli parol so‘ralsa — shu sahifada kiriting."
+msgstr "Если спросят пароль двухэтапной проверки — введите его на этой странице."
+
+#: templates/academy/teachers/telegram.html
+msgid "Akkauntingiz faqat sizning guruhlaringizga test havolalarini yuborish uchun ishlatiladi. Kirish kaliti serverda alohida, faqat tizim o‘qiy oladigan faylda saqlanadi."
+msgstr "Ваш аккаунт используется только для отправки ссылок на тесты вашим группам. Ключ доступа хранится на сервере в отдельном файле, доступном только системе."
+
+#: templates/academy/teachers/telegram.html
+msgid "Akkauntingizda 2 bosqichli parol yoqilgan — uni kiriting"
+msgstr "В аккаунте включена двухэтапная проверка — введите пароль"
+
+#: templates/academy/teachers/telegram.html
+msgid "Birinchi kirish · bir marta"
+msgstr "Первый вход · один раз"
+
+#: templates/academy/teachers/telegram.html
+msgid "Chapdagi QR-kodni skanerlang (telefon kamerasi emas — aynan Telegram ichidan)."
+msgstr "Отсканируйте QR-код слева (не камерой телефона — именно из Telegram)."
+
+#: templates/academy/teachers/telegram.html
+msgid "QR-kod har 25 soniyada yangilanadi."
+msgstr "QR-код обновляется каждые 25 секунд."
+
+#: templates/academy/teachers/telegram.html
+msgid "QR-kod tayyorlanmoqda…"
+msgstr "QR-код готовится…"
+
+#: templates/academy/teachers/telegram.html
+msgid "Qanday ulanadi?"
+msgstr "Как подключить?"
+
+#: templates/academy/teachers/telegram.html
+msgid "Sozlamalar → Qurilmalar → “Kompyuterni ulash” (Link Desktop Device)."
+msgstr "Настройки → Устройства → «Подключить устройство» (Link Desktop Device)."
+
+#: templates/academy/teachers/telegram.html
+msgid "Tasdiqlash"
+msgstr "Подтвердить"
+
+#: templates/academy/teachers/telegram.html
+msgid "Telefoningizda Telegram ilovasini oching."
+msgstr "Откройте Telegram на телефоне."
+
+#: templates/academy/teachers/telegram.html
+msgid "Telegramingizni ulang"
+msgstr "Подключите свой Telegram"
+
+#: templates/academy/teachers/telegram.html
+msgid "Telegramni ulash"
+msgstr "Подключение Telegram"
+
+#: templates/academy/teachers/telegram.html
+msgid "Testlar o‘quvchilaringizga sizning Telegram akkauntingizdan yuboriladi. Buni faqat bir marta qilasiz — keyingi kirishlarda so‘ralmaydi."
+msgstr "Тесты будут отправляться вашим ученикам с вашего аккаунта Telegram. Это делается один раз — при следующих входах не спрашивается."
+
+#: templates/academy/teachers/telegram.html
+msgid "Yangi QR-kod"
+msgstr "Новый QR-код"
 
 #: templates/academy/timetable.html
 msgid "%(sessions)s ta dars shu haftada. Blokni bosing — dars yoki guruh sahifasi ochiladi."

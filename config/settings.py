@@ -49,6 +49,8 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    # O'qituvchi (bosh ustoz emas): Telegram ulanmagan — ulash sahifasi; faqat ruxsat etilgan sahifalar.
+    "academy.teachers.TeacherAccessMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Sahifalar Turbo bilan ochiladi: xatoli forma javobini Turbo ko'rsatadigan qiladi.
     "academy.middleware.TurboFormStatusMiddleware",
@@ -146,6 +148,8 @@ TELEGRAM_API_ID = int(os.environ.get("TELEGRAM_API_ID") or 0)
 TELEGRAM_API_HASH = os.environ.get("TELEGRAM_API_HASH", "")
 TELEGRAM_SENDER_ID = int(os.environ.get("TELEGRAM_SENDER_ID") or 7730996406)
 TELEGRAM_SESSION_FILE = os.environ.get("TELEGRAM_SESSION_FILE", BASE_DIR / ".telegram_session")
+# O'qituvchilarning Telegram sessiyalari (har biri alohida fayl, 0600; repozitoriy va zaxiraga kirmaydi).
+TELEGRAM_SESSIONS_DIR = os.environ.get("TELEGRAM_SESSIONS_DIR", BASE_DIR / ".telegram_sessions")
 
 # Gmail orqali email (SMTP). Google hisobida 2 bosqichli tasdiqlash yoqilgan bo'lishi va
 # "App password" (16 belgi) yaratilgan bo'lishi kerak: myaccount.google.com/apppasswords

@@ -1,0 +1,41 @@
+{% extends "academy/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "O‘qituvchilar" %}{% endblock %}
+{% block kicker %}{% translate "Bosh ustoz" %}{% endblock %}
+{% block heading %}{% translate "O‘qituvchilar" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Har bir o‘qituvchiga login va parol yarating, guruhlarini belgilang. Birinchi kirishda o‘qituvchi Telegramini QR-kod orqali ulaydi va o‘z guruhlariga testlarni o‘z Telegramidan yuboradi." %}</p>{% endblock %}
+
+{% block content %}
+<div class="split">
+  <section class="card" aria-labelledby="t-list">
+    <div class="card-head"><h2 id="t-list">{% icon "users" 18 %} {% translate "O‘qituvchilar" %}</h2><span class="meta">{{ teachers|length }}</span></div>
+    <div class="card-body flush">
+      <div class="rows">
+        {% for t in teachers %}
+          {% with u=t.account.user %}
+          <a class="row quiz-row" href="{% url 'teacher_edit' u.pk %}">
+            <span class="avatar sm" style="--h: {{ u.username|hue }}" aria-hidden="true">{{ u.first_name|default:u.username|slice:":1"|upper }}</span>
+            <span class="grow truncate">
+              <strong class="block truncate">{{ u.get_full_name|default:u.username }}{% if not u.is_active %} <span class="badge">{% translate "o‘chirilgan" %}</span>{% endif %}</strong>
+              <span class="meta">{% translate "login" %}: {{ u.username }} · {% for g in t.groups %}{{ g.code }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "guruh yo‘q" %}{% endfor %}</span>
+            </span>
+            {% if t.account.is_linked %}<span class="badge ok" title="{{ t.account.telegram_name }}">{% translate "Telegram ulangan" %}</span>{% else %}<span class="badge warn">{% translate "Telegram ulanmagan" %}</span>{% endif %}
+          </a>
+          {% endwith %}
+        {% empty %}
+          <div class="empty"><span class="empty-icon">{% icon "users" 22 %}</span><p>{% translate "Hali o‘qituvchi yo‘q — o‘ngdagi forma orqali qo‘shing." %}</p></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <aside class="card pad">
+    <h2>{% icon "plus" 18 %} {% translate "Yangi o‘qituvchi" %}</h2>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "academy/includes/form_fields.html" %}
+      <div class="form-actions"><button class="btn primary" type="submit">{% icon "check" 16 %} {% translate "Yaratish" %}</button></div>
+    </form>
+  </aside>
+</div>
+{% endblock %}

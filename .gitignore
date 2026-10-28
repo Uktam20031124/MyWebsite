@@ -11,6 +11,7 @@ media/
 .idea/
 .vscode/
 .telegram_session
+.telegram_sessions/
 backups/
 
 # Vosita keshlari (ruff, pip va h.k.)
