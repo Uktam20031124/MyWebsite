@@ -698,11 +698,24 @@ class TeacherForm(StyledFormMixin, forms.Form):
         widget=forms.CheckboxSelectMultiple,
         help_text=_("O‘qituvchi faqat shu guruhlarni ko‘radi va ularga test yuboradi."),
     )
+    permissions = forms.MultipleChoiceField(
+        label=_("Nimalarga ruxsat"),
+        choices=(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text=_(
+            "O‘qituvchi panelida qaysi bo‘limlar ko‘rinadi. Har bir bo‘limda u faqat o‘z guruhlarining "
+            "ma’lumotini ko‘radi. “Mening guruhlarim” va “Test jo‘natish” doim ochiq."
+        ),
+    )
     is_active = forms.BooleanField(label=_("Faol (tizimga kira oladi)"), required=False, initial=True)
 
     def __init__(self, *args, user=None, **kwargs):
+        from .teachers import SECTIONS
+
         self.user = user
         if user is not None:
+            account = getattr(user, "teacher_account", None)
             kwargs.setdefault(
                 "initial",
                 {
@@ -710,10 +723,12 @@ class TeacherForm(StyledFormMixin, forms.Form):
                     "last_name": user.last_name,
                     "username": user.username,
                     "groups": list(Group.objects.filter(teacher=user)),
+                    "permissions": list(account.permissions) if account else [],
                     "is_active": user.is_active,
                 },
             )
         super().__init__(*args, **kwargs)
+        self.fields["permissions"].choices = [(key, label) for key, label, _pages in SECTIONS]
         self.fields["groups"].queryset = Group.objects.exclude(status=Group.Status.ARCHIVED).order_by("name")
         if user is None:
             self.fields["password"].required = True

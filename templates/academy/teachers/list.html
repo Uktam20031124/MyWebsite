@@ -18,6 +18,7 @@
             <span class="grow truncate">
               <strong class="block truncate">{{ u.get_full_name|default:u.username }}{% if not u.is_active %} <span class="badge">{% translate "o‘chirilgan" %}</span>{% endif %}</strong>
               <span class="meta">{% translate "login" %}: {{ u.username }} · {% for g in t.groups %}{{ g.code }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "guruh yo‘q" %}{% endfor %}</span>
+              <span class="meta block truncate">{% translate "Ruxsatlar" %}: {% for s in t.sections %}{{ s }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "faqat test jo‘natish" %}{% endfor %}</span>
             </span>
             {% if t.account.is_linked %}<span class="badge ok" title="{{ t.account.telegram_name }}">{% translate "Telegram ulangan" %}</span>{% else %}<span class="badge warn">{% translate "Telegram ulanmagan" %}</span>{% endif %}
           </a>

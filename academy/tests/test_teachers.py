@@ -55,12 +55,14 @@ class AdminManagesTeachersTests(TeacherTestsMixin, TestCase):
         r = self.client.post(
             reverse("teacher_list"),
             {"first_name": "Malika", "last_name": "Karimova", "username": "malika", "password": PASSWORD,
-             "groups": [self.mine.pk]},
+             "groups": [self.mine.pk], "permissions": ["students", "groups"]},
         )
         self.assertRedirects(r, reverse("teacher_list"))
         teacher = get_user_model().objects.get(username="malika")
         self.assertFalse(teacher.is_superuser or teacher.is_staff)
         self.assertTrue(teacher.check_password(PASSWORD))
+        self.assertEqual(teacher.teacher_account.permissions, ["groups", "students"])
+        self.assertContains(self.client.get(reverse("teacher_list")), "Ruxsatlar: Guruhlar, Shogirdlar")
         self.mine.refresh_from_db()
         self.assertEqual(self.mine.teacher, teacher)
         self.assertContains(self.client.get(reverse("teacher_list")), "Telegram ulanmagan")
@@ -127,9 +129,10 @@ class TeacherAccessTests(TeacherTestsMixin, TestCase):
         home = self.client.get(reverse("teacher_home"))
         self.assertContains(home, "Mening guruhim")
         self.assertNotContains(home, "Boshqa guruh")
-        for name, args in (("group_list", []), ("student_list", []), ("student_detail", [self.zuh.pk]),
-                           ("quiz_batches", []), ("quiz_warnings", [])):
-            self.assertRedirects(self.client.get(reverse(name, args=args)), reverse("teacher_home"))
+        for name in ("group_list", "student_list", "quiz_batches", "quiz_warnings"):
+            self.assertRedirects(self.client.get(reverse(name)), reverse("teacher_home"))
+        # Boshqa guruh o'quvchisi — borligini ham bildirmaymiz.
+        self.assertEqual(self.client.get(reverse("student_detail", args=[self.zuh.pk])).status_code, 404)
         # Boshqa guruhni so'rasa ham — faqat o'z guruhi.
         page = self.client.get(reverse("quiz_send"), {"topic": self.topic.pk, "group": self.other.pk})
         self.assertContains(page, "Ali Valiyev")
@@ -138,6 +141,48 @@ class TeacherAccessTests(TeacherTestsMixin, TestCase):
         self.assertEqual(self.client.get(reverse("quiz_batch", args=[other_batch.pk])).status_code, 404)
         attempt = other_batch.attempts.get()
         self.assertEqual(self.client.get(reverse("quiz_attempt_review", args=[attempt.pk])).status_code, 404)
+
+    def test_granted_sections_show_only_own_groups(self, start_link):
+        teacher = self.make_teacher()
+        account = teacher.teacher_account
+        account.permissions = ["groups", "students", "lessons", "warnings", "requests"]
+        account.save()
+        f.lesson(self.mine, topic=self.topic)
+        f.lesson(self.other, topic=self.topic)
+        self.client.force_login(teacher)
+
+        nav = self.client.get(reverse("teacher_home"))
+        for label in ("Guruhlar", "Shogirdlar", "Darslar", "Ogohlantirishlar", "So‘rovlar"):
+            self.assertContains(nav, label)
+        self.assertNotContains(nav, reverse("rewards"))
+        self.assertNotContains(nav, reverse("teacher_list"))
+
+        groups = self.client.get(reverse("group_list"))
+        self.assertContains(groups, "Mening guruhim")
+        self.assertNotContains(groups, "Boshqa guruh")
+        self.assertEqual(self.client.get(reverse("group_detail", args=[self.mine.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("group_detail", args=[self.other.pk])).status_code, 404)
+
+        students = self.client.get(reverse("student_list"))
+        self.assertContains(students, "Ali Valiyev")
+        self.assertNotContains(students, "Zuhra Begim")
+        self.assertEqual(self.client.get(reverse("student_detail", args=[self.ali.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("student_detail", args=[self.zuh.pk])).status_code, 404)
+        export = self.client.get(reverse("student_export")).content.decode()
+        self.assertIn("Ali Valiyev", export)
+        self.assertNotIn("Zuhra Begim", export)
+        # Shogird qo'shishda — faqat o'z guruhi.
+        form = self.client.get(reverse("student_create")).context["form"]
+        self.assertEqual(list(form.fields["group"].queryset), [self.mine])
+
+        lessons = self.client.get(reverse("lesson_list"))
+        self.assertEqual({lesson.group for lesson in lessons.context["lessons"]}, {self.mine})
+        self.assertEqual(self.client.get(reverse("quiz_warnings")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("quiz_review_requests")).status_code, 200)
+
+        # Ruxsat berilmagan bo'lim va bosh ustoz bo'limlari — yopiq.
+        for name in ("rewards", "topic_list", "registrations", "group_create", "teacher_list", "dashboard"):
+            self.assertRedirects(self.client.get(reverse(name)), reverse("teacher_home"))
 
     @mock.patch("academy.telegram_sender.send_messages", side_effect=ok_results)
     def test_teacher_sends_from_own_telegram(self, send, start_link):

@@ -1734,6 +1734,9 @@ class TeacherAccount(models.Model):
     link_updated_at = models.DateTimeField(null=True, blank=True)
     # 2 bosqichli parol: sahifadan fon oqimiga uzatiladi va darhol o'chiriladi.
     link_password = models.CharField(max_length=255, blank=True)
+    # Bosh ustoz ruxsat bergan bo'limlar (``teachers.SECTIONS`` kalitlari); har birida — faqat
+    # o'qituvchining o'z guruhlari ma'lumoti.
+    permissions = models.JSONField(_("Ruxsat etilgan bo‘limlar"), default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
