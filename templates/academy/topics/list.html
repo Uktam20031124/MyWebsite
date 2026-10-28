@@ -5,10 +5,15 @@
 {% block heading %}{% translate "Mavzular katalogi" %}{% endblock %}
 {% block subheading %}<p class="page-sub">{% blocktranslate with topics=topics|length modules=modules|length trimmed %}{{ topics }} mavzu, {{ modules }} bo‘lim. Har bir mavzuda dars rejasi, uy vazifasi shabloni va materiallar.{% endblocktranslate %}</p>{% endblock %}
 {% block actions %}
+{# O'qituvchi mavzularni faqat ko'radi: eksport, import va yangi mavzu — bosh ustozda. #}
+{% if not is_teacher %}
 <a class="btn ghost" data-turbo="false" href="{% url 'topic_export' %}">{% icon "download" 16 %} {% translate "Eksport" %}</a>
 <a class="btn soft" href="{% url 'topic_import' %}">{% icon "upload" 16 %} {% translate "Import" %}</a>
+{% endif %}
 <a class="btn soft" href="{% url 'quiz_send' %}">{% icon "send" 16 %} {% translate "Test jo‘natish" %}</a>
+{% if not is_teacher %}
 <a class="btn primary" href="{% url 'topic_create' %}{% if request.GET.module and request.GET.module != 'none' %}?module={{ request.GET.module }}{% endif %}">{% icon "plus" 16 %} {% translate "Yangi mavzu" %}</a>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -30,7 +35,7 @@
   {% endif %}
   <button class="btn soft" type="submit">{% translate "Qidirish" %}</button>
   <span class="spacer"></span>
-  <a class="btn ghost" href="{% url 'module_create' %}">{% icon "folder" 16 %} {% translate "Bo‘lim qo‘shish" %}</a>
+  {% if not is_teacher %}<a class="btn ghost" href="{% url 'module_create' %}">{% icon "folder" 16 %} {% translate "Bo‘lim qo‘shish" %}</a>{% endif %}
 </form>
 
 {% for module, items in sections %}
@@ -40,7 +45,7 @@
         <h2>{% icon "folder" 18 %} {% if module %}{{ module.title }}{% else %}{% translate "Bo‘limsiz mavzular" %}{% endif %} <span class="badge plain">{{ items|length }}</span></h2>
         {% if module.description %}<p class="meta" style="margin:6px 0 0">{{ module.description }}</p>{% endif %}
       </div>
-      {% if module %}
+      {% if module and not is_teacher %}
         <div class="actions">
           <a class="btn xs soft" href="{% url 'topic_create' %}?module={{ module.pk }}">{% icon "plus" 14 %} {% translate "Mavzu" %}</a>
           <a class="btn xs ghost square" href="{% url 'module_update' module.pk %}" title="{% translate "Bo‘limni tahrirlash" %}" aria-label="{% translate "Bo‘limni tahrirlash" %}">{% icon "edit" 14 %}</a>
@@ -60,9 +65,9 @@
           </div>
           <div class="topic-tail">
             <div class="topic-actions">
-              {% if t.question_n %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}" title="{% translate "Test savollarini tahrirlash" %}">{% icon "edit" 13 %} {% translate "Test" %}</a>{% else %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}">{% icon "plus" 13 %} {% translate "Test" %}</a>{% endif %}
-              <a class="btn xs ghost" href="{% url 'lesson_create' %}?topic={{ t.pk }}">{% icon "plus" 13 %} {% translate "Dars" %}</a>
-              <a class="btn xs ghost square" href="{% url 'topic_update' t.pk %}" title="{% translate "Tahrirlash" %}" aria-label="{% translate "Tahrirlash" %}">{% icon "edit" 13 %}</a>
+              {% if not is_teacher %}{% if t.question_n %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}" title="{% translate "Test savollarini tahrirlash" %}">{% icon "edit" 13 %} {% translate "Test" %}</a>{% else %}<a class="btn xs ghost" href="{% url 'quiz_edit' t.pk %}">{% icon "plus" 13 %} {% translate "Test" %}</a>{% endif %}{% endif %}
+              {% if not is_teacher or 'lessons' in teacher_sections %}<a class="btn xs ghost" href="{% url 'lesson_create' %}?topic={{ t.pk }}">{% icon "plus" 13 %} {% translate "Dars" %}</a>{% endif %}
+              {% if not is_teacher %}<a class="btn xs ghost square" href="{% url 'topic_update' t.pk %}" title="{% translate "Tahrirlash" %}" aria-label="{% translate "Tahrirlash" %}">{% icon "edit" 13 %}</a>{% endif %}
             </div>
             {% if t.question_n %}<a class="btn xs soft" href="{% url 'quiz_send' %}?topic={{ t.pk }}" title="{% translate "Shu mavzu bo‘yicha test jo‘natish" %}">{% icon "send" 13 %} {% translate "Test jo‘natish" %}</a>{% endif %}
           </div>
@@ -80,7 +85,7 @@
       {% else %}
         {% blocktranslate trimmed %}<strong>Katalog bo‘sh</strong>{% endblocktranslate %}
         <p>{% translate "Mavzularni Word yoki Telegram’dan nusxa olib, bir yo‘la import qiling." %}</p>
-        <a class="btn sm primary" href="{% url 'topic_import' %}">{% icon "upload" 15 %} {% translate "Import qilish" %}</a>
+        {% if not is_teacher %}<a class="btn sm primary" href="{% url 'topic_import' %}">{% icon "upload" 15 %} {% translate "Import qilish" %}</a>{% endif %}
       {% endif %}
     </div>
   </div>
