@@ -14,8 +14,11 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from . import qr, teachers
+from . import teacher_report as report
 from .forms import TeacherForm
-from .models import Group, QuizBatch, TeacherAccount
+from .models import Group, QuizBatch, TeacherAccount, TeacherPayout
+from .templatetags.ui import intspace
+from .views import csv_response
 
 User = get_user_model()
 
@@ -59,10 +62,16 @@ def teacher_home(request):
         .select_related("quiz__topic", "group")
         .order_by("-created_at")[:15]
     )
+    account = teachers.account_of(request.user)
     return render(
         request,
         "academy/teachers/home.html",
-        {"groups": groups, "batches": batches, "account": teachers.account_of(request.user)},
+        {
+            "groups": groups,
+            "batches": batches,
+            "account": account,
+            "month_row": report.teacher_row(account, report.month_start()),  # bu oy: darslar va maosh
+        },
     )
 
 
@@ -139,8 +148,10 @@ def _save_teacher(form: TeacherForm, user=None):
             user.set_password(data["password"])
         user.save()
         account = teachers.account_of(user)
+        account.lesson_rate = data.get("lesson_rate") or 0
+        account.monthly_fixed = data.get("monthly_fixed") or 0
         account.permissions = [key for key in teachers.SECTION_KEYS if key in set(data.get("permissions") or [])]
-        account.save(update_fields=["permissions"])
+        account.save(update_fields=["permissions", "lesson_rate", "monthly_fixed"])
         chosen = {g.pk for g in data["groups"]}
         Group.objects.filter(teacher=user).exclude(pk__in=chosen).update(teacher=None)
         Group.objects.filter(pk__in=chosen).update(teacher=user)
@@ -189,6 +200,82 @@ def teacher_edit(request, pk):
         messages.success(request, _("O‘qituvchi saqlandi."))
         return redirect("teacher_list")
     return render(request, "academy/teachers/edit.html", {"form": form, "teacher": user, "account": account})
+
+
+@superuser_required
+def teacher_report(request):
+    """Bosh ustoz: o'qituvchilar faoliyati va maoshi oy bo'yicha (?oy=YYYY-MM, ?csv=1)."""
+    month = report.month_start(request.GET.get("oy", ""))
+    rows = report.month_report(month)
+    if request.GET.get("csv") == "1":
+        header = [
+            "O‘qituvchi", "Login", "Guruhlar", "O‘quvchilar", "O‘tilgan darslar", "Bekor", "Rejada",
+            "Yuborilgan testlar", "Yakunlangan testlar", "O‘rtacha natija %", "Davomat %",
+            "Dars narxi", "Oylik qat’iy", "Hisoblangan", "To‘langan",
+        ]  # fmt: skip
+        data = [
+            [
+                r.user.get_full_name() or r.user.username,
+                r.user.username,
+                ", ".join(g.code for g in r.groups),
+                r.students,
+                r.lessons,
+                r.cancelled,
+                r.planned,
+                r.tests,
+                r.results,
+                "" if r.avg_percent is None else r.avg_percent,
+                "" if r.attendance is None else r.attendance,
+                r.account.lesson_rate,
+                r.account.monthly_fixed,
+                r.salary,
+                r.payout.amount if r.payout else "",
+            ]
+            for r in rows
+        ]
+        return csv_response(f"oqituvchilar-{month:%Y-%m}.csv", header, data)
+    return render(
+        request,
+        "academy/teachers/report.html",
+        {
+            "rows": rows,
+            "month": month,
+            "prev": report.prev_month(month),
+            "next": report.next_month(month),
+            "is_current": month == report.month_start(),
+            "total_salary": sum(r.salary for r in rows),
+            "total_paid": sum(r.payout.amount for r in rows if r.payout),
+            "total_lessons": sum(r.lessons for r in rows),
+        },
+    )
+
+
+@require_POST
+@superuser_required
+def teacher_payout(request, pk):
+    """Shu oy maoshi to'landi deb belgilash (yoki bekor qilish)."""
+    user = get_object_or_404(User, pk=pk, is_superuser=False)
+    month = report.month_start(request.POST.get("oy", ""))
+    back = f"{reverse('teacher_report')}?oy={month:%Y-%m}"
+    if request.POST.get("action") == "undo":
+        TeacherPayout.objects.filter(teacher=user, month=month).delete()
+        messages.info(request, _("{name}: to‘lov belgisi olib tashlandi.").format(name=user.get_full_name() or user))
+        return redirect(back)
+    payout = report.mark_paid(teacher_account_or_404(user), month)
+    messages.success(
+        request,
+        _("{name}: {month} uchun {amount} so‘m to‘landi deb belgilandi.").format(
+            name=user.get_full_name() or user.username, month=f"{month:%m.%Y}", amount=intspace(payout.amount)
+        ),
+    )
+    return redirect(back)
+
+
+def teacher_account_or_404(user) -> TeacherAccount:
+    account = TeacherAccount.objects.filter(user=user).first()
+    if account is None:
+        raise Http404
+    return account
 
 
 @require_POST
