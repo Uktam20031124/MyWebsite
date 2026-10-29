@@ -1,0 +1,16 @@
+{% load i18n ui %}<div class="hw-sub">
+  <div class="hw-body">
+    {% if sub.text %}<div class="prose hw-text">{{ sub.text|linebreaksbr }}</div>{% endif %}
+    {% if sub.link %}<a class="btn xs soft" href="{{ sub.link }}" target="_blank" rel="noopener noreferrer nofollow">{% icon "external" 13 %} {% translate "Havola" %}</a>{% endif %}
+    {% if sub.file %}<a class="btn xs soft" href="{% url 'homework_file' sub.pk %}" data-turbo="false">{% icon "download" 13 %} {{ sub.file_name|truncatechars:40 }}</a>{% endif %}
+    <span class="meta">{{ sub.submitted_at|date:"d.m H:i" }}{% if not sub.on_time %} · <span class="badge warn">{% translate "kech" %}</span>{% endif %}</span>
+  </div>
+  <form method="post" action="{% url 'homework_check' sub.pk %}" class="hw-grade">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <input class="input" type="number" name="score" min="0" max="100" required placeholder="0–100" value="{{ sub.score|default_if_none:'' }}" aria-label="{% translate "Ball" %}">
+    <input class="input grow" type="text" name="comment" maxlength="2000" placeholder="{% translate "Izoh (ixtiyoriy)" %}" value="{{ sub.comment }}" aria-label="{% translate "Izoh" %}">
+    <button class="btn sm {% if sub.status == 'checked' %}soft{% else %}primary{% endif %}" type="submit">{% if sub.status == 'checked' %}{% translate "Yangilash" %}{% else %}{% translate "Baholash" %}{% endif %}</button>
+    {% if sub.status == 'checked' %}<span class="badge ok">{{ sub.score }}/100{% if sub.coins %} · +{{ sub.coins }} ⚡️{% endif %}</span>{% endif %}
+  </form>
+</div>

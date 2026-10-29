@@ -88,6 +88,27 @@
     <a class="btn danger-ghost sm" href="{% url 'lesson_delete' lesson.pk %}" style="align-self:flex-start">{% icon "trash" 15 %} {% translate "Darsni o‘chirish" %}</a>
   </aside>
 </div>
+{% if homework_rows %}
+<section class="card" id="homework" aria-labelledby="hw-h" style="margin-top:18px">
+  <div class="card-head">
+    <h2 id="hw-h">{% icon "edit" 18 %} {% translate "Topshirilgan uyga vazifalar" %}</h2>
+    <span class="meta">{% blocktranslate with due=homework_due|date:"d.m.Y" trimmed %}muddat: {{ due }}{% endblocktranslate %}</span>
+  </div>
+  <div class="card-body flush">
+    <div class="rows">
+      {% for r in homework_rows %}
+        <div class="row hw-item">
+          <div class="hw-who">
+            <span class="avatar sm" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span>
+            <span class="person-name truncate">{{ r.student|person_name }}</span>
+          </div>
+          {% if r.submission %}{% include "academy/homework/_submission.html" with sub=r.submission %}{% else %}<span class="meta">{% translate "topshirmagan" %}</span>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
 <section class="card quiz-card" id="quiz" aria-labelledby="quiz-h" style="margin-top:18px">
   <div class="card-head">
     <div>

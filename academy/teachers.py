@@ -26,6 +26,7 @@ from django.utils.translation import gettext_lazy
 from . import telegram_sender as tg
 from .models import (
     Group,
+    HomeworkSubmission,
     Lesson,
     Purchase,
     QuizAttempt,
@@ -105,6 +106,7 @@ SECTIONS = [
         gettext_lazy("Testlar (jo‘natmalar ro‘yxati)"),
         {"quiz_batches", "quiz_batch_retake", "quiz_batch_delete", "quiz_attempt_renew"},
     ),
+    ("homework", gettext_lazy("Uyga vazifalar"), {"homework_list", "homework_check", "homework_file"}),
     ("rewards", gettext_lazy("Mukofotlar"), {"rewards", "reward_edit", "purchase_decide"}),
     ("warnings", gettext_lazy("Ogohlantirishlar"), {"quiz_warnings", "attempt_penalty"}),
     (
@@ -169,6 +171,8 @@ OBJECT_SCOPES = {
         (QuizAttempt, "student__group__teacher"),
     ),
     "test_request_decide": (TestRequest, "student__group__teacher"),
+    "homework_check": (HomeworkSubmission, "student__group__teacher"),
+    "homework_file": (HomeworkSubmission, "student__group__teacher"),
     "purchase_decide": (Purchase, "student__group__teacher"),
     "registration_action": (Registration, "link__group__teacher"),
     "registration_link_action": (RegistrationLink, "group__teacher"),
@@ -220,6 +224,8 @@ PUBLIC_PAGES = {
     "portal_practice",
     "portal_bonus",
     "portal_buy",
+    "portal_homework",
+    "portal_homework_file",
 }
 
 LINK_SECONDS = 240  # QR'ni skanerlash va parol kiritish uchun jami vaqt

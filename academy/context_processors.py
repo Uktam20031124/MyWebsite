@@ -1,6 +1,17 @@
 from django.utils import timezone
 
-from .models import Group, Lesson, Purchase, QuizAttempt, Registration, Student, TestRequest, Topic, warning_attempts
+from .models import (
+    Group,
+    HomeworkSubmission,
+    Lesson,
+    Purchase,
+    QuizAttempt,
+    Registration,
+    Student,
+    TestRequest,
+    Topic,
+    warning_attempts,
+)
 from .teachers import is_teacher, permissions_of, scope
 
 
@@ -41,6 +52,9 @@ def nav_counts(request):
         + count("requests", Purchase.objects.filter(status=Purchase.Status.PENDING), student_path),
         # Ogohlantirishli (oynadan chiqqan / nusxalagan), ustoz hali ko'rib chiqmagan testlar.
         "nav_warnings": count("warnings", warning_attempts().filter(warning_checked_at__isnull=True), student_path),
+        "nav_homework": count(
+            "homework", HomeworkSubmission.objects.filter(status=HomeworkSubmission.Status.SUBMITTED), student_path
+        ),
         "nav_registrations": count(
             "registrations", Registration.objects.filter(status=Registration.Status.PENDING), "link__group__teacher"
         ),

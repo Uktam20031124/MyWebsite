@@ -65,6 +65,7 @@
   <nav class="p-tabs" role="tablist" aria-label="{% translate "Profil bo‘limlari" %}" data-tabs hidden>
     <button type="button" role="tab" aria-controls="tab-tests" aria-selected="true">{% icon "target" 16 %}<span>{% translate "Testlar" %}</span></button>
     <button type="button" role="tab" aria-controls="tab-mistakes" aria-selected="false">{% icon "undo" 16 %}<span>{% translate "Xatolar" %}</span>{% if open_mistakes_n %}<b class="p-tab-n">{{ open_mistakes_n }}</b>{% endif %}</button>
+    <button type="button" role="tab" aria-controls="tab-homework" aria-selected="false">{% icon "edit" 16 %}<span>{% translate "Vazifalar" %}</span>{% if homework_open_n %}<b class="p-tab-n">{{ homework_open_n }}</b>{% endif %}</button>
     <button type="button" role="tab" aria-controls="tab-bonus" aria-selected="false">{% icon "bolt" 16 %}<span>{% translate "Qo‘shimcha" %}</span>{% if bonus.left_today and bonus.remaining %}<b class="p-tab-n">{{ bonus.left_today }}</b>{% endif %}</button>
     <button type="button" role="tab" aria-controls="tab-board" aria-selected="false">{% icon "trophy" 16 %}<span>{% translate "Reyting" %}</span></button>
     <button type="button" role="tab" aria-controls="tab-shop" aria-selected="false">{% icon "gift" 16 %}<span>{% translate "Mukofotlar" %}</span></button>
@@ -182,6 +183,29 @@
       {% else %}
         <a class="btn primary block" href="{% url 'portal_bonus' student.portal_token %}">{% translate "⚡️ Savollarni boshlash" %}</a>
       {% endif %}
+    </section>
+  </div>
+
+  <div class="p-panel" id="tab-homework" role="tabpanel">
+    <section class="card pad" id="homework">
+      <h2>{% icon "edit" 18 %} {% translate "Uyga vazifalar" %}</h2>
+      <p class="meta">{% blocktranslate with coins=homework_coins trimmed %}Vazifani shu yerdan topshiring: javob, havola yoki fayl. Muddatida topshirib yaxshi baho olsangiz — +{{ coins }} ⚡️.{% endblocktranslate %}</p>
+      <div class="rows hw-rows">
+        {% for r in homework_rows %}
+          <a class="row hw-row" href="{% url 'portal_homework' student.portal_token r.lesson.pk %}">
+            <span class="grow">
+              <strong class="block">{% if r.lesson.topic %}{{ r.lesson.topic|topic_title }}{% else %}{{ r.lesson.held_on|date:"d.m.Y" }}{% endif %}</strong>
+              <span class="meta">{{ r.lesson.held_on|date:"d.m" }} · {% blocktranslate with due=r.due|date:"d.m" trimmed %}muddat {{ due }}{% endblocktranslate %}</span>
+            </span>
+            {% if r.submission.status == "checked" %}<span class="badge ok">{{ r.submission.score }}/100{% if r.submission.coins %} · +{{ r.submission.coins }} ⚡️{% endif %}</span>
+            {% elif r.submission %}<span class="badge">{% translate "tekshirilmoqda" %}</span>
+            {% elif r.overdue %}<span class="badge warn">{% translate "muddati o‘tgan" %}</span>
+            {% else %}<span class="badge plain">{% translate "topshirilmagan" %}</span>{% endif %}
+          </a>
+        {% empty %}
+          <div class="empty compact"><span class="empty-icon">{% icon "check" 22 %}</span><p>{% translate "Hozircha uyga vazifa berilmagan." %}</p></div>
+        {% endfor %}
+      </div>
     </section>
   </div>
 
