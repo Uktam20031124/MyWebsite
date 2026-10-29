@@ -708,6 +708,17 @@ class TeacherForm(StyledFormMixin, forms.Form):
             "ma’lumotini ko‘radi. “Mening guruhlarim” va “Test jo‘natish” doim ochiq."
         ),
     )
+    lesson_rate = forms.IntegerField(
+        label=_("Bir dars uchun (so‘m)"),
+        min_value=0,
+        max_value=100_000_000,
+        required=False,
+        initial=0,
+        help_text=_("O‘tilgan har bir dars uchun. Oylik = darslar × shu summa + qat’iy qism."),
+    )
+    monthly_fixed = forms.IntegerField(
+        label=_("Oylik qat’iy qism (so‘m)"), min_value=0, max_value=1_000_000_000, required=False, initial=0
+    )
     is_active = forms.BooleanField(label=_("Faol (tizimga kira oladi)"), required=False, initial=True)
 
     def __init__(self, *args, user=None, **kwargs):
@@ -724,6 +735,8 @@ class TeacherForm(StyledFormMixin, forms.Form):
                     "username": user.username,
                     "groups": list(Group.objects.filter(teacher=user)),
                     "permissions": list(account.permissions) if account else [],
+                    "lesson_rate": account.lesson_rate if account else 0,
+                    "monthly_fixed": account.monthly_fixed if account else 0,
                     "is_active": user.is_active,
                 },
             )

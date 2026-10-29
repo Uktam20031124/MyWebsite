@@ -28,6 +28,15 @@
   </section>
 
   <aside class="stack">
+    <section class="card pad" aria-labelledby="month-h">
+      <h2 id="month-h">{% icon "chart" 18 %} {% translate "Bu oy" %}</h2>
+      <div class="bonus-stats">
+        <div><b>{{ month_row.lessons }}</b><span>{% translate "o‘tilgan dars" %}</span></div>
+        <div><b>{{ month_row.tests }}</b><span>{% translate "yuborilgan test" %}</span></div>
+        <div><b>{% if month_row.avg_percent is not None %}{{ month_row.avg_percent }}%{% else %}—{% endif %}</b><span>{% translate "o‘rtacha natija" %}</span></div>
+        <div class="gold"><b>{{ month_row.salary|intspace }}</b><span>{% if month_row.payout %}{% translate "so‘m · to‘langan" %}{% else %}{% translate "so‘m · hisoblangan" %}{% endif %}</span></div>
+      </div>
+    </section>
     <section class="card pad" aria-labelledby="tg-h">
       <h2 id="tg-h">{% icon "send" 18 %} {% translate "Telegram" %}</h2>
       {% if account.is_linked %}

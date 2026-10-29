@@ -1,0 +1,71 @@
+{% extends "academy/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "O‘qituvchilar hisoboti" %} · {{ month|date:"m.Y" }}{% endblock %}
+{% block kicker %}<a href="{% url 'teacher_list' %}">{% translate "O‘qituvchilar" %}</a>{% endblock %}
+{% block heading %}{% translate "Faoliyat va maosh" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Oy bo‘yicha: o‘tilgan darslar (darsni o‘tgan o‘qituvchi bo‘yicha), yuborilgan testlar, o‘quvchilar natijasi va davomati. Maosh = o‘tilgan darslar × dars narxi + oylik qat’iy qism." %}</p>{% endblock %}
+{% block actions %}
+<a class="btn ghost" data-turbo="false" href="?oy={{ month|date:'Y-m' }}&csv=1">{% icon "download" 16 %} {% translate "CSV" %}</a>
+{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <nav class="seg-tabs" aria-label="{% translate "Oy" %}">
+    <a href="?oy={{ prev|date:'Y-m' }}" aria-label="{% translate "Oldingi oy" %}">{% icon "left" 16 %}</a>
+    <a href="?" {% if is_current %}aria-current="true"{% endif %}>{{ month|date:"F Y" }}</a>
+    <a href="?oy={{ next|date:'Y-m' }}" aria-label="{% translate "Keyingi oy" %}">{% icon "right" 16 %}</a>
+  </nav>
+  <span class="spacer"></span>
+  <span class="meta">{% blocktranslate with lessons=total_lessons salary=total_salary|intspace paid=total_paid|intspace trimmed %}Jami: {{ lessons }} dars · hisoblangan {{ salary }} so‘m · to‘langan {{ paid }} so‘m{% endblocktranslate %}</span>
+</div>
+
+<section class="card">
+  <div class="card-body flush table-wrap">
+    <table class="table report-table">
+      <thead>
+        <tr>
+          <th>{% translate "O‘qituvchi" %}</th>
+          <th class="num">{% translate "Darslar" %}</th>
+          <th class="num">{% translate "Testlar" %}</th>
+          <th class="num">{% translate "Natija" %}</th>
+          <th class="num">{% translate "Davomat" %}</th>
+          <th class="num">{% translate "Maosh" %}</th>
+          <th>{% translate "To‘lov" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>
+              <a href="{% url 'teacher_edit' r.user.pk %}"><strong>{{ r.user.get_full_name|default:r.user.username }}</strong></a>
+              <span class="meta block">{% for g in r.groups %}{{ g.code }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "guruh yo‘q" %}{% endfor %} · {% blocktranslate with n=r.students trimmed %}{{ n }} o‘quvchi{% endblocktranslate %}</span>
+            </td>
+            <td class="num"><strong>{{ r.lessons }}</strong>{% if r.cancelled or r.planned %}<span class="meta block">{% blocktranslate with c=r.cancelled p=r.planned trimmed %}bekor {{ c }} · rejada {{ p }}{% endblocktranslate %}</span>{% endif %}</td>
+            <td class="num">{{ r.tests }}<span class="meta block">{% blocktranslate with n=r.results trimmed %}{{ n }} yechildi{% endblocktranslate %}</span></td>
+            <td class="num">{% if r.avg_percent is not None %}<span class="badge tone-{{ r.avg_percent|quiz_tone }}">{{ r.avg_percent }}%</span>{% else %}<span class="meta">—</span>{% endif %}</td>
+            <td class="num">{% if r.attendance is not None %}{{ r.attendance }}%{% else %}<span class="meta">—</span>{% endif %}</td>
+            <td class="num">
+              <strong>{{ r.salary|intspace }}</strong>
+              <span class="meta block">{% if r.account.lesson_rate or r.account.monthly_fixed %}{{ r.lessons }} × {{ r.account.lesson_rate|intspace }}{% if r.account.monthly_fixed %} + {{ r.account.monthly_fixed|intspace }}{% endif %}{% else %}<a href="{% url 'teacher_edit' r.user.pk %}">{% translate "narx kiritilmagan" %}</a>{% endif %}</span>
+            </td>
+            <td>
+              <form method="post" action="{% url 'teacher_payout' r.user.pk %}" class="quiz-actions" style="justify-content:flex-start">
+                {% csrf_token %}
+                <input type="hidden" name="oy" value="{{ month|date:'Y-m' }}">
+                {% if r.payout %}
+                  <span class="badge ok" title="{{ r.payout.paid_at|date:'d.m.Y H:i' }}">✓ {{ r.payout.amount|intspace }}</span>
+                  <button class="btn xs ghost" type="submit" name="action" value="undo">{% translate "Bekor" %}</button>
+                {% elif r.salary %}
+                  <button class="btn xs soft" type="submit" name="action" value="pay" data-confirm="{% blocktranslate with name=r.user.get_full_name|default:r.user.username sum=r.salary|intspace trimmed %}{{ name }}: {{ sum }} so‘m to‘landi deb belgilansinmi?{% endblocktranslate %}">{% translate "To‘landi" %}</button>
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7"><div class="empty compact"><p>{% translate "Hali o‘qituvchi yo‘q." %}</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -425,6 +425,16 @@ class Lesson(models.Model):
     )
     homework = models.TextField(_("Uyga vazifa"), blank=True)
     notes = models.TextField(_("Dars izohi"), blank=True)
+    # Darsni o'tgan o'qituvchi (guruh o'qituvchisidan avtomatik). Guruh keyin boshqa o'qituvchiga
+    # o'tsa ham, hisobot va maosh shu yerdan olinadi. Bo'sh — bosh ustoz.
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="taught_lessons",
+        verbose_name=_("O‘qituvchi"),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -450,6 +460,12 @@ class Lesson(models.Model):
                 .values_list("group_id", "topic_id", "status")
                 .first()
             )
+        if self.teacher_id is None and self.group_id:
+            # O'qituvchi — guruhniki (dars yaratilganda yoki o'tilganda).
+            self.teacher_id = Group.objects.filter(pk=self.group_id).values_list("teacher_id", flat=True).first()
+            fields = kwargs.get("update_fields")
+            if fields is not None and self.teacher_id:
+                kwargs["update_fields"] = {*fields, "teacher"}
         super().save(*args, **kwargs)
         # Dars qaysi yo'l bilan "o'tildi" bo'lmasin (forma, yo'qlama, tugma),
         # guruh dasturi bir xil tarzda yangilanadi. Dars "o'tildi"dan qaytarilsa
@@ -1737,6 +1753,9 @@ class TeacherAccount(models.Model):
     # Bosh ustoz ruxsat bergan bo'limlar (``teachers.SECTIONS`` kalitlari); har birida — faqat
     # o'qituvchining o'z guruhlari ma'lumoti.
     permissions = models.JSONField(_("Ruxsat etilgan bo‘limlar"), default=list, blank=True)
+    # Maosh: o'tilgan har bir dars uchun + oylik qat'iy qism (so'm).
+    lesson_rate = models.PositiveIntegerField(_("Bir dars uchun (so‘m)"), default=0)
+    monthly_fixed = models.PositiveIntegerField(_("Oylik qat’iy qism (so‘m)"), default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1749,3 +1768,24 @@ class TeacherAccount(models.Model):
     @property
     def is_linked(self) -> bool:
         return bool(self.linked_at and self.telegram_id)
+
+
+class TeacherPayout(models.Model):
+    """O'qituvchiga oylik to'langani (hisoblangan summaning o'sha paytdagi nusxasi)."""
+
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="payouts", verbose_name=_("O‘qituvchi")
+    )
+    month = models.DateField(_("Oy"), help_text=_("Oyning 1-sanasi."))
+    lessons = models.PositiveIntegerField(_("O‘tilgan darslar"), default=0)
+    amount = models.PositiveIntegerField(_("Summa (so‘m)"), default=0)
+    paid_at = models.DateTimeField(_("To‘langan"), default=timezone.now)
+
+    class Meta:
+        ordering = ["-month", "teacher__first_name"]
+        verbose_name = _("O‘qituvchi maoshi")
+        verbose_name_plural = _("O‘qituvchilar maoshi")
+        constraints = [models.UniqueConstraint(fields=["teacher", "month"], name="uniq_payout_teacher_month")]
+
+    def __str__(self) -> str:
+        return f"{self.teacher} · {self.month:%m.%Y} · {self.amount}"

@@ -53,6 +53,15 @@ def tone(pct) -> str:
 
 
 @register.filter
+def intspace(value) -> str:
+    """Butun son minglik ajratuvchi bilan: 1500000 → "1 500 000" (bo'shliq — ajralmas)."""
+    try:
+        return f"{int(value):,}".replace(",", " ")
+    except (TypeError, ValueError):
+        return ""
+
+
+@register.filter
 def quiz_tone(pct) -> str:
     """Test foizi uchun ton — test sahifalaridagi bilan bir xil: 80+ ok, 50+ warn."""
     if pct is None or pct == "":
