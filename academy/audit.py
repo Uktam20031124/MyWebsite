@@ -13,6 +13,7 @@ from django.utils.translation import gettext, gettext_noop
 from .models import (
     ActionLog,
     Group,
+    HomeworkSubmission,
     Lesson,
     Module,
     OpenQuiz,
@@ -90,6 +91,7 @@ LABELS = {
     "quiz_warnings": gettext_noop("Ogohlantirishlarni ommaviy kechirdi"),
     "quiz_review_decide": gettext_noop("Javoblarni ko‘rish so‘roviga javob berdi"),
     "quiz_review_approve_all": gettext_noop("Javoblarni ko‘rish so‘rovlarini ommaviy tasdiqladi"),
+    "homework_check": gettext_noop("Uyga vazifani baholadi"),
     "open_quiz_create": gettext_noop("Ochiq test yaratdi"),
     "open_quiz_invite": gettext_noop("Ochiq testga taklif yubordi"),
     "open_quiz_toggle": gettext_noop("Ochiq testni yoqdi/o‘chirdi"),
@@ -115,6 +117,7 @@ TARGET_MODELS = {
     **dict.fromkeys(["quiz_batch_send", "quiz_batch_retake", "quiz_batch_delete"], QuizBatch),
     **dict.fromkeys(["attempt_penalty", "quiz_review_decide", "quiz_attempt_renew"], QuizAttempt),
     **dict.fromkeys(["open_quiz_invite", "open_quiz_toggle", "open_quiz_delete"], OpenQuiz),
+    "homework_check": HomeworkSubmission,
     "reward_edit": Reward,
     "purchase_decide": Purchase,
     "test_request_decide": TestRequest,

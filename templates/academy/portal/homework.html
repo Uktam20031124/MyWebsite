@@ -1,0 +1,43 @@
+{% extends "academy/portal/_base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Uyga vazifa" %} · {{ student.full_name }}{% endblock %}
+{% block main %}
+<header class="portal-head">
+  <p class="kicker"><a href="{% url 'student_portal' student.portal_token %}#homework">{% translate "← Profilga qaytish" %}</a></p>
+  <h1>{% translate "Uyga vazifa 📝" %}</h1>
+  <p class="muted">{{ lesson.held_on|date:"d.m.Y" }}{% if lesson.topic %} · {{ lesson.topic|topic_title }}{% endif %} · {% blocktranslate with due=due|date:"d.m.Y" trimmed %}muddat: <strong>{{ due }}</strong>{% endblocktranslate %}</p>
+</header>
+
+{% if error %}<div class="callout warn" role="alert" style="margin-bottom:14px"><div class="grow">{{ error }}</div></div>{% endif %}
+
+<section class="card pad">
+  <h2>{% translate "Vazifa" %}</h2>
+  <div class="prose">{{ lesson.homework|linebreaks }}</div>
+</section>
+
+{% if sub and sub.status == "checked" %}
+  <section class="card pad hw-result">
+    <h2>{% translate "Baho" %}</h2>
+    <p class="hw-score"><b class="tone-{{ sub.score|quiz_tone }}">{{ sub.score }}</b> / 100{% if sub.coins %} · <span class="bonus-badge">+{{ sub.coins }} ⚡️</span>{% endif %}</p>
+    {% if sub.comment %}<div class="callout next"><div class="grow">{{ sub.comment|linebreaksbr }}</div></div>{% endif %}
+    <p class="meta">{% blocktranslate with d=sub.checked_at|date:"d.m.Y H:i" trimmed %}Tekshirildi: {{ d }}{% endblocktranslate %}</p>
+  </section>
+{% endif %}
+
+{% if not sub or sub.status != "checked" %}
+  <form class="card pad hw-form" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <h2>{% if sub %}{% translate "Topshiriqni yangilash" %}{% else %}{% translate "Topshirish" %}{% endif %}</h2>
+    {% if sub %}<p class="meta">{% blocktranslate with d=sub.submitted_at|date:"d.m.Y H:i" trimmed %}Topshirilgan: {{ d }} — ustoz tekshirguncha o‘zgartirishingiz mumkin.{% endblocktranslate %}{% if not sub.on_time %} <span class="badge warn">{% translate "kech" %}</span>{% endif %}</p>{% endif %}
+    <label class="label" for="hw-text">{% translate "Javob" %}</label>
+    <textarea class="input" id="hw-text" name="text" rows="6" maxlength="20000">{% if posted %}{{ posted.text }}{% elif sub %}{{ sub.text }}{% endif %}</textarea>
+    <label class="label" for="hw-link">{% translate "Havola (Google Docs, Canva, sayt...)" %}</label>
+    <input class="input" id="hw-link" type="url" name="link" maxlength="500" placeholder="https://" value="{% if posted %}{{ posted.link }}{% elif sub %}{{ sub.link }}{% endif %}">
+    <label class="label" for="hw-file">{% blocktranslate with mb=max_mb trimmed %}Fayl (ixtiyoriy, {{ mb }} MB gacha){% endblocktranslate %}</label>
+    <input class="input" id="hw-file" type="file" name="file">
+    {% if sub.file %}<p class="meta">{% translate "Yuklangan fayl:" %} <a href="{% url 'portal_homework_file' student.portal_token sub.pk %}">{{ sub.file_name }}</a></p>{% endif %}
+    <p class="meta">{% blocktranslate with coins=coins pass=pass_score trimmed %}Muddatida topshirib, {{ pass }}+ ball olsangiz — +{{ coins }} ⚡️.{% endblocktranslate %}</p>
+    <button class="btn primary block" type="submit">{% if sub %}{% translate "Yangilash" %}{% else %}{% translate "Topshirish" %}{% endif %}</button>
+  </form>
+{% endif %}
+{% endblock %}

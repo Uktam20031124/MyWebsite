@@ -1532,6 +1532,7 @@ class CoinTransaction(models.Model):
         (re.compile(r"^🎁 Ustozdan sovg‘a: (?P<t>.+)$"), gettext_noop("🎁 Ustozdan sovg‘a: {t}")),
         (re.compile(r"^➕ Qo‘shimcha savol: (?P<t>.+)$"), gettext_noop("➕ Qo‘shimcha savol: {t}")),
         (re.compile(r"^⚠️ Test qoidasi buzildi: (?P<t>.+)$"), gettext_noop("⚠️ Test qoidasi buzildi: {t}")),
+        (re.compile(r"^📝 Uyga vazifa: (?P<t>.+)$"), gettext_noop("📝 Uyga vazifa: {t}")),
     ]
 
     @property
@@ -1817,3 +1818,58 @@ class ActionLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.username} · {self.action} · {self.target}"
+
+
+def homework_file_path(instance, filename: str) -> str:
+    """Taxmin qilib bo'lmaydigan nom: homework/<tasodifiy>.<kengaytma> (faqat ruxsat bilan beriladi)."""
+    ext = filename.rsplit(".", 1)[-1].lower()[:5] if "." in filename else "bin"
+    return f"homework/{secrets.token_urlsafe(16)}.{ext}"
+
+
+class HomeworkSubmission(models.Model):
+    """O'quvchining uyga vazifasi (profil orqali): matn, havola va/yoki fayl; o'qituvchi baholaydi."""
+
+    class Status(models.TextChoices):
+        SUBMITTED = "submitted", _("Tekshirilmoqda")
+        CHECKED = "checked", _("Baholangan")
+
+    student = models.ForeignKey(
+        Student, on_delete=models.CASCADE, related_name="homework", verbose_name=_("O'quvchi")
+    )
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.CASCADE, related_name="submissions", verbose_name=_("Dars")
+    )
+    text = models.TextField(_("Javob"), blank=True)
+    link = models.URLField(_("Havola"), max_length=500, blank=True)
+    file = models.FileField(_("Fayl"), upload_to=homework_file_path, blank=True)
+    file_name = models.CharField(_("Fayl nomi"), max_length=200, blank=True)
+    submitted_at = models.DateTimeField(_("Topshirilgan"), default=timezone.now)
+    on_time = models.BooleanField(_("Vaqtida"), default=True)
+    status = models.CharField(
+        _("Holat"), max_length=12, choices=Status.choices, default=Status.SUBMITTED, db_index=True
+    )
+    score = models.PositiveSmallIntegerField(
+        _("Ball"), null=True, blank=True, validators=[MaxValueValidator(100)]
+    )
+    comment = models.TextField(_("Izoh"), blank=True)
+    checked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="checked_homework",
+        verbose_name=_("Tekshirgan"),
+    )
+    checked_at = models.DateTimeField(_("Tekshirilgan"), null=True, blank=True)
+    coins = models.PositiveSmallIntegerField(_("Quvvat ⚡️"), default=0)
+
+    class Meta:
+        ordering = ["-submitted_at", "-pk"]
+        verbose_name = _("Uyga vazifa")
+        verbose_name_plural = _("Uyga vazifalar")
+        constraints = [
+            models.UniqueConstraint(fields=["student", "lesson"], name="uniq_homework_student_lesson"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.student} · {self.lesson}"

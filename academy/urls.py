@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import open_quiz_views, profile_views, teacher_views, views
+from . import homework_views, open_quiz_views, profile_views, teacher_views, views
 
 urlpatterns = [
     path("kirish/", views.ThrottledLoginView.as_view(), name="login"),
@@ -63,6 +63,11 @@ urlpatterns = [
     path("men/<str:token>/ochish/<int:topic_id>/", profile_views.portal_unlock, name="portal_unlock"),
     path("men/<str:token>/xatolar/", profile_views.portal_practice, name="portal_practice"),
     path("men/<str:token>/qoshimcha/", profile_views.portal_bonus, name="portal_bonus"),
+    path("men/<str:token>/vazifa/<int:lesson_id>/", homework_views.portal_homework, name="portal_homework"),
+    path("men/<str:token>/vazifa-fayl/<int:pk>/", homework_views.portal_homework_file, name="portal_homework_file"),
+    path("vazifalar/", homework_views.homework_list, name="homework_list"),
+    path("vazifalar/<int:pk>/baho/", homework_views.homework_check, name="homework_check"),
+    path("vazifalar/<int:pk>/fayl/", homework_views.homework_file, name="homework_file"),
     path("men/<str:token>/dokon/<int:reward_id>/", profile_views.portal_buy, name="portal_buy"),
     path("dokon/", profile_views.rewards, name="rewards"),
     path("dokon/<int:pk>/", profile_views.rewards, name="reward_edit"),

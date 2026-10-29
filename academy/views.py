@@ -33,7 +33,19 @@ from django.views.generic import (
 )
 from django.views.static import serve as static_serve
 
-from . import bonus, coins, delivery, engagement, mailer, motivation, profiles, review_access, teachers, telegram_sender
+from . import (
+    bonus,
+    coins,
+    delivery,
+    engagement,
+    homework,
+    mailer,
+    motivation,
+    profiles,
+    review_access,
+    teachers,
+    telegram_sender,
+)
 from .contacts import apply_contacts, has_contact, has_telegram, preview_contacts
 from .delivery import quiz_message  # noqa: F401 — eski import yo'llari uchun
 from .forms import (
@@ -852,6 +864,9 @@ class LessonDetailView(AuthMixin, DetailView):
         finalize_expired_attempts(QuizAttempt.objects.filter(batch__lesson=lesson))
         ctx["batches"] = annotate_batches(lesson.quiz_batches.all())
         ctx["send_url"] = _send_url(lesson=lesson.pk)
+        if lesson.homework:
+            ctx["homework_rows"] = homework.lesson_overview(lesson)
+            ctx["homework_due"] = homework.due_date(lesson)
         return ctx
 
 
@@ -2259,6 +2274,7 @@ def student_portal(request, token):
     rank, ranked_n = motivation.group_rank(student)
     board = engagement.quvvat_board(student.group_id)
     coin_available = engagement.available(student)
+    homework_rows = homework.rows_for(student)
     response = render(
         request,
         "academy/portal/student.html",
@@ -2283,6 +2299,9 @@ def student_portal(request, token):
             "streak": engagement.streak_info(student),
             "streak_every": engagement.STREAK_BONUS_EVERY,
             "streak_bonus": engagement.STREAK_BONUS,
+            "homework_rows": homework_rows,
+            "homework_open_n": sum(1 for r in homework_rows if r.submission is None and not r.overdue),
+            "homework_coins": homework.COINS,
             "bonus": bonus.summary(student),
             "bonus_topics": bonus.topics(student),
             "mistake_topics": engagement.mistakes_by_topic(student),
