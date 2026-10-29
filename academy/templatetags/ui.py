@@ -53,6 +53,14 @@ def tone(pct) -> str:
 
 
 @register.filter
+def action_label(action: str) -> str:
+    """Harakatlar jurnali: amal kaliti → o'qiladigan nom (joriy tilda)."""
+    from academy.audit import label
+
+    return label(action)
+
+
+@register.filter
 def intspace(value) -> str:
     """Butun son minglik ajratuvchi bilan: 1500000 → "1 500 000" (bo'shliq — ajralmas)."""
     try:

@@ -3,6 +3,7 @@
 {% block title %}{{ teacher.get_full_name|default:teacher.username }} · {% translate "O‘qituvchilar" %}{% endblock %}
 {% block kicker %}<a href="{% url 'teacher_list' %}">{% translate "O‘qituvchilar" %}</a>{% endblock %}
 {% block heading %}{{ teacher.get_full_name|default:teacher.username }}{% endblock %}
+{% block actions %}<a class="btn ghost" href="{% url 'action_log' %}?user={{ teacher.pk }}">{% icon "journal" 16 %} {% translate "Harakatlari" %}</a>{% endblock %}
 
 {% block content %}
 <div class="split">

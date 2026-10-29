@@ -51,6 +51,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     # O'qituvchi (bosh ustoz emas): Telegram ulanmagan — ulash sahifasi; faqat ruxsat etilgan sahifalar.
     "academy.teachers.TeacherAccessMiddleware",
+    # Harakatlar jurnali: bosh ustoz va o'qituvchilarning muvaffaqiyatli POST amallari.
+    "academy.audit.ActionLogMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Sahifalar Turbo bilan ochiladi: xatoli forma javobini Turbo ko'rsatadigan qiladi.
     "academy.middleware.TurboFormStatusMiddleware",
