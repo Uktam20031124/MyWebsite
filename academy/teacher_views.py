@@ -1,10 +1,12 @@
 """O'qituvchilar: o'qituvchining sahifasi, Telegramni QR orqali ulash va bosh ustozning boshqaruvi."""
 
+from datetime import date
 from functools import wraps
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -13,10 +15,10 @@ from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
-from . import qr, teachers
+from . import audit, qr, teachers
 from . import teacher_report as report
 from .forms import TeacherForm
-from .models import Group, QuizBatch, TeacherAccount, TeacherPayout
+from .models import ActionLog, Group, QuizBatch, TeacherAccount, TeacherPayout
 from .templatetags.ui import intspace
 from .views import csv_response
 
@@ -276,6 +278,41 @@ def teacher_account_or_404(user) -> TeacherAccount:
     if account is None:
         raise Http404
     return account
+
+
+@superuser_required
+def action_log(request):
+    """Bosh ustoz: harakatlar jurnali (?user=, ?kun=YYYY-MM-DD, ?amal=)."""
+    logs = ActionLog.objects.select_related("user")
+    user_id = request.GET.get("user", "")
+    if user_id.isdigit():
+        logs = logs.filter(user_id=user_id)
+    day = request.GET.get("kun", "")
+    try:
+        logs = logs.filter(created_at__date=date.fromisoformat(day)) if day else logs
+    except ValueError:
+        day = ""
+    action = request.GET.get("amal", "")
+    if action:
+        logs = logs.filter(action=action)
+    page = Paginator(logs, 100).get_page(request.GET.get("page"))
+    users = User.objects.filter(actions__isnull=False).distinct().order_by("first_name", "username")
+    actions = sorted(
+        {(a, audit.label(a)) for a in ActionLog.objects.values_list("action", flat=True).distinct()},
+        key=lambda pair: pair[1],
+    )
+    return render(
+        request,
+        "academy/teachers/action_log.html",
+        {
+            "page": page,
+            "users": users,
+            "actions": actions,
+            "user_id": int(user_id) if user_id.isdigit() else None,
+            "day": day,
+            "action": action,
+        },
+    )
 
 
 @require_POST

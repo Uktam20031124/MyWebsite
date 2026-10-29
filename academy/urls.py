@@ -15,6 +15,7 @@ urlpatterns = [
     path("oqituvchi/telegram/qayta/", teacher_views.teacher_telegram_restart, name="teacher_telegram_restart"),
     path("oqituvchilar/", teacher_views.teacher_list, name="teacher_list"),
     path("oqituvchilar/hisobot/", teacher_views.teacher_report, name="teacher_report"),
+    path("oqituvchilar/jurnal/", teacher_views.action_log, name="action_log"),
     path("oqituvchilar/<int:pk>/", teacher_views.teacher_edit, name="teacher_edit"),
     path("oqituvchilar/<int:pk>/maosh/", teacher_views.teacher_payout, name="teacher_payout"),
     path("oqituvchilar/<int:pk>/telegram-uzish/", teacher_views.teacher_unlink, name="teacher_unlink"),

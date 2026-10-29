@@ -1789,3 +1789,31 @@ class TeacherPayout(models.Model):
 
     def __str__(self) -> str:
         return f"{self.teacher} · {self.month:%m.%Y} · {self.amount}"
+
+
+class ActionLog(models.Model):
+    """Harakatlar jurnali: kim, qachon, nima qildi (bosh ustoz va o'qituvchilarning POST amallari,
+    kirish/chiqish). Yozuvlar ``audit.ActionLogMiddleware`` va kirish signallaridan."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="actions",
+        verbose_name=_("Foydalanuvchi"),
+    )
+    username = models.CharField(_("Login"), max_length=150, blank=True)  # foydalanuvchi o'chirilsa ham
+    action = models.CharField(_("Amal"), max_length=64, db_index=True)
+    target = models.CharField(_("Obyekt"), max_length=200, blank=True)
+    path = models.CharField(_("Manzil"), max_length=255, blank=True)
+    ip = models.CharField(_("IP"), max_length=64, blank=True)
+    created_at = models.DateTimeField(_("Vaqt"), default=timezone.now, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name = _("Harakat")
+        verbose_name_plural = _("Harakatlar jurnali")
+
+    def __str__(self) -> str:
+        return f"{self.username} · {self.action} · {self.target}"

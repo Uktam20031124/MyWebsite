@@ -4,7 +4,10 @@
 {% block kicker %}{% translate "Bosh ustoz" %}{% endblock %}
 {% block heading %}{% translate "O‘qituvchilar" %}{% endblock %}
 {% block subheading %}<p class="page-sub">{% translate "Har bir o‘qituvchiga login va parol yarating, guruhlarini belgilang. Birinchi kirishda o‘qituvchi Telegramini QR-kod orqali ulaydi va o‘z guruhlariga testlarni o‘z Telegramidan yuboradi." %}</p>{% endblock %}
-{% block actions %}<a class="btn soft" href="{% url 'teacher_report' %}">{% icon "chart" 16 %} {% translate "Faoliyat va maosh" %}</a>{% endblock %}
+{% block actions %}
+<a class="btn ghost" href="{% url 'action_log' %}">{% icon "journal" 16 %} {% translate "Harakatlar jurnali" %}</a>
+<a class="btn soft" href="{% url 'teacher_report' %}">{% icon "chart" 16 %} {% translate "Faoliyat va maosh" %}</a>
+{% endblock %}
 
 {% block content %}
 <div class="split">

@@ -1,0 +1,52 @@
+{% extends "academy/base.html" %}
+{% load i18n ui %}
+{% block title %}{% translate "Harakatlar jurnali" %}{% endblock %}
+{% block kicker %}<a href="{% url 'teacher_list' %}">{% translate "O‘qituvchilar" %}</a>{% endblock %}
+{% block heading %}{% translate "Harakatlar jurnali" %}{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Kim, qachon va nima qildi: bosh ustoz va o‘qituvchilarning amallari, tizimga kirish va chiqish. O‘quvchilarning amallari va parollar yozilmaydi." %}</p>{% endblock %}
+
+{% block content %}
+<form class="toolbar" method="get">
+  <select class="input" name="user" data-autosubmit aria-label="{% translate "Kim" %}">
+    <option value="">{% translate "Hamma" %}</option>
+    {% for u in users %}<option value="{{ u.pk }}" {% if u.pk == user_id %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>{% endfor %}
+  </select>
+  <select class="input" name="amal" data-autosubmit aria-label="{% translate "Amal" %}">
+    <option value="">{% translate "Barcha amallar" %}</option>
+    {% for key, label in actions %}<option value="{{ key }}" {% if key == action %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <input class="input" type="date" name="kun" value="{{ day }}" data-autosubmit aria-label="{% translate "Sana" %}">
+  {% if user_id or day or action %}<a class="btn ghost sm" href="?">{% translate "Tozalash" %}</a>{% endif %}
+  <span class="spacer"></span>
+  <span class="meta">{% blocktranslate with n=page.paginator.count trimmed %}{{ n }} ta yozuv{% endblocktranslate %}</span>
+</form>
+
+<section class="card">
+  <div class="card-body flush table-wrap">
+    <table class="table">
+      <thead><tr><th>{% translate "Vaqt" %}</th><th>{% translate "Kim" %}</th><th>{% translate "Amal" %}</th><th>{% translate "Obyekt" %}</th><th>{% translate "IP" %}</th></tr></thead>
+      <tbody>
+        {% for log in page %}
+          <tr>
+            <td class="nowrap">{{ log.created_at|date:"d.m.Y H:i" }}</td>
+            <td>{% if log.user %}<a href="?user={{ log.user_id }}">{{ log.user.get_full_name|default:log.username }}</a>{% if log.user.is_superuser %} <span class="badge">{% translate "bosh ustoz" %}</span>{% endif %}{% else %}{{ log.username|default:"—" }}{% endif %}</td>
+            <td><a href="?amal={{ log.action }}">{{ log.action|action_label }}</a></td>
+            <td class="truncate" style="max-width:360px">{{ log.target|default:"—" }}</td>
+            <td class="meta mono">{{ log.ip }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5"><div class="empty compact"><p>{% translate "Hali yozuv yo‘q." %}</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% if page.has_other_pages %}
+<nav class="pager" aria-label="{% translate "Sahifalar" %}">
+  {% if page.has_previous %}<a class="btn sm soft" href="?{% if user_id %}user={{ user_id }}&{% endif %}{% if action %}amal={{ action }}&{% endif %}{% if day %}kun={{ day }}&{% endif %}page={{ page.previous_page_number }}">{% icon "left" 14 %}</a>{% endif %}
+  <span class="meta">{{ page.number }} / {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn sm soft" href="?{% if user_id %}user={{ user_id }}&{% endif %}{% if action %}amal={{ action }}&{% endif %}{% if day %}kun={{ day }}&{% endif %}page={{ page.next_page_number }}">{% icon "right" 14 %}</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}
