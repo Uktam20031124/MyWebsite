@@ -40,7 +40,8 @@ from .models import (
 
 # Bosh ustoz o'qituvchiga ochadigan bo'limlar: (kalit, nomi, sahifalar). Har bir bo'limda
 # o'qituvchi faqat o'z guruhlariga tegishli ma'lumotni ko'radi (``OBJECT_SCOPES`` va ro'yxatlarda
-# ``scope``). Guruh/shogird yaratish-o'chirish va "O'qituvchilar" — faqat bosh ustozda.
+# ``scope``). Guruh ochish — alohida ruxsat (ochilgan guruh o'qituvchiga biriktiriladi); guruh/shogird
+# o'chirish va "O'qituvchilar" — faqat bosh ustozda.
 SECTIONS = [
     ("timetable", gettext_lazy("Dars jadvali"), {"timetable"}),
     (
@@ -61,6 +62,7 @@ SECTIONS = [
             "group_telegram_chat",
         },
     ),
+    ("group_create", gettext_lazy("Guruh ochish (yangi guruh — o‘ziga biriktiriladi)"), {"group_create"}),
     (
         "students",
         gettext_lazy("Shogirdlar"),

@@ -4,8 +4,8 @@
 {% block kicker %}{% icon "layers" 15 %} {% translate "O‘quv markazi" %}{% endblock %}
 {% block heading %}{% translate "Guruhlar" %}{% endblock %}
 {% block actions %}
-<a class="btn soft" href="{% url 'timetable' %}">{% icon "calendar" 16 %} {% translate "Jadval" %}</a>
-<a class="btn primary" href="{% url 'group_create' %}">{% icon "plus" 16 %} {% translate "Yangi guruh" %}</a>
+{% if not is_teacher or 'timetable' in teacher_sections %}<a class="btn soft" href="{% url 'timetable' %}">{% icon "calendar" 16 %} {% translate "Jadval" %}</a>{% endif %}
+{% if not is_teacher or 'group_create' in teacher_sections %}<a class="btn primary" href="{% url 'group_create' %}">{% icon "plus" 16 %} {% translate "Yangi guruh" %}</a>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -66,7 +66,7 @@
       {% else %}
         {% blocktranslate trimmed %}<strong>Hali guruh yo‘q</strong>{% endblocktranslate %}
         <p>{% translate "Birinchi guruhni yarating: nomi, kodi, dars kunlari va vaqti." %}</p>
-        <a class="btn sm primary" href="{% url 'group_create' %}">{% icon "plus" 15 %} {% translate "Guruh yaratish" %}</a>
+        {% if not is_teacher or 'group_create' in teacher_sections %}<a class="btn sm primary" href="{% url 'group_create' %}">{% icon "plus" 15 %} {% translate "Guruh yaratish" %}</a>{% endif %}
       {% endif %}
     </div>
   </div>

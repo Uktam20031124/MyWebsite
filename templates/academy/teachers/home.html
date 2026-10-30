@@ -4,7 +4,7 @@
 {% block kicker %}{% translate "O‘qituvchi" %}{% endblock %}
 {% block heading %}{% blocktranslate with name=request.user.first_name|default:request.user.username trimmed %}Salom, {{ name }}!{% endblocktranslate %}{% endblock %}
 {% block subheading %}<p class="page-sub">{% translate "Bu yerda faqat sizga biriktirilgan guruhlar. Testlar o‘quvchilarga sizning Telegramingizdan yuboriladi." %}</p>{% endblock %}
-{% block actions %}<a class="btn primary" href="{% url 'quiz_send' %}">{% icon "send" 16 %} {% translate "Test jo‘natish" %}</a>{% endblock %}
+{% block actions %}{% if 'group_create' in teacher_sections %}<a class="btn soft" href="{% url 'group_create' %}">{% icon "plus" 16 %} {% translate "Yangi guruh" %}</a>{% endif %}<a class="btn primary" href="{% url 'quiz_send' %}">{% icon "send" 16 %} {% translate "Test jo‘natish" %}</a>{% endblock %}
 
 {% block content %}
 <div class="split">

@@ -184,6 +184,29 @@ class TeacherAccessTests(TeacherTestsMixin, TestCase):
         for name in ("rewards", "topic_list", "registrations", "group_create", "teacher_list", "dashboard"):
             self.assertRedirects(self.client.get(reverse(name)), reverse("teacher_home"))
 
+    def test_group_create_permission(self, start_link):
+        teacher = self.make_teacher()
+        self.client.force_login(teacher)
+        url = reverse("group_create")
+        self.assertRedirects(self.client.get(url), reverse("teacher_home"))  # ruxsat yo'q
+        self.assertNotContains(self.client.get(reverse("teacher_home")), url)
+
+        account = teacher.teacher_account
+        account.permissions = ["group_create"]
+        account.save()
+        self.assertContains(self.client.get(reverse("teacher_home")), url)
+        self.assertEqual(self.client.get(url).status_code, 200)
+        r = self.client.post(url, {"name": "Yangi guruh", "code": "N-1", "status": "active"})
+        self.assertRedirects(r, reverse("teacher_home"))  # Guruhlar bo'limi ochiq emas
+        group = Group.objects.get(code="N-1")
+        self.assertEqual(group.teacher, teacher)  # o'qituvchiga biriktirildi
+        self.assertContains(self.client.get(reverse("teacher_home")), "Yangi guruh")
+        # Guruhlar bo'limi ham ochiq bo'lsa — guruh sahifasiga.
+        account.permissions = ["group_create", "groups"]
+        account.save()
+        r = self.client.post(url, {"name": "Ikkinchi", "code": "N-2", "status": "active"})
+        self.assertRedirects(r, Group.objects.get(code="N-2").get_absolute_url())
+
     def test_timetable_permission_shows_only_own_groups(self, start_link):
         from datetime import time
 

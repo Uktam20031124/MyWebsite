@@ -33,7 +33,7 @@ def nav_counts(request):
         "is_teacher": teacher,
         "teacher_sections": sections if teacher else set(),
         # "O'quv markazi" menyusidagi bo'limlar (Dars jadvali — o'qituvchi menyusida alohida).
-        "teacher_center": sections - {"timetable"} if teacher else set(),
+        "teacher_center": sections - {"timetable", "group_create"} if teacher else set(),
         "nav_groups": groups.count() if "groups" in sections else 0,
         "nav_students": count("students", Student.objects.filter(status=Student.Status.ACTIVE)),
         "nav_topics": Topic.objects.filter(is_active=True).count() if "topics" in sections else 0,
