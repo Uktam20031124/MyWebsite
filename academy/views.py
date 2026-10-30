@@ -295,6 +295,18 @@ class GroupCreateView(AuthMixin, SuccessMessageMixin, CreateView):
     template_name = "academy/groups/form.html"
     success_message = "Guruh yaratildi."
 
+    def form_valid(self, form):
+        # O'qituvchi ochgan guruh — darhol o'ziniki (ro'yxatida va testlarida ko'rinadi).
+        if teachers.is_teacher(self.request.user):
+            form.instance.teacher = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        # Guruhlar bo'limi ochiq bo'lmagan o'qituvchi — o'z sahifasiga.
+        if teachers.is_teacher(self.request.user) and "groups" not in teachers.permissions_of(self.request.user):
+            return reverse("teacher_home")
+        return super().get_success_url()
+
 
 class GroupUpdateView(AuthMixin, SuccessMessageMixin, UpdateView):
     model = Group
