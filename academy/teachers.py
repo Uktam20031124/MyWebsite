@@ -102,7 +102,11 @@ SECTIONS = [
             "attendance",
         },
     ),
-    ("topics", gettext_lazy("Mavzular (ko‘rish va taqdimot)"), {"topic_list", "topic_detail", "topic_slides"}),
+    (
+        "topics",
+        gettext_lazy("Mavzular (ko‘rish va taqdimot)"),
+        {"topic_list", "topic_detail", "topic_slides", "topic_poster"},
+    ),
     (
         "tests",
         gettext_lazy("Testlar (jo‘natmalar ro‘yxati)"),
