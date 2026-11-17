@@ -97,6 +97,7 @@ urlpatterns = [
     path("mavzular/eksport/", views.topic_export, name="topic_export"),
     path("mavzular/<int:pk>/", views.TopicDetailView.as_view(), name="topic_detail"),
     path("mavzular/<int:pk>/taqdimot/", views.topic_slides, name="topic_slides"),
+    path("mavzular/<int:pk>/rasm/", views.topic_poster, name="topic_poster"),
     path("mavzular/<int:pk>/tahrir/", views.TopicUpdateView.as_view(), name="topic_update"),
     path("mavzular/<int:pk>/ochirish/", views.TopicDeleteView.as_view(), name="topic_delete"),
     path("bolimlar/yangi/", views.ModuleCreateView.as_view(), name="module_create"),

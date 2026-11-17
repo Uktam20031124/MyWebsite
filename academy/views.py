@@ -722,6 +722,20 @@ def topic_slides(request, pk):
     return render(request, "academy/topics/slides.html", {"topic": topic, "slides": slides})
 
 
+@login_required
+def topic_poster(request, pk):
+    """Dars rasmi: 16:9 poster (proyektor), PNG yuklab olish va ustoz uchun javoblar. ``?png=1`` — toza 1920×1080."""
+    topic = get_object_or_404(Topic.objects.select_related("module"), pk=pk)
+    if not topic.poster:
+        raise Http404
+    number = Topic.objects.filter(module=topic.module, order__lt=topic.order).count() + 1 if topic.module else 1
+    return render(
+        request,
+        "academy/posters/page.html",
+        {"topic": topic, "number": number, "png": request.GET.get("png") == "1"},
+    )
+
+
 class TopicCreateView(AuthMixin, SuccessMessageMixin, CreateView):
     model = Topic
     form_class = TopicForm

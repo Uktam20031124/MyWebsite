@@ -1,0 +1,83 @@
+{% load i18n ui posters %}{% with p=topic.poster %}
+<div class="poster" role="img" aria-label="{{ topic.title }} — {% translate "dars rasmi" %}">
+  <div class="pp-frame">
+    <header class="pp-head">
+      <div>
+        <span class="pp-kicker">{% if topic.module %}{{ topic.module.title|poster_typeset }} · {% endif %}{{ number }}-{% translate "mavzu" %}</span>
+        <h1{% if topic.title|length > 54 %} class="xlong"{% elif topic.title|length > 40 %} class="long"{% endif %}>{{ topic.title|poster_typeset }}</h1>
+        <p class="pp-goal">{{ p.goal|safe }}</p>
+      </div>
+      {% if p.badge %}<div class="pp-badge"><div><b{% if p.badge.0|length > 4 %} class="long"{% elif p.badge.0|length > 2 %} class="mid"{% endif %}>{{ p.badge.0 }}</b><span>{{ p.badge.1 }}</span></div></div>{% endif %}
+    </header>
+
+    <div class="pp-main kind-{{ p.visual.kind }}">
+      <section class="pp-board" aria-label="{{ p.visual_title }}">
+        <h2>{{ p.visual_title }}</h2>
+        <div class="pp-visual">
+        {% with v=p.visual.data %}
+          {% if p.visual.kind == "keyboard" %}{% include "academy/posters/_keyboard.html" %}
+          {% elif p.visual.kind == "window" %}
+            <div class="pp-window">
+              <div class="pp-titlebar"><i></i><i></i><i></i>{{ v.app }}</div>
+              <div class="pp-parts">
+                {% for part in v.parts %}
+                  <div class="pp-part">
+                    <span class="pp-num">{{ forloop.counter }}</span>
+                    {% if part.2 == "tabs" %}<div class="pp-mock tabs">{% for t in part.3 %}<span>{{ t }}</span>{% endfor %}</div>
+                    {% else %}<div class="pp-mock {{ part.2|default:'field' }}">{{ part.3|default:"" }}</div>{% endif %}
+                    <div class="pp-part-label"><b>{{ part.0 }}</b>{{ part.1 }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% elif p.visual.kind == "code" %}
+            <div class="pp-code{% if v.stack %} stack{% endif %}">
+              <div><div class="pp-code-label">{% translate "Kod" %}</div><pre class="{{ v.size }}">{{ v.code|poster_code:v.lang }}</pre></div>
+              <div><div class="pp-code-label">{% translate "Natija" %}</div><pre class="out {{ v.size }}">{{ v.output }}</pre></div>
+            </div>
+          {% elif p.visual.kind == "flow" %}
+            <div class="pp-flow">
+              {% for step in v %}<div class="pp-step"><i>{{ forloop.counter }}</i><b>{{ step.0 }}</b><span>{{ step.1 }}</span></div>{% endfor %}
+            </div>
+          {% elif p.visual.kind == "compare" %}
+            <div class="pp-compare">
+              <div class="pp-col bad"><h3>{{ v.bad.0 }}</h3><ul>{% for item in v.bad.1 %}<li>{{ item|safe }}</li>{% endfor %}</ul></div>
+              <div class="pp-col good"><h3>{{ v.good.0 }}</h3><ul>{% for item in v.good.1 %}<li>{{ item|safe }}</li>{% endfor %}</ul></div>
+            </div>
+          {% elif p.visual.kind == "tiles" %}
+            <div class="pp-tiles" style="--cols: {% if v|length == 4 %}2{% else %}3{% endif %}">
+              {% for t in v %}<div class="pp-tile"><span class="big{% if t.0|length > 3 %} mono{% endif %}">{{ t.0 }}</span><b>{{ t.1 }}</b><span>{{ t.2 }}</span></div>{% endfor %}
+            </div>
+          {% elif p.visual.kind == "anatomy" %}
+            <div class="pp-anatomy">
+              <div class="pp-sentence">{% for seg in v %}<span class="pp-seg {{ forloop.counter0|poster_seg_class }}">{{ seg.1 }}</span>{% endfor %}</div>
+              <div class="pp-seg-legend">{% for seg in v %}<div><i class="{{ forloop.counter0|poster_seg_class }}"></i><b>{{ seg.0 }}</b></div>{% endfor %}</div>
+            </div>
+          {% endif %}
+        {% endwith %}
+        </div>
+      </section>
+
+      <div class="pp-side">
+        {% for c in p.cards %}
+          <section class="pp-card">
+            <h2>{{ c.title }}</h2>
+            {% if c.keys %}<div class="pp-keys">{{ c.keys|poster_keys }}</div>{% endif %}
+            {% if c.formula %}<div class="pp-formula">{{ c.formula|poster_formula }}</div>{% endif %}
+            {% if c.code %}<pre class="pp-mini-code">{{ c.code }}</pre>{% endif %}
+            {% if c.text %}<p>{{ c.text|safe }}</p>{% endif %}
+            {% if c.example %}<div class="pp-example">{{ c.example|safe }}</div>{% endif %}
+          </section>
+        {% endfor %}
+        <section class="pp-rule"><b>{{ p.rule.title }}</b>{% if p.rule.text %}<span>{{ p.rule.text }}</span>{% endif %}</section>
+      </div>
+    </div>
+
+    <footer class="pp-check" aria-label="{% translate "Test oldidan savollar" %}">
+      <div class="pp-check-title">{% translate "Test oldidan" %}</div>
+      {% for q in p.questions %}<div class="pp-q"><i>{{ forloop.counter }}</i>{{ q.q }}</div>{% endfor %}
+    </footer>
+  </div>
+  <span class="pp-brand">MINAR TEST · {% translate "DARS RASMI" %}</span>
+</div>
+{% endwith %}

@@ -299,6 +299,13 @@ class Topic(models.Model):
             "!! katta ibora; :: timer 25 — 25 daqiqalik taymer; qolgani — material formati."
         ),
     )
+    poster = models.JSONField(
+        _("Dars rasmi"),
+        default=dict,
+        blank=True,
+        editable=False,
+        help_text=_("Proyektor uchun 16:9 dars rasmi: ko'rgazma, formulalar va test oldidan savollar."),
+    )
     duration_minutes = models.PositiveIntegerField(_("Davomiyligi (daq.)"), default=90)
     order = models.PositiveIntegerField(_("Tartib"), default=0, db_index=True)
     is_active = models.BooleanField(_("Faol"), default=True)

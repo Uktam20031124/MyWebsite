@@ -1,0 +1,55 @@
+{% load i18n static ui %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>🖼 {{ topic|topic_title }} · {% translate "Dars rasmi" %}</title>
+  {% include "academy/includes/head.html" %}
+  <link rel="stylesheet" href="{% static 'css/poster.css' %}">
+</head>
+<body class="poster-body{% if png %} png{% endif %}">
+{% if not png %}
+  <header class="pp-bar">
+    <a class="btn soft" href="{% url 'topic_detail' topic.pk %}">← {% translate "Mavzu" %}</a>
+    <div class="grow">
+      <strong>{{ topic|topic_title }}</strong>
+      <span class="meta">{% translate "Proyektorda ko‘rsating: F — to‘liq ekran, Esc — chiqish." %}</span>
+    </div>
+    <button class="btn soft" type="button" id="pp-answers-toggle" aria-controls="pp-answers" aria-expanded="false">🔑 {% translate "Javoblar" %}</button>
+    <a class="btn soft" href="{% static topic.poster.image %}" download="{{ topic.poster.key }}-dars-rasmi.png">⬇ PNG</a>
+    <button class="btn primary" type="button" id="pp-full">⛶ {% translate "To‘liq ekran" %}</button>
+  </header>
+{% endif %}
+  <main class="pp-stage">
+    {% include "academy/posters/_poster.html" %}
+{% if not png %}
+    <section class="pp-answers" id="pp-answers" hidden>
+      <h2>🔑 {% translate "Test oldidan — javoblar (faqat ustoz uchun)" %}</h2>
+      <ol>{% for q in topic.poster.questions %}<li>{{ q.q }} — <b>{{ q.a }}</b></li>{% endfor %}</ol>
+    </section>
+{% endif %}
+  </main>
+{% if not png %}
+  <script>
+    (function () {
+      var full = document.getElementById("pp-full");
+      var toggle = document.getElementById("pp-answers-toggle");
+      var answers = document.getElementById("pp-answers");
+      function fullscreen() {
+        if (document.fullscreenElement) { document.exitFullscreen(); return; }
+        if (document.body.requestFullscreen) document.body.requestFullscreen().catch(function () {});
+      }
+      full.addEventListener("click", fullscreen);
+      toggle.addEventListener("click", function () {
+        answers.hidden = !answers.hidden;
+        toggle.setAttribute("aria-expanded", String(!answers.hidden));
+      });
+      document.addEventListener("keydown", function (e) {
+        if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey && !e.altKey) fullscreen();
+      });
+    })();
+  </script>
+{% endif %}
+</body>
+</html>
