@@ -1,6 +1,7 @@
 """Minar Dasturchi darslari bo'yicha test savollari (har darsga 10 ta). Format va kalitlar — ``quizzes_ai.py`` kabi."""
 
 from .quizzes_m03 import QUIZZES as M03
+from .quizzes_m04 import QUIZZES as M04
 
 QUIZZES = {
     "TB10": """
@@ -65,4 +66,4 @@ QUIZZES = {
 - Hech narsa o'zgarmaydi
 """,
 }
-QUIZZES = {**M03, **QUIZZES}
+QUIZZES = {**M03, **M04, **QUIZZES}
