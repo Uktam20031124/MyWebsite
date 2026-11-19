@@ -24,8 +24,9 @@ def bank() -> dict[str, dict]:
     from .school_data.lessons_m03 import LESSONS as M03
     from .school_data.lessons_m04 import LESSONS as M04
     from .school_data.lessons_m05 import LESSONS as M05
+    from .school_data.lessons_m06 import LESSONS as M06
 
-    return {**M03, **M04, **M05, **BOT}
+    return {**M03, **M04, **M05, **M06, **BOT}
 
 
 def run_program(lesson: dict) -> str:
@@ -177,11 +178,14 @@ def validate(key: str, lesson: dict) -> list[str]:
     errors = []
     allcode = "\n".join(lesson.get("files", {}).values())
     for s in lesson["steps"]:
-        if s["file"].startswith("Terminal"):  # buyruqlar va ularning natijasi — faylda emas
+        if s["file"].startswith(("Terminal", "Telegram")):  # buyruqlar, chat va natija — faylda emas
             continue
         for line in s["code"].split("\n"):
-            if line.strip() and not line.strip().startswith(("#", "//", "<!--")) and line not in allcode:
-                errors.append(f"{key}: {s['file']}: {line.strip()[:60]}")
+            text = line.strip()
+            if text in ("", "...") or text.startswith(("#", "//", "<!--")):  # bo'sh, qisqartma va izohlar
+                continue
+            if line not in allcode:
+                errors.append(f"{key}: {s['file']}: {text[:60]}")
         if any(n < 1 or n > s["code"].count("\n") + 1 for n in s["new"]):
             errors.append(f"{key}: {s['file']}: noto'g'ri qator raqami")
     return errors
