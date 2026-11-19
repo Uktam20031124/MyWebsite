@@ -105,7 +105,7 @@ SECTIONS = [
     (
         "topics",
         gettext_lazy("Mavzular (ko‘rish va taqdimot)"),
-        {"topic_list", "topic_detail", "topic_slides", "topic_poster"},
+        {"topic_list", "topic_detail", "topic_slides", "topic_poster", "topic_lesson"},
     ),
     (
         "tests",

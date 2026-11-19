@@ -31,7 +31,9 @@ def catalog_topic(key):
 class PosterDataTests(TestCase):
     def test_every_catalog_topic_has_valid_poster_and_png(self):
         data = bank()
-        keys = [t.key for m in all_modules() for t in m.topics]
+        from academy.school_data.dev import TRACK as DEV  # Dasturchi darslarida poster o'rnida "Dars kodi"
+
+        keys = [t.key for m in all_modules() for t in m.topics if t.key not in DEV]
         self.assertEqual(sorted(data), sorted(keys))
         for key, p in data.items():
             self.assertEqual(validate(key, p), [])

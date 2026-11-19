@@ -1,0 +1,91 @@
+{% load i18n static ui %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>🧩 {{ topic|topic_title }} · {% translate "Dars kodi" %}</title>
+  {% include "academy/includes/head.html" %}
+  <link rel="stylesheet" href="{% static 'css/lesson.css' %}">
+</head>
+<body class="lesson-body{% if png %} png{% endif %}">
+{% if png %}
+  {% for f in frames %}{{ f }}{% endfor %}
+{% else %}
+  <header class="lp-bar">
+    <a class="btn soft" href="{% url 'topic_detail' topic.pk %}">← {% translate "Mavzu" %}</a>
+    <div class="grow">
+      <strong>{{ topic|topic_title }}</strong>
+      <span class="meta">{% translate "← → — kadrlar, F — to‘liq ekran, Esc — chiqish." %}</span>
+    </div>
+    <a class="btn soft" id="lp-png" href="{{ pngs.0 }}" download>⬇ PNG</a>
+    <button class="btn primary" type="button" id="lp-full">⛶ {% translate "To‘liq ekran" %}</button>
+  </header>
+  <main class="lp-stage">
+    <div class="lp-viewport" id="lp-viewport">
+      {% for f in frames %}{{ f }}{% endfor %}
+    </div>
+    <nav class="lp-nav" aria-label="{% translate "Kadrlar" %}">
+      <button type="button" data-step="-1" aria-label="{% translate "Oldingi" %}">←</button>
+      {% for url in pngs %}<button type="button" data-go="{{ forloop.counter }}" data-png="{{ url }}">{{ forloop.counter }}</button>{% endfor %}
+      <button type="button" data-step="1" aria-label="{% translate "Keyingi" %}">→</button>
+    </nav>
+    <div class="lp-extra">
+      <section class="lp-card">
+        <h2>{% translate "Dars rejasi (60 daqiqa)" %}</h2>
+        <table>{% for row in lesson.plan %}<tr><td>{{ row.0 }} {% translate "daq" %}</td><td><b>{{ row.1 }}</b></td><td>{{ row.2 }}</td></tr>{% endfor %}</table>
+      </section>
+      {% if lesson.files %}
+      <section class="lp-card">
+        <h2>{% translate "Tayyor kod" %}</h2>
+        {% for name, text in lesson.files.items %}
+          <details{% if forloop.last %} open{% endif %}><summary><code>{{ name }}</code><button type="button" class="btn soft copy" data-copy="lp-f{{ forloop.counter }}">{% translate "Nusxa" %}</button></summary><pre id="lp-f{{ forloop.counter }}">{{ text }}</pre></details>
+        {% endfor %}
+      </section>
+      {% endif %}
+    </div>
+  </main>
+  <script>
+    (function () {
+      var vp = document.getElementById("lp-viewport");
+      var frames = [].slice.call(vp.querySelectorAll(".lf"));
+      var buttons = [].slice.call(document.querySelectorAll("[data-go]"));
+      var png = document.getElementById("lp-png");
+      var cur = 1;
+      function fit() { vp.style.setProperty("--k", vp.clientWidth / 1920); }
+      function pad(n) { return (n < 10 ? "0" : "") + n; }
+      function show(n) {
+        cur = Math.min(Math.max(n, 1), frames.length);
+        frames.forEach(function (f, i) { f.hidden = i + 1 !== cur; });
+        buttons.forEach(function (b, i) { b.classList.toggle("on", i + 1 === cur); });
+        png.href = buttons[cur - 1].dataset.png;
+        png.setAttribute("download", "{{ lesson.key }}-" + pad(cur) + ".png");
+      }
+      function fullscreen() {
+        if (document.fullscreenElement) { document.exitFullscreen(); return; }
+        if (document.body.requestFullscreen) document.body.requestFullscreen().catch(function () {});
+      }
+      buttons.forEach(function (b) { b.addEventListener("click", function () { show(+b.dataset.go); }); });
+      document.querySelectorAll("[data-step]").forEach(function (b) { b.addEventListener("click", function () { show(cur + +b.dataset.step); }); });
+      document.getElementById("lp-full").addEventListener("click", fullscreen);
+      document.addEventListener("keydown", function (e) {
+        if (e.target.closest && e.target.closest("input, textarea")) return;
+        if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); show(cur + 1); }
+        if (e.key === "ArrowLeft") show(cur - 1);
+        if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey) fullscreen();
+      });
+      document.querySelectorAll(".copy").forEach(function (b) {
+        b.addEventListener("click", function (e) {
+          e.preventDefault();
+          var text = document.getElementById(b.dataset.copy).textContent;
+          navigator.clipboard.writeText(text).then(function () { b.textContent = "✓"; }, function () {});
+        });
+      });
+      window.addEventListener("resize", fit);
+      document.addEventListener("fullscreenchange", function () { setTimeout(fit, 50); });
+      fit(); show(1);
+    })();
+  </script>
+{% endif %}
+</body>
+</html>
