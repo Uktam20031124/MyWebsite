@@ -98,13 +98,18 @@ class BankTranslationTests(TestCase):
         from academy.models import Question
 
         out = load()
-        self.assertIn("ruscha tarjima: 1009 ta savol", out)
+        from academy.lessons import bank as lesson_bank
+        from academy.quiz_bank import bank_texts_ru
+        from academy.quiz_format import parse_quiz
+
+        total_ru = sum(len(parse_quiz(text)[0]) for text in bank_texts_ru().values())
+        self.assertIn(f"ruscha tarjima: {total_ru} ta savol", out)
         self.assertIn("mustahkamlash materiali: 82 ta mavzu", out)
         # Dasturchi darslarida material o'rnida "Dars kodi" (mustahkamlash materiali keyin qo'shiladi).
         older = Topic.objects.exclude(module__title__startswith="Dasturchi")
         self.assertFalse(older.filter(study="").exists())
         self.assertFalse(older.filter(study_ru="").exists())
-        self.assertEqual(Topic.objects.exclude(lesson={}).count(), 1)
+        self.assertEqual(Topic.objects.exclude(lesson={}).count(), len(lesson_bank()))
         self.assertFalse(Question.objects.filter(text_ru="").exists())
         topic = Topic.objects.get(title__startswith="Pythonga kirish")
         self.assertTrue(topic.title_ru.startswith("Введение в Python"))

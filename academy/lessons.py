@@ -11,16 +11,44 @@ sinov (Telegram chat yoki brauzer natijasi, ixtiyoriy); yakun — fayllar, o'rga
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from .posters import code_html
+from .posters import RAW_FIELDS, code_html, typeset
 
 TREE_TAGS = {"yangi": "yangi", "o‘zgardi": "ozgardi"}
+# Apostrof almashtirilmaydigan maydonlar: kod, natija, fayllar, sinov va bot xabarlari.
+RAW = RAW_FIELDS | {"files", "result", "run", "file", "chat", "tree"}
 CODE_WIDTH_PX = 900  # kod kartasidagi qator uchun joy (1920 px kadrda, zaxira bilan)
 
 
 def bank() -> dict[str, dict]:
-    from .school_data.lessons_dev import LESSONS
+    from .school_data.lessons_dev import LESSONS as BOT
+    from .school_data.lessons_m03 import LESSONS as M03
 
-    return dict(LESSONS)
+    return {**M03, **BOT}
+
+
+def run_program(lesson: dict) -> str:
+    """Darsning ``run`` dasturini kiritish bilan bajaradi (randint — ixtiyoriy belgilangan son); chiqishni qaytaradi."""
+    import contextlib
+    import io
+    import random
+    from unittest import mock
+
+    spec = lesson["run"]
+    lines = iter(spec.get("input", "").split("\n"))
+    out = io.StringIO()
+
+    def fake_input(prompt=""):
+        out.write(str(prompt))
+        return next(lines)
+
+    patches = [mock.patch("builtins.input", fake_input)]
+    if "randint" in spec:
+        patches.append(mock.patch.object(random, "randint", return_value=spec["randint"]))
+    with contextlib.ExitStack() as stack, contextlib.redirect_stdout(out):
+        for p in patches:
+            stack.enter_context(p)
+        exec(compile(lesson["files"][spec["file"]], spec["file"], "exec"), {"__name__": "__main__"})  # noqa: S102
+    return out.getvalue()
 
 
 def png_urls(lesson: dict) -> list[str]:
@@ -139,6 +167,8 @@ def validate(key: str, lesson: dict) -> list[str]:
     errors = []
     allcode = "\n".join(lesson.get("files", {}).values())
     for s in lesson["steps"]:
+        if s["file"].startswith("Terminal"):  # buyruqlar va ularning natijasi — faylda emas
+            continue
         for line in s["code"].split("\n"):
             if line.strip() and not line.strip().startswith(("#", "//", "<!--")) and line not in allcode:
                 errors.append(f"{key}: {s['file']}: {line.strip()[:60]}")
@@ -159,7 +189,7 @@ def seed_lessons(Topic, only=None) -> int:
         for t in module.topics:
             if t.key not in data or (only is not None and t.key not in only):
                 continue
-            value = {**data[t.key], "key": t.key, "frames": frame_count(data[t.key])}
+            value = {**typeset(data[t.key], raw=RAW), "key": t.key, "frames": frame_count(data[t.key])}
             done += Topic.objects.filter(module__title__iexact=module.title, title__iexact=t.title).update(
                 lesson=value
             )
