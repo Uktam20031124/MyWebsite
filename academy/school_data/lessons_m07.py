@@ -300,7 +300,9 @@ async def add_correct(message: Message, state: FSMContext):
 ADMIN_15 = ADMIN_14.replace(
     "from aiogram import Router\nfrom aiogram.filters import Command\nfrom aiogram.types import Message\n",
     "from aiogram import F, Router\nfrom aiogram.filters import Command\nfrom aiogram.fsm.context import FSMContext\n"
-    "from aiogram.types import CallbackQuery, Message\n\nfrom database import add_question\n",
+    "from aiogram.types import CallbackQuery, Message\n",
+).replace(
+    "from filters.admin import IsAdmin\n", "from database import add_question\nfrom filters.admin import IsAdmin\n"
 ).replace("from keyboards.admin import admin_kb\n", "from keyboards.admin import admin_kb\nfrom states import AddQuestion\n") + ADD_FLOW
 
 PAGES_FLOW = r'''
@@ -391,7 +393,7 @@ async def show_stats(callback: CallbackQuery):
     await callback.answer()
 '''
 
-ADMIN_22 = ("import csv\nimport io\n" + ADMIN_17).replace(
+ADMIN_22 = ADMIN_17.replace("import asyncio\n", "import asyncio\nimport csv\nimport io\n", 1).replace(
     "from aiogram.types import CallbackQuery, Message\n", "from aiogram.types import BufferedInputFile, CallbackQuery, Message\n"
 ).replace(
     "from database import add_question, all_user_ids, delete_question, questions_page\n",
