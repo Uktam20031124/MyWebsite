@@ -3,6 +3,7 @@
 from .quizzes_m03_ru import QUIZZES as M03
 from .quizzes_m04_ru import QUIZZES as M04
 from .quizzes_m05_ru import QUIZZES as M05
+from .quizzes_m06_ru import QUIZZES as M06
 
 QUIZZES = {
     "TB10": """
@@ -67,4 +68,4 @@ QUIZZES = {
 - Ничего не изменится
 """,
 }
-QUIZZES = {**M03, **M04, **M05, **QUIZZES}
+QUIZZES = {**M03, **M04, **M05, **M06, **QUIZZES}

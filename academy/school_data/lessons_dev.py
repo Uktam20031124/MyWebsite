@@ -309,3 +309,26 @@ LESSONS = {
                          '    asyncio.run(main())\n'},
      'next': '6.11 · Test rejimi, 2-qism: natijani attempts jadvaliga saqlash va “Mening natijalarim”.'},
 }
+
+
+
+def _tb10_full_project():
+    """TB10 fayllari 6-oy loyihasining shu darsdagi to'liq holati (oldingi darslar ustiga yoziladi)."""
+    from .lessons_m06 import BOT_FINAL, DB_TB10, MENU_FINAL, STATES_FULL
+
+    lesson = LESSONS["TB10"]
+    lesson["files"].update(
+        {"database.py": DB_TB10, "states.py": STATES_FULL, "handlers/menu.py": MENU_FINAL, "bot.py": BOT_FINAL}
+    )
+    last = lesson["steps"][-1]
+    last["code"] = last["code"].replace("from handlers import quiz, start", "from handlers import menu, quiz, register, start")
+    last["code"] = last["code"].replace(
+        "dp.include_routers(start.router, quiz.router)",
+        "dp.include_routers(start.router, register.router, menu.router, quiz.router)",
+    )
+    last["notes"] = last["notes"] + [
+        ("menu.py", "5-darsdagi “Tanlandi” callback'ini o'chiramiz — endi fan tugmasini quiz.router ushlaydi."),
+    ]
+
+
+_tb10_full_project()
