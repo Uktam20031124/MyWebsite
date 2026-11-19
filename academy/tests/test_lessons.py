@@ -50,6 +50,19 @@ class LessonDataTests(TestCase):
                 png = Path(settings.BASE_DIR) / "static" / "lessons" / key / f"{n:02}.png"
                 self.assertTrue(png.is_file(), png)
 
+    def test_programs_run_and_print_expected_output(self):
+        from academy.lessons import run_program
+
+        checked = 0
+        for key, lesson in bank().items():
+            if "run" not in lesson:
+                continue
+            out = run_program(lesson)
+            for expected in lesson["run"]["expect"]:
+                self.assertIn(expected, out, key)
+            checked += 1
+        self.assertGreaterEqual(checked, 12)
+
     def test_validate_catches_code_not_in_files(self):
         lesson = {**bank()["TB10"]}
         lesson["steps"] = [{**lesson["steps"][0], "code": "print('yo‘q qator')"}]

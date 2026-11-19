@@ -1,5 +1,7 @@
 """Minar Dasturchi darslari bo'yicha test savollari (har darsga 10 ta). Format va kalitlar — ``quizzes_ai.py`` kabi."""
 
+from .quizzes_m03 import QUIZZES as M03
+
 QUIZZES = {
     "TB10": """
 ? ORDER BY RANDOM() LIMIT 10 nima qiladi?
@@ -63,3 +65,4 @@ QUIZZES = {
 - Hech narsa o'zgarmaydi
 """,
 }
+QUIZZES = {**M03, **QUIZZES}

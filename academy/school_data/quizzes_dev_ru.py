@@ -1,5 +1,7 @@
 """Ruscha tarjima: ``quizzes_dev.py`` bilan bir xil kalitlar, savollar tartibi va to'g'ri javob o'rni."""
 
+from .quizzes_m03_ru import QUIZZES as M03
+
 QUIZZES = {
     "TB10": """
 ? Что делает ORDER BY RANDOM() LIMIT 10?
@@ -63,3 +65,4 @@ QUIZZES = {
 - Ничего не изменится
 """,
 }
+QUIZZES = {**M03, **QUIZZES}

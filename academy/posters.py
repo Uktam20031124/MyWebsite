@@ -88,14 +88,14 @@ RAW_FIELDS = {"code", "output", "keys", "lang", "kind", "image", "key"}
 _APOS = re.compile(r"(?<=[A-Za-z])'(?=[A-Za-z])")
 
 
-def typeset(value, field: str = ""):
-    """O'zbekcha apostrofni tipografik ‘ ga almashtiradi (o'z → o‘z); kod va tugmalarga tegmaydi."""
+def typeset(value, field: str = "", raw=RAW_FIELDS):
+    """O'zbekcha apostrofni tipografik ‘ ga almashtiradi (o'z → o‘z); ``raw`` maydonlarga (kod va h.k.) tegmaydi."""
     if isinstance(value, str):
-        return value if field in RAW_FIELDS else _APOS.sub("\u2018", value)
+        return value if field in raw else _APOS.sub("\u2018", value)
     if isinstance(value, dict):
-        return {k: typeset(v, k if k in RAW_FIELDS else field) for k, v in value.items()}
+        return {k: typeset(v, k if k in raw else field, raw) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
-        return [typeset(v, field) for v in value]
+        return [typeset(v, field, raw) for v in value]
     return value
 
 
