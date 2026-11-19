@@ -23,8 +23,9 @@ def bank() -> dict[str, dict]:
     from .school_data.lessons_dev import LESSONS as BOT
     from .school_data.lessons_m03 import LESSONS as M03
     from .school_data.lessons_m04 import LESSONS as M04
+    from .school_data.lessons_m05 import LESSONS as M05
 
-    return {**M03, **M04, **BOT}
+    return {**M03, **M04, **M05, **BOT}
 
 
 def run_program(lesson: dict) -> str:
@@ -45,10 +46,18 @@ def run_program(lesson: dict) -> str:
     patches = [mock.patch("builtins.input", fake_input)]
     if "randint" in spec:
         patches.append(mock.patch.object(random, "randint", return_value=spec["randint"]))
-    with contextlib.ExitStack() as stack, contextlib.redirect_stdout(out):
-        for p in patches:
-            stack.enter_context(p)
-        exec(compile(lesson["files"][spec["file"]], spec["file"], "exec"), {"__name__": "__main__"})  # noqa: S102
+    import os
+    import tempfile
+
+    cwd = os.getcwd()
+    with tempfile.TemporaryDirectory() as tmp, contextlib.ExitStack() as stack, contextlib.redirect_stdout(out):
+        os.chdir(tmp)  # dastur yozadigan fayllar (tasks.json va h.k.) vaqtinchalik papkada qoladi
+        try:
+            for p in patches:
+                stack.enter_context(p)
+            exec(compile(lesson["files"][spec["file"]], spec["file"], "exec"), {"__name__": "__main__"})  # noqa: S102
+        finally:
+            os.chdir(cwd)
     return out.getvalue()
 
 
@@ -69,7 +78,7 @@ def frame_count(lesson: dict) -> int:
     return 1 + len(lesson["steps"]) + (1 if lesson.get("chat") else 0) + 1
 
 
-def code_block(code: str, new) -> str:
+def code_block(code: str, new, lang: str = "python") -> str:
     lines = code.split("\n")
     widest = max(len(line) for line in lines)
     by_lines = 22 if len(lines) <= 13 else 19 if len(lines) <= 17 else 17
@@ -78,7 +87,7 @@ def code_block(code: str, new) -> str:
     rows = []
     for i, line in enumerate(lines, 1):
         css = "ln new" if i in marked else "ln"
-        rows.append(f'<span class="{css}"><span class="no">{i}</span>{code_html(line) or " "}</span>')
+        rows.append(f'<span class="{css}"><span class="no">{i}</span>{code_html(line, lang) or " "}</span>')
     return f'<pre style="--fs:{size}px">{"".join(rows)}</pre>'
 
 
@@ -127,7 +136,7 @@ def frames(lesson: dict) -> list:
         out.append(
             f'<section class="lf">{_head(lesson, s["title"], "", (str(n), f"qadam / {len(steps)}"))}'
             f'<div class="lmain"><div class="codecard"><div class="tab"><i></i><i></i><i></i>{escape(s["file"])}</div>'
-            f'{code_block(s["code"], s["new"])}</div>'
+            f'{code_block(s["code"], s["new"], "python" if ".py" in s["file"] else "text")}</div>'
             f'<div class="side"><div class="notes"><h2>Nima qilyapmiz?</h2>{notes}</div>'
             f'<div class="result"><b>Natija</b><pre>{escape(s["result"])}</pre></div></div></div>'
             f"{_foot(n + 1, total)}</section>"
