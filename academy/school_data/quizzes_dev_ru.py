@@ -1,6 +1,7 @@
 """Ruscha tarjima: ``quizzes_dev.py`` bilan bir xil kalitlar, savollar tartibi va to'g'ri javob o'rni."""
 
 from .quizzes_m03_ru import QUIZZES as M03
+from .quizzes_m04_ru import QUIZZES as M04
 
 QUIZZES = {
     "TB10": """
@@ -65,4 +66,4 @@ QUIZZES = {
 - Ничего не изменится
 """,
 }
-QUIZZES = {**M03, **QUIZZES}
+QUIZZES = {**M03, **M04, **QUIZZES}

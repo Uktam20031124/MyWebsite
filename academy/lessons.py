@@ -22,8 +22,9 @@ CODE_WIDTH_PX = 900  # kod kartasidagi qator uchun joy (1920 px kadrda, zaxira b
 def bank() -> dict[str, dict]:
     from .school_data.lessons_dev import LESSONS as BOT
     from .school_data.lessons_m03 import LESSONS as M03
+    from .school_data.lessons_m04 import LESSONS as M04
 
-    return {**M03, **BOT}
+    return {**M03, **M04, **BOT}
 
 
 def run_program(lesson: dict) -> str:
