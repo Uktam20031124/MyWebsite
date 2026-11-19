@@ -20,20 +20,22 @@ DEFAULT_TIME_LIMIT = 10
 
 def bank_texts() -> dict[str, str]:
     from .school_data.quizzes_ai import QUIZZES as AI
+    from .school_data.quizzes_dev import QUIZZES as DEV
     from .school_data.quizzes_iq import QUIZZES as IQ
     from .school_data.quizzes_python import QUIZZES as PYTHON
     from .school_data.quizzes_starter import QUIZZES as STARTER
 
-    return {**STARTER, **PYTHON, **AI, **IQ}
+    return {**STARTER, **PYTHON, **AI, **IQ, **DEV}
 
 
 def bank_texts_ru() -> dict[str, str]:
     from .school_data.quizzes_ai_ru import QUIZZES as AI
+    from .school_data.quizzes_dev_ru import QUIZZES as DEV
     from .school_data.quizzes_iq_ru import QUIZZES as IQ
     from .school_data.quizzes_python_ru import QUIZZES as PYTHON
     from .school_data.quizzes_starter_ru import QUIZZES as STARTER
 
-    return {**STARTER, **PYTHON, **AI, **IQ}
+    return {**STARTER, **PYTHON, **AI, **IQ, **DEV}
 
 
 def bank_study() -> dict[str, str]:
@@ -61,9 +63,10 @@ def bank_slides() -> dict[str, str]:
 
 
 def bank_titles_ru() -> dict[str, str]:
+    from .school_data.titles_dev_ru import TITLES as DEV
     from .school_data.titles_ru import TITLES
 
-    return TITLES
+    return {**TITLES, **DEV}
 
 
 def bank_entries(only=None) -> list[tuple[str, str, str, Parsed]]:

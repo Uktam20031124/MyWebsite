@@ -299,6 +299,13 @@ class Topic(models.Model):
             "!! katta ibora; :: timer 25 — 25 daqiqalik taymer; qolgani — material formati."
         ),
     )
+    lesson = models.JSONField(
+        _("Dars kodi"),
+        default=dict,
+        blank=True,
+        editable=False,
+        help_text=_("Darsning bir nechta kadri: sxema, kod qadamlari, sinov va yakun."),
+    )
     poster = models.JSONField(
         _("Dars rasmi"),
         default=dict,

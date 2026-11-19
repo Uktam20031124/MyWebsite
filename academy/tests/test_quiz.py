@@ -91,7 +91,11 @@ class ParseQuizTests(TestCase):
 class QuizBankTests(TestCase):
     def test_bank_is_valid_and_covers_every_topic(self):
         self.assertEqual(validate_bank(), [])
-        keys = {t.key for m in all_modules() for t in m.topics}
+        from academy.lessons import bank as lesson_bank
+        from academy.school_data.dev import TRACK as DEV
+
+        # Dasturchi yo'nalishida: "Dars kodi" tayyor bo'lgan har bir darsda test ham bo'lishi shart.
+        keys = {t.key for m in all_modules() for t in m.topics if t.key not in DEV or t.key in lesson_bank()}
         entries = {key: parsed for key, *_, parsed in bank_entries()}
         self.assertEqual(set(entries), keys)
         for key, parsed in entries.items():

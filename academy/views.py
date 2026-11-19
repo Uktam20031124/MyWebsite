@@ -736,6 +736,27 @@ def topic_poster(request, pk):
     )
 
 
+@login_required
+def topic_lesson(request, pk):
+    """Dars kodi: kadrlar (← →, F — to'liq ekran), kadr PNG'si, reja va tayyor kod. ``?png=1`` — kadrlar 1920×1080."""
+    from .lessons import frames, png_urls
+
+    topic = get_object_or_404(Topic.objects.select_related("module"), pk=pk)
+    if not topic.lesson:
+        raise Http404
+    return render(
+        request,
+        "academy/lessons/page.html",
+        {
+            "topic": topic,
+            "lesson": topic.lesson,
+            "frames": frames(topic.lesson),
+            "pngs": png_urls(topic.lesson),
+            "png": request.GET.get("png") == "1",
+        },
+    )
+
+
 class TopicCreateView(AuthMixin, SuccessMessageMixin, CreateView):
     model = Topic
     form_class = TopicForm

@@ -4,6 +4,7 @@ from datetime import time
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from academy.lessons import seed_lessons
 from academy.models import (
     Attendance,
     Choice,
@@ -16,6 +17,7 @@ from academy.models import (
     SyllabusItem,
     Topic,
 )
+from academy.posters import seed_posters
 from academy.quiz_bank import seed_quizzes, seed_slides, seed_study, seed_translations, validate_bank
 from academy.school_data import GroupData, ModuleData, all_groups, all_modules
 from academy.school_data.iq import MODULES as IQ_MODULES
@@ -105,6 +107,8 @@ class Command(BaseCommand):
             _titles_ru, questions_ru = seed_translations(Topic, Question, Choice)
             study_new = seed_study(Topic)
             slides_new = seed_slides(Topic)
+            seed_posters(Topic)
+            seed_lessons(Topic)
             Quiz.objects.filter(topic__module__title=IQ_MODULES[0].title, time_limit_minutes=10).update(
                 time_limit_minutes=IQ_TIME_LIMIT
             )
