@@ -318,3 +318,10 @@ def person_name(person):
 def form_nonce():
     """Bir martalik forma kaliti (takroriy yuborishdan himoya, ``profile_views._fresh_nonce``)."""
     return format_html('<input type="hidden" name="nonce" value="{}">', secrets.token_hex(8))
+
+
+@register.simple_tag(takes_context=True)
+def active_filters(context, names: str) -> int:
+    """Ro'yxat filtrlaridan nechtasi tanlangan (GET'da bo'sh emas): {% active_filters "group,status" as n %}."""
+    get = context["request"].GET
+    return sum(1 for name in names.split(",") if get.get(name.strip()))

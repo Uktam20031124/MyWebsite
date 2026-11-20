@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<form class="toolbar" method="get">
+<form class="toolbar" method="get" data-remember-list="lessons">
   <div class="seg-tabs" role="group" aria-label="{% translate "Holat" %}">
     <a href="?{% if request.GET.group %}group={{ request.GET.group }}{% endif %}" {% if not request.GET.status %}aria-current="true"{% endif %}>{% translate "Barchasi" %}</a>
     {% for value, label in statuses %}
@@ -30,22 +30,23 @@
 <section class="card">
   {% if lessons %}
   <div class="table-wrap">
-    <table class="table">
-      <thead><tr><th>{% translate "Sana" %}</th><th>{% translate "Guruh" %}</th><th>{% translate "Mavzu" %}</th><th>{% translate "Holat" %}</th><th class="right">{% translate "Yo‘qlama" %}</th></tr></thead>
+    <table class="table responsive">
+      <thead><tr><th>{% translate "Mavzu" %}</th><th>{% translate "Sana" %}</th><th>{% translate "Guruh" %}</th><th>{% translate "Holat" %}</th><th class="right">{% translate "Yo‘qlama" %}</th></tr></thead>
       <tbody>
         {% for lesson in lessons %}
         <tr>
-          <td class="nowrap">
+          <td class="cell-main"><a class="strong" href="{{ lesson.get_absolute_url }}">{{ lesson.topic|topic_title|default:_("Mavzusiz dars") }}</a></td>
+          <td class="nowrap" data-label="{% translate "Sana" %}">
             <strong class="tabular">{{ lesson.held_on|date:"d.m.Y" }}</strong>
-            <div class="meta">{{ lesson.held_on|weekday_short }}{% if lesson.starts_at %} · {{ lesson.starts_at|time:"H:i" }}{% endif %}</div>
+            <span class="meta">{{ lesson.held_on|weekday_short }}{% if lesson.starts_at %} · {{ lesson.starts_at|time:"H:i" }}{% endif %}</span>
           </td>
           <td><a class="tag" href="{{ lesson.group.get_absolute_url }}">{{ lesson.group.code }}</a></td>
-          <td><a class="strong" href="{{ lesson.get_absolute_url }}">{{ lesson.topic|topic_title|default:_("Mavzusiz dars") }}</a></td>
           <td class="nowrap">
-            <span class="badge {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}info{% endif %}">{{ lesson.get_status_display }}</span>
-            {% if lesson.status == 'planned' and lesson.held_on < today %}<span class="badge warn">{% translate "Kechikkan" %}</span>{% endif %}
+            {# Sanasi o'tgan, hali "Rejada" — "Rejada" bilan aralashmasin. #}
+            {% if lesson.status == 'planned' and lesson.held_on < today %}<span class="chip warn">{% icon "alert" 12 %} {% translate "Kechikkan" %}</span>
+            {% else %}<span class="chip {% if lesson.status == 'completed' %}ok{% elif lesson.status == 'cancelled' %}bad{% else %}info{% endif %}">{{ lesson.get_status_display }}</span>{% endif %}
           </td>
-          <td class="right">
+          <td class="right cell-end">
             <a class="btn xs {% if lesson.marked %}ghost{% else %}soft{% endif %}" href="{% url 'attendance' lesson.pk %}">
               {% if lesson.marked %}{% icon "check" 14 %} {% blocktranslate with marked=lesson.marked trimmed %}{{ marked }} belgilangan{% endblocktranslate %}{% else %}{% translate "Belgilash" %}{% endif %}
             </a>

@@ -1,0 +1,8 @@
+{% load i18n ui %}{# Jo'natish oqimi: current = 1 | 2; back_url — 1-qadamga qaytish. #}
+<ol class="steps" aria-label="{% translate "Jo‘natish bosqichlari" %}">
+  <li class="{% if current == 1 %}is-current{% else %}is-done{% endif %}"{% if current == 1 %} aria-current="step"{% endif %}>
+    {% if current > 1 and back_url %}<a href="{{ back_url }}">{% endif %}<span class="step-n">{% if current > 1 %}{% icon "check" 12 %}{% else %}1{% endif %}</span> {% translate "Mavzu" %}{% if current > 1 and back_url %}</a>{% endif %}
+  </li>
+  <li class="{% if current == 2 %}is-current{% endif %}"{% if current == 2 %} aria-current="step"{% endif %}><span class="step-n">2</span> {% translate "Oluvchilar" %}</li>
+  <li class="{% if current == 2 %}is-current{% endif %}"><span class="step-n">3</span> {% translate "Savol, vaqt va yuborish" %}</li>
+</ol>

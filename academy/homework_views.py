@@ -99,7 +99,8 @@ def homework_list(request):
     return render(
         request,
         "academy/homework/list.html",
-        {"page": page, "show_all": show_all, "pending_n": pending_n, "coins": homework.COINS},
+        {"page": page, "show_all": show_all, "pending_n": pending_n, "coins": homework.COINS,
+         "pass_score": homework.PASS_SCORE},
     )
 
 

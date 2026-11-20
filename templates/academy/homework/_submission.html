@@ -3,7 +3,10 @@
     {% if sub.text %}<div class="prose hw-text">{{ sub.text|linebreaksbr }}</div>{% endif %}
     {% if sub.link %}<a class="btn xs soft" href="{{ sub.link }}" target="_blank" rel="noopener noreferrer nofollow">{% icon "external" 13 %} {% translate "Havola" %}</a>{% endif %}
     {% if sub.file %}<a class="btn xs soft" href="{% url 'homework_file' sub.pk %}" data-turbo="false">{% icon "download" 13 %} {{ sub.file_name|truncatechars:40 }}</a>{% endif %}
-    <span class="meta">{{ sub.submitted_at|date:"d.m H:i" }}{% if not sub.on_time %} · <span class="badge warn">{% translate "kech" %}</span>{% endif %}</span>
+    <span class="meta tabular">{{ sub.submitted_at|date:"d.m H:i" }}</span>
+    {# +quvvat qoidasi: muddatida va kamida PASS_SCORE ball (homework.py); haqiqiy berilgani — serverdan (sub.coins). #}
+    {% if sub.on_time %}<span class="chip ok">{% icon "clock" 12 %} {% translate "Muddatida" %}{% if sub.status != 'checked' %} · {% blocktranslate with score=pass_score coins=coins trimmed %}{{ score }}+ ball → +{{ coins }} ⚡️{% endblocktranslate %}{% endif %}</span>
+    {% else %}<span class="chip warn">{% icon "alert" 12 %} {% translate "Kechikib" %} · {% translate "quvvat berilmaydi" %}</span>{% endif %}
   </div>
   <form method="post" action="{% url 'homework_check' sub.pk %}" class="hw-grade">
     {% csrf_token %}

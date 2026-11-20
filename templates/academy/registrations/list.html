@@ -90,8 +90,9 @@
 
           {% if status == 'pending' %}
             <div class="reg-actions">
-              <form method="post" action="{% url 'registration_action' r.pk %}">
+              <form method="post" action="{% url 'registration_action' r.pk %}" aria-label="{% translate "Mavjud shogirdga biriktirish" %}">
                 {% csrf_token %}
+                <span class="reg-action-label">{% translate "Mavjud shogirdga biriktirish" %}</span>
                 <input type="hidden" name="action" value="attach">
                 <select class="input" name="student" aria-label="{% translate "Qaysi o‘quvchiga" %}">
                   <option value="">{% translate "— o‘quvchini tanlang —" %}</option>
@@ -99,8 +100,9 @@
                 </select>
                 <button class="btn sm {% if r.suggested|length == 1 %}primary{% else %}soft{% endif %}" type="submit">{% icon "check" 14 %} {% translate "Biriktirish" %}</button>
               </form>
-              <form method="post" action="{% url 'registration_action' r.pk %}">
+              <form method="post" action="{% url 'registration_action' r.pk %}" aria-label="{% translate "Yangi shogird sifatida qabul qilish" %}">
                 {% csrf_token %}
+                <span class="reg-action-label">{% translate "Yangi shogird sifatida qabul qilish" %}</span>
                 <input type="hidden" name="action" value="create">
                 <select class="input" name="group" aria-label="{% translate "Guruh" %}">
                   <option value="">{% translate "— guruh —" %}</option>

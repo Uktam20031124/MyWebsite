@@ -1324,8 +1324,10 @@ def _topic_picker(request, lesson: Lesson | None, group: Group | None):
             "lesson": lesson,
             "group": group,
             "featured": featured,
-            "sections": list(sections.items()),
+            # (bo'lim, mavzular, tayyor soni) — savolsiz mavzular standartda yashirin, alohida ochiladi.
+            "sections": [(m, items, sum(1 for t in items if t.question_n)) for m, items in sections.items()],
             "ready_n": sum(1 for t in topics if t.question_n),
+            "empty_n": sum(1 for t in topics if not t.question_n),
         },
     )
 

@@ -1,7 +1,7 @@
 {% extends "academy/base.html" %}
 {% load i18n ui %}
 {% block title %}{% blocktranslate with title=topic|topic_title trimmed %}{{ title }} · Minar Test{% endblocktranslate %}{% endblock %}
-{% block kicker %}<a href="{% url 'topic_list' %}">{% translate "Mavzular" %}</a><span class="sep">/</span>{% if topic.module %}<a href="{{ topic.module.get_absolute_url }}">{{ topic.module.title }}</a>{% else %}{% translate "Bo‘limsiz" %}{% endif %}<span class="sep">·</span>{% icon "clock" 14 %} {% blocktranslate with duration_minutes=topic.duration_minutes trimmed %}{{ duration_minutes }} daq.{% endblocktranslate %}{% endblock %}
+{% block kicker %}<a href="{% url 'topic_list' %}" data-list-back="topics">{% translate "Mavzular" %}</a><span class="sep">/</span>{% if topic.module %}<a href="{{ topic.module.get_absolute_url }}">{{ topic.module.title }}</a>{% else %}{% translate "Bo‘limsiz" %}{% endif %}<span class="sep">·</span>{% icon "clock" 14 %} {% blocktranslate with duration_minutes=topic.duration_minutes trimmed %}{{ duration_minutes }} daq.{% endblocktranslate %}{% endblock %}
 {% block heading %}{{ topic|topic_title }}{% endblock %}
 {% block actions %}
 {% if topic.lesson %}<a class="btn dark" href="{% url 'topic_lesson' topic.pk %}" data-turbo="false" target="_blank" rel="noopener">🧩 {% translate "Dars kodi" %}</a>{% endif %}
