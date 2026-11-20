@@ -27,7 +27,8 @@
     <span class="meta">{% blocktranslate with lessons=lessons|length rows=rows|length trimmed %}{{ lessons }} dars · {{ rows }} shogird{% endblocktranslate %}</span>
   </div>
   {% if rows and lessons or rows and has_quiz %}
-  <div class="table-wrap">
+  <p class="scroll-hint show-mobile-block" aria-hidden="true">{% icon "left" 13 %} {% translate "Jadval ichida suriladi — so‘nggi darslar o‘ngda" %} {% icon "right" 13 %}</p>
+  <div class="table-wrap journal-wrap" role="region" aria-label="{% translate "Davomat jurnali: shogirdlar va dars sanalari" %}" tabindex="0" data-scroll-end>
     <table class="table journal">
       <thead>
         <tr>

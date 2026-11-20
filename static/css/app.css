@@ -417,6 +417,8 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
 .btn.sm.square { width: 32px; }
 .btn.xs.square { width: 28px; }
 .btn.block { width: 100%; }
+/* .block utilitasi (display: block) keyin e'lon qilingan — blok tugma ham markazlangan flex bo'lib qolsin. */
+.btn.block, a.btn.block, button.btn.block { display: flex; }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
 .btn .kbd-hint { opacity: 0.7; font-weight: 500; font-size: 12px; }
 
@@ -2580,3 +2582,17 @@ details.module-card[open] > .module-summary { border-bottom: 1px solid var(--bor
 }
 /* Jadval ichidagi aloqa havolalari: bosish sohasi ≥ 24px (WCAG 2.5.8). */
 .table td a.nowrap, .table td .meta a { display: inline-block; padding: 4px 0; }
+
+/* --- Redizayn P1b: guruh jurnali (mobil matritsa — ichki surilish aniq ko'rinadi) --- */
+.show-mobile-block { display: none; }
+.journal-wrap:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+@media (max-width: 640px) {
+  .show-mobile-block { display: flex; }
+  .scroll-hint { align-items: center; justify-content: center; gap: 6px; margin: 0; padding: 8px 12px; color: var(--text-2); font-size: 12.5px; border-top: 1px solid var(--border); }
+  .journal .sticky-col { min-width: 132px; max-width: 132px; white-space: normal; }
+  .journal .sticky-col .avatar { display: none; }
+  .journal .sticky-col .person-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .journal-wrap { background:
+    linear-gradient(to left, var(--surface) 30%, transparent) right / 24px 100% no-repeat local,
+    linear-gradient(to left, rgba(0,0,0,.12), transparent) right / 12px 100% no-repeat scroll; }
+}
