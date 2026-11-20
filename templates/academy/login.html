@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10244c">
+  <meta name="theme-color" content="#101e36">
   <meta name="color-scheme" content="light dark">
   <title>{% translate "Kirish · Minar Test" %}</title>
   {% include "academy/includes/head.html" %}
@@ -58,8 +58,8 @@
         <span class="brand-name">{% translate "Minar Test" %}</span>
       </div>
       <p class="kicker">{% icon "lock" 14 %} {% translate "Faqat ustoz uchun" %}</p>
-      <h1>{% translate "Xush kelibsiz" %}</h1>
-      <p class="muted auth-lead">{% translate "Davom etish uchun hisobingizga kiring." %}</p>
+      <h1>{% translate "Hisobga kirish" %}</h1>
+      <p class="muted auth-lead">{% translate "Login va parolni markaz administratori beradi." %}</p>
       <form method="post" novalidate>
         {% csrf_token %}
         {% if locked_message %}

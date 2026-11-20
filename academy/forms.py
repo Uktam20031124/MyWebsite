@@ -33,7 +33,8 @@ class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["username"].widget.attrs.update(
-            {"class": "input", "placeholder": _("Login"), "autofocus": True, "autocomplete": "username"}
+            {"class": "input", "placeholder": _("Login"), "autofocus": True, "autocomplete": "username",
+             "autocapitalize": "none", "spellcheck": "false"}
         )
         self.fields["password"].widget.attrs.update(
             {"class": "input", "placeholder": _("Parol"), "autocomplete": "current-password"}

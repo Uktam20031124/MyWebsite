@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#10244c">
+  <meta name="theme-color" content="#101e36">
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}{% translate "Minar Test" %}{% endblock %}</title>
   {% include "academy/includes/head.html" %}
@@ -55,27 +55,43 @@
       </div>
       {% endif %}
       {% if not is_teacher or teacher_center %}
+      {# Badge — faqat bajarilishi kerak bo'lgan ish soni (katalog hajmi sahifa ichida). Ruxsat shartlari o'zgarmagan. #}
       <div class="nav-label">{% translate "O‘quv markazi" %}</div>
       <div class="nav">
         {% if not is_teacher or 'groups' in teacher_sections %}
         <a href="{% url 'group_list' %}" {% if 'group' in url_name or 'syllabus' in url_name or url_name == 'start_lesson' %}aria-current="page"{% endif %}>
-          {% icon "layers" %} {% translate "Guruhlar" %} <span class="count">{{ nav_groups }}</span>
+          {% icon "layers" %} {% translate "Guruhlar" %}
         </a>
         {% endif %}
         {% if not is_teacher or 'students' in teacher_sections %}
-        <a href="{% url 'student_list' %}" {% if 'student' in url_name %}aria-current="page"{% endif %}>
-          {% icon "users" %} {% translate "Shogirdlar" %} <span class="count">{{ nav_students }}</span>
+        <a href="{% url 'student_list' %}" {% if 'student' in url_name or url_name == 'contacts_import' %}aria-current="page"{% endif %}>
+          {% icon "users" %} {% translate "Shogirdlar" %}
         </a>
         {% endif %}
+        {% if not is_teacher or 'lessons' in teacher_sections %}
+        <a href="{% url 'lesson_list' %}" {% if 'lesson' in url_name and 'topic_lesson' != url_name or url_name == 'attendance' %}aria-current="page"{% endif %}>
+          {% icon "lesson" %} {% translate "Darslar" %}
+        </a>
+        {% endif %}
+        {% if not is_teacher or 'topics' in teacher_sections %}
+        <a href="{% url 'topic_list' %}" {% if 'topic' in url_name or 'module' in url_name or url_name == 'quiz_edit' %}aria-current="page"{% endif %}>
+          {% icon "book" %} {% translate "Mavzular" %}
+        </a>
+        {% endif %}
+        {% if not is_teacher or 'tests' in teacher_sections %}
+        <a href="{% url 'quiz_batches' %}" {% if url_name == 'quiz_send' or 'quiz_batch' in url_name or 'open_quiz' in url_name or 'open_attempt' in url_name or url_name == 'quiz_attempt_review' %}aria-current="page"{% endif %}>
+          {% icon "target" %} {% translate "Testlar" %}
+        </a>
+        {% endif %}
+      </div>
+
+      {% if not is_teacher or 'registrations' in teacher_sections or 'homework' in teacher_sections or 'warnings' in teacher_sections or 'requests' in teacher_sections %}
+      <div class="nav-label">{% translate "Navbatlar" %}</div>
+      <div class="nav">
         {% if not is_teacher or 'registrations' in teacher_sections %}
         <a href="{% url 'registrations' %}" {% if 'registration' in url_name %}aria-current="page"{% endif %}>
           {% icon "user" %} {% translate "Arizalar" %}
           {% if nav_registrations %}<span class="count hot" title="{% translate "Tekshirilishi kutilayotgan arizalar" %}">{{ nav_registrations }}</span>{% endif %}
-        </a>
-        {% endif %}
-        {% if not is_teacher or 'lessons' in teacher_sections %}
-        <a href="{% url 'lesson_list' %}" {% if 'lesson' in url_name or url_name == 'attendance' %}aria-current="page"{% endif %}>
-          {% icon "lesson" %} {% translate "Darslar" %} <span class="count">{{ nav_lessons }}</span>
         </a>
         {% endif %}
         {% if not is_teacher or 'homework' in teacher_sections %}
@@ -84,31 +100,10 @@
           {% if nav_homework %}<span class="count hot" title="{% translate "Tekshirilmagan uyga vazifalar" %}">{{ nav_homework }}</span>{% endif %}
         </a>
         {% endif %}
-        {% if not is_teacher or 'topics' in teacher_sections %}
-        <a href="{% url 'topic_list' %}" {% if 'topic' in url_name or 'module' in url_name %}aria-current="page"{% endif %}>
-          {% icon "book" %} {% translate "Mavzular" %} <span class="count">{{ nav_topics }}</span>
-        </a>
-        {% endif %}
-        {% if not is_teacher or 'tests' in teacher_sections %}
-        <a href="{% url 'quiz_batches' %}" {% if url_name == 'quiz_send' or 'quiz_batch' in url_name or 'open_quiz' in url_name or 'open_attempt' in url_name %}aria-current="page"{% endif %}>
-          {% icon "target" %} {% translate "Testlar" %}
-          {% if nav_quiz_open %}<span class="count" title="{% translate "Hali yechilmagan test havolalari" %}">{{ nav_quiz_open }}</span>{% endif %}
-        </a>
-        {% endif %}
-        {% if not is_teacher or 'rewards' in teacher_sections %}
-        <a href="{% url 'rewards' %}" {% if url_name == 'rewards' or url_name == 'reward_edit' %}aria-current="page"{% endif %}>
-          {% icon "trophy" %} {% translate "Mukofotlar" %}
-        </a>
-        {% endif %}
         {% if not is_teacher or 'warnings' in teacher_sections %}
         <a href="{% url 'quiz_warnings' %}" {% if url_name == 'quiz_warnings' %}aria-current="page"{% endif %}>
           {% icon "alert" %} {% translate "Ogohlantirishlar" %}
           {% if nav_warnings %}<span class="count hot" title="{% translate "Test paytida ogohlantirish olgan, hali ko‘rib chiqilmagan o‘quvchilar" %}">{{ nav_warnings }}</span>{% endif %}
-        </a>
-        {% endif %}
-        {% if request.user.is_superuser %}
-        <a href="{% url 'teacher_list' %}" {% if 'teacher_' in url_name %}aria-current="page"{% endif %}>
-          {% icon "users" %} {% translate "O‘qituvchilar" %}
         </a>
         {% endif %}
         {% if not is_teacher or 'requests' in teacher_sections %}
@@ -118,6 +113,23 @@
         </a>
         {% endif %}
       </div>
+      {% endif %}
+
+      {% if not is_teacher or 'rewards' in teacher_sections or request.user.is_superuser %}
+      <div class="nav-label">{% translate "Boshqaruv" %}</div>
+      <div class="nav">
+        {% if not is_teacher or 'rewards' in teacher_sections %}
+        <a href="{% url 'rewards' %}" {% if url_name == 'rewards' or url_name == 'reward_edit' or url_name == 'purchase_decide' %}aria-current="page"{% endif %}>
+          {% icon "trophy" %} {% translate "Mukofotlar" %}
+        </a>
+        {% endif %}
+        {% if request.user.is_superuser %}
+        <a href="{% url 'teacher_list' %}" {% if 'teacher_' in url_name or url_name == 'action_log' %}aria-current="page"{% endif %}>
+          {% icon "users" %} {% translate "O‘qituvchilar" %}
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
       {% endif %}
     </nav>
 

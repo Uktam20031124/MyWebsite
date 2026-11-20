@@ -3,14 +3,14 @@
 {% block title %}{% translate "Dars jadvali · Minar Test" %}{% endblock %}
 {% block kicker %}{% icon "calendar" 15 %} {{ monday|date:"j E" }} — {% with sunday=days.6.date %}{{ sunday|date:"j E Y" }}{% endwith %}{% endblock %}
 {% block heading %}{% translate "Dars jadvali" %}{% endblock %}
-{% block subheading %}<p class="page-sub">{% blocktranslate with sessions=sessions|length trimmed %}{{ sessions }} ta dars shu haftada. Blokni bosing — dars yoki guruh sahifasi ochiladi.{% endblocktranslate %}</p>{% endblock %}
+{% block subheading %}<p class="page-sub">{% blocktranslate with sessions=sessions|length trimmed %}{{ sessions }} ta dars shu haftada.{% endblocktranslate %}</p>{% endblock %}
 {% block actions %}
 <div class="seg-tabs" role="group" aria-label="{% translate "Hafta" %}">
   <a href="?hafta={{ prev|date:'Y-m-d' }}" aria-label="{% translate "Oldingi hafta" %}">{% icon "left" 16 %}</a>
   <a href="?hafta={{ this_week|date:'Y-m-d' }}" {% if monday == this_week %}aria-current="true"{% endif %}>{% translate "Shu hafta" %}</a>
   <a href="?hafta={{ next|date:'Y-m-d' }}" aria-label="{% translate "Keyingi hafta" %}">{% icon "right" 16 %}</a>
 </div>
-<button class="btn soft no-print" type="button" onclick="window.print()">{% icon "print" 16 %} {% translate "Chop etish" %}</button>
+<button class="btn soft no-print hide-mobile" type="button" onclick="window.print()">{% icon "print" 16 %} {% translate "Chop etish" %}</button>
 {% endblock %}
 
 {% block content %}
@@ -25,8 +25,31 @@
   </div>
 {% endif %}
 
-<section class="card">
-  <div class="table-wrap">
+{# Mobil standart ko'rinish: sanalar tasmasi + tanlangan kun ro'yxati (gorizontal surishsiz). #}
+<section class="tt-agenda{% if grid_view %} is-hidden{% endif %}" aria-labelledby="agenda-h">
+  <nav class="day-strip" aria-label="{% translate "Hafta kunlari" %}">
+    {% for d in days %}
+      <a href="?hafta={{ monday|date:'Y-m-d' }}&amp;kun={{ d.date|date:'Y-m-d' }}" class="{% if d.is_today %}is-today{% endif %}"
+         {% if d.date == selected_day %}aria-current="date"{% endif %}
+         aria-label="{{ d.date|weekday_full }}, {{ d.date|date:'j E' }}{% if d.is_today %} — {% translate "bugun" %}{% endif %}{% if d.items %} · {% blocktranslate count n=d.items|length %}{{ n }} ta dars{% plural %}{{ n }} ta dars{% endblocktranslate %}{% endif %}">
+        <span class="dname">{{ d.date|weekday_short }}</span>
+        <span class="dnum tabular">{{ d.date|date:"j" }}</span>
+        <span class="dots" aria-hidden="true">{% for i in d.items|slice:":3" %}<i></i>{% endfor %}</span>
+      </a>
+    {% endfor %}
+  </nav>
+  <h2 id="agenda-h" class="agenda-title">{{ selected_day|weekday_full }}, {{ selected_day|date:"j E" }}{% if selected_day == today %} · <span class="meta">{% translate "bugun" %}</span>{% endif %}</h2>
+  {% if selected_sessions %}
+    <div class="sessions">{% for s in selected_sessions %}{% include "academy/includes/session.html" %}{% endfor %}</div>
+  {% else %}
+    <div class="empty compact"><p>{% translate "Bu kunda jadval bo‘yicha dars yo‘q." %}</p></div>
+  {% endif %}
+  <p class="agenda-more"><a href="?hafta={{ monday|date:'Y-m-d' }}&amp;korinish=grid">{% icon "calendar" 15 %} {% translate "Hafta gridini ko‘rsatish" %}</a></p>
+</section>
+
+<section class="card tt-grid-card{% if grid_view %} is-forced{% endif %}">
+  {% if grid_view %}<p class="agenda-more show-mobile"><a href="?hafta={{ monday|date:'Y-m-d' }}">{% icon "left" 15 %} {% translate "Kun ro‘yxatiga qaytish" %}</a></p>{% endif %}
+  <div class="table-wrap" role="region" aria-label="{% translate "Haftalik jadval" %}" tabindex="0">
     <div class="tt" style="--rows: {{ hours|length }}">
       <div class="tt-corner"></div>
       {% for d in days %}
@@ -43,7 +66,8 @@
         <div class="tt-col{% if d.is_today %} today{% endif %}" style="height: calc(var(--hour) * {{ hours|length }})">
           {% for item in d.items %}
             {% with s=item.session %}
-              <a class="tt-event {{ s.state }}" style="--h: {{ s.group|hue }}; top: {{ item.top|unlocalize }}%; height: {{ item.height|unlocalize }}%"
+              <a class="tt-event {{ s.state }}" style="--h: {{ s.group|hue }}; --lane: {{ item.lane }}; --lanes: {{ item.lanes }}; top: {{ item.top|unlocalize }}%; height: {{ item.height|unlocalize }}%"
+                 aria-label="{{ s.group.name }}, {{ d.date|weekday_full }} {{ s.starts_at|time:'H:i' }}{% if s.ends_at %}–{{ s.ends_at|time:'H:i' }}{% endif %}{% if s.topic %}, {{ s.topic|topic_title }}{% endif %}{% if s.state == 'done' %}, {% translate "o‘tildi" %}{% elif s.state == 'live' %}, {% translate "hozir" %}{% endif %}"
                  href="{% if s.lesson %}{{ s.lesson.get_absolute_url }}{% else %}{{ s.group.get_absolute_url }}{% endif %}"
                  title="{{ s.group.name }} · {{ s.starts_at|time:'H:i' }}{% if s.ends_at %}–{{ s.ends_at|time:'H:i' }}{% endif %}{% if s.topic %} · {{ s.topic|topic_title }}{% endif %}">
                 <strong class="truncate">{{ s.group.code }}{% if s.state == 'done' %} ✓{% endif %}</strong>
@@ -60,7 +84,7 @@
 </section>
 
 {% if sessions %}
-<section class="card" style="margin-top:18px">
+<section class="card tt-week-list" style="margin-top:18px">
   <div class="card-head"><h2>{% icon "lesson" 18 %} {% translate "Hafta bo‘yicha ro‘yxat" %}</h2></div>
   <div class="card-body">
     {% regroup sessions by day as by_day %}

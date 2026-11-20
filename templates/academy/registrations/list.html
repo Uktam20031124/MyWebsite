@@ -3,9 +3,9 @@
 {% block title %}{% translate "Arizalar · Minar Test" %}{% endblock %}
 {% block kicker %}{% icon "users" 15 %} {% translate "O‘quvchilar ma’lumotlari" %}{% endblock %}
 {% block heading %}{% translate "Arizalar" %}{% endblock %}
-{% block subheading %}<p class="page-sub">{% translate "Havolani Telegram guruhlariga tashlang — o‘quvchilar F.I.Sh., telefon va Telegram username’ini yuboradi. Siz tekshirib, bazaga qo‘shasiz." %}</p>{% endblock %}
+{% block subheading %}<p class="page-sub">{% translate "Ochiq havola orqali kelgan arizalarni tekshirib, bazaga qo‘shing." %}</p>{% endblock %}
 {% block actions %}
-{% if auto_n %}
+{% if auto_n and not links_view %}
   <form method="post" action="{% url 'registration_approve_all' %}">
     {% csrf_token %}
     <button class="btn primary" type="submit" data-confirm="{% blocktranslate with auto_n=auto_n trimmed %}{{ auto_n }} ta ariza tasdiqlanadi: ismi yagona o‘quvchiga mos kelganlar biriktiriladi, mos kelmagan va havolasi guruhga bog‘langanlar yangi o‘quvchi sifatida qo‘shiladi. Davom etilsinmi?{% endblocktranslate %}">{% icon "check" 16 %} {% blocktranslate with auto_n=auto_n trimmed %}Ishonchlilarni tasdiqlash ({{ auto_n }}){% endblocktranslate %}</button>
@@ -14,10 +14,20 @@
 {% endblock %}
 
 {% block content %}
+<div class="toolbar">
+  <nav class="seg-tabs" aria-label="{% translate "Arizalar bo‘limi" %}">
+    {% for value, label, n in statuses %}
+      <a href="?status={{ value }}" {% if not links_view and status == value %}aria-current="true"{% endif %}>{{ label }} <span class="meta tabular">{{ n }}</span></a>
+    {% endfor %}
+    <a href="?korinish=havolalar" {% if links_view %}aria-current="true"{% endif %}>{% icon "link" 14 %} {% translate "Havolalar" %} <span class="meta tabular">{{ links|length }}</span></a>
+  </nav>
+</div>
+
+{% if links_view %}
 <section class="card" id="links" aria-labelledby="links-h">
   <div class="card-head">
     <h2 id="links-h">{% icon "link" 18 %} {% translate "Havolalar" %}</h2>
-    <span class="meta">{% translate "Har bir Telegram guruhi uchun alohida havola — arizalar o‘sha guruhga taklif qilinadi" %}</span>
+    <span class="meta">{% translate "Har bir Telegram guruhi uchun alohida havola" %}</span>
   </div>
   <div class="card-body flush">
     <div class="rows">
@@ -53,15 +63,7 @@
     <button class="btn primary" type="submit">{% icon "plus" 16 %} {% translate "Havola yaratish" %}</button>
   </form>
 </section>
-
-<div class="toolbar" style="margin-top:22px">
-  <nav class="seg-tabs" aria-label="{% translate "Holat" %}">
-    {% for value, label, n in statuses %}
-      <a href="?status={{ value }}" {% if status == value %}aria-current="true"{% endif %}>{{ label }} <span class="meta">{{ n }}</span></a>
-    {% endfor %}
-  </nav>
-</div>
-
+{% else %}
 <section class="card" aria-label="{% translate "Arizalar" %}">
   <div class="card-body flush">
     <div class="rows">
@@ -125,4 +127,5 @@
     </div>
   </div>
 </section>
+{% endif %}
 {% endblock %}

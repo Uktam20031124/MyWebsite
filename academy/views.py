@@ -239,6 +239,19 @@ def timetable(request):
     ctx = week_timetable(week_start(day), groups)
     ctx["unscheduled"] = active.filter(Q(days="") | Q(starts_at=None))
     ctx["this_week"] = week_start(timezone.localdate())
+    # Mobil agenda: tanlangan kun (?kun=YYYY-MM-DD) — shu haftada bo'lsa; aks holda bugun yoki dushanba.
+    week_days = [d["date"] for d in ctx["days"]]
+    try:
+        selected = date.fromisoformat(request.GET.get("kun", ""))
+    except ValueError:
+        selected = None
+    if selected not in week_days:
+        today = timezone.localdate()
+        selected = today if today in week_days else week_days[0]
+    ctx["selected_day"] = selected
+    ctx["selected_sessions"] = [s for s in ctx["sessions"] if s.day == selected]
+    ctx["grid_view"] = request.GET.get("korinish") == "grid"
+    ctx["today"] = timezone.localdate()
     return render(request, "academy/timetable.html", ctx)
 
 
@@ -358,6 +371,7 @@ class GroupDetailView(AuthMixin, DetailView):
             ).filter(free__gt=0),
             next_item=group.next_syllabus_item(),
         )
+        ctx["syllabus_modules"] = syllabus_by_module(ctx["syllabus"], ctx["next_item"])
         active = [s for s in students if s.status == Student.Status.ACTIVE]
         ctx["contact_missing"] = [s for s in active if not has_contact(s)]
         ctx["contact_total"] = len(active)
@@ -370,6 +384,26 @@ class GroupDetailView(AuthMixin, DetailView):
         ctx["coin_board"] = engagement.quvvat_board(self.object.pk)[: engagement.LEADERBOARD_SIZE]
         ctx["email_ready"] = mailer.is_configured()
         return ctx
+
+
+def syllabus_by_module(items, next_item) -> list[dict]:
+    """Dastur qatorlarini ketma-ket bo'limlarga yig'adi (tartib o'zgarmaydi). Faqat navbatdagi mavzu turgan
+    bo'lim ochiq (uzun dastur sahifani cho'zmasin); qolganlari bajarilgan/jami bilan yopiq. Har qatorga tartib (n)."""
+    sections: list[dict] = []
+    next_pk = next_item.pk if next_item else None
+    for n, item in enumerate(items, 1):
+        item.n = n
+        module = item.topic.module
+        if not sections or sections[-1]["module_id"] != item.topic.module_id:
+            sections.append({"module_id": item.topic.module_id, "module": module, "items": []})
+        sections[-1]["items"].append(item)
+    for sec in sections:
+        sec["taught"] = sum(i.status == SyllabusItem.Status.TAUGHT for i in sec["items"])
+        sec["open"] = any(i.pk == next_pk for i in sec["items"])
+    if sections and not any(sec["open"] for sec in sections):  # navbatdagi yo'q — birinchi to'liq o'tilmagan bo'lim
+        target = next((sec for sec in sections if sec["taught"] < len(sec["items"])), sections[0])
+        target["open"] = True
+    return sections
 
 
 JOURNAL_LIMIT = 30
@@ -995,6 +1029,7 @@ def attendance_sheet(request, pk):
             {
                 "student": student,
                 "status": rec.status if rec else Attendance.Status.PRESENT,
+                "saved": rec is not None,
                 "note": rec.note if rec else "",
                 "score": rec.score if rec else None,
             }
@@ -2133,9 +2168,11 @@ def registrations(request):
             messages.success(
                 request, _("“{title}” havolasi yaratildi — nusxalab guruhga tashlang.").format(title=link.title)
             )
-            return redirect(f"{reverse('registrations')}#links")
+            return redirect(f"{reverse('registrations')}?korinish=havolalar#links")
 
     status = choice_param(request, "status", Registration.Status) or Registration.Status.PENDING
+    # "Havolalar" — alohida yorliq; navbat (Kutilmoqda) standart ko'rinish. Xato forma ham shu yorliqda qaytadi.
+    links_view = request.GET.get("korinish") == "havolalar" or request.method == "POST"
     pending = Q(registrations__status=Registration.Status.PENDING)
     links = list(
         teachers.scope(user, RegistrationLink.objects.select_related("group"), "group__teacher").annotate(
@@ -2157,6 +2194,7 @@ def registrations(request):
         {
             "link_form": link_form,
             "links": links,
+            "links_view": links_view,
             "regs": regs,
             "status": status,
             "statuses": [(v, label, counts.get(v, 0)) for v, label in Registration.Status.choices],
@@ -2264,7 +2302,7 @@ def registration_link_action(request, pk):
                 request,
                 _("“{title}” havolasi to‘xtatildi — endi ariza qabul qilmaydi.").format(title=link.title),
             )
-    return redirect(f"{reverse('registrations')}#links")
+    return redirect(f"{reverse('registrations')}?korinish=havolalar#links")
 
 
 @never_cache
