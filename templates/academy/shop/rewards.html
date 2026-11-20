@@ -4,7 +4,7 @@
 {% block kicker %}{% icon "trophy" 15 %} {% translate "Motivatsiya" %}{% endblock %}
 {% block heading %}{% translate "Mukofotlar" %}{% endblock %}
 {% block subheading %}<p class="page-sub">{% translate "O‘quvchilar quvvat ⚡️ yig‘ib, shu mukofotlarni so‘raydi. So‘rov “So‘rovlar” bo‘limiga keladi; siz tasdiqlasangiz — quvvat sarflanadi." %}</p>{% endblock %}
-{% block actions %}<a class="btn soft" href="{% url 'quiz_review_requests' %}">{% icon "shield" 16 %} {% translate "So‘rovlar" %}</a>{% endblock %}
+{% block actions %}<a class="btn soft" href="{% url 'quiz_review_requests' %}">{% icon "shield" 16 %} {% translate "So‘rovlar" %}</a>{% if not editing %}<a class="btn primary" href="#reward-form" data-open-details="reward-form">{% icon "plus" 16 %} {% translate "Yangi sovg‘a" %}</a>{% endif %}{% endblock %}
 
 {% block content %}
 <div class="split">
@@ -18,13 +18,14 @@
             <strong>{{ r.cost }} ⚡️</strong>
           </a>
         {% empty %}
-          <div class="empty compact"><p>{% translate "Sovg‘a yo‘q — o‘ngdagi formadan qo‘shing." %}</p></div>
+          <div class="empty compact"><p>{% translate "Hali sovg‘a yo‘q." %}</p><a class="btn sm primary" href="#reward-form" data-open-details="reward-form">{% icon "plus" 14 %} {% translate "Yangi sovg‘a" %}</a></div>
         {% endfor %}
       </div>
     </div>
   </section>
-  <section class="card pad">
-    <h2 style="margin-top:0">{% if editing %}{% blocktranslate with title=editing.title trimmed %}Tahrirlash: {{ title }}{% endblocktranslate %}{% else %}{% translate "Yangi sovg‘a" %}{% endif %}</h2>
+  {# Yaratish formasi "Yangi sovg'a" amali bilan ochiladi; tahrir yoki xato bo'lsa — ochiq. #}
+  <details class="card pad reward-form" id="reward-form"{% if editing or form.errors %} open{% endif %}>
+    <summary class="reward-form-summary"><h2>{% if editing %}{% blocktranslate with title=editing.title trimmed %}Tahrirlash: {{ title }}{% endblocktranslate %}{% else %}{% icon "plus" 16 %} {% translate "Yangi sovg‘a" %}{% endif %}</h2></summary>
     <form method="post" novalidate>
       {% csrf_token %}
       {% include "academy/includes/form_fields.html" with wide="title,description" %}
@@ -33,7 +34,7 @@
         {% if editing %}<a class="btn ghost" href="{% url 'rewards' %}">{% translate "Bekor" %}</a>{% endif %}
       </div>
     </form>
-  </section>
+  </details>
 </div>
 
 {% if recent %}

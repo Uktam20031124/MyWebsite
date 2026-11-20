@@ -325,3 +325,16 @@ def active_filters(context, names: str) -> int:
     """Ro'yxat filtrlaridan nechtasi tanlangan (GET'da bo'sh emas): {% active_filters "group,status" as n %}."""
     get = context["request"].GET
     return sum(1 for name in names.split(",") if get.get(name.strip()))
+
+
+@register.filter
+def until_hours(hours) -> str:
+    """Hozirdan N soat keyingi mahalliy vaqt (HH:MM) — ruxsat muddatining aniq tugashi."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    try:
+        return timezone.localtime(timezone.now() + timedelta(hours=int(hours))).strftime("%H:%M")
+    except (TypeError, ValueError):
+        return ""

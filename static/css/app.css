@@ -2273,7 +2273,8 @@ h1 .honor-medal, .page-head .honor-medal, .p-hero h1 .honor-medal { width: 0.78e
 /* --- Test ogohlantirishlari va jarima ------------------------------------------- */
 .warning-row { flex-wrap: wrap; row-gap: 8px; }
 .warning-facts { display: inline-flex; flex-wrap: wrap; gap: 6px; }
-.penalty-form { margin-left: auto; }
+.penalty-form { margin-left: auto; flex-wrap: wrap; align-items: center; gap: 6px; }
+.penalty-form .penalty-select { width: auto; min-width: 92px; height: 36px; }
 .callout .penalty-form { justify-content: flex-start; margin: 10px 0 0; }
 
 /* --- Guruh quvvat reytingi: 1–3-o'rin — oltin, kumush, bronza ism -------------- */
@@ -2596,3 +2597,22 @@ details.module-card[open] > .module-summary { border-bottom: 1px solid var(--bor
     linear-gradient(to left, var(--surface) 30%, transparent) right / 24px 100% no-repeat local,
     linear-gradient(to left, rgba(0,0,0,.12), transparent) right / 12px 100% no-repeat scroll; }
 }
+
+/* --- Redizayn P2: so'rovlar va ogohlantirishlar (mobilda ism o'qiladi, amallar keyingi qatorda) --- */
+@media (max-width: 640px) {
+  .quiz-row > .grow, .quiz-row > .person, .quiz-row > a.person { flex: 1 1 100%; min-width: 0; }
+  .quiz-row .quiz-actions, .quiz-row .penalty-form { margin-left: 0; flex: 1 1 100%; justify-content: flex-start; }
+  .quiz-row .truncate { white-space: normal; }
+}
+
+details.notice { display: block; }
+details.notice > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; cursor: pointer; list-style: none; min-height: 28px; }
+details.notice > summary::-webkit-details-marker { display: none; }
+details.notice > summary .meta { text-decoration: underline; }
+.kpis.compact:has(> .kpi:nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 640px) { .kpis.compact:has(> .kpi:nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .kpis.compact .kpi { padding: 10px; } }
+
+.reward-form > summary { list-style: none; cursor: pointer; }
+.reward-form > summary::-webkit-details-marker { display: none; }
+.reward-form > summary h2 { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+.reward-form[open] > summary { margin-bottom: 14px; }

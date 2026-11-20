@@ -21,7 +21,7 @@
 
 <section class="card">
   <div class="card-body flush table-wrap">
-    <table class="table report-table">
+    <table class="table report-table responsive">
       <thead>
         <tr>
           <th>{% translate "O‘qituvchi" %}</th>
@@ -36,16 +36,17 @@
       <tbody>
         {% for r in rows %}
           <tr>
-            <td>
+            <td class="cell-main">
               <a href="{% url 'teacher_edit' r.user.pk %}"><strong>{{ r.user.get_full_name|default:r.user.username }}</strong></a>
               <span class="meta block">{% for g in r.groups %}{{ g.code }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "guruh yo‘q" %}{% endfor %} · {% blocktranslate with n=r.students trimmed %}{{ n }} o‘quvchi{% endblocktranslate %}</span>
             </td>
-            <td class="num"><strong>{{ r.lessons }}</strong>{% if r.cancelled or r.planned %}<span class="meta block">{% blocktranslate with c=r.cancelled p=r.planned trimmed %}bekor {{ c }} · rejada {{ p }}{% endblocktranslate %}</span>{% endif %}</td>
-            <td class="num">{{ r.tests }}<span class="meta block">{% blocktranslate with n=r.results trimmed %}{{ n }} yechildi{% endblocktranslate %}</span></td>
-            <td class="num">{% if r.avg_percent is not None %}<span class="badge tone-{{ r.avg_percent|quiz_tone }}">{{ r.avg_percent }}%</span>{% else %}<span class="meta">—</span>{% endif %}</td>
-            <td class="num">{% if r.attendance is not None %}{{ r.attendance }}%{% else %}<span class="meta">—</span>{% endif %}</td>
-            <td class="num">
-              <strong>{{ r.salary|intspace }}</strong>
+            <td class="num" data-label="{% translate "Darslar" %}"><strong>{{ r.lessons }}</strong>{% if r.cancelled or r.planned %}<span class="meta block">{% blocktranslate with c=r.cancelled p=r.planned trimmed %}bekor {{ c }} · rejada {{ p }}{% endblocktranslate %}</span>{% endif %}</td>
+            <td class="num" data-label="{% translate "Testlar" %}">{{ r.tests }}<span class="meta block">{% blocktranslate with n=r.results trimmed %}{{ n }} yechildi{% endblocktranslate %}</span></td>
+            <td class="num" data-label="{% translate "Natija" %}">{% if r.avg_percent is not None %}<span class="badge tone-{{ r.avg_percent|quiz_tone }}">{{ r.avg_percent }}%</span>{% else %}<span class="meta">—</span>{% endif %}</td>
+            <td class="num" data-label="{% translate "Davomat" %}">{% if r.attendance is not None %}{{ r.attendance }}%{% else %}<span class="meta">—</span>{% endif %}</td>
+            <td class="num" data-label="{% translate "Maosh" %}">
+              {# Narx kiritilmagan — "—" (haqiqiy 0 so'm to'lovdan ajraladi). #}
+              {% if r.account.lesson_rate or r.account.monthly_fixed %}<strong class="tabular">{% blocktranslate with sum=r.salary|intspace trimmed %}{{ sum }} so‘m{% endblocktranslate %}</strong>{% else %}<strong class="muted">—</strong>{% endif %}
               <span class="meta block">{% if r.account.lesson_rate or r.account.monthly_fixed %}{{ r.lessons }} × {{ r.account.lesson_rate|intspace }}{% if r.account.monthly_fixed %} + {{ r.account.monthly_fixed|intspace }}{% endif %}{% else %}<a href="{% url 'teacher_edit' r.user.pk %}">{% translate "narx kiritilmagan" %}</a>{% endif %}</span>
             </td>
             <td>

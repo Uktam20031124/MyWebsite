@@ -42,34 +42,30 @@
   <div class="grow">{% blocktranslate with scheduled_at=batch.scheduled_at|date:"d.m.Y H:i" trimmed %}<strong>Havolalar {{ scheduled_at }} da avtomatik yuboriladi.</strong>{% endblocktranslate %}<div class="meta">{% translate "Kanal:" %} {% if 'telegram' in batch.channels %}{% translate "Telegram" %}{% endif %}{% if 'telegram' in batch.channels and 'email' in batch.channels %} {% translate "va" %} {% endif %}{% if 'email' in batch.channels %}{% translate "email" %}{% endif %}{% translate ". Hozir yubormoqchi bo‘lsangiz — yuqoridagi “yuborish” tugmasi." %}</div></div>
 </div>
 {% endif %}
-<section class="kpis">
+<section class="kpis compact" aria-label="{% translate "Jo‘natma ko‘rsatkichlari" %}">
   <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">{% translate "Jo‘natildi" %}</span><span class="kpi-icon info">{% icon "send" 17 %}</span></div>
-    <div class="kpi-value">{{ attempts|length }}</div>
+    <span class="kpi-label">{% translate "Yechdi" %}</span>
+    <div class="kpi-value tabular">{{ finished_n }} <small>/ {{ attempts|length }}</small></div>
+    <div class="kpi-foot">{% translate "yechgan / jo‘natilgan" %}</div>
   </article>
   <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">{% translate "Yechdi" %}</span><span class="kpi-icon ok">{% icon "check" 17 %}</span></div>
-    <div class="kpi-value">{{ finished_n }}</div>
+    <span class="kpi-label">{% translate "Ochilmagan" %}</span>
+    <div class="kpi-value tabular">{{ pending_n }}</div>
+    <div class="kpi-foot">{% translate "hali boshlanmagan havolalar" %}</div>
   </article>
   <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">{% translate "Ochilmagan" %}</span><span class="kpi-icon gold">{% icon "clock" 17 %}</span></div>
-    <div class="kpi-value">{{ pending_n }}</div>
-  </article>
-  <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">{% translate "O‘rtacha natija" %}</span><span class="kpi-icon accent">{% icon "trophy" 17 %}</span></div>
-    <div class="kpi-value">{% if avg is not None %}{{ avg }}%{% else %}—{% endif %}</div>
+    <span class="kpi-label">{% translate "O‘rtacha natija" %}</span>
+    {% if avg is not None %}<div class="kpi-value tabular">{{ avg }}<small>%</small></div><div class="kpi-foot">{% translate "yakunlanganlar bo‘yicha" %}</div>
+    {% else %}<div class="kpi-value muted">—</div><div class="kpi-foot">{% translate "Hali natija yo‘q" %}</div>{% endif %}
   </article>
 </section>
 
 {% if not telegram_ready %}
-  <div class="callout warn" style="margin-bottom:18px">
-    <span class="callout-icon">{% icon "alert" 18 %}</span>
-    <div class="grow">
-      {% blocktranslate trimmed %}<strong>Telegram ulanmagan — havolalar yuborilmadi.</strong>{% endblocktranslate %}
-      <div class="meta" style="margin-top:4px">{% blocktranslate with sender_id=sender_id telegram_hint=telegram_hint trimmed %}Testlar faqat {{ sender_id }} akkauntidan yuboriladi. {{ telegram_hint }}{% endblocktranslate %}</div>
-      {% if email_ready %}<div class="meta" style="margin-top:4px">{% translate "Gmail ulangan — havolalarni email orqali yuborishingiz mumkin." %}</div>{% else %}<div class="meta" style="margin-top:4px">{% blocktranslate with email_hint=email_hint trimmed %}Yoki Gmail orqali: {{ email_hint }}{% endblocktranslate %}</div>{% endif %}
-    </div>
-  </div>
+  <details class="callout warn notice" style="margin-bottom:18px">
+    <summary>{% icon "alert" 16 %} <strong>{% translate "Telegram ulanmagan — havolalar avtomatik yuborilmadi." %}</strong> <span class="meta">{% translate "Qanday ulash?" %}</span></summary>
+    <div class="meta" style="margin-top:8px">{% blocktranslate with sender_id=sender_id telegram_hint=telegram_hint trimmed %}Testlar faqat {{ sender_id }} akkauntidan yuboriladi. {{ telegram_hint }}{% endblocktranslate %}</div>
+    {% if email_ready %}<div class="meta" style="margin-top:4px">{% translate "Gmail ulangan — havolalarni email orqali yuborishingiz mumkin." %}</div>{% else %}<div class="meta" style="margin-top:4px">{% blocktranslate with email_hint=email_hint trimmed %}Yoki Gmail orqali: {{ email_hint }}{% endblocktranslate %}</div>{% endif %}
+  </details>
 {% endif %}
 
 <section class="card quiz-card" id="quiz" aria-labelledby="links-h">
