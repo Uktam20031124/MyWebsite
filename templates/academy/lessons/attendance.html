@@ -20,15 +20,14 @@
     {% if rows %}
     <div class="att-toolbar">
       <button type="button" class="btn sm soft" data-mark-all="present">{% icon "check" 15 %} {% translate "Hammasi keldi" %}</button>
-      <button type="button" class="btn sm ghost" data-mark-all="absent">{% translate "Hammasi kelmadi" %}</button>
+      <button type="button" class="btn sm ghost" data-mark-all="absent" data-mark-confirm="{% translate "Barcha shogirdlar “Kelmadi” deb belgilanadi. Avval tanlangan holatlar almashtiriladi (saqlamaguningizcha bazaga yozilmaydi)." %}">{% translate "Hammasi kelmadi" %}</button>
       <span class="spacer"></span>
-      <span class="att-counts" data-attendance-count aria-live="polite"></span>
-      {% if not is_saved %}<span class="badge warn">{% translate "Hali saqlanmagan" %}</span>{% endif %}
+      <span class="att-counts" data-attendance-count aria-live="polite" data-label-unsaved="{% translate "saqlanmagan" %}"></span>
     </div>
     {% endif %}
 
     {% for row in rows %}
-      <fieldset class="att-row">
+      <fieldset class="att-row{% if row.score is not None or row.note %} has-extra{% endif %}" data-saved="{{ row.saved|yesno:'1,0' }}">
         <legend class="person">
           <span class="avatar{% if row.student.honor_since %} honor{% endif %}" style="--h: {{ row.student.full_name|hue }}" aria-hidden="true">{{ row.student.initials }}</span>
           <span class="truncate">
@@ -46,7 +45,11 @@
             </label>
           {% endfor %}
         </div>
-        <div class="att-extra">
+        <button type="button" class="att-more-btn" aria-expanded="false" aria-controls="extra-{{ row.student.pk }}" data-att-more
+                data-label-empty="{% translate "Ball / izoh" %}" data-label-score="{% translate "Ball" %}" data-label-note="{% translate "izoh bor" %}">
+          {% icon "edit" 14 %} <span data-att-more-label>{% if row.score is not None %}{% translate "Ball" %} {{ row.score }}{% if row.note %} · {% translate "izoh bor" %}{% endif %}{% elif row.note %}{% translate "izoh bor" %}{% else %}{% translate "Ball / izoh" %}{% endif %}</span>
+        </button>
+        <div class="att-extra" id="extra-{{ row.student.pk }}">
           <input class="input score-input" name="score_{{ row.student.pk }}" value="{{ row.score|default_if_none:'' }}" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="{% translate "Ball" %}" aria-label="{% blocktranslate with full_name=row.student.full_name trimmed %}{{ full_name }} uchun ball (0–100){% endblocktranslate %}">
           <input class="input" name="note_{{ row.student.pk }}" value="{{ row.note }}" placeholder="{% translate "Izoh" %}" maxlength="200" aria-label="{% blocktranslate with full_name=row.student.full_name trimmed %}{{ full_name }} uchun izoh{% endblocktranslate %}">
         </div>
@@ -61,11 +64,17 @@
 
     {% if rows %}
       <div class="att-foot">
-        <span class="meta">{% blocktranslate trimmed %}Klaviatura: holatni tanlang va <kbd>1</kbd>–<kbd>4</kbd> bosing — keyingi shogirdga o‘tadi.{% endblocktranslate %}</span>
-        <span class="spacer"></span>
+        <span class="meta hide-mobile">{% blocktranslate trimmed %}Klaviatura: holatni tanlang va <kbd>1</kbd>–<kbd>4</kbd> bosing — keyingi shogirdga o‘tadi.{% endblocktranslate %}</span>
+        <span class="spacer hide-mobile"></span>
         <button class="btn soft" type="submit">{% translate "Saqlash" %}</button>
-        <button class="btn soft" type="submit" name="then" value="quiz">{% icon "send" 16 %} {% translate "Saqlash va test jo‘natish" %}</button>
-        <button class="btn primary" type="submit" name="complete" value="1">{% icon "check" 16 %} {% translate "Saqlash va darsni yakunlash" %}</button>
+        <button class="btn soft hide-mobile" type="submit" name="then" value="quiz">{% icon "send" 16 %} {% translate "Saqlash va test jo‘natish" %}</button>
+        <details class="more-actions show-mobile-flex">
+          <summary class="btn soft square" aria-label="{% translate "Boshqa saqlash amallari" %}" title="{% translate "Boshqa saqlash amallari" %}">{% icon "more" 16 %}</summary>
+          <div class="more-menu" role="group" aria-label="{% translate "Boshqa saqlash amallari" %}">
+            <button class="btn ghost block" type="submit" name="then" value="quiz">{% icon "send" 16 %} {% translate "Saqlash va test jo‘natish" %}</button>
+          </div>
+        </details>
+        <button class="btn primary att-primary" type="submit" name="complete" value="1" aria-label="{% translate "Saqlash va darsni yakunlash" %}">{% icon "check" 16 %} <span class="hide-mobile">{% translate "Saqlash va darsni yakunlash" %}</span><span class="show-mobile-inline">{% translate "Saqlash va yakunlash" %}</span></button>
       </div>
     {% endif %}
   </form>

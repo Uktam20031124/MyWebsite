@@ -58,10 +58,48 @@
   });
 
   // --- Mobil menyu ---------------------------------------------------------
+  // Ochilganda fokus menyu ichiga o'tadi va Tab bilan ichida aylanadi; Escape yopadi;
+  // yopilganda fokus menyu tugmasiga qaytadi. Ochiq paytda asosiy qism "inert".
+  const focusables = (root) =>
+    $$('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])', root)
+      .filter((el) => el.offsetParent !== null);
   const setNav = (open) => {
+    const was = document.body.classList.contains("nav-open");
     document.body.classList.toggle("nav-open", open);
-    $("[data-nav-toggle]")?.setAttribute("aria-expanded", String(open));
+    const toggle = $("[data-nav-toggle]");
+    toggle?.setAttribute("aria-expanded", String(open));
+    const main = $("#content");
+    if (main) main.inert = open;
+    if (open && !was) requestAnimationFrame(() => focusables($("#sidebar"))[0]?.focus());
+    if (!open && was) toggle?.focus();
   };
+  document.addEventListener("keydown", (e) => {
+    if (!document.body.classList.contains("nav-open")) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setNav(false);
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const items = focusables($("#sidebar"));
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (!$("#sidebar").contains(document.activeElement)) {
+      e.preventDefault();
+      first.focus();
+    } else if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
+  // Menyudagi havola bosilib boshqa sahifaga o'tilganda drawer yopiq holatda ochiladi.
+  document.addEventListener("turbo:before-render", () => {
+    document.body.classList.remove("nav-open");
+  });
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-nav-toggle]")) setNav(!document.body.classList.contains("nav-open"));
     else if (e.target.closest("[data-nav-close]")) setNav(false);
@@ -194,6 +232,7 @@
     const btn = e.target.closest("[data-mark-all]");
     const form = $("[data-attendance-form]");
     if (!btn || !form) return;
+    if (btn.dataset.markConfirm && !window.confirm(btn.dataset.markConfirm)) return;
     $$(`input[type="radio"][value="${CSS.escape(btn.dataset.markAll)}"]`, form).forEach((el) => (el.checked = true));
     attendanceChanged(form);
   });
@@ -404,14 +443,37 @@
     const render = () => {
       const counts = {};
       $$('input[type="radio"]:checked', form).forEach((el) => (counts[el.value] = (counts[el.value] || 0) + 1));
-      counter.innerHTML = Object.keys(labels)
-        .filter((k) => counts[k])
-        .map((k) => `<span class="badge ${labels[k][1]}">${counts[k]} ${labels[k][0]}</span>`)
-        .join("");
+      const unsaved = $$('.att-row[data-saved="0"]', form).length;
+      counter.innerHTML =
+        Object.keys(labels)
+          .filter((k) => counts[k])
+          .map((k) => `<span class="badge ${labels[k][1]}">${counts[k]} ${labels[k][0]}</span>`)
+          .join("") + (unsaved ? `<span class="badge warn">${unsaved} ${counter.dataset.labelUnsaved || ""}</span>` : "");
     };
     form.addEventListener("change", render);
     render();
   };
+
+  // Yo'qlama: ball/izoh mobilda yig'ilgan — tugma ochadi; kiritilgan qiymat tugma matnida ko'rinadi.
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-att-more]");
+    if (!btn) return;
+    const row = btn.closest(".att-row");
+    const open = !row.classList.contains("extra-open");
+    row.classList.toggle("extra-open", open);
+    btn.setAttribute("aria-expanded", String(open));
+    if (open) $("input", $("#" + btn.getAttribute("aria-controls")))?.focus();
+  });
+  document.addEventListener("input", (e) => {
+    const row = e.target.closest?.(".att-row");
+    const btn = row && $("[data-att-more]", row);
+    if (!btn || !e.target.matches(".att-extra input")) return;
+    const score = $('input[name^="score_"]', row)?.value.trim();
+    const note = $('input[name^="note_"]', row)?.value.trim();
+    const parts = [score ? `${btn.dataset.labelScore} ${score}` : "", note ? btn.dataset.labelNote : ""].filter(Boolean);
+    $("[data-att-more-label]", btn).textContent = parts.join(" · ") || btn.dataset.labelEmpty;
+    row.classList.toggle("has-extra", parts.length > 0);
+  });
 
   // Ro'yxatni matn bo'yicha filtrlash: [data-filter-input="x"] → [data-filter-item="x"]
   const initFilters = () => {
@@ -502,10 +564,42 @@
     $$("[data-check-count]").forEach((el) => updateCheckCount(el.dataset.checkCount));
     initQuizPace();
     initAutoRefresh();
+    revealHash();
     // Kalendar: bugungi kunga avtomatik aylantirish (mobil)
     const today = $(".tt-col.today");
     if (today) today.closest(".table-wrap")?.scrollTo({ left: Math.max(0, today.offsetLeft - 70) });
   };
+
+  // --- Takror yuborishdan himoya (barcha POST formalar) ------------------------------
+  // Birinchi yuborishdan keyin forma "is-pending" bo'ladi; ikkinchi submit bekor qilinadi.
+  // Turbo javobi kelganda (xato bilan qaytsa ham) yoki sahifaga orqaga qaytilganda tiklanadi.
+  document.addEventListener("submit", (e) => {
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement) || (form.method || "").toLowerCase() !== "post" || form.target) return;
+    if (form.classList.contains("is-pending")) { e.preventDefault(); return; }
+    setTimeout(() => {
+      if (e.defaultPrevented) return;
+      form.classList.add("is-pending");
+      form.setAttribute("aria-busy", "true");
+    });
+  });
+  const resetPending = () => $$("form.is-pending").forEach((f) => { f.classList.remove("is-pending"); f.removeAttribute("aria-busy"); });
+  document.addEventListener("turbo:submit-end", resetPending);
+  window.addEventListener("pageshow", resetPending);
+
+  // URL fragmenti yopiq <details> ichidagi elementga ishora qilsa (#syllabus-12), bo'lim ochiladi.
+  const revealHash = () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    const el = id && document.getElementById(id);
+    if (!el) return;
+    let d = el.closest("details");
+    while (d) {
+      d.open = true;
+      d = d.parentElement?.closest("details");
+    }
+    el.scrollIntoView({ block: "start" });
+  };
+  window.addEventListener("hashchange", revealHash);
 
   // Turbo bor sahifalarda turbo:load har bir ko'rinishda (birinchisida ham) keladi.
   if (window.Turbo) document.addEventListener("turbo:load", init);

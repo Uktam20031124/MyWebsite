@@ -382,6 +382,37 @@ def week_start(day: date) -> date:
     return day - timedelta(days=day.weekday())
 
 
+def place_in_lanes(items: list[dict]) -> list[dict]:
+    """Bir vaqtga to'g'ri kelgan bloklar bir-birini yopmasligi uchun yonma-yon yo'laklarga joylanadi.
+
+    Har blokka "lane" (0 dan) va "lanes" (o'sha kesishuvchi to'plamdagi yo'laklar soni) qo'shiladi.
+    """
+    items = sorted(items, key=lambda i: (i["top"], -i["height"]))
+    cluster: list[dict] = []
+    lane_ends: list[float] = []
+    cluster_end = -1.0
+
+    def close():
+        for it in cluster:
+            it["lanes"] = len(lane_ends)
+
+    for it in items:
+        if cluster and it["top"] >= cluster_end:
+            close()
+            cluster, lane_ends = [], []
+        lane = next((n for n, end in enumerate(lane_ends) if it["top"] >= end), None)
+        if lane is None:  # bo'sh yo'lak yo'q — yangisi
+            lane = len(lane_ends)
+            lane_ends.append(0)
+        lane_ends[lane] = it["top"] + it["height"]
+        it["lane"] = lane
+        cluster.append(it)
+        cluster_end = max(cluster_end, lane_ends[lane]) if len(cluster) > 1 else lane_ends[lane]
+    if cluster:
+        close()
+    return items
+
+
 def week_timetable(monday: date, groups: list[Group] | None = None) -> dict:
     """Haftalik kalendar: 7 ustun, soatlar shkalasi va har bir dars blokining o'rni (%)."""
     sessions = sessions_between(monday, monday + timedelta(days=6), groups)
@@ -401,21 +432,16 @@ def week_timetable(monday: date, groups: list[Group] | None = None) -> dict:
     days = []
     for n in range(7):
         day = monday + timedelta(days=n)
-        days.append(
+        items = [
             {
-                "date": day,
-                "is_today": day == today,
-                "items": [
-                    {
-                        "session": s,
-                        "top": offset(s.starts_at),
-                        "height": round(s.duration_minutes / span * 100, 3),
-                    }
-                    for s in sessions
-                    if s.day == day
-                ],
+                "session": s,
+                "top": offset(s.starts_at),
+                "height": round(s.duration_minutes / span * 100, 3),
             }
-        )
+            for s in sessions
+            if s.day == day
+        ]
+        days.append({"date": day, "is_today": day == today, "items": place_in_lanes(items)})
     now = timezone.localtime()
     in_week = monday <= today <= monday + timedelta(days=6)
     return {
@@ -518,6 +544,16 @@ def risk_reasons(s) -> list[str]:
     return reasons
 
 
+def next_up_session(today_sessions: list, later_sessions: list):
+    """Bosh sahifadagi asosiy blok uchun bitta seans: hozir ketayotgan, bugun keyingisi, bugun yakunlanmagani
+    (dars yozilgan, lekin yakunlanmagan yoki umuman yozilmagan) yoki yaqin kunlardagi birinchi rejadagi dars."""
+    for wanted in ("live", "upcoming", "missed"):
+        for s in today_sessions:
+            if s.state == wanted:
+                return s
+    return later_sessions[0] if later_sessions else None
+
+
 def dashboard_payload():
     today = timezone.localdate()
     week_ago = today - timedelta(days=7)
@@ -565,8 +601,14 @@ def dashboard_payload():
     today_sessions = [s for s in week if s.day == today]
 
     lessons = Lesson.objects.select_related("group", "topic")
+    overdue_qs = lessons.filter(held_on__lt=today, status=Lesson.Status.PLANNED).order_by("held_on")
+    syllabus_total = sum(r["total"] for r in progress_rows)
+    syllabus_taught = sum(r["taught"] for r in progress_rows)
     return {
         "today": today,
+        # Ustozning hozirgi ustuvor ishi: hozirgi → bugungi keyingi → bugun yakunlanmagan → yaqin kunlardagi.
+        "next_up": next_up_session(today_sessions, [s for s in week if s.day > today]),
+        "overdue_count": overdue_qs.count(),
         "progress_rows": progress_rows,
         "today_sessions": today_sessions,
         "next_sessions": [s for s in week if s.day > today][:6],
@@ -578,24 +620,24 @@ def dashboard_payload():
             held_on__gt=today, status=Lesson.Status.PLANNED
         ).order_by("held_on", "starts_at")[:6],
         "recent": lessons.filter(status=Lesson.Status.COMPLETED)[:6],
-        "overdue": lessons.filter(
-            held_on__lt=today, status=Lesson.Status.PLANNED
-        ).order_by("held_on")[:6],
+        "overdue": overdue_qs[:6],
         "stats": {
             "groups": len(progress_rows),
             "students": Student.objects.filter(status=Student.Status.ACTIVE).count(),
             "lessons_week": Lesson.objects.filter(past_week).count(),
-            "attendance_pct": percent(week_att["present"], week_att["total"]),
+            # Belgilangan davomat yo'q — None ("ma'lumot yo'q"), haqiqiy 0% bilan aralashmasin.
+            "attendance_pct": percent(week_att["present"], week_att["total"]) if week_att["total"] else None,
+            "attendance_marked": week_att["total"],
+            "attendance_present": week_att["present"],
             "attendance_delta": (
                 this_week - last_week
                 if this_week is not None and last_week is not None
                 else None
             ),
             "sessions_week": len(week),
-            "syllabus_pct": percent(
-                sum(r["taught"] for r in progress_rows),
-                sum(r["total"] for r in progress_rows),
-            ),
+            "syllabus_pct": percent(syllabus_taught, syllabus_total) if syllabus_total else None,
+            "syllabus_taught": syllabus_taught,
+            "syllabus_total": syllabus_total,
         },
         "trend": trend,
         "trend_values": [t["percent"] for t in trend],

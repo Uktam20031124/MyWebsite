@@ -90,8 +90,12 @@ class ReviewTests(TestCase):
         self.assertContains(page, "Bazada bor:")
         self.assertContains(page, "Bazada topilmadi")
         self.assertContains(page, "Ishonchlilarni tasdiqlash (2)")
-        self.assertContains(page, self.link.get_absolute_url())
         self.assertEqual(page.context["nav_registrations"], 2)
+        # Navbat birinchi: standart ko'rinishda havolalar ro'yxati yo'q, ular alohida yorliqda.
+        self.assertNotContains(page, self.link.get_absolute_url())
+        links = self.client.get(reverse("registrations") + "?korinish=havolalar")
+        self.assertContains(links, self.link.get_absolute_url())
+        self.assertNotContains(links, "Ishonchlilarni tasdiqlash")
 
     def test_attach_to_existing(self):
         reg = self.reg()
@@ -139,7 +143,7 @@ class ReviewTests(TestCase):
 
     def test_link_create_toggle_delete(self):
         response = self.client.post(reverse("registrations"), {"title": "P-006 chat", "group": self.other_group.pk})
-        self.assertRedirects(response, f"{reverse('registrations')}#links")
+        self.assertRedirects(response, f"{reverse('registrations')}?korinish=havolalar#links")
         link = RegistrationLink.objects.get(title="P-006 chat")
         self.assertTrue(link.token)
         url = reverse("registration_link_action", args=[link.pk])

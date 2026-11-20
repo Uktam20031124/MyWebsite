@@ -2,43 +2,125 @@
 {% load i18n ui %}
 {% block title %}{% translate "Bosh sahifa · Minar Test" %}{% endblock %}
 {% block kicker %}{% icon "calendar" 15 %} {{ today|weekday_full }}, {{ today|date:"j E Y" }}{% endblock %}
-{% block heading %}{% translate "Xush kelibsiz" %}{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}{% endblock %}
+{% block heading %}{% translate "Bugun" %}{% endblock %}
 {% block subheading %}
   <p class="page-sub">
-    {% if today_sessions %}{% blocktranslate with today_sessions=today_sessions|length trimmed %}Bugun jadvalda {{ today_sessions }} ta dars bor.{% endblocktranslate %}{% else %}{% translate "Bugun jadval bo‘yicha dars yo‘q." %}{% endif %}
-    {% if overdue %}<a href="#overdue">{% blocktranslate with overdue=overdue|length trimmed %}{{ overdue }} ta dars yakunlanmagan{% endblocktranslate %}</a>.{% endif %}
+    {% if today_sessions %}{% blocktranslate with today_sessions=today_sessions|length trimmed %}Jadvalda {{ today_sessions }} ta dars.{% endblocktranslate %}{% else %}{% translate "Bugun jadval bo‘yicha dars yo‘q." %}{% endif %}
   </p>
 {% endblock %}
 {% block actions %}
 <a class="btn soft" href="{% url 'timetable' %}">{% icon "calendar" 16 %} {% translate "Jadval" %}</a>
-<a class="btn primary" href="{% url 'lesson_create' %}">{% icon "plus" 16 %} {% translate "Yangi dars" %}</a>
+<a class="btn soft" href="{% url 'lesson_create' %}">{% icon "plus" 16 %} {% translate "Yangi dars" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="kpis" aria-label="{% translate "Asosiy ko‘rsatkichlar" %}">
+{# 1. Navbatdagi dars — ustozning hozirgi asosiy ishi. #}
+<section class="next-up{% if next_up %} {{ next_up.state }}{% endif %}" aria-labelledby="next-h" data-next-lesson>
+  {% if next_up %}
+    {% with s=next_up %}
+    <div class="next-up-time tabular">
+      <strong>{{ s.starts_at|time:"H:i" }}</strong>
+      <span>{% if s.is_today %}{% if s.ends_at %}{{ s.ends_at|time:"H:i" }} {% translate "gacha" %}{% endif %}{% else %}{{ s.day|weekday_full }}, {{ s.day|date:"j E" }}{% endif %}</span>
+    </div>
+    <div class="next-up-body">
+      <h2 id="next-h" class="next-up-label">
+        {% if s.state == 'live' %}<span class="chip live">{% icon "play" 12 %} {% translate "Hozir ketmoqda" %}</span>
+        {% elif s.state == 'missed' %}<span class="chip warn">{% icon "alert" 12 %} {% translate "Yakunlanmagan" %}</span>
+        {% elif s.state == 'done' %}<span class="chip ok">{% icon "check" 12 %} {% translate "O‘tildi" %}</span>
+        {% elif s.is_today %}<span class="chip info">{% icon "clock" 12 %} {% translate "Navbatdagi dars" %}</span>
+        {% else %}<span class="chip">{% icon "calendar" 12 %} {% translate "Keyingi rejadagi dars" %}</span>{% endif %}
+      </h2>
+      <a class="next-up-group" href="{{ s.group.get_absolute_url }}">{{ s.group.name }}</a>
+      <p class="next-up-topic">{% icon "book" 15 %}<span>{% if s.topic %}{{ s.topic|topic_title }}{% if not s.lesson %} <span class="meta">· {% translate "dastur bo‘yicha navbatdagi" %}</span>{% endif %}{% else %}<span class="meta">{% translate "Mavzu belgilanmagan" %}</span>{% endif %}</span></p>
+    </div>
+    <div class="next-up-actions">
+      {% if s.lesson %}
+        {% if s.state != 'done' and s.state != 'cancelled' %}
+          <a class="btn primary" href="{% url 'attendance' s.lesson.pk %}">{% icon "check" 16 %} {% translate "Yo‘qlama" %}</a>
+        {% endif %}
+        <a class="btn soft" href="{{ s.lesson.get_absolute_url }}">{% translate "Darsni ochish" %}</a>
+      {% elif s.is_today %}
+        <form method="post" action="{% url 'start_lesson' s.group.pk %}" data-pending>
+          {% csrf_token %}
+          <button class="btn primary" type="submit">{% icon "play" 14 %} {% translate "Darsni boshlash" %}</button>
+        </form>
+      {% else %}
+        <a class="btn soft" href="{% url 'lesson_create' %}?group={{ s.group.pk }}&amp;sana={{ s.day|date:'Y-m-d' }}{% if s.topic %}&amp;topic={{ s.topic.pk }}{% endif %}">{% translate "Rejalash" %}</a>
+      {% endif %}
+    </div>
+    {% endwith %}
+  {% else %}
+    <div class="next-up-body">
+      <h2 id="next-h" class="next-up-label"><span class="chip">{% icon "calendar" 12 %} {% translate "Navbatdagi dars" %}</span></h2>
+      <p class="next-up-group">{% if has_timetable %}{% translate "Yaqin 7 kunda jadval bo‘yicha dars yo‘q" %}{% else %}{% translate "Jadval hali tuzilmagan" %}{% endif %}</p>
+      <p class="meta">{% if has_timetable %}{% translate "Qo‘shimcha dars kerak bo‘lsa, uni qo‘lda yozing." %}{% else %}{% translate "Guruhga dars kunlari va vaqtini qo‘shing — navbatdagi dars shu yerda chiqadi." %}{% endif %}</p>
+    </div>
+    <div class="next-up-actions">
+      <a class="btn soft" href="{% if has_timetable %}{% url 'timetable' %}{% else %}{% url 'group_list' %}{% endif %}">{% if has_timetable %}{% translate "Jadvalni ochish" %}{% else %}{% translate "Guruhlarga o‘tish" %}{% endif %}</a>
+    </div>
+  {% endif %}
+</section>
+
+{# 2. E'tibor talab qiladi — yakunlanmagan darslar va xavf ostidagi shogirdlar (qisqa). #}
+{% if overdue_count or insights.at_risk %}
+<section class="attention" aria-labelledby="attn-h">
+  <h2 id="attn-h" class="sr-only">{% translate "E’tibor talab qiladi" %}</h2>
+  {% if overdue_count %}
+    {% with first=overdue.0 %}
+    <a class="attention-item warn" href="#overdue">
+      <span class="attention-count tabular">{{ overdue_count }}</span>
+      <span class="grow">
+        <strong>{% translate "Yakunlanmagan darslar" %}</strong>
+        <span class="meta block truncate">{% blocktranslate with code=first.group.code held_on=first.held_on|date:"d.m" trimmed %}Eng eskisi: {{ code }}, {{ held_on }}{% endblocktranslate %}</span>
+      </span>
+      {% icon "right" 16 %}
+    </a>
+    {% endwith %}
+  {% endif %}
+  {% if insights.at_risk %}
+    <a class="attention-item" href="#risk">
+      <span class="attention-count tabular">{{ insights.at_risk|length }}</span>
+      <span class="grow">
+        <strong>{% translate "E’tibor talab qiladigan shogirdlar" %}</strong>
+        <span class="meta block truncate">{{ insights.at_risk.0|person_name }} · {{ insights.at_risk.0.risk_reasons|join:" · " }}</span>
+      </span>
+      {% icon "right" 16 %}
+    </a>
+  {% endif %}
+</section>
+{% endif %}
+
+{# 3. Haftalik ko'rsatkichlar — ixcham, maxraj bilan. #}
+<section class="kpis compact" aria-label="{% translate "Haftalik ko‘rsatkichlar" %}">
   <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">{% translate "Faol shogirdlar" %}</span><span class="kpi-icon info">{% icon "users" 17 %}</span></div>
-    <div class="kpi-value">{{ stats.students }}</div>
+    <span class="kpi-label">{% translate "Davomat, 7 kun" %}</span>
+    {% if stats.attendance_pct is None %}
+      <div class="kpi-value muted">—</div>
+      <div class="kpi-foot">{% translate "Ma’lumot yo‘q: davomat belgilanmagan" %}</div>
+    {% else %}
+      <div class="kpi-value tabular">{{ stats.attendance_pct }}<small>%</small></div>
+      <div class="kpi-foot tabular">{% blocktranslate with present=stats.attendance_present marked=stats.attendance_marked trimmed %}{{ present }} / {{ marked }} belgi{% endblocktranslate %}{% if stats.attendance_delta is not None %} · <span class="delta {% if stats.attendance_delta > 0 %}up{% elif stats.attendance_delta < 0 %}down{% else %}flat{% endif %}">{% if stats.attendance_delta > 0 %}+{% endif %}{{ stats.attendance_delta }}%</span>{% endif %}</div>
+    {% endif %}
+  </article>
+  <article class="kpi">
+    <span class="kpi-label">{% translate "Darslar, 7 kun" %}</span>
+    <div class="kpi-value tabular">{{ stats.sessions_week }}</div>
+    <div class="kpi-foot tabular" title="{% translate "Jadvalda — guruh jadvali bo‘yicha kelgusi 7 kun; CRM’da yozilgan — oxirgi 7 kunda bazaga kiritilgan darslar" %}">{% blocktranslate with lessons_week=stats.lessons_week trimmed %}jadvalda · {{ lessons_week }} ta CRM’da yozilgan{% endblocktranslate %}</div>
+  </article>
+  <article class="kpi">
+    <span class="kpi-label">{% translate "Faol shogirdlar" %}</span>
+    <div class="kpi-value tabular">{{ stats.students }}</div>
     <div class="kpi-foot">{% blocktranslate with groups=stats.groups trimmed %}{{ groups }} ta faol guruhda{% endblocktranslate %}</div>
   </article>
   <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">{% translate "Haftalik davomat" %}</span><span class="kpi-icon ok">{% icon "check" 17 %}</span></div>
-    <div class="kpi-value">{{ stats.attendance_pct }}<small>%</small></div>
-    <div class="kpi-foot">
-      {% if stats.attendance_delta is not None %}
-        <span class="delta {% if stats.attendance_delta > 0 %}up{% elif stats.attendance_delta < 0 %}down{% else %}flat{% endif %}">{% if stats.attendance_delta > 0 %}+{% endif %}{{ stats.attendance_delta }}%</span> {% translate "o‘tgan haftaga nisbatan" %}
-      {% else %}{% translate "oxirgi 7 kun" %}{% endif %}
-    </div>
-  </article>
-  <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">{% translate "Shu hafta darslar" %}</span><span class="kpi-icon accent">{% icon "lesson" 17 %}</span></div>
-    <div class="kpi-value">{{ stats.sessions_week }}</div>
-    <div class="kpi-foot">{% blocktranslate with lessons_week=stats.lessons_week trimmed %}jadval bo‘yicha, 7 kun ichida · {{ lessons_week }} ta yozilgan{% endblocktranslate %}</div>
-  </article>
-  <article class="kpi">
-    <div class="kpi-top"><span class="kpi-label">{% translate "Dastur bajarilishi" %}</span><span class="kpi-icon gold">{% icon "target" 17 %}</span></div>
-    <div class="kpi-value">{{ stats.syllabus_pct }}<small>%</small></div>
-    <div class="bar thin" role="progressbar" aria-label="{% translate "Dastur bajarilishi" %}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ stats.syllabus_pct }}"><span style="width:{{ stats.syllabus_pct }}%"></span></div>
+    <span class="kpi-label">{% translate "Dastur bajarilishi" %}</span>
+    {% if stats.syllabus_pct is None %}
+      <div class="kpi-value muted">—</div>
+      <div class="kpi-foot">{% translate "Dastur biriktirilmagan" %}</div>
+    {% else %}
+      <div class="kpi-value tabular">{{ stats.syllabus_pct }}<small>%</small></div>
+      <div class="kpi-foot tabular">{% blocktranslate with taught=stats.syllabus_taught total=stats.syllabus_total trimmed %}{{ taught }} / {{ total }} mavzu{% endblocktranslate %}</div>
+    {% endif %}
   </article>
 </section>
 
@@ -96,7 +178,7 @@
     <section class="card" aria-labelledby="trend-h">
       <div class="card-head">
         <h2 id="trend-h">{% icon "trend" 18 %} {% translate "Davomat dinamikasi" %}</h2>
-        <span class="meta">{% translate "oxirgi 8 hafta" %}</span>
+        <span class="meta">{% translate "oxirgi 8 hafta, % · “—” — ma’lumot yo‘q" %}</span>
       </div>
       <div class="card-body">
         {% sparkline trend_values 640 120 %}
@@ -154,7 +236,7 @@
     </section>
 
     {% if insights.at_risk %}
-    <section class="card" aria-labelledby="risk-h">
+    <section class="card" id="risk" aria-labelledby="risk-h">
       <div class="card-head">
         <h2 id="risk-h">{% icon "alert" 18 %} {% translate "E’tibor talab qiladi" %}</h2>
         <span class="meta">{% translate "davomat &lt; 70%, ball &lt; 60 yoki oxirgi testlar &lt; 50%" %}</span>
@@ -180,7 +262,7 @@
     <section class="card" id="overdue" aria-labelledby="overdue-h">
       <div class="card-head">
         <h2 id="overdue-h">{% icon "clock" 18 %} {% translate "Yakunlanmagan darslar" %}</h2>
-        <span class="badge warn">{{ overdue|length }}</span>
+        <span class="badge warn tabular">{{ overdue_count }}</span>
       </div>
       <div class="card-body flush">
         <div class="rows">
@@ -194,6 +276,7 @@
             </div>
           {% endfor %}
         </div>
+        {% if overdue_count > overdue|length %}<div class="card-foot"><a class="btn xs ghost" href="{% url 'lesson_list' %}?status=planned">{% blocktranslate with n=overdue_count trimmed %}Barchasini ko‘rish ({{ n }}){% endblocktranslate %} {% icon "right" 14 %}</a></div>{% endif %}
       </div>
     </section>
     {% endif %}

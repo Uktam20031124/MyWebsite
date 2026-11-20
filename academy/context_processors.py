@@ -3,13 +3,11 @@ from django.utils import timezone
 from .models import (
     Group,
     HomeworkSubmission,
-    Lesson,
     Purchase,
     QuizAttempt,
     Registration,
     Student,
     TestRequest,
-    Topic,
     warning_attempts,
 )
 from .teachers import is_teacher, permissions_of, scope
@@ -34,15 +32,9 @@ def nav_counts(request):
         "teacher_sections": sections if teacher else set(),
         # "O'quv markazi" menyusidagi bo'limlar (Dars jadvali — o'qituvchi menyusida alohida).
         "teacher_center": sections - {"timetable", "group_create"} if teacher else set(),
-        "nav_groups": groups.count() if "groups" in sections else 0,
-        "nav_students": count("students", Student.objects.filter(status=Student.Status.ACTIVE)),
-        "nav_topics": Topic.objects.filter(is_active=True).count() if "topics" in sections else 0,
-        "nav_lessons": count("lessons", Lesson.objects.filter(status=Lesson.Status.PLANNED)),
+        # Menyu badge'lari faqat bajarilishi kerak bo'lgan ish soni (katalog hajmi sahifa ichida ko'rsatiladi).
         # "days" — bir xonali raqamlar ro'yxati, shuning uchun __contains aniq ishlaydi.
         "nav_today": 0 if teacher else groups.filter(days__contains=weekday).exclude(starts_at=None).count(),
-        "nav_quiz_open": count(
-            "tests", QuizAttempt.objects.exclude(status=QuizAttempt.Status.FINISHED), student_path
-        ),
         # Javoblarni ko'rish + profilga kirish + test so'rovlari + mukofot so'rovlari.
         "nav_review_requests": count(
             "requests", QuizAttempt.objects.filter(reveal=QuizAttempt.Reveal.REQUESTED), student_path
