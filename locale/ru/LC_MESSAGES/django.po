@@ -3195,12 +3195,20 @@ msgid "Davomat jurnali"
 msgstr "Журнал посещаемости"
 
 #: templates/academy/groups/journal.html
+msgid "Davomat jurnali: shogirdlar va dars sanalari"
+msgstr "Журнал посещаемости: ученики и даты уроков"
+
+#: templates/academy/groups/journal.html
 msgid "Excel (CSV)"
 msgstr "Excel (CSV)"
 
 #: templates/academy/groups/journal.html
 msgid "Hali o‘tilgan yoki yo‘qlama olingan dars yo‘q."
 msgstr "Пока нет проведённых уроков или уроков с отметкой посещаемости."
+
+#: templates/academy/groups/journal.html
+msgid "Jadval ichida suriladi — so‘nggi darslar o‘ngda"
+msgstr "Таблица прокручивается — последние уроки справа"
 
 #: templates/academy/groups/journal.html
 msgid "Jurnal · %(name)s · Minar Test"

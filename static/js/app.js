@@ -566,6 +566,15 @@
     initAutoRefresh();
     revealHash();
     rememberLists();
+    // Jurnal kabi matritsalar: mobilda so'nggi ustunlar (oxirgi darslar) ko'rinadigan holatda ochiladi.
+    $$("[data-scroll-end]").forEach((el) => {
+      if (el.scrollWidth <= el.clientWidth) return;
+      const dates = $$("th.date-col", el);
+      const last = dates[dates.length - 1];
+      const stickyW = $(".sticky-col", el)?.offsetWidth || 0;
+      // So'nggi ikki sana shogird ustuni yonida ko'rinadi; yakuniy ko'rsatkichlar o'ngdan davom etadi.
+      el.scrollLeft = last ? Math.max(0, last.offsetLeft - stickyW - last.offsetWidth) : el.scrollWidth;
+    });
     initSendSummary();
     // Kalendar: bugungi kunga avtomatik aylantirish (mobil)
     const today = $(".tt-col.today");

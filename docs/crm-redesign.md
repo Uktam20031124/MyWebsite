@@ -98,7 +98,17 @@ anonim/o'quvchi (ochiq havolalar: `/royxat/`, `/men/`, `/t/`, `/o/`, `/aloqa/`).
 - axe: P1 sahifalari 56 holat — 0 buzilish (topilgan: jadval havolalari 17 px → ≥ 24 px, katalog amallari xiraligi,
   tungi rejimda til tugmasi kontrasti 1.2); P0 regressiyasi — 0. Testlar: `test_crm_p1.py` (7).
 
-**P1b (keyingi)**: shogird profili va formasi, ommaviy aloqa preview, guruh jurnali, dars formasi va tafsiloti,
-ochiq ro'yxat formasi, mavzu tafsiloti/editor/import preview, umumiy havolalar.
+## P1b — qilingan ishlar va tekshiruv
+
+- **Guruh jurnali** (mobil): ichki surilishi aniq ko'rinadigan matritsa — shogird ustuni 132 px (2 qator ism),
+  «Jadval ichida suriladi» ishorasi va chetdagi soya, ochilganda so'nggi ikki sana ko'rinadigan joyga suriladi,
+  matritsa `role="region"` + `tabindex` (klaviatura bilan surish). Chop etish va CSV o'zgarmagan.
+- **Blok tugmalar**: `.block` utilitasi `.btn` ning `inline-flex`ini bekor qilardi (mavzu sahifasidagi «Test jo'natish»
+  matni tepaga yopishgan) — `.btn.block` endi flex.
+- Brief talabiga mosligi tekshirilgan, o'zgarish kerak bo'lmagan: ochiq ro'yxat formasi (alohida yengil layout, guruh
+  konteksti, doimiy label, format namunasi, `inputmode=tel`/`autocomplete`), dars formasi (guruh → mavzu → sana/vaqt,
+  jadval/guruh/mavzudan prefill), shogird formasi («Saqlash va yana qo'shish»), ommaviy aloqa (preview → `confirm=1`
+  bilan yozish), umumiy havolalar (yorliqlar, amalli bo'sh holat).
+- axe: P1 sahifalari (mavzu tafsiloti bilan) 60 holat — 0 buzilish.
 
 Tekshirilmagan: mobil WebKit/Safari (muhitda yo'q), Core Web Vitals dala ma'lumoti (monitoring yo'q).

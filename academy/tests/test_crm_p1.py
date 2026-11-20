@@ -46,6 +46,18 @@ class ListTests(TestCase):
         self.assertContains(opened, "Savol qo‘shish")  # "Test" o'rniga aniq yorliq
 
 
+class JournalMatrixTests(TestCase):
+    def test_journal_is_keyboard_scrollable_region(self):
+        self.client.force_login(f.user())
+        g = f.group()
+        f.student(g)
+        f.lesson(g, days=-1, status=Lesson.Status.COMPLETED)
+        page = self.client.get(reverse("group_journal", args=[g.pk]))
+        self.assertContains(page, 'role="region"')
+        self.assertContains(page, "data-scroll-end")
+        self.assertContains(page, 'tabindex="0"')
+
+
 class HomeworkRuleTests(TestCase):
     def test_on_time_and_late_chips(self):
         self.client.force_login(f.user())
