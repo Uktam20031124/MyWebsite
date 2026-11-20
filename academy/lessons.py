@@ -27,8 +27,9 @@ def bank() -> dict[str, dict]:
     from .school_data.lessons_m06 import LESSONS as M06
     from .school_data.lessons_m07 import LESSONS as M07
     from .school_data.lessons_m08 import LESSONS as M08
+    from .school_data.lessons_m09 import LESSONS as M09
 
-    return {**M03, **M04, **M05, **M06, **M07, **M08, **BOT}
+    return {**M03, **M04, **M05, **M06, **M07, **M08, **M09, **BOT}
 
 
 def run_program(lesson: dict) -> str:
@@ -78,7 +79,7 @@ def png_urls(lesson: dict) -> list[str]:
 
 
 def frame_count(lesson: dict) -> int:
-    return 1 + len(lesson["steps"]) + (1 if lesson.get("chat") else 0) + 1
+    return 1 + len(lesson["steps"]) + (1 if lesson.get("chat") else 0) + (1 if lesson.get("preview") else 0) + 1
 
 
 def code_block(code: str, new, lang: str = "python") -> str:
@@ -157,8 +158,10 @@ def frames(lesson: dict) -> list:
         out.append(
             f'<section class="lf">{head}'
             f'<div class="chatwrap"><div class="phone">{"".join(chat)}</div><div class="checks">{checks}</div></div>'
-            f"{_foot(total - 1, total)}</section>"
+            f"{_foot(len(steps) + 2, total)}</section>"
         )
+    if lesson.get("preview"):
+        out.append(_preview_frame(lesson, total - 1, total))
     tree = "\n".join(
         escape(p) + (f'<em class="{TREE_TAGS.get(t, "yangi")}">{escape(t)}</em>' if t else "")
         for p, t in lesson["tree"]
@@ -173,6 +176,25 @@ def frames(lesson: dict) -> list:
         f'<div class="lcard hw"><h2>Uyga vazifa</h2><ul>{hw}</ul></div></div>{_foot(total, total)}</section>'
     )
     return [mark_safe(f) for f in out]  # noqa: S308 — har bir matn bo'lagi escape qilingan
+
+
+def _preview_frame(lesson: dict, n: int, total: int) -> str:
+    """Brauzerda natija: o'quvchi saytining shu darsdagi haqiqiy skrinshoti (kompyuter + telefon)."""
+    from django.templatetags.static import static
+
+    pv = lesson["preview"]
+    try:
+        src = static(pv["image"])
+    except ValueError:  # manifest'da yo'q (skrinshot hali olinmagan)
+        src = ""
+    checks = "".join(f"<div><b>{i}.</b> {escape(c)}</div>" for i, c in enumerate(pv.get("checks", []), 1))
+    head = _head(lesson, pv.get("title", "Brauzerda natija"), pv.get("sub", ""), ("▶", "natija"))
+    return (
+        f'<section class="lf">{head}<div class="previewwrap"><div class="browser">'
+        f'<div class="bbar"><i></i><i></i><i></i><span>{escape(pv.get("url", "index.html"))}</span></div>'
+        f'<img src="{escape(src)}" alt="{escape(pv.get("title", ""))}"></div>'
+        f'<div class="checks">{checks}</div></div>{_foot(n, total)}</section>'
+    )
 
 
 def validate(key: str, lesson: dict) -> list[str]:

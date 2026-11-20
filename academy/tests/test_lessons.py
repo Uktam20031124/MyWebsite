@@ -72,6 +72,16 @@ class LessonDataTests(TestCase):
         lesson = {**bank()["TB10"], "key": "TB10", "title": "<script>x</script>"}
         self.assertNotIn("<script>x", frames(lesson)[0])
 
+    def test_web_lessons_have_browser_preview_frame(self):
+        web = {k: v for k, v in bank().items() if k.startswith("WB")}
+        self.assertGreaterEqual(len(web), 12)
+        for key, lesson in web.items():
+            image = Path(settings.BASE_DIR) / "static" / lesson["preview"]["image"]
+            self.assertTrue(image.is_file(), image)
+            out = frames({**lesson, "key": key})
+            self.assertIn("previewwrap", out[-2])  # yakuniy kadrdan oldin
+            self.assertIn(f"lessons/{key}/site", out[-2])
+
 
 class DevMigrationTests(TestCase):
     def test_skips_empty_database(self):
