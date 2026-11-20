@@ -1,4 +1,4 @@
-{% load i18n ui %}<div class="row pick-row" data-filter-item="topics" data-filter-text="{{ t.title|lower }} {{ t.module.title|lower }}">
+{% load i18n ui %}<div class="row pick-row{% if not t.question_n %} no-bank{% endif %}" data-filter-item="topics" data-filter-text="{{ t.title|lower }} {{ t.module.title|lower }}">
   <div class="grow">
     <div class="row-title">{% if t.question_n %}<a href="{{ t.send_url }}">{{ t.title }}</a>{% else %}{{ t.title }}{% endif %}{% if label %} <span class="badge accent plain">{{ label }}</span>{% endif %}</div>
     <div class="meta">{% if t.question_n %}{% icon "target" 13 %} {% blocktranslate with question_n=t.question_n trimmed %}{{ question_n }} ta savol{% endblocktranslate %}{% else %}{% translate "Test savollari yo‘q" %}{% endif %}{% if t.module and label %} · {{ t.module.title }}{% endif %}</div>

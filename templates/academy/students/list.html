@@ -5,17 +5,21 @@
 {% block heading %}{% translate "Shogirdlar" %}{% endblock %}
 {% block actions %}
 <a class="btn soft" href="{% url 'contacts_import' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "send" 16 %} {% translate "Telegram kiritish" %}</a>
-<a class="btn soft" data-turbo="false" href="{% url 'student_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">{% icon "download" 16 %} {% translate "CSV" %}</a>
+<a class="btn soft" data-turbo="false" href="{% url 'student_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" title="{% translate "Joriy filtr bo‘yicha barcha sahifalar (CSV)" %}">{% icon "download" 16 %} {% blocktranslate with n=page_obj.paginator.count|default:0 trimmed %}CSV · {{ n }} ta{% endblocktranslate %}</a>
 <a class="btn primary" href="{% url 'student_create' %}{% if request.GET.group %}?group={{ request.GET.group }}{% endif %}">{% icon "plus" 16 %} {% translate "Yangi shogird" %}</a>
 {% endblock %}
 
 {% block content %}
-<form class="toolbar" method="get" role="search">
+{% active_filters "group,status,contact" as nf %}
+<form class="toolbar collapsible" method="get" role="search" data-remember-list="students">
   <label class="search-field">
     <span class="sr-only">{% translate "Qidirish" %}</span>
     {% icon "search" 16 %}
     <input class="input" type="search" name="q" value="{{ request.GET.q }}" placeholder="{% translate "Ism, telefon yoki @telegram" %}">
   </label>
+  <button class="btn soft filters-toggle" type="button" data-filters-toggle aria-expanded="false">{% icon "filter" 16 %} {% translate "Filtrlar" %}{% if nf %} <span class="badge info count tabular">{{ nf }}</span>{% endif %}</button>
+  {% if request.GET.q or nf %}<a class="btn ghost" href="{% url 'student_list' %}">{% icon "x" 15 %} {% translate "Filtrlarni tozalash" %}</a>{% endif %}
+  <div class="toolbar-filters">
   <select class="input" name="group" data-autosubmit aria-label="{% translate "Guruh" %}">
     <option value="">{% translate "Barcha guruhlar" %}</option>
     {% for g in groups %}
@@ -34,18 +38,19 @@
     <option value="has" {% if request.GET.contact == 'has' %}selected{% endif %}>{% translate "Telegram/telefon bor" %}</option>
   </select>
   <button class="btn soft" type="submit">{% translate "Qidirish" %}</button>
-  {% if request.GET.q or request.GET.group or request.GET.status or request.GET.contact %}<a class="btn ghost" href="{% url 'student_list' %}">{% icon "x" 15 %} {% translate "Tozalash" %}</a>{% endif %}
+  </div>
 </form>
+{% if page_obj %}<p class="meta tabular list-count" aria-live="polite">{% blocktranslate count n=page_obj.paginator.count %}{{ n }} ta shogird{% plural %}{{ n }} ta shogird{% endblocktranslate %}{% if request.GET.q or nf %} · {% translate "filtr bo‘yicha" %}{% endif %}</p>{% endif %}
 
 <section class="card">
   {% if students %}
   <div class="table-wrap">
-    <table class="table">
+    <table class="table responsive">
       <thead><tr><th>{% translate "Shogird" %}</th><th>{% translate "Guruh" %}</th><th>{% translate "Aloqa" %}</th><th style="width:200px">{% translate "Davomat" %}</th><th>{% translate "Holat" %}</th><th>{% translate "Profil" %}</th></tr></thead>
       <tbody>
         {% for s in students %}
         <tr>
-          <td>
+          <td class="cell-main">
             <a class="person" href="{{ s.get_absolute_url }}">
               <span class="avatar{% if s.honor_since %} honor{% endif %}" style="--h: {{ s.full_name|hue }}" aria-hidden="true">{{ s.initials }}</span>
               <span class="truncate">
@@ -55,11 +60,11 @@
             </a>
           </td>
           <td><a class="tag" href="{{ s.group.get_absolute_url }}" style="--h: {{ s.group|hue }}">{{ s.group.code }}</a></td>
-          <td>
+          <td class="cell-hide-mobile">
             {% if s.phone %}<a class="nowrap" href="tel:{{ s.phone|cut:' ' }}">{{ s.phone }}</a>{% else %}<span class="meta">—</span>{% endif %}
             {% if s.telegram %}<div class="meta"><a href="https://t.me/{{ s.telegram|urlencode }}" target="_blank" rel="noopener noreferrer">@{{ s.telegram }}</a></div>{% endif %}
           </td>
-          <td>
+          <td data-label="{% translate "Davomat" %}">
             {% if s.att_total %}
               {% widthratio s.att_present s.att_total 100 as pct %}
               <div class="nowrap" style="display:flex;justify-content:space-between;font-size:13px"><strong class="tabular">{{ pct }}%</strong><span class="meta">{{ s.att_present }}/{{ s.att_total }}</span></div>
@@ -67,7 +72,7 @@
             {% else %}<span class="meta">{% translate "hali yo‘q" %}</span>{% endif %}
           </td>
           <td><span class="badge {% if s.status == 'active' %}ok{% elif s.status == 'dropped' %}bad{% elif s.status == 'paused' %}warn{% else %}info{% endif %}">{{ s.get_status_display }}</span></td>
-          <td class="profile-cell">{% include "academy/students/_profile_menu.html" %}</td>
+          <td class="profile-cell cell-end">{% include "academy/students/_profile_menu.html" %}</td>
         </tr>
         {% endfor %}
       </tbody>

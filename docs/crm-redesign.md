@@ -14,12 +14,12 @@ anonim/o'quvchi (ochiq havolalar: `/royxat/`, `/men/`, `/t/`, `/o/`, `/aloqa/`).
 | Bosh sahifa | `/` | `dashboard.html` | ustoz | Navbatdagi dars → yo'qlama/boshlash | **P0 ✓** |
 | Jadval | `/jadval/?hafta=&kun=&korinish=grid` | `timetable.html` | ustoz, o'qituvchi (`timetable`) | Kun agendasi, chop etish | **P0 ✓** |
 | Guruhlar | `/guruhlar/`, `yangi/`, `<pk>/`, `tahrir/`, `ochirish/`, `jurnal/`, `boshlash/`, `mavzu/…`, `qr/`, `reyting/`, `telegram-chat/`, `aloqa-havola/`, `sahifalar/` | `groups/*` | ustoz, `groups` | Tafsilot: bo'limlar, navbatdagi mavzu | **P0 ✓** tafsilot; ro'yxat, forma, jurnal — P1 |
-| Darslar va yo'qlama | `/darslar/`, `yangi/`, `<pk>/`, `tahrir/`, `ochirish/`, `yakun/`, `yoqlama/` | `lessons/*` | ustoz, `lessons` | Yo'qlama → saqlash/yakunlash | **P0 ✓** yo'qlama; ro'yxat, forma, tafsilot — P1 |
+| Darslar va yo'qlama | `/darslar/`, `yangi/`, `<pk>/`, `tahrir/`, `ochirish/`, `yakun/`, `yoqlama/` | `lessons/*` | ustoz, `lessons` | Yo'qlama → saqlash/yakunlash | **P0 ✓** yo'qlama; **P1a ✓** ro'yxat; forma, tafsilot — P1b |
 | Arizalar | `/arizalar/?status=&korinish=havolalar`, `tasdiqlash/`, `<pk>/`, `havola/<pk>/`, `/royxat/<token>/` | `registrations/*` | ustoz, `registrations`; anonim (ochiq forma) | Navbat (Kutilmoqda) birinchi | **P0 ✓** navbat; ariza tafsiloti va ochiq forma — P1 |
-| Shogirdlar | `/shogirdlar/`, `yangi/`, `<pk>/`, `tahrir/`, `ochirish/`, `eksport/`, `aloqa/`, `<pk>/profil|alochi|coin|mavzular|sahifa|sertifikat|qr/` | `students/*`, `contacts/*` | ustoz, `students` | Ro'yxat, profil, ommaviy aloqa | P1 |
-| Mavzular | `/mavzular/`, `yangi/`, `import/`, `eksport/`, `<pk>/`, `taqdimot/`, `rasm/`, `dars/`, `test/`; `/bolimlar/…` | `topics/*`, `quiz/edit*` | ustoz, `topics` | Katalog, tafsilot, editor, import preview | P1 |
-| Uyga vazifalar | `/vazifalar/`, `<pk>/baho/`, `<pk>/fayl/` | `homework/*` | ustoz, `homework` | Tekshirilmagan navbat | P1 |
-| Testlar | `/testlar/`, `jonatish/`, `umumiy/…`, `<pk>/…`, `natija/<pk>/…`, `/t/<token>/…`, `/o/<token>/…` | `quiz/*` | ustoz, `tests`; o'quvchi | Jo'natish oqimi, natija | P1 (jo'natish), P2 (natija, ochiq test) |
+| Shogirdlar | `/shogirdlar/`, `yangi/`, `<pk>/`, `tahrir/`, `ochirish/`, `eksport/`, `aloqa/`, `<pk>/profil|alochi|coin|mavzular|sahifa|sertifikat|qr/` | `students/*`, `contacts/*` | ustoz, `students` | Ro'yxat, profil, ommaviy aloqa | **P1a ✓** ro'yxat; profil, forma, ommaviy aloqa — P1b |
+| Mavzular | `/mavzular/`, `yangi/`, `import/`, `eksport/`, `<pk>/`, `taqdimot/`, `rasm/`, `dars/`, `test/`; `/bolimlar/…` | `topics/*`, `quiz/edit*` | ustoz, `topics` | Katalog, tafsilot, editor, import preview | **P1a ✓** katalog; tafsilot, editor, import — P1b |
+| Uyga vazifalar | `/vazifalar/`, `<pk>/baho/`, `<pk>/fayl/` | `homework/*` | ustoz, `homework` | Tekshirilmagan navbat | **P1a ✓** |
+| Testlar | `/testlar/`, `jonatish/`, `umumiy/…`, `<pk>/…`, `natija/<pk>/…`, `/t/<token>/…`, `/o/<token>/…` | `quiz/*` | ustoz, `tests`; o'quvchi | Jo'natish oqimi, natija | **P1a ✓** jo'natish (1–2-qadam); umumiy havolalar — P1b; natija, ochiq test — P2 |
 | Ogohlantirishlar | `/testlar/ogohlantirishlar/`, `natija/<pk>/jarima/` | `quiz/warnings.html` | ustoz, `warnings` | Ko'rib chiqish, quvvat ayirish | P2 |
 | So'rovlar | `/testlar/sorovlar/`, `hammasi/`, `natija/<pk>/ruxsat/`, `testlar/sorov/<pk>/` | `quiz/requests.html` | ustoz, `requests` | Ruxsat/rad | P2 |
 | Mukofotlar | `/dokon/`, `<pk>/`, `sorov/<pk>/` | `shop/*` | ustoz, `rewards` | Katalog, so'rov qarori | P2 |
@@ -73,5 +73,32 @@ anonim/o'quvchi (ochiq havolalar: `/royxat/`, `/men/`, `/t/`, `/o/`, `/aloqa/`).
   (1.71), dastur sarlavhasi havolasi tugmalarni geometrik yopardi (2.5.8 target size).
 - Klaviatura: drawer fokus/Tab/Escape/qaytish — o'tdi; 320px yo'qlama — 4 holat yopishmaydi, hammasi ≥ 44px.
 - Testlar: `manage.py test academy` — 436 (yangi `test_crm_p0.py`: 11), ruff toza; RU tarjima 1700/1700.
+
+## P1a — qilingan ishlar
+
+- **Ro'yxat komponentlari**: `<table class="table responsive">` — mobilda qator ixcham karta (asosiy havola + amal bir qatorda,
+  qolgani ikkinchi qatorda, ikki o'lchamli jadval surishsiz); filtrlar mobilda «Filtrlar · N» ostida (JS bo'lmasa ochiq),
+  «Filtrlarni tozalash» doim ko'rinadi; ro'yxat URL'i eslab qolinadi — tafsilotdan «Shogirdlar / Darslar / Mavzular»
+  havolasi filtr bilan qaytadi (`data-list-back`).
+- **Shogirdlar**: aloqa ustuni mobilda profilga qoldirildi; CSV tugmasi doirani aytadi — «CSV · N ta» (joriy filtr,
+  barcha sahifalar — `student_export` ro'yxat bilan bir xil filtrni ishlatadi).
+- **Darslar**: sanasi o'tgan rejadagi dars faqat «Kechikkan» (avval «Rejada» bilan yonma-yon edi).
+- **Mavzular katalogi**: bo'limlar ochilib-yopiladi (qidiruv/filtr faol bo'lsa ochiq), bo'lim amallari summary'dan
+  tashqarida; yorliqlar «Savollar (N) / Savol qo'shish», «Dars rejalash», «Mavzuni tahrirlash», «Test jo'natish»;
+  mobilda ikkilamchi amallar «⋯» menyusida. 6 165 px → 973 px.
+- **Uyga vazifalar**: «Muddatida · 50+ ball → +3 ⚡️» yoki «Kechikib · quvvat berilmaydi» (qoida `homework.PASS_SCORE/COINS`
+  dan, berilgan quvvat — serverdan).
+- **Test jo'natish**: qadamlar ko'rsatkichi; 1-qadamda savolsiz mavzular yashirin («Savollari yo'q mavzular (N)»),
+  7 208 px → 860 px; 2-qadamda «Ko'rib chiqish» (oluvchilar · savol · daqiqa · vaqt) va tugma serverning haqiqiy
+  ishiga mos: «Faqat havolalarni yaratish» / «Yaratish va yuborish» / «Yaratish va yuborishni rejalash»
+  (repo: POST doim havola yaratadi, vaqt bo'lsa rejalashtiradi, aks holda faqat ulangan kanallar orqali darhol yuboradi);
+  «Hammasi (N)»; nol oluvchida tugma o'chiq; mobilda panel sticky.
+- **Arizalar**: har qaror yorliqli («Mavjud shogirdga biriktirish», «Yangi shogird sifatida qabul qilish»), maydonlar
+  ≥ 40 px; takror bosish dublikat yaratmasligi testlangan (ikkinchi so'rov 404).
+- axe: P1 sahifalari 56 holat — 0 buzilish (topilgan: jadval havolalari 17 px → ≥ 24 px, katalog amallari xiraligi,
+  tungi rejimda til tugmasi kontrasti 1.2); P0 regressiyasi — 0. Testlar: `test_crm_p1.py` (7).
+
+**P1b (keyingi)**: shogird profili va formasi, ommaviy aloqa preview, guruh jurnali, dars formasi va tafsiloti,
+ochiq ro'yxat formasi, mavzu tafsiloti/editor/import preview, umumiy havolalar.
 
 Tekshirilmagan: mobil WebKit/Safari (muhitda yo'q), Core Web Vitals dala ma'lumoti (monitoring yo'q).

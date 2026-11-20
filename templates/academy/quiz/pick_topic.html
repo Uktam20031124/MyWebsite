@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block content %}
+{% include "academy/includes/steps.html" with current=1 %}
 <div class="toolbar">
   <label class="search-field" style="flex:1 1 320px">
     <span class="sr-only">{% translate "Mavzu qidirish" %}</span>
@@ -16,7 +17,9 @@
     <input class="input" type="search" placeholder="{% translate "Mavzu nomi bo‘yicha qidirish…" %}" data-filter-input="topics" autofocus>
   </label>
   <span class="meta" data-filter-empty="topics" hidden>{% translate "Hech narsa topilmadi." %}</span>
+  {% if empty_n %}<button class="btn soft" type="button" data-toggle-class="show-empty-bank" data-toggle-target="#pick-topics" aria-pressed="false">{% blocktranslate with n=empty_n trimmed %}Savollari yo‘q mavzular ({{ n }}){% endblocktranslate %}</button>{% endif %}
 </div>
+<div id="pick-topics" class="pick-topics">
 
 {% if featured %}
   <section class="card module-card" data-filter-section>
@@ -29,10 +32,11 @@
   </section>
 {% endif %}
 
-{% for module, items in sections %}
-  <section class="card module-card" data-filter-section>
+{% for module, items, ready in sections %}
+  <section class="card module-card{% if not ready %} no-bank-section{% endif %}" data-filter-section>
     <div class="card-head">
-      <h2>{% icon "folder" 18 %} {% if module %}{{ module.title }}{% else %}{% translate "Bo‘limsiz mavzular" %}{% endif %} <span class="badge plain">{{ items|length }}</span></h2>
+      <h2>{% icon "folder" 18 %} {% if module %}{{ module.title }}{% else %}{% translate "Bo‘limsiz mavzular" %}{% endif %}</h2>
+      <span class="meta tabular">{% blocktranslate with ready=ready total=items|length trimmed %}{{ ready }} / {{ total }} tayyor{% endblocktranslate %}</span>
     </div>
     <div class="rows">
       {% for t in items %}
@@ -47,4 +51,5 @@
     <a class="btn sm primary" href="{% url 'topic_create' %}">{% icon "plus" 14 %} {% translate "Mavzu qo‘shish" %}</a>
   </div>
 {% endfor %}
+</div>
 {% endblock %}

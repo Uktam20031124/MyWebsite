@@ -565,6 +565,8 @@
     initQuizPace();
     initAutoRefresh();
     revealHash();
+    rememberLists();
+    initSendSummary();
     // Kalendar: bugungi kunga avtomatik aylantirish (mobil)
     const today = $(".tt-col.today");
     if (today) today.closest(".table-wrap")?.scrollTo({ left: Math.max(0, today.offsetLeft - 70) });
@@ -600,6 +602,66 @@
     el.scrollIntoView({ block: "start" });
   };
   window.addEventListener("hashchange", revealHash);
+
+  // --- Ro'yxat filtrlari (mobil): "Filtrlar" tugmasi --------------------------------
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-filters-toggle]");
+    if (!btn) return;
+    const bar = btn.closest(".toolbar");
+    const open = !bar.classList.contains("filters-open");
+    bar.classList.toggle("filters-open", open);
+    btn.setAttribute("aria-expanded", String(open));
+    if (open) $(".toolbar-filters select, .toolbar-filters input", bar)?.focus();
+  });
+  // Ro'yxat (filtr bilan) eslab qolinadi: tafsilotdagi [data-list-back="key"] havolasi shu manzilga qaytadi.
+  const rememberLists = () => {
+    const key = document.body.dataset.rememberList || $("[data-remember-list]")?.dataset.rememberList;
+    try {
+      if (key) sessionStorage.setItem(`list:${key}`, location.pathname + location.search);
+      $$("[data-list-back]").forEach((a) => {
+        const saved = sessionStorage.getItem(`list:${a.dataset.listBack}`);
+        if (saved && saved.startsWith(new URL(a.href, location.href).pathname)) a.href = saved;
+      });
+    } catch (err) { /* sessionStorage yo'q — oddiy havola ishlaydi */ }
+  };
+
+  // --- Test jo'natish: ko'rib chiqish va tugma yorlig'i ------------------------------
+  // Server: har doim havolalar yaratiladi; vaqt bo'lsa — yuborish rejalashtiriladi; bo'lmasa — ulangan
+  // kanallar orqali darhol yuboriladi; kanal yo'q/ulanmagan — faqat havolalar.
+  const initSendSummary = () => {
+    const form = $("form[data-quiz-send]");
+    const box = form && $("[data-send-summary]", form);
+    if (!box) return;
+    const render = () => {
+      const people = $$('input[name="students"]:checked', form).length;
+      const q = $('input[name="question_count"]', form)?.value || "?";
+      const min = $('input[name="time_limit_minutes"]', form)?.value || "?";
+      const when = $('input[name="scheduled_at"]', form)?.value;
+      const chosen = $$('input[name="channels"]:checked', form).map((c) => c.value);
+      const ready = chosen.filter((c) => form.dataset[`ready${c[0].toUpperCase()}${c.slice(1)}`] === "1");
+      const d = box.dataset;
+      $("[data-summary-line]", box).textContent = people
+        ? `${people} ${d.tPeople} · ${q} ${d.tQ} · ${min} ${d.tMin} · ${when ? d.tAt : d.tNow}`
+        : d.tNone;
+      const mode = when && chosen.length ? "schedule" : ready.length ? "send" : "links";
+      $("[data-summary-effect]", box).textContent = { schedule: d.tSchedule, send: d.tSend, links: d.tLinksOnly }[mode];
+      const btn = $("[data-send-submit]", box);
+      $("[data-send-label]", btn).textContent = btn.dataset[`label${mode[0].toUpperCase()}${mode.slice(1)}`];
+      btn.disabled = people === 0;
+    };
+    form.addEventListener("input", render);
+    form.addEventListener("change", render);
+    form.addEventListener("click", (e) => { if (e.target.closest("[data-check-all], [data-preset]")) setTimeout(render); });
+    render();
+  };
+  // Umumiy: [data-toggle-class="x" data-toggle-target="#id"] — maqsadga klassni yoqadi/o'chiradi.
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-toggle-class]");
+    const target = btn && $(btn.dataset.toggleTarget);
+    if (!target) return;
+    const on = target.classList.toggle(btn.dataset.toggleClass);
+    btn.setAttribute("aria-pressed", String(on));
+  });
 
   // Turbo bor sahifalarda turbo:load har bir ko'rinishda (birinchisida ham) keladi.
   if (window.Turbo) document.addEventListener("turbo:load", init);

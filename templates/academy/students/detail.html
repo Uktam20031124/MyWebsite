@@ -1,7 +1,7 @@
 {% extends "academy/base.html" %}
 {% load i18n ui %}
 {% block title %}{% blocktranslate with full_name=student.full_name trimmed %}{{ full_name }} · Minar Test{% endblocktranslate %}{% endblock %}
-{% block kicker %}<a href="{% url 'student_list' %}">{% translate "Shogirdlar" %}</a><span class="sep">/</span><a href="{{ student.group.get_absolute_url }}">{{ student.group.name }}</a>{% endblock %}
+{% block kicker %}<a href="{% url 'student_list' %}" data-list-back="students">{% translate "Shogirdlar" %}</a><span class="sep">/</span><a href="{{ student.group.get_absolute_url }}">{{ student.group.name }}</a>{% endblock %}
 {% block heading %}
 <span class="profile">
   <span class="avatar xl{% if student.honor_since %} honor{% endif %}" style="--h: {{ student.full_name|hue }}" aria-hidden="true">{{ student.initials }}</span>

@@ -9,7 +9,8 @@
 {% endblock %}
 
 {% block content %}
-<form method="post" novalidate data-quiz-send>
+{% include "academy/includes/steps.html" with current=2 back_url=change_topic_url %}
+<form method="post" novalidate data-quiz-send data-ready-telegram="{{ telegram_ready|yesno:'1,0' }}" data-ready-email="{{ email_ready|yesno:'1,0' }}">
   {% csrf_token %}
   {% if form.non_field_errors %}<div class="form-errors" role="alert">{% icon "alert" 18 %}{{ form.non_field_errors }}</div>{% endif %}
   <div class="split">
@@ -29,7 +30,7 @@
       {% endif %}
       {% if rows %}
         <div class="att-toolbar">
-          <button type="button" class="btn sm soft" data-check-all="students" data-check-value="all">{% icon "check" 15 %} {% translate "Hammasi" %}</button>
+          <button type="button" class="btn sm soft" data-check-all="students" data-check-value="all">{% icon "check" 15 %} {% blocktranslate with n=rows|length trimmed %}Hammasi ({{ n }}){% endblocktranslate %}</button>
           {% if has_attendance %}<button type="button" class="btn sm ghost" data-check-all="students" data-check-value="came">{% translate "Darsga kelganlar" %}</button>{% endif %}
           <button type="button" class="btn sm ghost" data-check-all="students" data-check-value="none">{% translate "Hech kim" %}</button>
           <span class="spacer"></span>
@@ -125,7 +126,18 @@
           </ul>
         </div>
 
-        <button class="btn primary block" type="submit">{% icon "send" 16 %} {% translate "Havolalarni yaratish" %}</button>
+        <div class="send-summary" data-send-summary aria-live="polite"
+             data-t-none="{% translate "Hech kim tanlanmagan" %}" data-t-people="{% translate "oluvchi" %}" data-t-q="{% translate "savol" %}"
+             data-t-min="{% translate "daq." %}" data-t-now="{% translate "darhol" %}" data-t-at="{% translate "rejalashtirilgan" %}"
+             data-t-links-only="{% translate "Kanal tanlanmagan yoki ulanmagan: faqat havolalar yaratiladi, ularni test sahifasidan o‘zingiz tarqatasiz." %}"
+             data-t-send="{% translate "Havolalar yaratiladi va tanlangan kanal orqali darhol yuboriladi." %}"
+             data-t-schedule="{% translate "Havolalar hozir yaratiladi, yuborish belgilangan vaqtda avtomatik bo‘ladi." %}">
+          <p class="send-summary-line tabular" data-summary-line></p>
+          <p class="meta" data-summary-effect>{% translate "Avval havolalar yaratiladi; Telegram/email ulangan bo‘lsa — darhol yoki belgilangan vaqtda yuboriladi." %}</p>
+          <button class="btn primary block" type="submit" data-send-submit
+                  data-label-links="{% translate "Faqat havolalarni yaratish" %}" data-label-send="{% translate "Yaratish va yuborish" %}"
+                  data-label-schedule="{% translate "Yaratish va yuborishni rejalash" %}">{% icon "send" 16 %} <span data-send-label>{% translate "Havolalarni yaratish" %}</span></button>
+        </div>
       </section>
     </aside>
   </div>

@@ -622,11 +622,11 @@ msgstr "Задание уже оценено — изменить нельзя."
 msgid "Javob yozing, havola qo‘shing yoki fayl yuklang."
 msgstr "Напишите ответ, добавьте ссылку или загрузите файл."
 
-#: academy/homework_views.py:117
+#: academy/homework_views.py:118
 msgid " +{n} ⚡️ berildi."
 msgstr " +{n} ⚡️ начислено."
 
-#: academy/homework_views.py:118
+#: academy/homework_views.py:119
 msgid "{name}: vazifa baholandi."
 msgstr "{name}: задание оценено."
 
@@ -1994,7 +1994,7 @@ msgstr "не пришёл"
 msgid "sababli"
 msgstr "уваж."
 
-#: academy/templatetags/ui.py:256
+#: academy/templatetags/ui.py:256 templates/academy/quiz/send.html
 msgid "daq."
 msgstr "мин"
 
@@ -2094,191 +2094,191 @@ msgstr "Учеников без email: {n} — {names}{more}."
 msgid "{CHANNEL_LABELS} ulanmagan — yuborilmadi. "
 msgstr "{CHANNEL_LABELS} не подключён — не отправлено."
 
-#: academy/views.py:1359
+#: academy/views.py:1361
 msgid "Bu mavzuda hali test savollari yo‘q — avval testni yarating."
 msgstr "В этой теме пока нет вопросов теста — сначала создайте тест."
 
-#: academy/views.py:1368 templates/academy/teachers/home.html
+#: academy/views.py:1370 templates/academy/teachers/home.html
 msgid "Sizga hali guruh biriktirilmagan — bosh ustozga murojaat qiling."
 msgstr "Вам ещё не назначена группа — обратитесь к главному учителю."
 
-#: academy/views.py:1370
+#: academy/views.py:1372
 msgid "Faol guruh yo‘q — avval guruh va shogird qo‘shing."
 msgstr "Нет активных групп — сначала добавьте группу и учеников."
 
-#: academy/views.py:1393
+#: academy/views.py:1395
 msgid "{n} ta shogird uchun havola tayyor: {question_count} ta savol, {time_limit_minutes} daqiqa."
 msgstr "Ссылки готовы для учеников: {n} · вопросов: {question_count} · время: {time_limit_minutes} мин."
 
-#: academy/views.py:1408
+#: academy/views.py:1410
 msgid "Havolalar {localtime:%d.%m %H:%M} da {labels} orqali avtomatik yuboriladi."
 msgstr "Ссылки будут автоматически отправлены {localtime:%d.%m %H:%M} через {labels}."
 
-#: academy/views.py:1539
+#: academy/views.py:1541
 msgid "{n} ta ogohlantirish kechirildi."
 msgstr "Прощено предупреждений: {n}."
 
-#: academy/views.py:1568
+#: academy/views.py:1570
 msgid "Jarima 0 dan {max} gacha bo‘lishi kerak."
 msgstr "Штраф должен быть от 0 до {max}."
 
-#: academy/views.py:1573
+#: academy/views.py:1575
 msgid "{name}: ogohlantirishlar kechirildi — quvvat ayirilmadi."
 msgstr "{name}: предупреждения прощены — энергия не списана."
 
-#: academy/views.py:1577
+#: academy/views.py:1579
 msgid "{name}: balans yetmadi — {taken} ⚡️ ayirildi ({amount} o‘rniga)."
 msgstr "{name}: не хватило баланса — списано {taken} ⚡️ (вместо {amount})."
 
-#: academy/views.py:1582
+#: academy/views.py:1584
 msgid "{name}: {taken} ⚡️ quvvat ayirildi."
 msgstr "{name}: списано {taken} ⚡️ энергии."
 
-#: academy/views.py:1672
+#: academy/views.py:1674
 msgid "{full_name}: javoblarini ko‘rishga ruxsat berildi."
 msgstr "{full_name}: просмотр ответов разрешён."
 
-#: academy/views.py:1674
+#: academy/views.py:1676
 msgid "{full_name}: javoblarini ko‘rish rad etildi."
 msgstr "{full_name}: просмотр ответов отклонён."
 
-#: academy/views.py:1690
+#: academy/views.py:1692
 msgid "Kutilayotgan so‘rov yo‘q."
 msgstr "Нет ожидающих запросов."
 
-#: academy/views.py:1690
+#: academy/views.py:1692
 msgid "{n} ta so‘rovga ruxsat berildi."
 msgstr "Разрешено запросов: {n}."
 
-#: academy/views.py:1711
+#: academy/views.py:1713
 msgid "{RETAKE_BELOW}% dan past natija olgan o‘quvchi yo‘q."
 msgstr "Нет учеников с результатом ниже {RETAKE_BELOW}%."
 
-#: academy/views.py:1724
+#: academy/views.py:1726
 msgid "Qayta topshirish: {n} ta o‘quvchi uchun yangi havolalar tayyor."
 msgstr "Пересдача: новые ссылки готовы для учеников ({n})."
 
-#: academy/views.py:1760
+#: academy/views.py:1762
 msgid "Yuboriladigan ochilmagan havola yo‘q."
 msgstr "Нет неоткрытых ссылок для отправки."
 
-#: academy/views.py:1784
+#: academy/views.py:1786
 msgid "Test yakunlangan — natijani o‘chirib bo‘lmaydi."
 msgstr "Тест завершён — результат удалить нельзя."
 
-#: academy/views.py:1795
+#: academy/views.py:1797
 msgid "{student} uchun yangi havola yaratildi — uni qayta yuboring."
 msgstr "Для {student} создана новая ссылка — отправьте её снова."
 
-#: academy/views.py:2066
+#: academy/views.py:2068
 msgid "{updated} ta o‘quvchining aloqa ma’lumotlari yangilandi."
 msgstr "Обновлены контакты учеников: {updated}."
 
-#: academy/views.py:2094
+#: academy/views.py:2096
 msgid "Havola o‘chirildi — endi u ishlamaydi."
 msgstr "Ссылка удалена — больше не работает."
 
-#: academy/views.py:2100
+#: academy/views.py:2102
 msgid "Havola yaratildi."
 msgstr "Ссылка создана."
 
-#: academy/views.py:2100
+#: academy/views.py:2102
 msgid "Yangi havola yaratildi (eskisi ishlamaydi)."
 msgstr "Создана новая ссылка (старая не работает)."
 
-#: academy/views.py:2169
+#: academy/views.py:2171
 msgid "“{title}” havolasi yaratildi — nusxalab guruhga tashlang."
 msgstr "Ссылка «{title}» создана — скопируйте и отправьте в группу."
 
-#: academy/views.py:2234
+#: academy/views.py:2236
 msgid "{full_name} — ariza rad etildi."
 msgstr "{full_name} — заявка отклонена."
 
-#: academy/views.py:2238
+#: academy/views.py:2240
 msgid "Biriktirish uchun o‘quvchini tanlang."
 msgstr "Выберите ученика для привязки."
 
-#: academy/views.py:2242
+#: academy/views.py:2244
 msgid "{full_name}: telefon va Telegram yangilandi."
 msgstr "{full_name}: телефон и Telegram обновлены."
 
-#: academy/views.py:2247
+#: academy/views.py:2249
 msgid "Yangi o‘quvchi uchun guruhni tanlang."
 msgstr "Выберите группу для нового ученика."
 
-#: academy/views.py:2252
+#: academy/views.py:2254
 msgid "{full_name} — {name} guruhiga qo‘shildi."
 msgstr "{full_name} — добавлен в группу {name}."
 
-#: academy/views.py:2280
+#: academy/views.py:2282
 msgid "Tasdiqlandi: {attached} ta mavjud o‘quvchiga biriktirildi, {created} ta yangi qo‘shildi."
 msgstr "Подтверждено: привязано к существующим ученикам — {attached}, добавлено новых — {created}."
 
-#: academy/views.py:2294
+#: academy/views.py:2296
 msgid "“{title}” havolasi o‘chirildi (arizalar saqlanadi)."
 msgstr "Ссылка «{title}» удалена (заявки сохранены)."
 
-#: academy/views.py:2299
+#: academy/views.py:2301
 msgid "“{title}” havolasi yoqildi."
 msgstr "Ссылка «{title}» включена."
 
-#: academy/views.py:2303
+#: academy/views.py:2305
 msgid "“{title}” havolasi to‘xtatildi — endi ariza qabul qilmaydi."
 msgstr "Ссылка «{title}» приостановлена — заявки больше не принимаются."
 
-#: academy/views.py:2468 academy/views.py:2600
+#: academy/views.py:2470 academy/views.py:2602
 msgid "Yuborilmadi: {exc}"
 msgstr "Не отправлено: {exc}"
 
-#: academy/views.py:2476
+#: academy/views.py:2478
 msgid "Shaxsiy sahifa havolasi {label} orqali {ok} ta o‘quvchiga yuborildi."
 msgstr "Ссылка на личную страницу отправлена через {label} ученикам: {ok}."
 
-#: academy/views.py:2481
+#: academy/views.py:2483
 msgid "{n} ta o‘quvchiga yuborilmadi: "
 msgstr "Не отправлено ученикам ({n}):"
 
-#: academy/views.py:2498
+#: academy/views.py:2500
 msgid "Yangi havola yaratildi — eskisi endi ishlamaydi."
 msgstr "Создана новая ссылка — старая больше не работает."
 
-#: academy/views.py:2518
+#: academy/views.py:2520
 msgid "Bu guruhda emaili kiritilgan faol o‘quvchi yo‘q."
 msgstr "В этой группе нет активных учеников с email."
 
-#: academy/views.py:2521
+#: academy/views.py:2523
 msgid "Bu guruhda Telegram yoki telefoni bor faol o‘quvchi yo‘q."
 msgstr "В этой группе нет активных учеников с Telegram или телефоном."
 
-#: academy/views.py:2563 academy/views.py:2579
+#: academy/views.py:2565 academy/views.py:2581
 msgid "Sertifikat yuborilmadi: {exc}"
 msgstr "Сертификат не отправлен: {exc}"
 
-#: academy/views.py:2566
+#: academy/views.py:2568
 msgid "Sertifikat {full_name}ga email orqali yuborildi."
 msgstr "Сертификат отправлен ученику {full_name} по email."
 
-#: academy/views.py:2582
+#: academy/views.py:2584
 msgid "Sertifikat {full_name}ga Telegram orqali yuborildi."
 msgstr "Сертификат отправлен ученику {full_name} в Telegram."
 
-#: academy/views.py:2593
+#: academy/views.py:2595
 msgid "Avval guruhning Telegram chatini tanlang."
 msgstr "Сначала выберите чат группы в Telegram."
 
-#: academy/views.py:2595
+#: academy/views.py:2597
 msgid "Oxirgi 7 kunda bu guruhda test yechilmagan — yuboriladigan reyting yo‘q."
 msgstr "За последние 7 дней в этой группе не решали тесты — рейтинг отправлять не из чего."
 
-#: academy/views.py:2602
+#: academy/views.py:2604
 msgid "Haftalik reyting guruh chatiga yuborildi."
 msgstr "Недельный рейтинг отправлен в чат группы."
 
-#: academy/views.py:2615
+#: academy/views.py:2617
 msgid "Telegram chat olib tashlandi."
 msgstr "Чат Telegram удалён."
 
-#: academy/views.py:2615
+#: academy/views.py:2617
 msgid "Telegram chat saqlandi."
 msgstr "Чат Telegram сохранён."
 
@@ -3327,6 +3327,10 @@ msgid "Yoki qo‘lda kiriting"
 msgstr "Или введите вручную"
 
 #: templates/academy/homework/_submission.html
+msgid "%(score)s+ ball → +%(coins)s ⚡️"
+msgstr "%(score)s+ баллов → +%(coins)s ⚡️"
+
+#: templates/academy/homework/_submission.html
 msgid "Baholash"
 msgstr "Оценить"
 
@@ -3334,15 +3338,23 @@ msgstr "Оценить"
 msgid "Izoh (ixtiyoriy)"
 msgstr "Комментарий (необязательно)"
 
-#: templates/academy/homework/_submission.html templates/academy/portal/homework.html
-msgid "kech"
-msgstr "поздно"
+#: templates/academy/homework/_submission.html
+msgid "Kechikib"
+msgstr "С опозданием"
+
+#: templates/academy/homework/_submission.html
+msgid "Muddatida"
+msgstr "Вовремя"
+
+#: templates/academy/homework/_submission.html
+msgid "quvvat berilmaydi"
+msgstr "энергия не начисляется"
 
 #: templates/academy/homework/list.html
 msgid "Hali vazifa topshirilmagan."
 msgstr "Заданий пока не сдавали."
 
-#: templates/academy/homework/list.html templates/academy/quiz/batch_list.html templates/academy/quiz/send.html templates/academy/quiz/warnings.html
+#: templates/academy/homework/list.html templates/academy/quiz/batch_list.html templates/academy/quiz/warnings.html
 msgid "Hammasi"
 msgstr "Все"
 
@@ -3397,6 +3409,18 @@ msgstr "Не записано"
 #: templates/academy/includes/session.html
 msgid "· navbatdagi"
 msgstr "· следующий"
+
+#: templates/academy/includes/steps.html
+msgid "Jo‘natish bosqichlari"
+msgstr "Этапы отправки"
+
+#: templates/academy/includes/steps.html
+msgid "Oluvchilar"
+msgstr "Получатели"
+
+#: templates/academy/includes/steps.html
+msgid "Savol, vaqt va yuborish"
+msgstr "Вопросы, время и отправка"
 
 #: templates/academy/lessons/attendance.html
 msgid "%(full_name)s holati"
@@ -3793,6 +3817,10 @@ msgstr "Задание"
 #: templates/academy/portal/homework.html
 msgid "Yuklangan fayl:"
 msgstr "Загруженный файл:"
+
+#: templates/academy/portal/homework.html
+msgid "kech"
+msgstr "поздно"
 
 #: templates/academy/portal/homework.html
 msgid "muddat: <strong>%(due)s</strong>"
@@ -4906,7 +4934,7 @@ msgstr "Начал"
 msgid "Bu F.I.Sh. bo‘yicha natija topilmadi."
 msgstr "По этому Ф.И.О. результатов нет."
 
-#: templates/academy/quiz/open_detail.html templates/academy/students/list.html templates/academy/teachers/report.html
+#: templates/academy/quiz/open_detail.html templates/academy/teachers/report.html
 msgid "CSV"
 msgstr "CSV"
 
@@ -5139,6 +5167,10 @@ msgid "· Test <strong>rus tilida</strong> yechilgan (bu yerda o‘zbekcha ko‘
 msgstr "· Тест решён <strong>на русском</strong> (здесь показан на узбекском)."
 
 #: templates/academy/quiz/pick_topic.html
+msgid "%(ready)s / %(total)s tayyor"
+msgstr "%(ready)s / %(total)s готово"
+
+#: templates/academy/quiz/pick_topic.html
 msgid "1-qadam: mavzu"
 msgstr "Шаг 1: тема"
 
@@ -5173,6 +5205,10 @@ msgstr "Выберите тему — на следующем шаге укаж�
 #: templates/academy/quiz/pick_topic.html
 msgid "Qaysi mavzu bo‘yicha test jo‘natamiz?"
 msgstr "По какой теме отправляем тест?"
+
+#: templates/academy/quiz/pick_topic.html
+msgid "Savollari yo‘q mavzular (%(n)s)"
+msgstr "Темы без вопросов (%(n)s)"
 
 #: templates/academy/quiz/pick_topic.html
 msgid "Test jo‘natish · Minar Test"
@@ -5303,6 +5339,10 @@ msgid "<strong>Til</strong> har bir o‘quvchiga alohida tanlanadi (UZ / RU) va 
 msgstr "<strong>Язык</strong> выбирается для каждого ученика отдельно (UZ / RU) и запоминается на следующий раз. Вопросов с переводом на русский: <strong>%(translated_n)s / %(bank_size)s</strong>"
 
 #: templates/academy/quiz/send.html
+msgid "Avval havolalar yaratiladi; Telegram/email ulangan bo‘lsa — darhol yoki belgilangan vaqtda yuboriladi."
+msgstr "Сначала создаются ссылки; если Telegram/email подключены — отправка сразу или в указанное время."
+
+#: templates/academy/quiz/send.html
 msgid "Bu guruhda faol shogird yo‘q."
 msgstr "В этой группе нет активных учеников."
 
@@ -5311,12 +5351,20 @@ msgid "Darsga kelganlar"
 msgstr "Пришедшие на урок"
 
 #: templates/academy/quiz/send.html
+msgid "Faqat havolalarni yaratish"
+msgstr "Только создать ссылки"
+
+#: templates/academy/quiz/send.html
 msgid "Guruhni tanlang va shogirdlarni belgilang"
 msgstr "Выберите группу и отметьте учеников"
 
 #: templates/academy/quiz/send.html
 msgid "Hammasi (%(bank_size)s)"
 msgstr "Все (%(bank_size)s)"
+
+#: templates/academy/quiz/send.html
+msgid "Hammasi (%(n)s)"
+msgstr "Все (%(n)s)"
 
 #: templates/academy/quiz/send.html
 msgid "Har bir shogird bankdan <strong>tasodifiy</strong> savollar oladi — savollar va javoblar tartibi ham har xil."
@@ -5331,12 +5379,28 @@ msgid "Havola <strong>bir martalik</strong>: boshqa qurilmada ochilmaydi, vaqt t
 msgstr "Ссылка <strong>одноразовая</strong>: на другом устройстве не откроется, по истечении времени тест завершится сам."
 
 #: templates/academy/quiz/send.html
+msgid "Havolalar hozir yaratiladi, yuborish belgilangan vaqtda avtomatik bo‘ladi."
+msgstr "Ссылки создаются сейчас, отправка произойдёт автоматически в указанное время."
+
+#: templates/academy/quiz/send.html
+msgid "Havolalar yaratiladi va tanlangan kanal orqali darhol yuboriladi."
+msgstr "Ссылки будут созданы и сразу отправлены через выбранный канал."
+
+#: templates/academy/quiz/send.html
 msgid "Havolalarni yaratish"
 msgstr "Создать ссылки"
 
 #: templates/academy/quiz/send.html
 msgid "Hech kim"
 msgstr "Никто"
+
+#: templates/academy/quiz/send.html
+msgid "Hech kim tanlanmagan"
+msgstr "Никто не выбран"
+
+#: templates/academy/quiz/send.html
+msgid "Kanal tanlanmagan yoki ulanmagan: faqat havolalar yaratiladi, ularni test sahifasidan o‘zingiz tarqatasiz."
+msgstr "Канал не выбран или не подключён: будут созданы только ссылки — раздайте их сами со страницы теста."
 
 #: templates/academy/quiz/send.html
 msgid "Kimga jo‘natamiz?"
@@ -5371,8 +5435,32 @@ msgid "UZ"
 msgstr "UZ"
 
 #: templates/academy/quiz/send.html
+msgid "Yaratish va yuborish"
+msgstr "Создать и отправить"
+
+#: templates/academy/quiz/send.html
+msgid "Yaratish va yuborishni rejalash"
+msgstr "Создать и запланировать отправку"
+
+#: templates/academy/quiz/send.html
 msgid "bankda %(bank_size)s ta savol"
 msgstr "в банке %(bank_size)s вопросов"
+
+#: templates/academy/quiz/send.html
+msgid "darhol"
+msgstr "сразу"
+
+#: templates/academy/quiz/send.html
+msgid "oluvchi"
+msgstr "получателей"
+
+#: templates/academy/quiz/send.html
+msgid "rejalashtirilgan"
+msgstr "запланировано"
+
+#: templates/academy/quiz/send.html
+msgid "savol"
+msgstr "вопросов"
 
 #: templates/academy/quiz/send.html
 msgid "tarjima qo‘shish"
@@ -5499,6 +5587,10 @@ msgid "Kutilayotgan ariza yo‘q"
 msgstr "Нет ожидающих заявок"
 
 #: templates/academy/registrations/list.html
+msgid "Mavjud shogirdga biriktirish"
+msgstr "Привязать к существующему ученику"
+
+#: templates/academy/registrations/list.html
 msgid "Ochiq havola orqali kelgan arizalarni tekshirib, bazaga qo‘shing."
 msgstr "Проверьте заявки, пришедшие по открытой ссылке, и добавьте их в базу."
 
@@ -5525,6 +5617,10 @@ msgstr "Приостановить"
 #: templates/academy/registrations/list.html
 msgid "Yangi o‘quvchi"
 msgstr "Новый ученик"
+
+#: templates/academy/registrations/list.html
+msgid "Yangi shogird sifatida qabul qilish"
+msgstr "Принять как нового ученика"
 
 #: templates/academy/registrations/list.html
 msgid "Yoqish"
@@ -6099,6 +6195,10 @@ msgid "%(joined_at)s dan"
 msgstr "с %(joined_at)s"
 
 #: templates/academy/students/list.html
+msgid "%(n)s ta shogird"
+msgstr "%(n)s учеников"
+
+#: templates/academy/students/list.html
 msgid "<strong>Shogird topilmadi</strong>"
 msgstr "<strong>Ученик не найден</strong>"
 
@@ -6107,12 +6207,28 @@ msgid "Birinchi shogirdni qo‘shing."
 msgstr "Добавьте первого ученика."
 
 #: templates/academy/students/list.html
+msgid "CSV · %(n)s ta"
+msgstr "CSV · %(n)s"
+
+#: templates/academy/students/list.html
+msgid "Filtrlar"
+msgstr "Фильтры"
+
+#: templates/academy/students/list.html
+msgid "Filtrlarni tozalash"
+msgstr "Сбросить фильтры"
+
+#: templates/academy/students/list.html
 msgid "Har qanday holat"
 msgstr "Любой статус"
 
 #: templates/academy/students/list.html
 msgid "Ism, telefon yoki @telegram"
 msgstr "Имя, телефон или @telegram"
+
+#: templates/academy/students/list.html
+msgid "Joriy filtr bo‘yicha barcha sahifalar (CSV)"
+msgstr "Все страницы по текущему фильтру (CSV)"
 
 #: templates/academy/students/list.html
 msgid "Shogirdlar · Minar Test"
@@ -6134,9 +6250,9 @@ msgstr "Нет Telegram/телефона"
 msgid "Telegram: hammasi"
 msgstr "Telegram: все"
 
-#: templates/academy/students/list.html templates/academy/teachers/action_log.html
-msgid "Tozalash"
-msgstr "Сбросить"
+#: templates/academy/students/list.html
+msgid "filtr bo‘yicha"
+msgstr "по фильтру"
 
 #: templates/academy/students/list.html
 msgid "hali yo‘q"
@@ -6201,6 +6317,10 @@ msgstr "Кто"
 #: templates/academy/teachers/action_log.html
 msgid "Kim, qachon va nima qildi: bosh ustoz va o‘qituvchilarning amallari, tizimga kirish va chiqish. O‘quvchilarning amallari va parollar yozilmaydi."
 msgstr "Кто, когда и что сделал: действия главного учителя и преподавателей, вход и выход. Действия учеников и пароли не записываются."
+
+#: templates/academy/teachers/action_log.html
+msgid "Tozalash"
+msgstr "Сбросить"
 
 #: templates/academy/teachers/action_log.html
 msgid "bosh ustoz"
@@ -6683,8 +6803,16 @@ msgid "%(duration_minutes)s daq. · %(group_n)s guruh dasturida · %(lesson_n)s 
 msgstr "%(duration_minutes)s мин · в программе групп: %(group_n)s · уроков: %(lesson_n)s"
 
 #: templates/academy/topics/list.html
+msgid "%(n)s mavzu"
+msgstr "%(n)s тем"
+
+#: templates/academy/topics/list.html
 msgid "%(question_n)s savol"
 msgstr "вопросов: %(question_n)s"
+
+#: templates/academy/topics/list.html
+msgid "%(title)s: boshqa amallar"
+msgstr "%(title)s: другие действия"
 
 #: templates/academy/topics/list.html
 msgid "%(topics)s mavzu, %(modules)s bo‘lim. Har bir mavzuda dars rejasi, uy vazifasi shabloni va materiallar."
@@ -6707,6 +6835,10 @@ msgid "Bo‘limni tahrirlash"
 msgstr "Редактировать раздел"
 
 #: templates/academy/topics/list.html
+msgid "Dars rejalash"
+msgstr "Запланировать урок"
+
+#: templates/academy/topics/list.html
 msgid "Eksport"
 msgstr "Экспорт"
 
@@ -6727,12 +6859,24 @@ msgid "Mavzularni Word yoki Telegram’dan nusxa olib, bir yo‘la import qiling
 msgstr "Скопируйте темы из Word или Telegram и импортируйте разом."
 
 #: templates/academy/topics/list.html
-msgid "Shu mavzu bo‘yicha test jo‘natish"
-msgstr "Отправить тест по этой теме"
+msgid "Mavzuni tahrirlash"
+msgstr "Редактировать тему"
 
 #: templates/academy/topics/list.html
-msgid "Test savollarini tahrirlash"
-msgstr "Редактировать вопросы теста"
+msgid "Savol qo‘shish"
+msgstr "Добавить вопросы"
+
+#: templates/academy/topics/list.html
+msgid "Savollar (%(n)s)"
+msgstr "Вопросы (%(n)s)"
+
+#: templates/academy/topics/list.html
+msgid "Shu bo‘limga mavzu"
+msgstr "Тема в этот раздел"
+
+#: templates/academy/topics/list.html
+msgid "Shu mavzu bo‘yicha test jo‘natish"
+msgstr "Отправить тест по этой теме"
 
 #: templates/academy/topics/list.html
 msgid "Yashirin"
@@ -6741,6 +6885,10 @@ msgstr "Скрыта"
 #: templates/academy/topics/list.html
 msgid "Yashirinlar (%(hidden_n)s)"
 msgstr "Скрытые (%(hidden_n)s)"
+
+#: templates/academy/topics/list.html
+msgid "test savollari yo‘q"
+msgstr "нет тестовых вопросов"
 
 #: templates/academy/topics/module_form.html
 msgid "Bo‘lim · Minar Test"
