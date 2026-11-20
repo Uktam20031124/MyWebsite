@@ -1,4 +1,4 @@
-"""Dasturchi 10-oy · 2-sayt: EduCenter (Django) — WB13–WB24 "Dars kodi".
+"""Dasturchi 10–11-oy · 2-sayt: EduCenter (Django) — WB13–WB24 "Dars kodi"; loyiha generatori WB36 gacha.
 
 Loyiha fayllari ``project(n)`` dan bosqichma-bosqich yig'iladi; dars "files" — shu darsda yangi yoki o'zgargan fayllar.
 Har bosqich vaqtinchalik Django loyihasida yig'ilib (startproject/startapp + fayllar), check, makemigrations,
@@ -23,27 +23,31 @@ def pick(n: int, rows: list) -> str:
     return "\n".join(out) + "\n"
 
 
-GITIGNORE = """.venv/
-__pycache__/
-db.sqlite3
-media/
-.env
-"""
+def gitignore(n):
+    return pick(n, [".venv/", "__pycache__/", "db.sqlite3", "media/", (26, "staticfiles/"), ".env"])
 
 
 def requirements(n):
-    return pick(n, ["Django>=5.2,<6.0", (20, "Pillow>=11.0")])
+    return pick(n, ["Django>=5.2,<6.0", (20, "Pillow>=11.0"), (26, "python-dotenv>=1.0"), (27, "gunicorn>=23.0")])
 
 
 def settings_py(n):
     return pick(n, [
+        (26, "import os"),
         "from pathlib import Path",
+        (26, ""),
+        (26, "from dotenv import load_dotenv"),
         "",
         "BASE_DIR = Path(__file__).resolve().parent.parent",
+        (26, 'load_dotenv(BASE_DIR / ".env")'),
         "",
-        'SECRET_KEY = "django-insecure-faqat-dars-uchun"',
-        "DEBUG = True",
-        "ALLOWED_HOSTS = []",
+        (13, 26, 'SECRET_KEY = "django-insecure-faqat-dars-uchun"'),
+        (13, 26, "DEBUG = True"),
+        (13, 26, "ALLOWED_HOSTS = []"),
+        (26, 'SECRET_KEY = os.environ["SECRET_KEY"]'),
+        (26, 'DEBUG = os.environ.get("DEBUG", "0") == "1"'),
+        (26, 'ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")'),
+        (28, 'CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS]'),
         "",
         "INSTALLED_APPS = [",
         '    "django.contrib.admin",',
@@ -53,6 +57,7 @@ def settings_py(n):
         '    "django.contrib.messages",',
         '    "django.contrib.staticfiles",',
         (14, '    "courses",'),
+        (25, '    "news",'),
         (22, '    "accounts",'),
         "]",
         "",
@@ -107,6 +112,7 @@ def settings_py(n):
         "",
         'STATIC_URL = "static/"',
         (14, 'STATICFILES_DIRS = [BASE_DIR / "static"]'),
+        (26, 'STATIC_ROOT = BASE_DIR / "staticfiles"'),
         (20, ""),
         (20, 'MEDIA_URL = "media/"'),
         (20, 'MEDIA_ROOT = BASE_DIR / "media"'),
@@ -114,6 +120,16 @@ def settings_py(n):
         (22, 'LOGIN_URL = "login"'),
         (22, 'LOGIN_REDIRECT_URL = "home"'),
         (22, 'LOGOUT_REDIRECT_URL = "home"'),
+        (30, ""),
+        (30, 'TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")'),
+        (30, 'TELEGRAM_ADMIN_ID = os.environ.get("TELEGRAM_ADMIN_ID", "")'),
+        (28, ""),
+        (28, "if not DEBUG:"),
+        (28, '    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")'),
+        (28, "    SECURE_SSL_REDIRECT = True"),
+        (28, "    SESSION_COOKIE_SECURE = True"),
+        (28, "    CSRF_COOKIE_SECURE = True"),
+        (28, "    SECURE_HSTS_SECONDS = 3600"),
         "",
         'DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"',
     ])
@@ -131,6 +147,7 @@ def config_urls(n):
         '    path("admin/", admin.site.urls),',
         (22, '    path("accounts/", include("django.contrib.auth.urls")),'),
         (22, '    path("accounts/", include("accounts.urls")),'),
+        (25, '    path("yangiliklar/", include("news.urls")),'),
         (14, '    path("", include("courses.urls")),'),
         "]",
         (20, ""),
@@ -150,6 +167,7 @@ def courses_urls(n):
         (17, '    path("kurslar/", views.course_list, name="course_list"),'),
         (18, '    path("kurslar/<slug:slug>/", views.course_detail, name="course_detail"),'),
         (19, '    path("ustozlar/<int:pk>/", views.teacher_detail, name="teacher_detail"),'),
+        (29, '    path("api/courses/", views.api_courses, name="api_courses"),'),
         "]",
     ])
 
@@ -252,13 +270,16 @@ def views_py(n):
     return pick(n, [
         (21, "from django.contrib import messages"),
         (23, "from django.db.models import Q"),
+        (29, "from django.http import JsonResponse"),
         (14, 18, "from django.shortcuts import render"),
         (18, 21, "from django.shortcuts import get_object_or_404, render"),
         (21, "from django.shortcuts import get_object_or_404, redirect, render"),
         (17, ""),
         (21, "from .forms import EnrollmentForm"),
         (17, 19, "from .models import Course"),
-        (19, "from .models import Course, Teacher"),
+        (19, 33, "from .models import Course, Teacher"),
+        (33, "from .models import Category, Course, Teacher"),
+        (30, "from .telegram import notify_admin"),
         "",
         "",
         "def home(request):",
@@ -273,7 +294,12 @@ def views_py(n):
         (23, '    query = request.GET.get("q", "").strip()'),
         (23, "    if query:"),
         (23, "        courses = courses.filter(Q(title__icontains=query) | Q(description__icontains=query))"),
-        (23, '    return render(request, "courses/course_list.html", {"courses": courses, "query": query})'),
+        (33, '    category = request.GET.get("category", "")'),
+        (33, "    if category.isdigit():"),
+        (33, "        courses = courses.filter(category_id=category)"),
+        (23, 33, '    return render(request, "courses/course_list.html", {"courses": courses, "query": query})'),
+        (33, '    context = {"courses": courses, "query": query, "categories": Category.objects.all(), "category": category}'),
+        (33, '    return render(request, "courses/course_list.html", context)'),
         (18, ""),
         (18, ""),
         (18, "def course_detail(request, slug):"),
@@ -286,6 +312,7 @@ def views_py(n):
         (23, "        if request.user.is_authenticated:"),
         (23, "            enrollment.user = request.user"),
         (21, "        enrollment.save()"),
+        (30, '        notify_admin(f"🆕 Yangi ariza: {course.title}\\n👤 {enrollment.name}\\n📞 {enrollment.phone}")'),
         (21, "        messages.success(request, \"Arizangiz qabul qilindi! Tez orada bog'lanamiz.\")"),
         (21, "        return redirect(course)"),
         (21, '    return render(request, "courses/course_detail.html", {"course": course, "form": form})'),
@@ -294,6 +321,22 @@ def views_py(n):
         (19, "def teacher_detail(request, pk):"),
         (19, "    teacher = get_object_or_404(Teacher, pk=pk)"),
         (19, '    return render(request, "courses/teacher_detail.html", {"teacher": teacher})'),
+        (29, ""),
+        (29, ""),
+        (29, "def api_courses(request):"),
+        (29, '    courses = Course.objects.filter(is_active=True).select_related("category")'),
+        (29, "    data = ["),
+        (29, "        {"),
+        (29, '            "title": c.title,'),
+        (29, '            "slug": c.slug,'),
+        (29, '            "price": c.price,'),
+        (29, '            "months": c.duration_months,'),
+        (29, '            "category": c.category.name if c.category else None,'),
+        (29, '            "url": request.build_absolute_uri(c.get_absolute_url()),'),
+        (29, "        }"),
+        (29, "        for c in courses"),
+        (29, "    ]"),
+        (29, '    return JsonResponse({"courses": data}, json_dumps_params={"ensure_ascii": False})'),
     ])
 
 
@@ -366,6 +409,7 @@ def base_html(n):
         '      <ul class="menu">',
         (14, 17, "        <li><a href=\"{% url 'home' %}\">Bosh sahifa</a></li>"),
         (17, "        <li><a href=\"{% url 'course_list' %}\">Kurslar</a></li>"),
+        (25, "        <li><a href=\"{% url 'news:list' %}\">Yangiliklar</a></li>"),
         (22, "        {% if user.is_authenticated %}"),
         (23, "          <li><a href=\"{% url 'cabinet' %}\">Kabinet</a></li>"),
         (22, "          <li>"),
@@ -443,6 +487,12 @@ def list_html(n):
         "    <h1>Kurslar</h1>",
         (23, '    <form method="get" class="search">'),
         (23, '      <input type="search" name="q" value="{{ query }}" placeholder="Kurs qidirish..." aria-label="Kurs qidirish">'),
+        (33, '      <select name="category" aria-label="Kategoriya">'),
+        (33, '        <option value="">Barcha kategoriyalar</option>'),
+        (33, "        {% for c in categories %}"),
+        (33, '          <option value="{{ c.pk }}"{% if c.pk|stringformat:"d" == category %} selected{% endif %}>{{ c.name }}</option>'),
+        (33, "        {% endfor %}"),
+        (33, "      </select>"),
         (23, '      <button type="submit" class="btn">Qidirish</button>'),
         (23, "    </form>"),
         '    <div class="grid">',
@@ -806,9 +856,47 @@ td {
 '''
 
 
+CSS_NEWS = '''
+.post {
+  margin-bottom: 16px;
+}
+
+.post h2 {
+  margin: 0;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.pagination {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 24px;
+}
+'''
+
+CSS_FILTER = '''
+.search {
+  flex-wrap: wrap;
+}
+
+.search select {
+  font: inherit;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: var(--surface);
+}
+'''
+
+
 def style_css(n):
     parts = [(14, CSS_BASE), (17, CSS_CARDS), (18, CSS_DETAIL), (20, CSS_IMAGES), (21, CSS_FORM),
-             (22, CSS_AUTH), (23, CSS_SEARCH)]
+             (22, CSS_AUTH), (23, CSS_SEARCH), (25, CSS_NEWS), (33, CSS_FILTER)]
     return "".join(css for s, css in parts if n >= s)
 
 
@@ -817,10 +905,10 @@ SEED_DEMO = '''from django.core.management.base import BaseCommand
 from courses.models import Category, Course, Teacher
 
 COURSES = [
-    ("Python asoslari", "python-asoslari", "Dasturlash", 450000, 3, "O'zgaruvchilar, sikllar, funksiyalar va OOP — noldan boshlab."),
+    ("Python asoslari", "python-asoslari", "Dasturlash", 450000, 3, "Sikllar, funksiyalar va OOP — noldan boshlab."),
     ("Telegram bot", "telegram-bot", "Dasturlash", 550000, 3, "aiogram 3 bilan haqiqiy bot: tugmalar, baza va server."),
     ("Web dasturlash", "web-dasturlash", "Web", 650000, 3, "HTML, CSS, JavaScript va Django bilan to'liq sayt."),
-    ("Kompyuter savodxonligi", "kompyuter-savodxonligi", "Boshlang'ich", 300000, 2, "Word, Excel, internet va xavfsizlik asoslari."),
+    ("Kompyuter savodxonligi", "kompyuter-savodxonligi", "Boshlang'ich", 300000, 2, "Word, Excel va internet asoslari."),
 ]
 
 
@@ -849,7 +937,7 @@ def project(n: int) -> dict:
     if n < 13:
         return {}
     out = {
-        ".gitignore": GITIGNORE,
+        ".gitignore": gitignore(n),
         "requirements.txt": requirements(n),
         "config/settings.py": settings_py(n),
         "config/urls.py": config_urls(n),
