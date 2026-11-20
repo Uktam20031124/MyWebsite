@@ -73,8 +73,8 @@ class LessonDataTests(TestCase):
         self.assertNotIn("<script>x", frames(lesson)[0])
 
     def test_web_lessons_have_browser_preview_frame(self):
-        web = {k: v for k, v in bank().items() if k.startswith("WB")}
-        self.assertGreaterEqual(len(web), 12)
+        web = {k: v for k, v in bank().items() if "preview" in v}
+        self.assertGreaterEqual(len(web), 23)
         for key, lesson in web.items():
             image = Path(settings.BASE_DIR) / "static" / lesson["preview"]["image"]
             self.assertTrue(image.is_file(), image)
