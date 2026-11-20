@@ -28,8 +28,9 @@ def bank() -> dict[str, dict]:
     from .school_data.lessons_m07 import LESSONS as M07
     from .school_data.lessons_m08 import LESSONS as M08
     from .school_data.lessons_m09 import LESSONS as M09
+    from .school_data.lessons_m10 import LESSONS as M10
 
-    return {**M03, **M04, **M05, **M06, **M07, **M08, **M09, **BOT}
+    return {**M03, **M04, **M05, **M06, **M07, **M08, **M09, **M10, **BOT}
 
 
 def run_program(lesson: dict) -> str:
