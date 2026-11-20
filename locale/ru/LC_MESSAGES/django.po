@@ -4455,20 +4455,32 @@ msgid "· ⏰ %(scheduled_at)s da yuboriladi"
 msgstr "· ⏰ будет отправлено в %(scheduled_at)s"
 
 #: templates/academy/quiz/_penalty_form.html
-msgid "%(n)s ⚡️ quvvat ayirish"
-msgstr "Списать %(n)s ⚡️ энергии"
+msgid "%(name)s: {n} ⚡️ quvvat ayiriladi. Davom etilsinmi?"
+msgstr "%(name)s: будет списано {n} ⚡️ энергии. Продолжить?"
 
 #: templates/academy/quiz/_penalty_form.html
-msgid "Ayirish:"
-msgstr "Списать:"
+msgid "Ayirish"
+msgstr "Списать"
+
+#: templates/academy/quiz/_penalty_form.html
+msgid "Kechirilgan"
+msgstr "Прощено"
 
 #: templates/academy/quiz/_penalty_form.html
 msgid "Kechirish"
 msgstr "Простить"
 
 #: templates/academy/quiz/_penalty_form.html
-msgid "kechirildi"
-msgstr "прощено"
+msgid "Ko‘rib chiqilmagan"
+msgstr "Не рассмотрено"
+
+#: templates/academy/quiz/_penalty_form.html
+msgid "Quvvat ayirish"
+msgstr "Списать энергию"
+
+#: templates/academy/quiz/_penalty_form.html
+msgid "−%(n)s ⚡️ ayirilgan"
+msgstr "Списано −%(n)s ⚡️"
 
 #: templates/academy/quiz/_pick_row.html
 msgid "%(question_n)s ta savol"
@@ -4583,10 +4595,6 @@ msgid "<strong>Havolalar %(scheduled_at)s da avtomatik yuboriladi.</strong>"
 msgstr "<strong>Ссылки будут автоматически отправлены %(scheduled_at)s.</strong>"
 
 #: templates/academy/quiz/batch_detail.html
-msgid "<strong>Telegram ulanmagan — havolalar yuborilmadi.</strong>"
-msgstr "<strong>Telegram не подключён — ссылки не отправлены.</strong>"
-
-#: templates/academy/quiz/batch_detail.html
 msgid "Avtomatik eslatma"
 msgstr "Автоматическое напоминание"
 
@@ -4623,12 +4631,16 @@ msgid "Gmail ulangan — havolalarni email orqali yuborishingiz mumkin."
 msgstr "Gmail подключён — ссылки можно отправить по email."
 
 #: templates/academy/quiz/batch_detail.html
+msgid "Hali natija yo‘q"
+msgstr "Результатов пока нет"
+
+#: templates/academy/quiz/batch_detail.html
 msgid "Havolalar va natijalar"
 msgstr "Ссылки и результаты"
 
 #: templates/academy/quiz/batch_detail.html
-msgid "Jo‘natildi"
-msgstr "Отправлено"
+msgid "Jo‘natma ko‘rsatkichlari"
+msgstr "Показатели рассылки"
 
 #: templates/academy/quiz/batch_detail.html
 msgid "Jo‘natmani o‘chirish"
@@ -4655,6 +4667,10 @@ msgid "O‘quvchiga javoblarini (to‘g‘ri/xato) ko‘rsatish"
 msgstr "Показать ученику его ответы (верно/неверно)"
 
 #: templates/academy/quiz/batch_detail.html
+msgid "Qanday ulash?"
+msgstr "Как подключить?"
+
+#: templates/academy/quiz/batch_detail.html
 msgid "Qaysi savollarda xato qilgani (faqat siz ko‘rasiz)"
 msgstr "В каких вопросах ошибся (видите только вы)"
 
@@ -4674,7 +4690,7 @@ msgstr "Отправить снова"
 msgid "RU"
 msgstr "RU"
 
-#: templates/academy/quiz/batch_detail.html templates/academy/quiz/review_requests.html templates/academy/students/detail.html
+#: templates/academy/quiz/batch_detail.html templates/academy/students/detail.html
 msgid "Rad"
 msgstr "Откл."
 
@@ -4697,6 +4713,10 @@ msgstr "Показывает, какую часть темы нужно объя
 #: templates/academy/quiz/batch_detail.html
 msgid "Telegram orqali yuborilgan"
 msgstr "Отправлено через Telegram"
+
+#: templates/academy/quiz/batch_detail.html
+msgid "Telegram ulanmagan — havolalar avtomatik yuborilmadi."
+msgstr "Telegram не подключён — ссылки не отправлены автоматически."
 
 #: templates/academy/quiz/batch_detail.html
 msgid "Telegram username / telefon yo‘q"
@@ -4763,6 +4783,10 @@ msgid "eslatildi %(reminded_at)s"
 msgstr "напомнили %(reminded_at)s"
 
 #: templates/academy/quiz/batch_detail.html
+msgid "hali boshlanmagan havolalar"
+msgstr "ссылки ещё не открыты"
+
+#: templates/academy/quiz/batch_detail.html
 msgid "ko‘ra oladi"
 msgstr "может видеть"
 
@@ -4781,6 +4805,14 @@ msgstr "верно: %(correct_text)s"
 #: templates/academy/quiz/batch_detail.html templates/academy/quiz/open_detail.html
 msgid "vaqt tugadi"
 msgstr "время вышло"
+
+#: templates/academy/quiz/batch_detail.html
+msgid "yakunlanganlar bo‘yicha"
+msgstr "по завершённым"
+
+#: templates/academy/quiz/batch_detail.html
+msgid "yechgan / jo‘natilgan"
+msgstr "решили / отправлено"
 
 #: templates/academy/quiz/batch_detail.html
 msgid "· ko‘p tanlangan xato: «%(top_wrong)s» (%(top_wrong_n)s)"
@@ -5247,8 +5279,12 @@ msgid "%(code)s · so‘radi %(profile_requested_at)s"
 msgstr "%(code)s · запросил %(profile_requested_at)s"
 
 #: templates/academy/quiz/review_requests.html
-msgid "%(h)s soat"
-msgstr "%(h)s ч"
+msgid "%(h)s soat · %(until)s gacha"
+msgstr "%(h)s ч · до %(until)s"
+
+#: templates/academy/quiz/review_requests.html
+msgid "%(h)s soatga ochish — %(until)s gacha"
+msgstr "Открыть на %(h)s ч — до %(until)s"
 
 #: templates/academy/quiz/review_requests.html
 msgid "%(pending)s ta"
@@ -5763,6 +5799,10 @@ msgid "%(rewards)s ta"
 msgstr "%(rewards)s"
 
 #: templates/academy/shop/rewards.html
+msgid "Hali sovg‘a yo‘q."
+msgstr "Подарков пока нет."
+
+#: templates/academy/shop/rewards.html
 msgid "Motivatsiya"
 msgstr "Мотивация"
 
@@ -5777,10 +5817,6 @@ msgstr "Последние запросы"
 #: templates/academy/shop/rewards.html
 msgid "O‘quvchilar quvvat ⚡️ yig‘ib, shu mukofotlarni so‘raydi. So‘rov “So‘rovlar” bo‘limiga keladi; siz tasdiqlasangiz — quvvat sarflanadi."
 msgstr "Ученики собирают энергию ⚡️ и запрашивают эти награды. Запрос приходит в раздел «Запросы»; если вы одобрите — энергия будет потрачена."
-
-#: templates/academy/shop/rewards.html
-msgid "Sovg‘a yo‘q — o‘ngdagi formadan qo‘shing."
-msgstr "Подарков нет — добавьте в форме справа."
 
 #: templates/academy/shop/rewards.html
 msgid "Sovg‘alar"
@@ -6218,11 +6254,11 @@ msgstr "Добавьте первого ученика."
 msgid "CSV · %(n)s ta"
 msgstr "CSV · %(n)s"
 
-#: templates/academy/students/list.html
+#: templates/academy/students/list.html templates/academy/teachers/action_log.html
 msgid "Filtrlar"
 msgstr "Фильтры"
 
-#: templates/academy/students/list.html
+#: templates/academy/students/list.html templates/academy/teachers/action_log.html
 msgid "Filtrlarni tozalash"
 msgstr "Сбросить фильтры"
 
@@ -6325,10 +6361,6 @@ msgstr "Кто"
 #: templates/academy/teachers/action_log.html
 msgid "Kim, qachon va nima qildi: bosh ustoz va o‘qituvchilarning amallari, tizimga kirish va chiqish. O‘quvchilarning amallari va parollar yozilmaydi."
 msgstr "Кто, когда и что сделал: действия главного учителя и преподавателей, вход и выход. Действия учеников и пароли не записываются."
-
-#: templates/academy/teachers/action_log.html
-msgid "Tozalash"
-msgstr "Сбросить"
 
 #: templates/academy/teachers/action_log.html
 msgid "bosh ustoz"
@@ -6477,6 +6509,10 @@ msgstr "решено: %(n)s"
 #: templates/academy/teachers/report.html
 msgid "%(name)s: %(sum)s so‘m to‘landi deb belgilansinmi?"
 msgstr "%(name)s: отметить %(sum)s сум как выплаченные?"
+
+#: templates/academy/teachers/report.html
+msgid "%(sum)s so‘m"
+msgstr "%(sum)s сум"
 
 #: templates/academy/teachers/report.html
 msgid "Hali o‘qituvchi yo‘q."

@@ -28,8 +28,8 @@
           <form method="post" action="{% url 'student_profile_access' s.pk %}" class="quiz-actions">
             {% csrf_token %}
             <input type="hidden" name="next" value="requests">
-            {% for h in access_hours %}<button class="btn xs {% if forloop.first %}primary{% else %}soft{% endif %}" type="submit" name="action" value="{{ h }}">{% blocktranslate with h=h trimmed %}{{ h }} soat{% endblocktranslate %}</button>{% endfor %}
-            <button class="btn xs ghost" type="submit" name="action" value="close">{% translate "Rad" %}</button>
+            {% for h in access_hours %}<button class="btn xs {% if forloop.first %}primary{% else %}soft{% endif %}" type="submit" name="action" value="{{ h }}" aria-label="{% blocktranslate with h=h until=h|until_hours trimmed %}{{ h }} soatga ochish — {{ until }} gacha{% endblocktranslate %}">{% blocktranslate with h=h until=h|until_hours trimmed %}{{ h }} soat · {{ until }} gacha{% endblocktranslate %}</button>{% endfor %}
+            <button class="btn xs ghost" type="submit" name="action" value="close">{% translate "Rad etish" %}</button>
           </form>
         </div>
       {% endfor %}

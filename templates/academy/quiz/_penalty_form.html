@@ -1,10 +1,19 @@
-{% load i18n %}<form method="post" action="{% url 'attempt_penalty' attempt.pk %}" class="quiz-actions penalty-form">
+{% load i18n ui %}{# Qaror: kechirish yoki quvvat ayirish (tanlov + tasdiq). Ogohlantirishlar va natija sahifasida bir xil. #}
+<form method="post" action="{% url 'attempt_penalty' attempt.pk %}" class="quiz-actions penalty-form" data-penalty-form>
   {% csrf_token %}
   <input type="hidden" name="next" value="{{ next }}">
   {% if attempt.warning_checked_at %}
-    <span class="badge {% if attempt.penalty %}warn{% else %}ok{% endif %}">{% if attempt.penalty %}−{{ attempt.penalty }} ⚡️{% else %}{% translate "kechirildi" %}{% endif %}</span>
+    {% if attempt.penalty %}<span class="chip warn">{% icon "bolt" 12 %} {% blocktranslate with n=attempt.penalty trimmed %}−{{ n }} ⚡️ ayirilgan{% endblocktranslate %}</span>
+    {% else %}<span class="chip ok">{% icon "check" 12 %} {% translate "Kechirilgan" %}</span>{% endif %}
+  {% else %}
+    <span class="chip">{% icon "clock" 12 %} {% translate "Ko‘rib chiqilmagan" %}</span>
   {% endif %}
-  <span class="meta">{% translate "Ayirish:" %}</span>
-  {% for n in penalty_choices %}<button class="btn xs {% if attempt.penalty == n %}danger{% else %}soft{% endif %}" type="submit" name="amount" value="{{ n }}" title="{% blocktranslate with n=n trimmed %}{{ n }} ⚡️ quvvat ayirish{% endblocktranslate %}">−{{ n }}</button>{% endfor %}
+  <label class="sr-only" for="penalty-{{ attempt.pk }}">{% translate "Quvvat ayirish" %}</label>
+  <select class="input penalty-select" id="penalty-{{ attempt.pk }}" name="amount">
+    {% for n in penalty_choices %}<option value="{{ n }}"{% if attempt.penalty == n %} selected{% endif %}>−{{ n }} ⚡️</option>{% endfor %}
+  </select>
+  <button class="btn xs danger-ghost" type="submit"
+          data-penalty-confirm="{% blocktranslate with name=attempt.student.full_name trimmed %}{{ name }}: {n} ⚡️ quvvat ayiriladi. Davom etilsinmi?{% endblocktranslate %}">{% translate "Ayirish" %}</button>
+  {# Kechirish select'dan keyin: POST'da amount=0 oxirgi qiymat bo'ladi. #}
   <button class="btn xs ghost" type="submit" name="amount" value="0">{% translate "Kechirish" %}</button>
 </form>

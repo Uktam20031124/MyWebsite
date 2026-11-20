@@ -6,7 +6,11 @@
 {% block subheading %}<p class="page-sub">{% translate "Kim, qachon va nima qildi: bosh ustoz va o‘qituvchilarning amallari, tizimga kirish va chiqish. O‘quvchilarning amallari va parollar yozilmaydi." %}</p>{% endblock %}
 
 {% block content %}
-<form class="toolbar" method="get">
+{% active_filters "user,amal,kun" as nf %}
+<form class="toolbar collapsible" method="get">
+  <button class="btn soft filters-toggle" type="button" data-filters-toggle aria-expanded="false">{% icon "filter" 16 %} {% translate "Filtrlar" %}{% if nf %} <span class="badge info count tabular">{{ nf }}</span>{% endif %}</button>
+  {% if nf %}<a class="btn ghost" href="?">{% icon "x" 15 %} {% translate "Filtrlarni tozalash" %}</a>{% endif %}
+  <div class="toolbar-filters">
   <select class="input" name="user" data-autosubmit aria-label="{% translate "Kim" %}">
     <option value="">{% translate "Hamma" %}</option>
     {% for u in users %}<option value="{{ u.pk }}" {% if u.pk == user_id %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>{% endfor %}
@@ -16,23 +20,23 @@
     {% for key, label in actions %}<option value="{{ key }}" {% if key == action %}selected{% endif %}>{{ label }}</option>{% endfor %}
   </select>
   <input class="input" type="date" name="kun" value="{{ day }}" data-autosubmit aria-label="{% translate "Sana" %}">
-  {% if user_id or day or action %}<a class="btn ghost sm" href="?">{% translate "Tozalash" %}</a>{% endif %}
+  </div>
   <span class="spacer"></span>
   <span class="meta">{% blocktranslate with n=page.paginator.count trimmed %}{{ n }} ta yozuv{% endblocktranslate %}</span>
 </form>
 
 <section class="card">
   <div class="card-body flush table-wrap">
-    <table class="table">
+    <table class="table responsive">
       <thead><tr><th>{% translate "Vaqt" %}</th><th>{% translate "Kim" %}</th><th>{% translate "Amal" %}</th><th>{% translate "Obyekt" %}</th><th>{% translate "IP" %}</th></tr></thead>
       <tbody>
         {% for log in page %}
           <tr>
-            <td class="nowrap">{{ log.created_at|date:"d.m.Y H:i" }}</td>
-            <td>{% if log.user %}<a href="?user={{ log.user_id }}">{{ log.user.get_full_name|default:log.username }}</a>{% if log.user.is_superuser %} <span class="badge">{% translate "bosh ustoz" %}</span>{% endif %}{% else %}{{ log.username|default:"—" }}{% endif %}</td>
-            <td><a href="?amal={{ log.action }}">{{ log.action|action_label }}</a></td>
-            <td class="truncate" style="max-width:360px">{{ log.target|default:"—" }}</td>
-            <td class="meta mono">{{ log.ip }}</td>
+            <td class="nowrap tabular" data-label="{% translate "Vaqt" %}">{{ log.created_at|date:"d.m.Y H:i" }}</td>
+            <td class="cell-main">{% if log.user %}<a href="?user={{ log.user_id }}">{{ log.user.get_full_name|default:log.username }}</a>{% if log.user.is_superuser %} <span class="badge">{% translate "bosh ustoz" %}</span>{% endif %}{% else %}{{ log.username|default:"—" }}{% endif %}</td>
+            <td data-label="{% translate "Amal" %}"><a href="?amal={{ log.action }}">{{ log.action|action_label }}</a></td>
+            <td class="truncate" style="max-width:360px" data-label="{% translate "Obyekt" %}">{{ log.target|default:"—" }}</td>
+            <td class="meta mono cell-hide-mobile">{{ log.ip }}</td>
           </tr>
         {% empty %}
           <tr><td colspan="5"><div class="empty compact"><p>{% translate "Hali yozuv yo‘q." %}</p></div></td></tr>

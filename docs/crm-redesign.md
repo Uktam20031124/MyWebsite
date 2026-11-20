@@ -111,4 +111,39 @@ anonim/o'quvchi (ochiq havolalar: `/royxat/`, `/men/`, `/t/`, `/o/`, `/aloqa/`).
   bilan yozish), umumiy havolalar (yorliqlar, amalli bo'sh holat).
 - axe: P1 sahifalari (mavzu tafsiloti bilan) 60 holat — 0 buzilish.
 
+## P2 — qilingan ishlar
+
+- **Ogohlantirishlar va natija sahifasi** (umumiy `_penalty_form`): beshta teng −1…−5 tugma o'rniga «Quvvat ayirish»
+  tanlovi + «Ayirish» (miqdor va ism bilan tasdiq) + «Kechirish» (tasdiqsiz); holat chipi «Ko'rib chiqilmagan /
+  −N ⚡️ ayirilgan / Kechirilgan». Server qoidasi o'zgarmagan (`amount`, `PENALTY_MAX`); select + Kechirish birga
+  yuborilganda kechirish hal qilishi testlangan. «Hammasini kechirish» — doira va son tasdiqda (avvaldan).
+- **So'rovlar**: mobilda ism to'liq o'qiladi (avval «A», «Naz…»), amallar keyingi qatorda; profil ruxsati tugmalarida
+  aniq tugash vaqti («2 soat · 22:45 gacha», `until_hours`); «Rad» → «Rad etish».
+- **Jo'natma tafsiloti**: ixcham KPI «Yechdi N / jami», natija yo'q bo'lsa «Hali natija yo'q» (0% emas);
+  «Telegram ulanmagan» — bir qator + «Qanday ulash?» (texnik ko'rsatma ichkarida).
+- **Mukofotlar**: katalog birinchi, yaratish formasi «Yangi sovg'a» amali bilan ochiladi (tahrir/xato bo'lsa — ochiq).
+- **Faoliyat va maosh**: narx kiritilmagan — «—» va «narx kiritilmagan» havolasi (avval «0»), summa «so'm» bilan;
+  mobil karta. **Harakatlar jurnali**: yig'iladigan filtrlar, mobil karta.
+- **Xato sahifalari** (`DEBUG=False`): sabab + «Bosh sahifaga qaytish», texnik ma'lumot yo'q — testlangan.
+- axe: P2 36 holat — 0; regressiya P0 28 + P1 60 — 0. Testlar: `test_crm_p2.py` (5).
+
+## Yakuniy hisobot
+
+**Umumiy komponentlar** (`app.css`, `app.js`): semantik tokenlar (light/dark), status `chip`, `next-up`, `attention`,
+ixcham KPI, `steps`, `table.responsive`, yig'iladigan `toolbar.collapsible`, `more-actions` menyu, `details.notice`,
+drawer focus-trap, global takror-yuborish himoyasi, ro'yxatga filtr bilan qaytish, fragment `<details>` ochish.
+
+**Muhim UX qarorlari**: kunlik ish (navbatdagi dars, yo'qlama, navbatlar) statistikadan oldin; ma'lumot yo'qligi
+haqiqiy noldan ajratiladi (davomat, dastur, test natijasi, maosh); tugma yorlig'i serverning haqiqiy natijasini aytadi
+(test jo'natish, CSV doirasi); oqibatli amallar tasdiqda miqdor va doirani ko'rsatadi; mobilda ikki o'lchamli jadval
+o'rniga karta yoki aniq ichki surilish.
+
+**Tekshiruv buyruqlari** (sintetik baza, `.cache/crm_seed*.py`): `manage.py test academy` — 449 OK; `ruff check
+academy/` — toza; `manage.py i18n_catalog` — RU 1748/1748; axe-core 4.10.2 (WCAG 2.2 A–AA) — 124 sahifa holati
+(light/dark × 390/1440), 0 buzilish; klaviatura (drawer), 320 px reflow — o'tdi.
+
+**Tekshirilgan rollar**: bosh ustoz (superuser), cheklangan o'qituvchi (faqat o'z guruhlari, bo'lim ruxsatlari —
+menyu va navbatlar), anonim (kirish, ochiq ro'yxat formasi, 404). **O'lchamlar**: 320, 390, 1440 (768/1024 —
+mavjud breakpointlar bilan, alohida skrinshot olinmagan).
+
 Tekshirilmagan: mobil WebKit/Safari (muhitda yo'q), Core Web Vitals dala ma'lumoti (monitoring yo'q).

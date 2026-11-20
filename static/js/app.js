@@ -154,6 +154,14 @@
     setTimeout(() => $$('button[type="submit"]', form).forEach((b) => (b.disabled = true)));
   });
 
+  // --- Quvvat ayirish: tanlangan miqdor bilan tasdiq (Kechirish — tasdiqsiz) -----------
+  document.addEventListener("submit", (e) => {
+    const form = e.target.closest?.("form[data-penalty-form]");
+    const text = e.submitter?.dataset.penaltyConfirm;
+    if (!form || !text) return;
+    if (!window.confirm(text.replace("{n}", $("select[name=amount]", form)?.value || "?"))) e.preventDefault();
+  }, true);
+
   // --- Qator menyusi (popover): tugma yonida ochiladi, sig'masa — yuqoriga ---------
   // "toggle" hodisasi ko'tarilmaydi, shuning uchun capture bosqichida tinglanadi.
   const placeMenu = (menu, measured) => {
@@ -670,6 +678,17 @@
     if (!target) return;
     const on = target.classList.toggle(btn.dataset.toggleClass);
     btn.setAttribute("aria-pressed", String(on));
+  });
+
+  // [data-open-details="id"]: havola bosilganda shu <details> ochiladi va birinchi maydonga fokus.
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("[data-open-details]");
+    const d = a && document.getElementById(a.dataset.openDetails);
+    if (!d) return;
+    e.preventDefault();
+    d.open = true;
+    d.scrollIntoView({ block: "start" });
+    $("input, select, textarea", d)?.focus();
   });
 
   // Turbo bor sahifalarda turbo:load har bir ko'rinishda (birinchisida ham) keladi.
