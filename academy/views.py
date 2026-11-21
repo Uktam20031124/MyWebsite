@@ -41,6 +41,7 @@ from . import (
     homework,
     mailer,
     motivation,
+    portal_ui,
     profiles,
     review_access,
     teachers,
@@ -2362,6 +2363,16 @@ def student_portal(request, token):
     board = engagement.quvvat_board(student.group_id)
     coin_available = engagement.available(student)
     homework_rows = homework.rows_for(student)
+    homework_open_n = sum(1 for r in homework_rows if r.submission is None and not r.overdue)
+    bonus_summary = bonus.summary(student)
+    open_mistakes_n = engagement.open_mistakes(student).count()
+    streak = engagement.streak_info(student)
+    rewards = list(Reward.objects.filter(is_active=True))
+    topic_rows = profiles.topic_rows(student)
+    missions = portal_ui.missions(pending=pending, homework_open_n=homework_open_n,
+                                  open_mistakes_n=open_mistakes_n, bonus=bonus_summary, streak=streak)
+    achievements = portal_ui.achievements(finished=finished, stats=stats, streak=streak, student=student,
+                                          open_mistakes_n=open_mistakes_n)
     response = render(
         request,
         "academy/portal/student.html",
@@ -2373,7 +2384,8 @@ def student_portal(request, token):
             "finished": finished,
             "pending": pending,
             "attendance": student_attendance_rate(student),
-            "topic_rows": profiles.topic_rows(student),
+            "topic_rows": [r for r in topic_rows if r.bank],
+            "topic_rows_empty": [r for r in topic_rows if not r.bank],
             "unlock_offers": profiles.unlock_offers(student),
             "unlock_cost": profiles.UNLOCK_COST,
             "daily_limit": TestRequest.DAILY_LIMIT,
@@ -2383,19 +2395,26 @@ def student_portal(request, token):
             "coin_rules": coins.RULES,
             "coin_available": coin_available,
             "unlock_need": max(0, profiles.UNLOCK_COST - coin_available),
-            "streak": engagement.streak_info(student),
+            "streak": streak,
             "streak_every": engagement.STREAK_BONUS_EVERY,
             "streak_bonus": engagement.STREAK_BONUS,
             "homework_rows": homework_rows,
-            "homework_open_n": sum(1 for r in homework_rows if r.submission is None and not r.overdue),
+            "homework_open_n": homework_open_n,
             "homework_coins": homework.COINS,
-            "bonus": bonus.summary(student),
+            "bonus": bonus_summary,
             "bonus_topics": bonus.topics(student),
             "mistake_topics": engagement.mistakes_by_topic(student),
-            "open_mistakes_n": engagement.open_mistakes(student).count(),
+            "open_mistakes_n": open_mistakes_n,
             "board": board[: engagement.LEADERBOARD_SIZE],
             "my_board": next((r for r in board if r["student"].pk == student.pk), None),
-            "rewards": Reward.objects.filter(is_active=True),
+            "rewards": rewards,
+            # Taqdimot (portal_ui): bugungi reja, keyingi mukofot, yutuqlar, o'sish grafigi — mavjud ma'lumotdan.
+            "missions": missions,
+            "missions_done": sum(m.done for m in missions),
+            "next_reward": portal_ui.next_reward(rewards, coin_available, bool(student.honor_since)),
+            "achievements": achievements,
+            "achievements_got": sum(a.got for a in achievements),
+            "growth": portal_ui.growth_chart(stats.recent),
             "purchases": student.purchases.all()[:5],
             "pending_reward_ids": set(
                 student.purchases.filter(status="pending").values_list("reward_id", flat=True)

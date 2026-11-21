@@ -30,6 +30,7 @@
   --accent-soft: #dcf0ee;
   --gold: #9a6b14;
   --gold-soft: #f6edda;
+  --gold-text: #7a5410;
 
   --ok: #1d7449;
   --ok-soft: #dff2e7;
@@ -108,6 +109,7 @@
   --accent-soft: #123a3c;
   --gold: #e0b45e;
   --gold-soft: #2e2614;
+  --gold-text: #e0b45e;
 
   --ok: #6fd39c;
   --ok-soft: #12301f;
@@ -1827,8 +1829,8 @@ textarea.mono { font: 13.5px/1.6 var(--font-mono); }
 .bonus-stats b { font-family: var(--font-display); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .bonus-stats span { font-size: 12px; color: var(--text-3); }
 .bonus-stats .gold { background: var(--gold-soft); border-color: color-mix(in srgb, var(--gold) 35%, transparent); }
-.bonus-stats .gold b { color: var(--gold); }
-.chip-link small { color: var(--gold); font-weight: 700; }
+.bonus-stats .gold b { color: var(--gold-text); }
+.chip-link small { color: var(--gold-text); font-weight: 700; }
 .bonus-badge { flex: none; padding: 3px 10px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); font-size: 13px; font-weight: 700; }
 @media (max-width: 420px) { .bonus-stats { grid-template-columns: repeat(2, 1fr); } }
 
@@ -1961,6 +1963,7 @@ a.p-stat:hover { color: #fff; transform: translateY(-2px); background: linear-gr
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 6px 14px -6px color-mix(in srgb, var(--accent) 80%, transparent);
 }
 .p-tab-n { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; display: inline-grid; place-items: center; font-size: 11px; background: var(--bad); color: #fff; }
+:root[data-theme="dark"] .p-tab-n { color: #1a0f0d; }
 .p-panel { display: flex; flex-direction: column; gap: 16px; }
 .p-panel[hidden] { display: none; }
 .p-panel:not([hidden]) { animation: page-in 0.28s var(--ease); }
@@ -2616,3 +2619,80 @@ details.notice > summary .meta { text-decoration: underline; }
 .reward-form > summary::-webkit-details-marker { display: none; }
 .reward-form > summary h2 { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
 .reward-form[open] > summary { margin-bottom: 14px; }
+
+/* ==========================================================================
+   O'quvchi profili — Ultra (halqa, keyingi mukofot, bugungi reja, yutuqlar, o'sish grafigi)
+   ========================================================================== */
+.p-avatar-ring {
+  --p: 0;
+  position: relative; flex: none; display: grid; place-items: center; width: 92px; height: 92px; border-radius: 50%;
+  background: conic-gradient(rgba(255, 255, 255, 0.22) 0 100%);
+}
+.p-avatar-ring.has-score { background: conic-gradient(#e2b55c calc(var(--p) * 1%), rgba(255, 255, 255, 0.16) 0); }
+.p-avatar-ring .avatar { width: 76px; height: 76px; font-size: 24px; box-shadow: 0 0 0 3px #10224b; }
+.p-mission a .grow { flex: 1; min-width: 0; }
+.p-next-reward { display: grid; gap: 6px; margin-top: 10px; }
+.p-next-label { font-size: 12.5px; color: rgba(255, 255, 255, 0.86); }
+.p-meter { display: block; height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.16); overflow: hidden; }
+.p-meter > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #e2b55c, #f3d48f); }
+
+.p-section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.p-section-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; }
+
+/* Bugungi reja */
+.p-mission-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.p-mission a {
+  display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px;
+  border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); color: var(--text); text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.p-mission a:hover { border-color: var(--primary); transform: translateY(-1px); }
+.p-mission-mark {
+  display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--primary-soft); color: var(--primary); font-weight: 700; font-size: 14px;
+}
+.p-mission.done a { background: var(--surface-2); }
+.p-mission.done .p-mission-mark { background: var(--ok); color: #fff; }
+.p-mission.done strong { color: var(--text-2); }
+.p-mission.m-test .p-mission-mark { background: var(--primary); color: var(--primary-ink); }
+
+/* Yutuqlar */
+.p-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.p-badge {
+  display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 10px 12px;
+  border: 1px dashed var(--border-input); border-radius: var(--r); background: var(--surface);
+}
+.p-badge-icon { flex: none; font-size: 24px; line-height: 1; filter: grayscale(1); opacity: 0.55; }
+.p-badge-text { display: grid; min-width: 0; }
+.p-badge-text strong { font-size: 13.5px; }
+.p-badge-text span { color: var(--text-2); font-size: 12px; }
+.p-badge.got { border-style: solid; border-color: color-mix(in srgb, var(--gold) 45%, transparent); background: var(--gold-soft); }
+.p-badge.got .p-badge-icon { filter: none; opacity: 1; }
+.p-badge.got .p-badge-text span { color: var(--gold-text); font-weight: 600; }
+
+/* O'sish grafigi */
+.p-chart { display: block; width: 100%; height: auto; overflow: visible; }
+.p-chart .ref { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 4 5; vector-effect: non-scaling-stroke; }
+.p-chart .ref.r80 { stroke: color-mix(in srgb, var(--ok) 55%, transparent); }
+.p-chart .ref-label { fill: var(--text-2); font-size: 18px; }
+.p-chart .area { fill: color-mix(in srgb, var(--primary) 14%, transparent); }
+.p-chart .line { fill: none; stroke: var(--primary); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.p-chart .dot { fill: var(--surface); stroke: var(--primary); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.p-chart .dot.hi { stroke: var(--ok); }
+.p-chart .dot.lo { stroke: var(--bad); }
+
+/* Savollari yo'q mavzular */
+.p-empty-topics { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+.p-empty-topics > summary { cursor: pointer; color: var(--text-2); font-size: 14px; min-height: 32px; display: flex; align-items: center; }
+.p-empty-topics ul { margin: 6px 0 0; padding-left: 20px; color: var(--text-2); font-size: 14px; }
+
+/* Bo'lim yorliqlari: chetida so'nish (suriladi) */
+.p-tabs { mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+.p-tabs button { flex: none; }
+
+@media (max-width: 640px) {
+  .p-avatar-ring { width: 76px; height: 76px; }
+  .p-avatar-ring .avatar { width: 62px; height: 62px; font-size: 20px; }
+  .p-badges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .p-mission a { transition: none; } }
