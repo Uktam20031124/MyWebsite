@@ -530,7 +530,7 @@ msgstr "Дни занятий"
 msgid "Mavzu testi"
 msgstr "Тест по теме"
 
-#: academy/forms.py:646 academy/portal_ui.py:33
+#: academy/forms.py:646 academy/portal_ui.py:34
 msgid "{topic} · {n} ta savol"
 msgstr "{topic} · вопросов: {n}"
 
@@ -1710,113 +1710,141 @@ msgstr "Ссылка отправлена на адресов: {sent}."
 msgid "Yuborilmadi: {failed}"
 msgstr "Не отправлено: {failed}"
 
-#: academy/portal_ui.py:34
+#: academy/portal_ui.py:100
+msgid "O‘zlashtirildi"
+msgstr "Освоено"
+
+#: academy/portal_ui.py:102
+msgid "Mustahkamlash kerak"
+msgstr "Нужно закрепить"
+
+#: academy/portal_ui.py:103
+msgid "Yaxshi, 80% ga yaqin"
+msgstr "Хорошо, почти 80%"
+
+#: academy/portal_ui.py:35
 msgid "Yechilmagan test"
 msgstr "Нерешённый тест"
 
-#: academy/portal_ui.py:36
+#: academy/portal_ui.py:37
 msgid "Uyga vazifani topshiring"
 msgstr "Сдайте домашнее задание"
 
-#: academy/portal_ui.py:37
+#: academy/portal_ui.py:38
 msgid "{n} ta vazifa kutmoqda"
 msgstr "Ожидает заданий: {n}"
 
-#: academy/portal_ui.py:39
+#: academy/portal_ui.py:40
 msgid "Xatolar ustida ishlang"
 msgstr "Поработайте над ошибками"
 
-#: academy/portal_ui.py:40
+#: academy/portal_ui.py:41
 msgid "{n} ta savol · har biri +2 ⚡️"
 msgstr "Вопросов: {n} · каждый +2 ⚡️"
 
-#: academy/portal_ui.py:42 templates/academy/portal/student.html templates/academy/students/qr_cards.html
+#: academy/portal_ui.py:43 templates/academy/portal/student.html templates/academy/students/qr_cards.html
 msgid "Qo‘shimcha savollar"
 msgstr "Дополнительные вопросы"
 
-#: academy/portal_ui.py:43
+#: academy/portal_ui.py:44
 msgid "bugun yana {n} ta"
 msgstr "сегодня ещё {n}"
 
-#: academy/portal_ui.py:44
+#: academy/portal_ui.py:45
 msgid "Streakni saqlang"
 msgstr "Сохраните серию"
 
-#: academy/portal_ui.py:45
+#: academy/portal_ui.py:46
 msgid "bitta test yoki mashq yetarli"
 msgstr "достаточно одного теста или тренировки"
 
-#: academy/portal_ui.py:45
+#: academy/portal_ui.py:46
 msgid "bugun faolsiz"
 msgstr "сегодня вы активны"
 
-#: academy/portal_ui.py:63
+#: academy/portal_ui.py:68
 msgid "1 ta test yeching"
 msgstr "Решите 1 тест"
 
-#: academy/portal_ui.py:63
+#: academy/portal_ui.py:68
 msgid "Birinchi test"
 msgstr "Первый тест"
 
-#: academy/portal_ui.py:64
+#: academy/portal_ui.py:69
 msgid "5 ta test"
 msgstr "5 тестов"
 
-#: academy/portal_ui.py:64
+#: academy/portal_ui.py:69
 msgid "{n}/5"
 msgstr "{n}/5"
 
-#: academy/portal_ui.py:65
+#: academy/portal_ui.py:70
 msgid "10 ta test"
 msgstr "10 тестов"
 
-#: academy/portal_ui.py:65
+#: academy/portal_ui.py:70
 msgid "{n}/10"
 msgstr "{n}/10"
 
-#: academy/portal_ui.py:66
+#: academy/portal_ui.py:71
 msgid "80%+ natija"
 msgstr "Результат 80%+"
 
-#: academy/portal_ui.py:67
+#: academy/portal_ui.py:72
 msgid "eng yaxshisi: {p}%"
 msgstr "лучший: {p}%"
 
-#: academy/portal_ui.py:67 templates/academy/students/list.html
+#: academy/portal_ui.py:72 templates/academy/students/list.html
 msgid "hali yo‘q"
 msgstr "пока нет"
 
-#: academy/portal_ui.py:69
+#: academy/portal_ui.py:74
 msgid "100% natija"
 msgstr "Результат 100%"
 
-#: academy/portal_ui.py:69
+#: academy/portal_ui.py:74
 msgid "Mukammal test"
 msgstr "Идеальный тест"
 
-#: academy/portal_ui.py:70
+#: academy/portal_ui.py:75
 msgid "7 kunlik streak"
 msgstr "Серия 7 дней"
 
-#: academy/portal_ui.py:70
+#: academy/portal_ui.py:75
 msgid "{d}/7 kun"
 msgstr "{d}/7 дн."
 
-#: academy/portal_ui.py:71
+#: academy/portal_ui.py:77
 msgid "Xatolarsiz"
 msgstr "Без ошибок"
 
-#: academy/portal_ui.py:71
+#: academy/portal_ui.py:77
 msgid "ochiq xato savol yo‘q"
 msgstr "нет открытых ошибочных вопросов"
 
-#: academy/portal_ui.py:72 academy/templatetags/ui.py:283 templates/academy/portal/student.html templates/academy/students/detail.html
+#: academy/portal_ui.py:79 academy/templatetags/ui.py:283 templates/academy/portal/student.html templates/academy/students/detail.html
 msgid "A’lochi"
 msgstr "Отличник"
 
-#: academy/portal_ui.py:72
+#: academy/portal_ui.py:79
 msgid "ustoz beradi"
 msgstr "выдаёт учитель"
+
+#: academy/portal_ui.py:87
+msgid "Xayrli tong"
+msgstr "Доброе утро"
+
+#: academy/portal_ui.py:89
+msgid "Xayrli kun"
+msgstr "Добрый день"
+
+#: academy/portal_ui.py:90
+msgid "Xayrli kech"
+msgstr "Добрый вечер"
+
+#: academy/portal_ui.py:97
+msgid "Boshlanmagan"
+msgstr "Не начато"
 
 #: academy/profile_views.py:143
 msgid "🔓 “{title}” ochildi! Materialni o‘qing va testni topshiring — 70% dan yuqori natijaga bonus ⚡️."
@@ -2330,59 +2358,59 @@ msgstr "Ссылка «{title}» включена."
 msgid "“{title}” havolasi to‘xtatildi — endi ariza qabul qilmaydi."
 msgstr "Ссылка «{title}» приостановлена — заявки больше не принимаются."
 
-#: academy/views.py:2489 academy/views.py:2621
+#: academy/views.py:2500 academy/views.py:2632
 msgid "Yuborilmadi: {exc}"
 msgstr "Не отправлено: {exc}"
 
-#: academy/views.py:2497
+#: academy/views.py:2508
 msgid "Shaxsiy sahifa havolasi {label} orqali {ok} ta o‘quvchiga yuborildi."
 msgstr "Ссылка на личную страницу отправлена через {label} ученикам: {ok}."
 
-#: academy/views.py:2502
+#: academy/views.py:2513
 msgid "{n} ta o‘quvchiga yuborilmadi: "
 msgstr "Не отправлено ученикам ({n}):"
 
-#: academy/views.py:2519
+#: academy/views.py:2530
 msgid "Yangi havola yaratildi — eskisi endi ishlamaydi."
 msgstr "Создана новая ссылка — старая больше не работает."
 
-#: academy/views.py:2539
+#: academy/views.py:2550
 msgid "Bu guruhda emaili kiritilgan faol o‘quvchi yo‘q."
 msgstr "В этой группе нет активных учеников с email."
 
-#: academy/views.py:2542
+#: academy/views.py:2553
 msgid "Bu guruhda Telegram yoki telefoni bor faol o‘quvchi yo‘q."
 msgstr "В этой группе нет активных учеников с Telegram или телефоном."
 
-#: academy/views.py:2584 academy/views.py:2600
+#: academy/views.py:2595 academy/views.py:2611
 msgid "Sertifikat yuborilmadi: {exc}"
 msgstr "Сертификат не отправлен: {exc}"
 
-#: academy/views.py:2587
+#: academy/views.py:2598
 msgid "Sertifikat {full_name}ga email orqali yuborildi."
 msgstr "Сертификат отправлен ученику {full_name} по email."
 
-#: academy/views.py:2603
+#: academy/views.py:2614
 msgid "Sertifikat {full_name}ga Telegram orqali yuborildi."
 msgstr "Сертификат отправлен ученику {full_name} в Telegram."
 
-#: academy/views.py:2614
+#: academy/views.py:2625
 msgid "Avval guruhning Telegram chatini tanlang."
 msgstr "Сначала выберите чат группы в Telegram."
 
-#: academy/views.py:2616
+#: academy/views.py:2627
 msgid "Oxirgi 7 kunda bu guruhda test yechilmagan — yuboriladigan reyting yo‘q."
 msgstr "За последние 7 дней в этой группе не решали тесты — рейтинг отправлять не из чего."
 
-#: academy/views.py:2623
+#: academy/views.py:2634
 msgid "Haftalik reyting guruh chatiga yuborildi."
 msgstr "Недельный рейтинг отправлен в чат группы."
 
-#: academy/views.py:2636
+#: academy/views.py:2647
 msgid "Telegram chat olib tashlandi."
 msgstr "Чат Telegram удалён."
 
-#: academy/views.py:2636
+#: academy/views.py:2647
 msgid "Telegram chat saqlandi."
 msgstr "Чат Telegram сохранён."
 
@@ -3194,7 +3222,7 @@ msgstr "Добавьте тему или целый раздел выше."
 msgid "Yuqoriga"
 msgstr "Вверх"
 
-#: templates/academy/groups/detail.html templates/academy/groups/list.html templates/academy/portal/student.html templates/academy/timetable.html
+#: templates/academy/groups/detail.html templates/academy/groups/list.html templates/academy/timetable.html
 msgid "bugun"
 msgstr "сегодня"
 
@@ -4059,8 +4087,24 @@ msgid "%(got)s / %(total)s"
 msgstr "%(got)s / %(total)s"
 
 #: templates/academy/portal/student.html
+msgid "%(have)s / %(need)s ⚡️"
+msgstr "%(have)s / %(need)s ⚡️"
+
+#: templates/academy/portal/student.html
+msgid "%(n)s kun qoldi"
+msgstr "осталось дней: %(n)s"
+
+#: templates/academy/portal/student.html
+msgid "%(n)s ⚡️ bor"
+msgstr "есть %(n)s ⚡️"
+
+#: templates/academy/portal/student.html
 msgid "%(name)s · har bir o‘quvchining hozirgi quvvati ⚡️ — profilida qancha bo‘lsa, shu yerda ham shuncha."
 msgstr "%(name)s · текущая энергия ⚡️ каждого ученика — столько же, сколько в его профиле."
+
+#: templates/academy/portal/student.html
+msgid "%(place)s-o‘rin"
+msgstr "%(place)s-е место"
 
 #: templates/academy/portal/student.html
 msgid "%(present)s/%(total)s dars"
@@ -4186,6 +4230,10 @@ msgstr "Последние тесты (%(n)s): от %(first)s%% до %(last)s%%"
 msgid "Oxirgi 7 kun"
 msgstr "Последние 7 дней"
 
+#: templates/academy/portal/student.html
+msgid "Oxirgi natija"
+msgstr "Последний результат"
+
 #: templates/academy/portal/student.html templates/academy/quiz/batch_detail.html templates/academy/quiz/open_detail.html
 msgid "O‘rtacha natija"
 msgstr "Средний результат"
@@ -4205,6 +4253,10 @@ msgstr "Разделы профиля"
 #: templates/academy/portal/student.html
 msgid "Profil ochiq: <strong>%(profile_until)s</strong> gacha"
 msgstr "Профиль открыт до <strong>%(profile_until)s</strong>"
+
+#: templates/academy/portal/student.html templates/academy/quiz/open_form.html
+msgid "Qanday ishlaydi?"
+msgstr "Как это работает?"
 
 #: templates/academy/portal/student.html
 msgid "Qayta topshirish <span data-countdown=\"%(seconds)s\"></span> dan keyin."
@@ -4227,6 +4279,10 @@ msgid "Quvvat tarixi"
 msgstr "История энергии"
 
 #: templates/academy/portal/student.html
+msgid "Quvvat yetishiga"
+msgstr "До нужной энергии"
+
+#: templates/academy/portal/student.html
 msgid "Quvvat ⚡️ yig‘ing va mukofot oling. So‘rov ustozga boradi, tasdiqlansa quvvat sarflanadi."
 msgstr "Собирайте энергию ⚡️ и получайте награды. Запрос уходит учителю; если он одобрит, энергия будет потрачена."
 
@@ -4239,8 +4295,8 @@ msgid "Savollari hali tayyor bo‘lmagan mavzular (%(n)s)"
 msgstr "Темы, для которых вопросы ещё не готовы (%(n)s)"
 
 #: templates/academy/portal/student.html
-msgid "Siz: %(place)s-o‘rin · %(coins)s ⚡️."
-msgstr "Вы: %(place)s-е место · %(coins)s ⚡️."
+msgid "Siz %(place)s-o‘rindasiz"
+msgstr "Вы на %(place)s-м месте"
 
 #: templates/academy/portal/student.html
 msgid "Streak"
@@ -4269,6 +4325,10 @@ msgstr "Мои тесты"
 #: templates/academy/portal/student.html templates/academy/portal/study.html
 msgid "Testni boshlash"
 msgstr "Начать тест"
+
+#: templates/academy/portal/student.html
+msgid "Top-3"
+msgstr "Топ-3"
 
 #: templates/academy/portal/student.html
 msgid "Ustozingiz hozircha javoblarni ko‘rsatmaslikka qaror qildi."
@@ -4303,8 +4363,24 @@ msgid "bajarildi"
 msgstr "выполнено"
 
 #: templates/academy/portal/student.html
+msgid "bugun %(today)s / %(limit)s"
+msgstr "сегодня %(today)s / %(limit)s"
+
+#: templates/academy/portal/student.html
+msgid "bugun oxirgi kun"
+msgstr "сегодня последний день"
+
+#: templates/academy/portal/student.html
 msgid "bugungi limit tugadi"
 msgstr "лимит на сегодня исчерпан"
+
+#: templates/academy/portal/student.html
+msgid "eng yaxshi"
+msgstr "лучший"
+
+#: templates/academy/portal/student.html
+msgid "eng yuqori o‘rin 🎉"
+msgstr "первое место 🎉"
 
 #: templates/academy/portal/student.html
 msgid "hali olinmagan"
@@ -4331,8 +4407,16 @@ msgid "olingan"
 msgstr "получено"
 
 #: templates/academy/portal/student.html
+msgid "oxirgi"
+msgstr "последний"
+
+#: templates/academy/portal/student.html
 msgid "oxirgi natija: <strong>%(percent)s%%</strong> (%(correct)s/%(total)s)"
 msgstr "последний результат: <strong>%(percent)s%%</strong> (%(correct)s/%(total)s)"
+
+#: templates/academy/portal/student.html
+msgid "o‘rtacha"
+msgstr "средний"
 
 #: templates/academy/portal/student.html
 msgid "quvvat bilan ochilgan"
@@ -4351,20 +4435,12 @@ msgid "savol qoldi"
 msgstr "вопросов осталось"
 
 #: templates/academy/portal/student.html
-msgid "savollar yo‘q"
-msgstr "нет вопросов"
-
-#: templates/academy/portal/student.html
 msgid "tekshirilmoqda"
 msgstr "на проверке"
 
 #: templates/academy/portal/student.html
 msgid "testlar bo‘yicha"
 msgstr "по тестам"
-
-#: templates/academy/portal/student.html
-msgid "topshirilmagan"
-msgstr "не сдано"
 
 #: templates/academy/portal/student.html
 msgid "to‘g‘ri"
@@ -4381,6 +4457,10 @@ msgstr "нужно ещё %(need)s ⚡️"
 #: templates/academy/portal/student.html
 msgid "yig‘ildi"
 msgstr "собрано"
+
+#: templates/academy/portal/student.html
+msgid "yuqoridagi o‘ringacha %(gap)s ⚡️"
+msgstr "до места выше %(gap)s ⚡️"
 
 #: templates/academy/portal/student.html
 msgid "«%(title)s» gacha %(need)s ⚡️"
@@ -5265,10 +5345,6 @@ msgstr "Выбираете тест по теме, количество вопр
 #: templates/academy/quiz/open_form.html
 msgid "Natijalarni kuzatasiz"
 msgstr "Следите за результатами"
-
-#: templates/academy/quiz/open_form.html
-msgid "Qanday ishlaydi?"
-msgstr "Как это работает?"
 
 #: templates/academy/quiz/open_form.html
 msgid "Qatnashchi F.I.Sh. kiritadi"

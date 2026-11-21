@@ -54,6 +54,27 @@ class PortalUiTests(TestCase):
         self.assertIsNone(portal_ui.growth_chart(recent[:1]))
 
 
+    def test_board_view_podium_handles_ties_and_gap(self):
+        def row(pk, coins, place):
+            return {"student": SimpleNamespace(pk=pk), "coins": coins, "place": place}
+
+        board = [row(1, 50, 1), row(2, 20, 2), row(3, 20, 2), row(4, 5, 4)]
+        v = portal_ui.board_view(board, me_pk=4)
+        self.assertEqual([r["pos"] for r in v["podium"]], [2, 1, 3])  # vizual: 2-1-3, teng ballarda ham
+        self.assertEqual([r["student"].pk for r in v["rest"]], [4])
+        self.assertEqual(v["gap"], 15)
+        self.assertEqual(portal_ui.board_view([row(1, 0, 1)], me_pk=1)["podium"], [])  # hamma 0 — podium yo'q
+
+    def test_topic_status_and_mistake_bars(self):
+        def st(p):
+            last = SimpleNamespace(percent=p) if p is not None else None
+            return portal_ui.topic_status(SimpleNamespace(last=last), 70)["key"]
+
+        self.assertEqual([st(None), st(40), st(75), st(90)], ["new", "review", "progress", "mastered"])
+        bars = portal_ui.mistake_bars([{"n": 4}, {"n": 1}])
+        self.assertEqual([b["pct"] for b in bars], [100, 25])
+
+
 class PortalPageTests(TestCase):
     def test_page_shows_plan_achievements_and_hides_empty_topics(self):
         s = f.student(f.group(), portal_token="tok-ultra", profile_until=timezone.now() + timedelta(hours=2))

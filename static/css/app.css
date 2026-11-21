@@ -2696,3 +2696,174 @@ details.notice > summary .meta { text-decoration: underline; }
   .p-badges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) { .p-mission a { transition: none; } }
+
+/* ==========================================================================
+   O'quvchi profili — Ultra v3 (har bo'lim o'z vizual tili bilan)
+   ========================================================================== */
+.p-greet { margin: 0 0 2px; color: #b9c6e4; font-size: 14px; font-weight: 500; }
+
+/* Bugungi reja: bajarilish halqasi + turiga qarab rangli ikonka */
+.p-missions-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.p-missions-head h2 { margin: 0; font-size: 18px; }
+.p-missions-head .meta { margin: 2px 0 0; }
+.p-mission-icon {
+  display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 12px;
+  background: var(--surface-3); font-size: 18px; line-height: 1;
+}
+.p-mission.m-test .p-mission-icon { background: var(--primary-soft); }
+.p-mission.m-homework .p-mission-icon { background: var(--info-soft); }
+.p-mission.m-mistakes .p-mission-icon { background: var(--bad-soft); }
+.p-mission.m-bonus .p-mission-icon { background: var(--gold-soft); }
+.p-mission.m-streak .p-mission-icon { background: var(--warn-soft); }
+.p-mission.m-test a { border-left: 4px solid var(--primary); }
+.p-mission.done .p-mission-icon { background: var(--ok); color: #fff; font-weight: 700; }
+.p-mission-go { color: var(--text-2); display: grid; place-items: center; }
+.p-mission a:hover .p-mission-go { color: var(--primary); }
+
+/* Yutuqlar: maqsadga progress */
+.p-badge-meter { display: block; height: 4px; margin-top: 5px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.p-badge-meter > span { display: block; height: 100%; border-radius: inherit; background: var(--gold); }
+
+/* Testlar: o'zlashtirish holati kartalari */
+.p-howto { margin: -4px 0 12px; }
+.p-howto > summary { cursor: pointer; color: var(--primary); font-size: 14px; font-weight: 600; min-height: 32px; display: inline-flex; align-items: center; }
+.p-topics { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.p-topic {
+  display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 14px;
+  border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface);
+  border-top: 4px solid var(--border-strong);
+}
+.p-topic.s-mastered { border-top-color: var(--ok); }
+.p-topic.s-progress { border-top-color: var(--info); }
+.p-topic.s-review { border-top-color: var(--warn); background: linear-gradient(180deg, var(--warn-soft), var(--surface) 60%); }
+.p-topic.s-new { border-top-color: var(--primary); }
+.p-topic-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.p-topic-title { font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+.p-topic-head .chip { flex: none; }
+.p-topic .meta { margin: 0; }
+.p-topic .pt-note { margin: 0; }
+.p-mastery { height: 6px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.p-mastery > span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+.s-mastered .p-mastery > span { background: var(--ok); }
+.s-progress .p-mastery > span { background: var(--info); }
+.s-review .p-mastery > span { background: var(--warn); }
+.p-topic-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: auto; padding-top: 4px; }
+.p-topic-actions form { margin: 0; }
+
+/* Yangi mavzular — sandiq kartalari */
+.p-chests { display: grid; gap: 8px; margin-top: 12px; }
+.p-chest {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r);
+  border: 1px dashed var(--border-input); background: var(--surface-2);
+}
+.p-chest.can { border-style: solid; border-color: color-mix(in srgb, var(--gold) 50%, var(--border)); background: var(--gold-soft); }
+.p-chest-icon { flex: none; font-size: 24px; line-height: 1; }
+.p-chest .grow { flex: 1; min-width: 0; }
+.p-chest form { margin: 0; }
+.p-chest .unlock-need { flex: none; font-size: 13px; color: var(--text-2); }
+.p-meter.dark { background: var(--surface-3); margin-top: 6px; height: 6px; }
+.p-meter.dark > span { background: var(--gold); }
+
+/* O'sish: 3 ko'rsatkich */
+.p-growth-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.p-growth-stats > div { display: grid; padding: 10px 12px; border-radius: var(--r); background: var(--surface-2); border: 1px solid var(--border); }
+.p-growth-stats b { font: 700 20px/1.2 var(--font-display); }
+.p-growth-stats span { font-size: 12px; color: var(--text-2); }
+
+/* Xatolar: mavzular bo'yicha chiziqlar */
+.p-bars { display: grid; gap: 6px; margin: 12px 0 14px; padding: 0; list-style: none; }
+.p-bars a {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
+  padding: 10px 12px; border-radius: var(--r); border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); text-decoration: none;
+}
+.p-bars a:hover { border-color: var(--bad); }
+.p-bar-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; }
+.p-bars b { color: var(--bad); }
+.p-bar { grid-column: 1 / -1; height: 6px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.p-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--bad); }
+
+/* Qo'shimcha savollar: halqa */
+.p-bonus-head { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+.p-bonus-head h2 { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 18px; }
+.p-bonus-head .meta { margin: 2px 0 0; }
+.p-bonus-ring .ring-value { stroke: var(--gold); }
+.bonus-card .bonus-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Vazifalar: vaqt chizig'i */
+.p-timeline { position: relative; display: grid; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
+.p-timeline > li:not(.empty) { position: relative; }
+.p-timeline:has(> li:nth-child(2))::before {
+  content: ""; position: absolute; left: 22px; top: 30px; bottom: 30px; width: 2px; background: var(--border);
+}
+.p-timeline a {
+  position: relative; display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 10px 12px;
+  border-radius: var(--r); color: var(--text); text-decoration: none; border: 1px solid transparent;
+}
+.p-timeline a:hover { background: var(--surface-2); border-color: var(--border); }
+.p-timeline .grow { flex: 1; min-width: 0; }
+.p-timeline .chip { flex: none; }
+.p-tl-dot { position: relative; z-index: 1; flex: none; width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--border-strong); background: var(--surface); }
+.t-open .p-tl-dot { border-color: var(--info); }
+.t-submitted .p-tl-dot { border-color: var(--info); background: var(--info); }
+.t-checked .p-tl-dot { border-color: var(--ok); background: var(--ok); }
+.t-overdue .p-tl-dot { border-color: var(--warn); background: var(--warn-soft); }
+
+/* Reyting: podium */
+.p-board-me { margin: 10px 0 0; padding: 10px 14px; border-radius: var(--r); background: var(--primary-soft); color: var(--text); font-size: 14px; }
+.p-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 8px; margin: 14px 0 4px; padding: 0; list-style: none; }
+.pod {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; padding: 14px 8px 0;
+  text-align: center; border-radius: var(--r-lg) var(--r-lg) 0 0; background: var(--surface-2); border: 1px solid var(--border); border-bottom: 0;
+}
+.pod .avatar { width: 48px; height: 48px; font-size: 16px; }
+.pod-1 { background: linear-gradient(180deg, var(--gold-soft), var(--surface-2)); border-color: color-mix(in srgb, var(--gold) 45%, var(--border)); }
+.pod-1 .avatar { width: 58px; height: 58px; font-size: 18px; box-shadow: 0 0 0 3px var(--gold); }
+.pod-name {
+  max-width: 100%; font-size: 13px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.pod-coins { font-size: 13px; color: var(--gold-text); font-weight: 700; }
+.pod-step { display: grid; place-items: center; width: 100%; font-size: 26px; line-height: 1; }
+.pod-1 .pod-step { height: 64px; }
+.pod-2 .pod-step { height: 44px; }
+.pod-3 .pod-step { height: 30px; }
+.pod.me { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* Mukofotlar: sovg'a kartalari */
+.p-shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
+.p-gift {
+  display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 14px;
+  border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface);
+}
+.p-gift.can { border-color: color-mix(in srgb, var(--gold) 50%, var(--border)); background: linear-gradient(180deg, var(--gold-soft), var(--surface) 70%); }
+.p-gift-icon { font-size: 28px; line-height: 1; }
+.p-gift-title { font-size: 15px; overflow-wrap: anywhere; }
+.p-gift-cost { font: 700 18px var(--font-display); color: var(--gold-text); margin-top: auto; }
+.p-gift form { margin: 0; }
+.p-gift .chip { align-self: flex-start; }
+
+/* Quvvat tarixi: kunlar bo'yicha */
+.p-ledger-day + .p-ledger-day { margin-top: 12px; }
+.p-ledger-date { display: flex; justify-content: space-between; align-items: center; padding: 4px 2px 6px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-2); font-weight: 600; }
+.p-ledger-date b { color: var(--ok); }
+.p-ledger-date b.neg { color: var(--bad); }
+.p-ledger-day .coin-history { margin-top: 6px; }
+
+/* Testlarim: natija halqasi */
+.p-attempt summary .grow { flex: 1; min-width: 0; }
+.pa-ring { flex: none; display: grid; }
+.pa-ring.tone-ok .ring-value { stroke: var(--ok); }
+.pa-ring.tone-warn .ring-value { stroke: var(--warn); }
+.pa-ring.tone-bad .ring-value { stroke: var(--bad); }
+.pa-ring .ring text { font-size: 11px; }
+.pa-chev { flex: none; color: var(--text-2); transition: transform 0.2s; }
+.p-attempt[open] .pa-chev { transform: rotate(180deg); }
+
+@media (max-width: 640px) {
+  .p-topics { grid-template-columns: minmax(0, 1fr); }
+  .p-shop { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pod .avatar { width: 40px; height: 40px; font-size: 14px; }
+  .pod-1 .avatar { width: 48px; height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) { .pa-chev { transition: none; } }

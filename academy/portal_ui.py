@@ -23,6 +23,7 @@ class Achievement:
     title: str
     hint: str
     got: bool
+    pct: int = 0  # olinmaganlarida — maqsadga qancha yaqin (0–100)
 
 
 def missions(*, pending, homework_open_n, open_mistakes_n, bonus, streak) -> list[Mission]:
@@ -59,18 +60,99 @@ def next_reward(rewards, available: int, owned_honor: bool):
 def achievements(*, finished, stats, streak, student, open_mistakes_n) -> list[Achievement]:
     best = max((a.percent for a in finished), default=None)
     n = stats.n
+
+    def pct(cur, target):
+        return max(0, min(100, round(cur * 100 / target))) if target else 0
+
     return [
-        Achievement("🎯", _("Birinchi test"), _("1 ta test yeching"), n >= 1),
-        Achievement("📚", _("5 ta test"), _("{n}/5").format(n=min(n, 5)), n >= 5),
-        Achievement("🏅", _("10 ta test"), _("{n}/10").format(n=min(n, 10)), n >= 10),
+        Achievement("🎯", _("Birinchi test"), _("1 ta test yeching"), n >= 1, pct(n, 1)),
+        Achievement("📚", _("5 ta test"), _("{n}/5").format(n=min(n, 5)), n >= 5, pct(n, 5)),
+        Achievement("🏅", _("10 ta test"), _("{n}/10").format(n=min(n, 10)), n >= 10, pct(n, 10)),
         Achievement("⭐", _("80%+ natija"),
                     _("eng yaxshisi: {p}%").format(p=best) if best is not None else _("hali yo‘q"),
-                    best is not None and best >= 80),
-        Achievement("💯", _("Mukammal test"), _("100% natija"), best == 100),
-        Achievement("🔥", _("7 kunlik streak"), _("{d}/7 kun").format(d=min(streak.days, 7)), streak.days >= 7),
-        Achievement("✅", _("Xatolarsiz"), _("ochiq xato savol yo‘q"), n >= 1 and not open_mistakes_n),
-        Achievement("🎖", _("A’lochi"), _("ustoz beradi"), bool(student.honor_since)),
+                    best is not None and best >= 80, pct(best or 0, 80)),
+        Achievement("💯", _("Mukammal test"), _("100% natija"), best == 100, pct(best or 0, 100)),
+        Achievement("🔥", _("7 kunlik streak"), _("{d}/7 kun").format(d=min(streak.days, 7)), streak.days >= 7,
+                    pct(streak.days, 7)),
+        Achievement("✅", _("Xatolarsiz"), _("ochiq xato savol yo‘q"), n >= 1 and not open_mistakes_n,
+                    100 if n >= 1 and not open_mistakes_n else 0),
+        Achievement("🎖", _("A’lochi"), _("ustoz beradi"), bool(student.honor_since), 100 if student.honor_since else 0),
     ]
+
+
+def greeting(now) -> str:
+    """Mahalliy vaqtga qarab salomlashuv."""
+    h = now.hour
+    if 5 <= h < 12:
+        return _("Xayrli tong")
+    if 12 <= h < 18:
+        return _("Xayrli kun")
+    return _("Xayrli kech")
+
+
+def topic_status(row, pass_percent: int) -> dict:
+    """Mavzu holati (oxirgi natijadan): o'zlashtirildi / mustahkamlash kerak / jarayonda / boshlanmagan."""
+    last = row.last
+    if last is None:
+        return {"key": "new", "label": _("Boshlanmagan"), "pct": 0}
+    p = last.percent or 0
+    if p >= 80:
+        return {"key": "mastered", "label": _("O‘zlashtirildi"), "pct": p}
+    if p < pass_percent:
+        return {"key": "review", "label": _("Mustahkamlash kerak"), "pct": p}
+    return {"key": "progress", "label": _("Yaxshi, 80% ga yaqin"), "pct": p}
+
+
+def homework_view(rows, today) -> list[dict]:
+    """Vazifalar vaqt chizig'i: holat va muddatgacha kunlar."""
+    out = []
+    for r in rows:
+        days = (r.due - today).days
+        if r.submission is not None and r.submission.status == "checked":
+            key = "checked"
+        elif r.submission is not None:
+            key = "submitted"
+        elif r.overdue:
+            key = "overdue"
+        else:
+            key = "open"
+        out.append({"row": r, "key": key, "days": days})
+    return out
+
+
+def mistake_bars(topics) -> list[dict]:
+    top = max((t["n"] for t in topics), default=0)
+    return [{**t, "pct": round(t["n"] * 100 / top) if top else 0} for t in topics]
+
+
+def board_view(board, me_pk: int) -> dict:
+    """Reyting: podium (top-3), qolganlar, o'quvchining o'rni va yuqoridagigacha farq."""
+    # Teng ballarda ham podium 3 pozitsiya: balandlik tartibdan (pos), medal esa haqiqiy o'rindan (place).
+    podium = [{**r, "pos": i} for i, r in enumerate(board[:3], start=1)] if board and board[0]["coins"] > 0 else []
+    rest = board[len(podium):]
+    me = next((r for r in board if r["student"].pk == me_pk), None)
+    gap = None
+    if me and me["place"] > 1:
+        above = [r for r in board if r["coins"] > me["coins"]]
+        if above:
+            gap = min(r["coins"] for r in above) - me["coins"]
+    # Vizual tartib: 2-pozitsiya, 1-pozitsiya, 3-pozitsiya.
+    order = {2: 0, 1: 1, 3: 2}
+    return {"podium": sorted(podium, key=lambda r: order[r["pos"]]), "rest": rest, "me": me, "gap": gap}
+
+
+def coin_days(history) -> list[dict]:
+    """Quvvat tarixi kunlar bo'yicha (yangi kun birinchi): yozuvlar va kunlik yig'indi."""
+    from django.utils import timezone
+
+    days: list[dict] = []
+    for c in history:
+        d = timezone.localtime(c.created_at).date()
+        if not days or days[-1]["day"] != d:
+            days.append({"day": d, "items": [], "total": 0})
+        days[-1]["items"].append(c)
+        days[-1]["total"] += c.amount
+    return days
 
 
 def growth_chart(recent, width: int = 640, height: int = 180, pad: int = 24) -> dict | None:
@@ -91,6 +173,7 @@ def growth_chart(recent, width: int = 640, height: int = 180, pad: int = 24) -> 
     line = " ".join(f"{p['x']},{p['y']}" for p in points)
     area = f"{points[0]['x']},{height - pad} {line} {points[-1]['x']},{height - pad}"
     delta = values[-1] - values[0]
+    best, avg = max(values), round(sum(values) / len(values))
     return {"w": width, "h": height, "points": points, "line": line, "area": area, "y50": y(50), "y80": y(80),
-            "y50l": y(50) + 4, "y80l": y(80) + 4,
+            "y50l": y(50) + 4, "y80l": y(80) + 4, "best": best, "avg": avg,
             "last": points[-1], "delta": delta, "pad": pad}
