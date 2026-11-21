@@ -2369,6 +2369,9 @@ def student_portal(request, token):
     streak = engagement.streak_info(student)
     rewards = list(Reward.objects.filter(is_active=True))
     topic_rows = profiles.topic_rows(student)
+    for r in topic_rows:
+        r.status = portal_ui.topic_status(r, profiles.PASS_PERCENT)
+    coin_history = list(student.coins.select_related("attempt__quiz__topic")[:12])
     missions = portal_ui.missions(pending=pending, homework_open_n=homework_open_n,
                                   open_mistakes_n=open_mistakes_n, bonus=bonus_summary, streak=streak)
     achievements = portal_ui.achievements(finished=finished, stats=stats, streak=streak, student=student,
@@ -2391,7 +2394,11 @@ def student_portal(request, token):
             "daily_limit": TestRequest.DAILY_LIMIT,
             "pass_percent": profiles.PASS_PERCENT,
             "coin_balance": coins.balance(student),
-            "coin_history": student.coins.select_related("attempt__quiz__topic")[:10],
+            "coin_history": coin_history,
+            "coin_days": portal_ui.coin_days(coin_history),
+            "greeting": portal_ui.greeting(timezone.localtime()),
+            "homework_view": portal_ui.homework_view(homework_rows, timezone.localdate()),
+            "board_view": portal_ui.board_view(board, student.pk),
             "coin_rules": coins.RULES,
             "coin_available": coin_available,
             "unlock_need": max(0, profiles.UNLOCK_COST - coin_available),
@@ -2403,7 +2410,7 @@ def student_portal(request, token):
             "homework_coins": homework.COINS,
             "bonus": bonus_summary,
             "bonus_topics": bonus.topics(student),
-            "mistake_topics": engagement.mistakes_by_topic(student),
+            "mistake_topics": portal_ui.mistake_bars(engagement.mistakes_by_topic(student)),
             "open_mistakes_n": open_mistakes_n,
             "board": board[: engagement.LEADERBOARD_SIZE],
             "my_board": next((r for r in board if r["student"].pk == student.pk), None),
@@ -2411,6 +2418,10 @@ def student_portal(request, token):
             # Taqdimot (portal_ui): bugungi reja, keyingi mukofot, yutuqlar, o'sish grafigi — mavjud ma'lumotdan.
             "missions": missions,
             "missions_done": sum(m.done for m in missions),
+            "missions_pct": round(sum(m.done for m in missions) * 100 / len(missions)) if missions else 0,
+            "bonus_pct": (
+                round(bonus_summary["today"] * 100 / bonus_summary["limit"]) if bonus_summary.get("limit") else 0
+            ),
             "next_reward": portal_ui.next_reward(rewards, coin_available, bool(student.honor_since)),
             "achievements": achievements,
             "achievements_got": sum(a.got for a in achievements),

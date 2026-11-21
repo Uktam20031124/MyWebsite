@@ -3,6 +3,7 @@
 {% block title %}{% blocktranslate with full_name=student.full_name trimmed %}{{ full_name }} · profil{% endblocktranslate %}{% endblock %}
 {% block topbar %}{% endblock %}
 {% block main %}
+  {# ── 1. HERO: salomlashuv, natija halqasi, asosiy ko'rsatkichlar ─────────────────────────── #}
   <header class="p-hero">
     <div class="p-hero-top">
       <span class="p-brand">{% include "academy/includes/brand_mark.html" %}<span>{% translate "Minar Test" %}</span></span>
@@ -13,6 +14,7 @@
         <span class="avatar xl p-avatar{% if student.honor_since %} honor{% endif %}" style="--h: {{ student.full_name|hue }}">{{ student.initials }}</span>
       </span>
       <div class="p-id-text">
+        <p class="p-greet">{{ greeting }},</p>
         <h1>{{ student|person_name }}</h1>
         <div class="p-pills">
           {% if student.honor_since %}<span class="p-pill honor-pill">{% honor_medal 15 %} {% translate "A’lochi" %}</span>{% endif %}
@@ -25,7 +27,7 @@
     <div class="p-stats">
       <a class="p-stat big coin" href="#shop" data-tab-link>
         <span class="p-stat-label">{% icon "bolt" 15 %} {% translate "Quvvatingiz" %}</span>
-        <strong class="p-stat-value">{{ coin_balance }}</strong>
+        <strong class="p-stat-value tabular">{{ coin_balance }}</strong>
         <span class="p-stat-foot">{% if coin_available != coin_balance %}{% blocktranslate with coin_available=coin_available trimmed %}sarflash mumkin: {{ coin_available }} ⚡️{% endblocktranslate %}{% else %}{% translate "Mukofotlar 🎁" %}{% endif %}</span>
         {% if next_reward %}
           <span class="p-next-reward">
@@ -41,58 +43,63 @@
       </div>
       <div class="p-stat">
         <span class="p-stat-label">{% translate "O‘rtacha natija" %}</span>
-        <strong class="p-stat-value">{% if stats.n %}{{ stats.pct }}<small>%</small>{% else %}—{% endif %}</strong>
+        <strong class="p-stat-value tabular">{% if stats.n %}{{ stats.pct }}<small>%</small>{% else %}—{% endif %}</strong>
         <span class="p-stat-foot">{% blocktranslate with n=stats.n trimmed %}{{ n }} ta test{% endblocktranslate %}</span>
       </div>
       <div class="p-stat">
         <span class="p-stat-label">{% translate "Guruhda o‘rningiz" %}</span>
-        <strong class="p-stat-value">{% if rank %}{{ rank }}<small>/{{ ranked_n }}</small>{% else %}—{% endif %}</strong>
+        <strong class="p-stat-value tabular">{% if rank %}{{ rank }}<small>/{{ ranked_n }}</small>{% else %}—{% endif %}</strong>
         <span class="p-stat-foot">{% translate "testlar bo‘yicha" %}</span>
       </div>
       <div class="p-stat">
         <span class="p-stat-label">{% translate "Davomat" %}</span>
-        <strong class="p-stat-value">{% if attendance.total %}{{ attendance.percent }}<small>%</small>{% else %}—{% endif %}</strong>
+        <strong class="p-stat-value tabular">{% if attendance.total %}{{ attendance.percent }}<small>%</small>{% else %}—{% endif %}</strong>
         <span class="p-stat-foot">{% blocktranslate with present=attendance.present total=attendance.total trimmed %}{{ present }}/{{ total }} dars{% endblocktranslate %}</span>
       </div>
     </div>
     <p class="p-streak-note">{% if streak.active_today %}{% translate "Bugun faolsiz ✅" %}{% else %}{% translate "Bugun test yoki mashq qiling — streak uzilmasin!" %}{% endif %} {% blocktranslate with streak_every=streak_every to_bonus=streak.to_bonus streak_bonus=streak_bonus trimmed %}· {{ streak_every }} kunlik bonusgacha {{ to_bonus }} kun (+{{ streak_bonus }} ⚡️){% endblocktranslate %}</p>
   </header>
 
+  {# ── 2. BUGUNGI REJA: bajarilish halqasi + har ish turi o'z ikonkasi bilan ──────────────────── #}
   <section class="card pad p-missions" aria-labelledby="missions-h">
-    <div class="p-section-head">
-      <h2 id="missions-h">{% icon "target" 18 %} {% translate "Bugungi reja" %}</h2>
-      <span class="meta tabular">{% blocktranslate with done=missions_done total=missions|length trimmed %}{{ done }} / {{ total }} bajarildi{% endblocktranslate %}</span>
+    <div class="p-missions-head">
+      <span class="p-missions-ring">{% ring missions_pct 64 6 %}</span>
+      <div class="grow">
+        <h2 id="missions-h">{% translate "Bugungi reja" %}</h2>
+        <p class="meta tabular">{% blocktranslate with done=missions_done total=missions|length trimmed %}{{ done }} / {{ total }} bajarildi{% endblocktranslate %}</p>
+      </div>
     </div>
     <ol class="p-mission-list">
       {% for m in missions %}
         <li class="p-mission{% if m.done %} done{% endif %} m-{{ m.key }}">
           <a href="{{ m.href }}"{% if m.href|slice:":1" == "#" %} data-tab-link{% endif %}>
-            <span class="p-mission-mark" aria-hidden="true">{% if m.done %}{% icon "check" 14 %}{% else %}{{ forloop.counter }}{% endif %}</span>
+            <span class="p-mission-icon" aria-hidden="true">{% if m.done %}✓{% elif m.key == "test" %}🎯{% elif m.key == "homework" %}📝{% elif m.key == "mistakes" %}🔁{% elif m.key == "bonus" %}⚡{% else %}🔥{% endif %}</span>
             <span class="grow"><strong>{{ m.title }}</strong>{% if m.meta %}<span class="meta block">{{ m.meta }}</span>{% endif %}</span>
-            {% if m.done %}<span class="chip ok">{% translate "bajarildi" %}</span>{% else %}{% icon "right" 16 %}{% endif %}
+            {% if m.done %}<span class="chip ok">{% translate "bajarildi" %}</span>{% else %}<span class="p-mission-go" aria-hidden="true">{% icon "right" 16 %}</span>{% endif %}
           </a>
         </li>
       {% endfor %}
     </ol>
   </section>
 
+  {# ── 3. YUTUQLAR: medallar; olinmaganlarida maqsadga progress ───────────────────────────────── #}
   <section class="card pad p-achievements" aria-labelledby="ach-h">
     <div class="p-section-head">
       <h2 id="ach-h">{% icon "trophy" 18 %} {% translate "Yutuqlar" %}</h2>
-      <span class="meta tabular">{% blocktranslate with got=achievements_got total=achievements|length trimmed %}{{ got }} / {{ total }}{% endblocktranslate %}</span>
+      <span class="chip tabular">{% blocktranslate with got=achievements_got total=achievements|length trimmed %}{{ got }} / {{ total }}{% endblocktranslate %}</span>
     </div>
     <ul class="p-badges">
       {% for a in achievements %}
         <li class="p-badge{% if a.got %} got{% endif %}">
           <span class="p-badge-icon" aria-hidden="true">{{ a.icon }}</span>
-          <span class="p-badge-text"><strong>{{ a.title }}</strong><span>{% if a.got %}{% translate "olingan" %}{% else %}{{ a.hint }}{% endif %}</span></span>
+          <span class="p-badge-text"><strong>{{ a.title }}</strong><span>{% if a.got %}{% translate "olingan" %}{% else %}{{ a.hint }}{% endif %}</span>
+            {% if not a.got %}<span class="p-badge-meter" aria-hidden="true"><span style="width: {{ a.pct }}%"></span></span>{% endif %}
+          </span>
           <span class="sr-only">{% if a.got %}{% translate "olingan" %}{% else %}{% translate "hali olinmagan" %}{% endif %}</span>
         </li>
       {% endfor %}
     </ul>
   </section>
-
-  {# Yechilmagan testlar — "Bugungi reja"da (har biri alohida, to'g'ridan-to'g'ri havola). #}
 
   <nav class="p-tabs" role="tablist" aria-label="{% translate "Profil bo‘limlari" %}" data-tabs hidden>
     <button type="button" role="tab" aria-controls="tab-tests" aria-selected="true">{% icon "target" 16 %}<span>{% translate "Testlar" %}</span></button>
@@ -104,27 +111,34 @@
     <button type="button" role="tab" aria-controls="tab-history" aria-selected="false">{% icon "chart" 16 %}<span>{% translate "Tarix" %}</span></button>
   </nav>
 
+  {# ── 4. TESTLAR: o'zlashtirish holati kartalari ─────────────────────────────────────────────── #}
   <div class="p-panel" id="tab-tests" role="tabpanel">
     <section class="card pad" id="topics">
-      <h2>{% translate "Test topshirish" %}</h2>
-      <p class="meta">{% blocktranslate with pass_percent=pass_percent daily_limit=daily_limit trimmed %}“Testni boshlash” → savollar soni (10/12) va vaqtni (5/10 daq.) tanlaysiz. Natija {{ pass_percent }}% dan past bo‘lsa — mavzuni mustahkamlash taklif qilinadi, 20 daqiqadan keyin qayta topshirasiz. Bir mavzudan kuniga ko‘pi bilan {{ daily_limit }} ta test.{% endblocktranslate %}</p>
-      <div class="topic-cards">
+      <div class="p-section-head"><h2>{% translate "Test topshirish" %}</h2></div>
+      <details class="p-howto">
+        <summary>{% translate "Qanday ishlaydi?" %}</summary>
+        <p class="meta">{% blocktranslate with pass_percent=pass_percent daily_limit=daily_limit trimmed %}“Testni boshlash” → savollar soni (10/12) va vaqtni (5/10 daq.) tanlaysiz. Natija {{ pass_percent }}% dan past bo‘lsa — mavzuni mustahkamlash taklif qilinadi, 20 daqiqadan keyin qayta topshirasiz. Bir mavzudan kuniga ko‘pi bilan {{ daily_limit }} ta test.{% endblocktranslate %}</p>
+      </details>
+      <div class="p-topics">
       {% for r in topic_rows %}
-        <div class="portal-topic{% if r.needs_review %} weak{% endif %}{% if r.gate %} gated{% endif %}" id="t{{ r.topic.pk }}">
-          <span class="pt-ring {% if r.last %}tone-{{ r.last.percent|quiz_tone }}{% else %}tone-none{% endif %}">{% if r.last %}{% ring r.last.percent 46 5 %}{% else %}{% icon "target" 18 %}{% endif %}</span>
-          <div class="grow">
-            <strong>{{ r.topic|topic_title }}</strong>{% if r.unlocked %} <span class="badge unlock-badge">🔓 {% translate "quvvat bilan ochilgan" %}</span>{% endif %}
-            <span class="meta block">{% if r.last %}{% blocktranslate with percent=r.last.percent correct=r.last.correct total=r.last.total trimmed %}oxirgi natija: <strong>{{ percent }}%</strong> ({{ correct }}/{{ total }}){% endblocktranslate %}{% else %}{% translate "hali topshirilmagan" %}{% endif %} {% blocktranslate with used=r.used daily_limit=daily_limit trimmed %}· bugun {{ used }}/{{ daily_limit }}{% endblocktranslate %}</span>
-            {% if r.gate == "review" %}
-              <span class="pt-note">{% blocktranslate with pass_percent=pass_percent trimmed %}📘 Natija {{ pass_percent }}% dan past — mavzuni mustahkamlashni tavsiya qilamiz.{% endblocktranslate %}{% if r.locked and r.session %} {% blocktranslate with seconds=r.seconds_left trimmed %}Qayta topshirish <span data-countdown="{{ seconds }}"></span> dan keyin.{% endblocktranslate %}{% elif not r.session %} {% translate "Material ochilgach 20 daqiqadan keyin qayta topshirasiz." %}{% endif %}</span>
-            {% endif %}
+        <article class="p-topic s-{{ r.status.key }}" id="t{{ r.topic.pk }}">
+          <div class="p-topic-head">
+            <strong class="p-topic-title">{{ r.topic|topic_title }}</strong>
+            <span class="chip {% if r.status.key == 'mastered' %}ok{% elif r.status.key == 'review' %}warn{% elif r.status.key == 'progress' %}info{% endif %}">{{ r.status.label }}</span>
           </div>
-          <div class="portal-topic-actions">
+          <div class="p-mastery" role="progressbar" aria-label="{% translate "Oxirgi natija" %}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ r.status.pct }}"><span style="width: {{ r.status.pct }}%"></span></div>
+          <p class="meta">
+            {% if r.last %}{% blocktranslate with percent=r.last.percent correct=r.last.correct total=r.last.total trimmed %}oxirgi natija: <strong>{{ percent }}%</strong> ({{ correct }}/{{ total }}){% endblocktranslate %}{% else %}{% translate "hali topshirilmagan" %}{% endif %}
+            {% blocktranslate with used=r.used daily_limit=daily_limit trimmed %}· bugun {{ used }}/{{ daily_limit }}{% endblocktranslate %}
+            {% if r.unlocked %} · <span class="unlock-badge">🔓 {% translate "quvvat bilan ochilgan" %}</span>{% endif %}
+          </p>
+          {% if r.gate == "review" %}
+            <p class="pt-note">{% blocktranslate with pass_percent=pass_percent trimmed %}📘 Natija {{ pass_percent }}% dan past — mavzuni mustahkamlashni tavsiya qilamiz.{% endblocktranslate %}{% if r.locked and r.session %} {% blocktranslate with seconds=r.seconds_left trimmed %}Qayta topshirish <span data-countdown="{{ seconds }}"></span> dan keyin.{% endblocktranslate %}{% elif not r.session %} {% translate "Material ochilgach 20 daqiqadan keyin qayta topshirasiz." %}{% endif %}</p>
+          {% endif %}
+          <div class="p-topic-actions">
             {% if r.gate %}<a class="btn sm soft" href="{% url 'portal_study' student.portal_token r.topic.pk %}">{% translate "📘 Mustahkamlash" %}</a>
             {% elif r.unlocked %}<a class="btn sm soft" href="{% url 'portal_study' student.portal_token r.topic.pk %}">{% translate "📘 Material" %}</a>{% endif %}
-            {% if not r.bank %}
-              <span class="meta">{% translate "savollar yo‘q" %}</span>
-            {% elif r.request %}
+            {% if r.request %}
               <a class="btn sm primary" href="{% url 'portal_test_start' student.portal_token r.request.pk %}">{% translate "Davom etish" %}</a>
             {% elif not r.left_today %}
               <span class="badge plain">{% translate "bugungi limit tugadi" %}</span>
@@ -135,7 +149,7 @@
               </form>
             {% endif %}
           </div>
-        </div>
+        </article>
       {% empty %}
         <div class="empty compact"><span class="empty-icon">{% icon "book" 22 %}</span><p>{% if topic_rows_empty %}{% translate "Hozircha test topshiriladigan mavzu yo‘q." %}{% else %}{% translate "Hozircha ustozingiz test uchun mavzu belgilamagan." %}{% endif %}</p></div>
       {% endfor %}
@@ -148,15 +162,18 @@
       {% endif %}
     </section>
 
-    <section class="card pad unlock-card" id="unlock">
-      <h2>{% icon "bolt" 18 %} {% translate "Yangi mavzularni ochish" %}</h2>
+    {# Yangi mavzular — "qulflangan sandiq" kartalari #}
+    <section class="card pad p-unlock" id="unlock">
+      <div class="p-section-head"><h2>{% icon "lock" 18 %} {% translate "Yangi mavzularni ochish" %}</h2><span class="chip tabular">{{ unlock_cost }} ⚡️</span></div>
       <p class="meta">{% blocktranslate with cost=unlock_cost trimmed %}Guruhdan oldinga o‘ting: navbatdagi mavzuni {{ cost }} ⚡️ ga oching — material va test darhol ochiladi. 70% dan yuqori natijaga bonus ⚡️.{% endblocktranslate %}</p>
       {% if unlock_offers %}
-        <div class="unlock-list">
+        <div class="p-chests">
           {% for t in unlock_offers %}
-            <div class="unlock-item{% if not unlock_need %} can{% endif %}">
-              <span class="unlock-icon" aria-hidden="true">{% icon "lock" 18 %}</span>
-              <div class="grow"><strong>{{ t|topic_title }}</strong>{% if t.module %}<span class="meta block">{{ t.module.title }}</span>{% endif %}</div>
+            <div class="p-chest{% if not unlock_need %} can{% endif %}">
+              <span class="p-chest-icon" aria-hidden="true">{% if not unlock_need %}🔓{% else %}🔒{% endif %}</span>
+              <div class="grow"><strong>{{ t|topic_title }}</strong>{% if t.module %}<span class="meta block">{{ t.module.title }}</span>{% endif %}
+                {% if unlock_need %}<span class="p-meter dark" aria-hidden="true"><span style="width:{% widthratio coin_available unlock_cost 100 %}%"></span></span>{% endif %}
+              </div>
               {% if not unlock_need %}
                 <form method="post" action="{% url 'portal_unlock' student.portal_token t.pk %}">
                   {% csrf_token %}
@@ -179,6 +196,11 @@
           <h2 id="growth-h">{% icon "chart" 18 %} {% translate "O‘sish" %}</h2>
           <span class="chip {% if growth.delta > 0 %}ok{% elif growth.delta < 0 %}warn{% endif %} tabular">{% if growth.delta > 0 %}+{% endif %}{{ growth.delta }}%</span>
         </div>
+        <div class="p-growth-stats">
+          <div><b class="tabular">{{ growth.best }}%</b><span>{% translate "eng yaxshi" %}</span></div>
+          <div><b class="tabular">{{ growth.avg }}%</b><span>{% translate "o‘rtacha" %}</span></div>
+          <div><b class="tabular">{{ growth.last.v }}%</b><span>{% translate "oxirgi" %}</span></div>
+        </div>
         <svg class="p-chart" viewBox="0 0 {{ growth.w }} {{ growth.h }}" role="img" aria-labelledby="growth-h growth-desc">
           <desc id="growth-desc">{% blocktranslate with n=growth.points|length first=growth.points.0.v last=growth.last.v trimmed %}Oxirgi {{ n }} ta test: {{ first }}% dan {{ last }}% gacha{% endblocktranslate %}</desc>
           <line class="ref r80" x1="{{ growth.pad }}" x2="{{ growth.w }}" y1="{{ growth.y80 }}" y2="{{ growth.y80 }}"/>
@@ -195,14 +217,20 @@
     {% endif %}
   </div>
 
+  {# ── 5. XATOLAR: mavzular bo'yicha proporsional chiziqlar ──────────────────────────────────── #}
   <div class="p-panel" id="tab-mistakes" role="tabpanel">
-    <section class="card pad" id="mistakes">
-      <h2>{% translate "Xatolar ustida ishlash" %}</h2>
+    <section class="card pad p-mistakes" id="mistakes">
+      <div class="p-section-head"><h2>{% translate "Xatolar ustida ishlash" %}</h2>{% if open_mistakes_n %}<span class="chip warn tabular">{{ open_mistakes_n }}</span>{% endif %}</div>
       {% if open_mistakes_n %}
         <p class="meta">{% blocktranslate with open_mistakes_n=open_mistakes_n trimmed %}Testlarda xato qilgan <strong>{{ open_mistakes_n }}</strong> ta savolingiz bor. Har birini 3 marta ketma-ket to‘g‘ri yechsangiz — ro‘yxatdan chiqadi va +2 ⚡️. Keyingi testlarda ham ular ko‘proq tushadi.{% endblocktranslate %}</p>
-        <div class="mistake-topics">
-          {% for t in mistake_topics %}<a class="chip-link" href="{% url 'portal_practice' student.portal_token %}?mavzu={{ t.topic_id }}">{{ t.title }} <b>{{ t.n }}</b></a>{% endfor %}
-        </div>
+        <ul class="p-bars">
+          {% for t in mistake_topics %}
+            <li><a href="{% url 'portal_practice' student.portal_token %}?mavzu={{ t.topic_id }}">
+              <span class="p-bar-label">{{ t.title }}</span><b class="tabular">{{ t.n }}</b>
+              <span class="p-bar" aria-hidden="true"><span style="width: {{ t.pct }}%"></span></span>
+            </a></li>
+          {% endfor %}
+        </ul>
         <a class="btn primary block" href="{% url 'portal_practice' student.portal_token %}">{% translate "💪 Mashqni boshlash" %}</a>
       {% else %}
         <div class="empty compact"><span class="empty-icon">{% icon "check" 22 %}</span><p>{% translate "Hozircha xato savollar yo‘q — zo‘r! Testda xato qilsangiz, ular shu yerga tushadi." %}</p></div>
@@ -210,12 +238,18 @@
     </section>
   </div>
 
+  {# ── 6. QO'SHIMCHA: kunlik limit halqasi ──────────────────────────────────────────────────── #}
   <div class="p-panel" id="tab-bonus" role="tabpanel">
     <section class="card pad bonus-card" id="bonus">
-      <h2>{% icon "bolt" 18 %} {% translate "Qo‘shimcha savollar" %}</h2>
+      <div class="p-bonus-head">
+        <span class="p-bonus-ring">{% ring bonus_pct 72 7 %}</span>
+        <div class="grow">
+          <h2>{% icon "bolt" 18 %} {% translate "Qo‘shimcha savollar" %}</h2>
+          <p class="meta tabular">{% blocktranslate with today=bonus.today limit=bonus.limit trimmed %}bugun {{ today }} / {{ limit }}{% endblocktranslate %}</p>
+        </div>
+      </div>
       <p class="meta">{% blocktranslate with limit=bonus.limit trimmed %}O‘tilgan mavzulardan savollar. Har bir savolga bir marta javob berasiz: to‘g‘ri bo‘lsa — ustoz shu test uchun belgilagan <strong>1–5 ⚡️</strong> quvvat. Kuniga {{ limit }} ta savol.{% endblocktranslate %}</p>
       <div class="bonus-stats">
-        <div><b>{{ bonus.today }}/{{ bonus.limit }}</b><span>{% translate "bugun" %}</span></div>
         <div><b>{{ bonus.remaining }}</b><span>{% translate "savol qoldi" %}</span></div>
         <div><b>{{ bonus.correct }}/{{ bonus.answered }}</b><span>{% translate "to‘g‘ri" %}</span></div>
         <div class="gold"><b>{{ bonus.coins }} ⚡️</b><span>{% translate "yig‘ildi" %}</span></div>
@@ -235,75 +269,99 @@
     </section>
   </div>
 
+  {# ── 7. VAZIFALAR: vaqt chizig'i, muddatgacha kunlar ──────────────────────────────────────── #}
   <div class="p-panel" id="tab-homework" role="tabpanel">
     <section class="card pad" id="homework">
-      <h2>{% icon "edit" 18 %} {% translate "Uyga vazifalar" %}</h2>
+      <div class="p-section-head"><h2>{% icon "edit" 18 %} {% translate "Uyga vazifalar" %}</h2>{% if homework_open_n %}<span class="chip info tabular">{{ homework_open_n }}</span>{% endif %}</div>
       <p class="meta">{% blocktranslate with coins=homework_coins trimmed %}Vazifani shu yerdan topshiring: javob, havola yoki fayl. Muddatida topshirib yaxshi baho olsangiz — +{{ coins }} ⚡️.{% endblocktranslate %}</p>
-      <div class="rows hw-rows">
-        {% for r in homework_rows %}
-          <a class="row hw-row" href="{% url 'portal_homework' student.portal_token r.lesson.pk %}">
-            <span class="grow">
-              <strong class="block">{% if r.lesson.topic %}{{ r.lesson.topic|topic_title }}{% else %}{{ r.lesson.held_on|date:"d.m.Y" }}{% endif %}</strong>
-              <span class="meta">{{ r.lesson.held_on|date:"d.m" }} · {% blocktranslate with due=r.due|date:"d.m" trimmed %}muddat {{ due }}{% endblocktranslate %}</span>
-            </span>
-            {% if r.submission.status == "checked" %}<span class="badge ok">{{ r.submission.score }}/100{% if r.submission.coins %} · +{{ r.submission.coins }} ⚡️{% endif %}</span>
-            {% elif r.submission %}<span class="badge">{% translate "tekshirilmoqda" %}</span>
-            {% elif r.overdue %}<span class="badge warn">{% translate "muddati o‘tgan" %}</span>
-            {% else %}<span class="badge plain">{% translate "topshirilmagan" %}</span>{% endif %}
-          </a>
+      <ol class="p-timeline">
+        {% for h in homework_view %}
+          <li class="t-{{ h.key }}">
+            <a href="{% url 'portal_homework' student.portal_token h.row.lesson.pk %}">
+              <span class="p-tl-dot" aria-hidden="true"></span>
+              <span class="grow">
+                <strong class="block">{% if h.row.lesson.topic %}{{ h.row.lesson.topic|topic_title }}{% else %}{{ h.row.lesson.held_on|date:"d.m.Y" }}{% endif %}</strong>
+                <span class="meta">{{ h.row.lesson.held_on|date:"d.m" }} · {% blocktranslate with due=h.row.due|date:"d.m" trimmed %}muddat {{ due }}{% endblocktranslate %}</span>
+              </span>
+              {% if h.key == "checked" %}<span class="chip ok tabular">{{ h.row.submission.score }}/100{% if h.row.submission.coins %} · +{{ h.row.submission.coins }} ⚡️{% endif %}</span>
+              {% elif h.key == "submitted" %}<span class="chip info">{% translate "tekshirilmoqda" %}</span>
+              {% elif h.key == "overdue" %}<span class="chip warn">{% translate "muddati o‘tgan" %}</span>
+              {% elif h.days == 0 %}<span class="chip warn">{% translate "bugun oxirgi kun" %}</span>
+              {% else %}<span class="chip">{% blocktranslate with n=h.days trimmed %}{{ n }} kun qoldi{% endblocktranslate %}</span>{% endif %}
+            </a>
+          </li>
         {% empty %}
-          <div class="empty compact"><span class="empty-icon">{% icon "check" 22 %}</span><p>{% translate "Hozircha uyga vazifa berilmagan." %}</p></div>
-        {% endfor %}
-      </div>
-    </section>
-  </div>
-
-  <div class="p-panel" id="tab-board" role="tabpanel">
-    <section class="card pad" id="board">
-      <h2>{% translate "Quvvat reytingi 🏆" %}</h2>
-      <p class="meta">{% blocktranslate with name=student.group.name trimmed %}{{ name }} · har bir o‘quvchining hozirgi quvvati ⚡️ — profilida qancha bo‘lsa, shu yerda ham shuncha.{% endblocktranslate %}</p>
-      <ol class="board">
-        {% for r in board %}
-          <li class="{% if r.student.pk == student.pk %}me{% endif %} p{{ r.place }}"><span class="board-place">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% elif r.place == 3 %}🥉{% else %}{{ r.place }}{% endif %}</span><span class="avatar sm{% if r.student.honor_since %} honor{% endif %}" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span><span class="grow">{{ r.student|person_name }}</span><strong>{{ r.coins }} ⚡️</strong></li>
+          <li class="empty compact"><span class="empty-icon">{% icon "check" 22 %}</span><p>{% translate "Hozircha uyga vazifa berilmagan." %}</p></li>
         {% endfor %}
       </ol>
-      {% if my_board and my_board.place > board|length %}<p class="meta">{% blocktranslate with place=my_board.place coins=my_board.coins trimmed %}Siz: {{ place }}-o‘rin · {{ coins }} ⚡️.{% endblocktranslate %}</p>{% endif %}
     </section>
   </div>
 
+  {# ── 8. REYTING: podium va keyingi o'ringacha farq ────────────────────────────────────────── #}
+  <div class="p-panel" id="tab-board" role="tabpanel">
+    <section class="card pad" id="board">
+      <div class="p-section-head"><h2>{% translate "Quvvat reytingi 🏆" %}</h2></div>
+      <p class="meta">{% blocktranslate with name=student.group.name trimmed %}{{ name }} · har bir o‘quvchining hozirgi quvvati ⚡️ — profilida qancha bo‘lsa, shu yerda ham shuncha.{% endblocktranslate %}</p>
+      {% if board_view.me %}
+        <p class="p-board-me">
+          <strong>{% blocktranslate with place=board_view.me.place trimmed %}Siz {{ place }}-o‘rindasiz{% endblocktranslate %}</strong>
+          {% if board_view.gap %} · {% blocktranslate with gap=board_view.gap trimmed %}yuqoridagi o‘ringacha {{ gap }} ⚡️{% endblocktranslate %}{% elif board_view.me.place == 1 %} · {% translate "eng yuqori o‘rin 🎉" %}{% endif %}
+        </p>
+      {% endif %}
+      {% if board_view.podium %}
+        <ol class="p-podium" aria-label="{% translate "Top-3" %}">
+          {% for r in board_view.podium %}
+            <li class="pod pod-{{ r.pos }}{% if r.student.pk == student.pk %} me{% endif %}">
+              <span class="avatar{% if r.student.honor_since %} honor{% endif %}" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span>
+              <span class="pod-name">{{ r.student|person_name }}</span>
+              <span class="pod-coins tabular"><strong>{{ r.coins }} ⚡️</strong></span>
+              <span class="pod-step" aria-hidden="true">{% if r.place == 1 %}🥇{% elif r.place == 2 %}🥈{% else %}🥉{% endif %}</span>
+              <span class="sr-only">{% blocktranslate with place=r.place trimmed %}{{ place }}-o‘rin{% endblocktranslate %}</span>
+            </li>
+          {% endfor %}
+        </ol>
+      {% endif %}
+      <ol class="board">
+        {% for r in board_view.rest|slice:":12" %}
+          <li class="{% if r.student.pk == student.pk %}me{% endif %}"><span class="board-place">{{ r.place }}</span><span class="avatar sm{% if r.student.honor_since %} honor{% endif %}" style="--h: {{ r.student.full_name|hue }}" aria-hidden="true">{{ r.student.initials }}</span><span class="grow">{{ r.student|person_name }}</span><strong class="tabular">{{ r.coins }} ⚡️</strong></li>
+        {% endfor %}
+      </ol>
+    </section>
+  </div>
+
+  {# ── 9. MUKOFOTLAR: yetishga qancha qolgani + quvvat hisobi (kunlar bo'yicha) ─────────────── #}
   <div class="p-panel" id="tab-shop" role="tabpanel">
     <section class="card pad" id="shop">
-      <h2>{% translate "Mukofotlar 🎁" %}</h2>
+      <div class="p-section-head"><h2>{% translate "Mukofotlar 🎁" %}</h2><span class="chip tabular">{% blocktranslate with n=coin_available trimmed %}{{ n }} ⚡️ bor{% endblocktranslate %}</span></div>
       <p class="meta">{% translate "Quvvat ⚡️ yig‘ing va mukofot oling. So‘rov ustozga boradi, tasdiqlansa quvvat sarflanadi." %}</p>
-      <div class="shop-grid">
+      <div class="p-shop">
       {% for r in rewards %}
-        <div class="shop-item{% if coin_available >= r.cost %} can{% endif %}{% if r.perk == 'honor' %} honor-item{% endif %}">
-          <span class="shop-icon" aria-hidden="true">{% if r.perk == 'honor' %}{% honor_medal 24 %}{% else %}{% icon "gift" 20 %}{% endif %}</span>
-          <div class="grow"><strong>{{ r.title }}</strong>{% if r.description %}<span class="meta block">{{ r.description }}</span>{% endif %}</div>
-          <div class="shop-buy">
-            <span class="shop-cost">{{ r.cost }} ⚡️</span>
-            {% if r.perk == 'honor' and student.honor_since %}
-              <span class="badge ok">{% translate "✓ sizda bor" %}</span>
-            {% elif r.pk in pending_reward_ids %}
-              <span class="badge warn">{% translate "⏳ kutilmoqda" %}</span>
-            {% elif coin_available >= r.cost %}
-              <form method="post" action="{% url 'portal_buy' student.portal_token r.pk %}">
-                {% csrf_token %}
-                <button class="btn sm primary" type="submit" data-confirm="{% blocktranslate with title=r.title cost=r.cost trimmed %}“{{ title }}” uchun {{ cost }} ⚡️ quvvat. So‘rov yuborilsinmi?{% endblocktranslate %}">{% translate "Olish" %}</button>
-              </form>
-            {% else %}
-              <span class="meta">{% translate "quvvat yetmaydi" %}</span>
-              <span class="bar thin shop-progress" aria-hidden="true"><span style="width:{% widthratio coin_available r.cost 100 %}%"></span></span>
-            {% endif %}
-          </div>
-        </div>
+        <article class="p-gift{% if coin_available >= r.cost %} can{% endif %}{% if r.perk == 'honor' %} honor{% endif %}">
+          <span class="p-gift-icon" aria-hidden="true">{% if r.perk == 'honor' %}{% honor_medal 28 %}{% else %}🎁{% endif %}</span>
+          <strong class="p-gift-title">{{ r.title }}</strong>
+          {% if r.description %}<span class="meta">{{ r.description }}</span>{% endif %}
+          <span class="p-gift-cost tabular">{{ r.cost }} ⚡️</span>
+          {% if r.perk == 'honor' and student.honor_since %}
+            <span class="chip ok">{% translate "✓ sizda bor" %}</span>
+          {% elif r.pk in pending_reward_ids %}
+            <span class="chip warn">{% translate "⏳ kutilmoqda" %}</span>
+          {% elif coin_available >= r.cost %}
+            <form method="post" action="{% url 'portal_buy' student.portal_token r.pk %}">
+              {% csrf_token %}
+              <button class="btn sm primary block" type="submit" data-confirm="{% blocktranslate with title=r.title cost=r.cost trimmed %}“{{ title }}” uchun {{ cost }} ⚡️ quvvat. So‘rov yuborilsinmi?{% endblocktranslate %}">{% translate "Olish" %}</button>
+            </form>
+          {% else %}
+            <span class="p-meter dark" role="progressbar" aria-label="{% translate "Quvvat yetishiga" %}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{% widthratio coin_available r.cost 100 %}"><span style="width:{% widthratio coin_available r.cost 100 %}%"></span></span>
+            <span class="meta tabular">{% blocktranslate with need=r.cost have=coin_available trimmed %}{{ have }} / {{ need }} ⚡️{% endblocktranslate %} · {% translate "quvvat yetmaydi" %}</span>
+          {% endif %}
+        </article>
       {% empty %}
         <p class="meta">{% translate "Do‘kon hozircha bo‘sh." %}</p>
       {% endfor %}
       </div>
       {% if purchases %}
         <ul class="coin-history" style="margin-top:14px">
-          {% for p in purchases %}<li><span class="grow">{{ p.title }} · {{ p.cost }} ⚡️</span><span class="badge {% if p.status == 'approved' %}ok{% elif p.status == 'rejected' %}plain{% else %}warn{% endif %}">{{ p.get_status_display }}</span></li>{% endfor %}
+          {% for p in purchases %}<li><span class="grow">{{ p.title }} · {{ p.cost }} ⚡️</span><span class="chip {% if p.status == 'approved' %}ok{% elif p.status == 'rejected' %}{% else %}warn{% endif %}">{{ p.get_status_display }}</span></li>{% endfor %}
         </ul>
       {% endif %}
     </section>
@@ -313,23 +371,27 @@
         <h2 style="margin:0">{% translate "Quvvat tarixi" %}</h2>
         <details class="coin-rules"><summary class="meta">{% translate "Quvvat qanday beriladi?" %}</summary><ul>{% for r in coin_rules %}<li>{{ r }}</li>{% endfor %}</ul></details>
       </div>
-      {% if coin_history %}
-        <ul class="coin-history">
-          {% for c in coin_history %}<li><span class="coin-amount {% if c.amount < 0 %}neg{% endif %}">{{ c.amount|stringformat:"+d" }}</span> <span class="grow">{{ c.display_reason }}{% if c.attempt %} · {{ c.attempt.quiz.topic|topic_title }}{% endif %}</span> <span class="meta nowrap">{{ c.created_at|date:"d.m H:i" }}</span></li>{% endfor %}
-        </ul>
-      {% else %}<p class="meta">{% translate "Test yeching — quvvat ⚡️ shu yerda ko‘rinadi." %}</p>{% endif %}
+      {% for d in coin_days %}
+        <div class="p-ledger-day">
+          <div class="p-ledger-date"><span>{{ d.day|date:"d.m.Y" }}</span><b class="tabular{% if d.total < 0 %} neg{% endif %}">{{ d.total|stringformat:"+d" }} ⚡️</b></div>
+          <ul class="coin-history">
+            {% for c in d.items %}<li><span class="coin-amount {% if c.amount < 0 %}neg{% endif %}">{{ c.amount|stringformat:"+d" }}</span> <span class="grow">{{ c.display_reason }}{% if c.attempt %} · {{ c.attempt.quiz.topic|topic_title }}{% endif %}</span> <span class="meta nowrap">{{ c.created_at|date:"H:i" }}</span></li>{% endfor %}
+          </ul>
+        </div>
+      {% empty %}<p class="meta">{% translate "Test yeching — quvvat ⚡️ shu yerda ko‘rinadi." %}</p>{% endfor %}
     </section>
   </div>
 
+  {# ── 10. TARIX: har test natija halqasi bilan ──────────────────────────────────────────────── #}
   <div class="p-panel" id="tab-history" role="tabpanel">
     <section class="card pad">
-      <h2>{% translate "Testlarim" %}</h2>
+      <div class="p-section-head"><h2>{% translate "Testlarim" %}</h2><span class="chip tabular">{{ finished|length }}</span></div>
       {% for a in finished %}
-        <details class="portal-attempt" id="a{{ a.pk }}"{% if a.reveal == "requested" or a.preview_seconds_left %} open{% endif %}>
+        <details class="portal-attempt p-attempt" id="a{{ a.pk }}"{% if a.reveal == "requested" or a.preview_seconds_left %} open{% endif %}>
           <summary>
-            <span class="pa-dot tone-{{ a.percent|quiz_tone }}" aria-hidden="true"></span>
+            <span class="pa-ring tone-{{ a.percent|quiz_tone }}" aria-hidden="true">{% ring a.percent 44 5 %}</span>
             <span class="grow"><strong>{{ a.quiz.topic|topic_title }}</strong><span class="meta block">{{ a.finished_at|date:"d.m.Y H:i" }}{% if a.timed_out %} {% translate "· vaqt tugadi" %}{% endif %}</span></span>
-            <span class="badge {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %}">{{ a.correct }}/{{ a.total }} · {{ a.percent }}%</span>
+            <span class="chip {% if a.percent >= 80 %}ok{% elif a.percent >= 50 %}warn{% else %}bad{% endif %} tabular">{{ a.correct }}/{{ a.total }}</span>
             {% icon "down" 16 "pa-chev" %}
           </summary>
           {% if a.reveal == "preview" and a.preview_seconds_left %}
