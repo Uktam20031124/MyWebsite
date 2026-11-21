@@ -9,13 +9,15 @@
       {% include "academy/includes/lang_switch.html" %}
     </div>
     <div class="p-id">
-      <span class="avatar xl p-avatar{% if student.honor_since %} honor{% endif %}" style="--h: {{ student.full_name|hue }}" aria-hidden="true">{{ student.initials }}</span>
+      <span class="p-avatar-ring{% if stats.n %} has-score{% endif %}" style="--p: {{ stats.pct|default:0 }}" aria-hidden="true">
+        <span class="avatar xl p-avatar{% if student.honor_since %} honor{% endif %}" style="--h: {{ student.full_name|hue }}">{{ student.initials }}</span>
+      </span>
       <div class="p-id-text">
         <h1>{{ student|person_name }}</h1>
         <div class="p-pills">
           {% if student.honor_since %}<span class="p-pill honor-pill">{% honor_medal 15 %} {% translate "A’lochi" %}</span>{% endif %}
           <span class="p-pill">{% icon "layers" 14 %} {{ student.group.name }}</span>
-          <span class="p-pill">{% icon "clock" 14 %} {% blocktranslate with profile_until=student.profile_until|date:"H:i" trimmed %}Profil ochiq: <strong>{{ profile_until }}</strong> gacha{% endblocktranslate %}</span>
+          <span class="p-pill">{% icon "clock" 14 %} {% blocktranslate with profile_until=student.profile_until|date:"d.m H:i" trimmed %}Profil ochiq: <strong>{{ profile_until }}</strong> gacha{% endblocktranslate %}</span>
         </div>
       </div>
     </div>
@@ -25,6 +27,12 @@
         <span class="p-stat-label">{% icon "bolt" 15 %} {% translate "Quvvatingiz" %}</span>
         <strong class="p-stat-value">{{ coin_balance }}</strong>
         <span class="p-stat-foot">{% if coin_available != coin_balance %}{% blocktranslate with coin_available=coin_available trimmed %}sarflash mumkin: {{ coin_available }} ⚡️{% endblocktranslate %}{% else %}{% translate "Mukofotlar 🎁" %}{% endif %}</span>
+        {% if next_reward %}
+          <span class="p-next-reward">
+            <span class="p-next-label">{% blocktranslate with title=next_reward.reward.title need=next_reward.need trimmed %}«{{ title }}» gacha {{ need }} ⚡️{% endblocktranslate %}</span>
+            <span class="p-meter" role="progressbar" aria-label="{% translate "Keyingi mukofotgacha" %}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ next_reward.pct }}"><span style="width: {{ next_reward.pct }}%"></span></span>
+          </span>
+        {% endif %}
       </a>
       <div class="p-stat big streak{% if streak.days %} on{% endif %}">
         <span class="p-stat-label">{% translate "Streak" %}</span>
@@ -50,17 +58,41 @@
     <p class="p-streak-note">{% if streak.active_today %}{% translate "Bugun faolsiz ✅" %}{% else %}{% translate "Bugun test yoki mashq qiling — streak uzilmasin!" %}{% endif %} {% blocktranslate with streak_every=streak_every to_bonus=streak.to_bonus streak_bonus=streak_bonus trimmed %}· {{ streak_every }} kunlik bonusgacha {{ to_bonus }} kun (+{{ streak_bonus }} ⚡️){% endblocktranslate %}</p>
   </header>
 
-  {% if pending %}
-    <section class="card pad portal-pending">
-      <h2>{% icon "play" 16 %} {% translate "Yechilmagan testlar" %}</h2>
-      {% for a in pending %}
-        <a class="portal-test" href="{{ a.get_absolute_url }}">
-          <span class="grow"><strong>{{ a.quiz.topic|topic_title }}</strong><span class="meta block">{% blocktranslate with question_count=a.question_count time_limit_minutes=a.batch.time_limit_minutes trimmed %}{{ question_count }} ta savol · {{ time_limit_minutes }} daqiqa{% endblocktranslate %}</span></span>
-          <span class="btn sm primary">{% translate "Boshlash" %} {% icon "right" 14 %}</span>
-        </a>
+  <section class="card pad p-missions" aria-labelledby="missions-h">
+    <div class="p-section-head">
+      <h2 id="missions-h">{% icon "target" 18 %} {% translate "Bugungi reja" %}</h2>
+      <span class="meta tabular">{% blocktranslate with done=missions_done total=missions|length trimmed %}{{ done }} / {{ total }} bajarildi{% endblocktranslate %}</span>
+    </div>
+    <ol class="p-mission-list">
+      {% for m in missions %}
+        <li class="p-mission{% if m.done %} done{% endif %} m-{{ m.key }}">
+          <a href="{{ m.href }}"{% if m.href|slice:":1" == "#" %} data-tab-link{% endif %}>
+            <span class="p-mission-mark" aria-hidden="true">{% if m.done %}{% icon "check" 14 %}{% else %}{{ forloop.counter }}{% endif %}</span>
+            <span class="grow"><strong>{{ m.title }}</strong>{% if m.meta %}<span class="meta block">{{ m.meta }}</span>{% endif %}</span>
+            {% if m.done %}<span class="chip ok">{% translate "bajarildi" %}</span>{% else %}{% icon "right" 16 %}{% endif %}
+          </a>
+        </li>
       {% endfor %}
-    </section>
-  {% endif %}
+    </ol>
+  </section>
+
+  <section class="card pad p-achievements" aria-labelledby="ach-h">
+    <div class="p-section-head">
+      <h2 id="ach-h">{% icon "trophy" 18 %} {% translate "Yutuqlar" %}</h2>
+      <span class="meta tabular">{% blocktranslate with got=achievements_got total=achievements|length trimmed %}{{ got }} / {{ total }}{% endblocktranslate %}</span>
+    </div>
+    <ul class="p-badges">
+      {% for a in achievements %}
+        <li class="p-badge{% if a.got %} got{% endif %}">
+          <span class="p-badge-icon" aria-hidden="true">{{ a.icon }}</span>
+          <span class="p-badge-text"><strong>{{ a.title }}</strong><span>{% if a.got %}{% translate "olingan" %}{% else %}{{ a.hint }}{% endif %}</span></span>
+          <span class="sr-only">{% if a.got %}{% translate "olingan" %}{% else %}{% translate "hali olinmagan" %}{% endif %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {# Yechilmagan testlar — "Bugungi reja"da (har biri alohida, to'g'ridan-to'g'ri havola). #}
 
   <nav class="p-tabs" role="tablist" aria-label="{% translate "Profil bo‘limlari" %}" data-tabs hidden>
     <button type="button" role="tab" aria-controls="tab-tests" aria-selected="true">{% icon "target" 16 %}<span>{% translate "Testlar" %}</span></button>
@@ -105,9 +137,15 @@
           </div>
         </div>
       {% empty %}
-        <div class="empty compact"><span class="empty-icon">{% icon "book" 22 %}</span><p>{% translate "Hozircha ustozingiz test uchun mavzu belgilamagan." %}</p></div>
+        <div class="empty compact"><span class="empty-icon">{% icon "book" 22 %}</span><p>{% if topic_rows_empty %}{% translate "Hozircha test topshiriladigan mavzu yo‘q." %}{% else %}{% translate "Hozircha ustozingiz test uchun mavzu belgilamagan." %}{% endif %}</p></div>
       {% endfor %}
       </div>
+      {% if topic_rows_empty %}
+        <details class="p-empty-topics">
+          <summary>{% blocktranslate with n=topic_rows_empty|length trimmed %}Savollari hali tayyor bo‘lmagan mavzular ({{ n }}){% endblocktranslate %}</summary>
+          <ul>{% for r in topic_rows_empty %}<li>{{ r.topic|topic_title }}</li>{% endfor %}</ul>
+        </details>
+      {% endif %}
     </section>
 
     <section class="card pad unlock-card" id="unlock">
@@ -135,13 +173,24 @@
       {% endif %}
     </section>
 
-    {% if stats.recent|length > 1 %}
-      <section class="card pad">
-        <h2>{% translate "O‘sish" %}</h2>
-        <div class="score-bars portal-bars" aria-label="{% translate "Oxirgi testlar natijasi" %}">
-          {% for a in stats.recent %}<span class="{% if a.percent < 50 %}low{% endif %}" style="height:{{ a.percent|add:4 }}%" title="{{ a.finished_at|date:'d.m' }} · {{ a.quiz.topic|topic_title }} · {{ a.percent }}%"></span>{% endfor %}
+    {% if growth %}
+      <section class="card pad p-growth" aria-labelledby="growth-h">
+        <div class="p-section-head">
+          <h2 id="growth-h">{% icon "chart" 18 %} {% translate "O‘sish" %}</h2>
+          <span class="chip {% if growth.delta > 0 %}ok{% elif growth.delta < 0 %}warn{% endif %} tabular">{% if growth.delta > 0 %}+{% endif %}{{ growth.delta }}%</span>
         </div>
-        <p class="meta">{% blocktranslate with recent=stats.recent|length trimmed %}Oxirgi {{ recent }} ta test, eskisidan yangisiga.{% endblocktranslate %}</p>
+        <svg class="p-chart" viewBox="0 0 {{ growth.w }} {{ growth.h }}" role="img" aria-labelledby="growth-h growth-desc">
+          <desc id="growth-desc">{% blocktranslate with n=growth.points|length first=growth.points.0.v last=growth.last.v trimmed %}Oxirgi {{ n }} ta test: {{ first }}% dan {{ last }}% gacha{% endblocktranslate %}</desc>
+          <line class="ref r80" x1="{{ growth.pad }}" x2="{{ growth.w }}" y1="{{ growth.y80 }}" y2="{{ growth.y80 }}"/>
+          <line class="ref r50" x1="{{ growth.pad }}" x2="{{ growth.w }}" y1="{{ growth.y50 }}" y2="{{ growth.y50 }}"/>
+          <text class="ref-label" x="2" y="{{ growth.y80l }}">80</text>
+          <text class="ref-label" x="2" y="{{ growth.y50l }}">50</text>
+          <polygon class="area" points="{{ growth.area }}"/>
+          <polyline class="line" points="{{ growth.line }}"/>
+          {% for p in growth.points %}<circle class="dot {% if p.v >= 80 %}hi{% elif p.v < 50 %}lo{% endif %}" cx="{{ p.x }}" cy="{{ p.y }}" r="7"><title>{{ p.a.finished_at|date:"d.m" }} · {{ p.v }}%</title></circle>{% endfor %}
+        </svg>
+        <ol class="sr-only">{% for p in growth.points %}<li>{{ p.a.finished_at|date:"d.m" }}: {{ p.v }}%</li>{% endfor %}</ol>
+        <p class="meta">{% blocktranslate with n=growth.points|length trimmed %}Oxirgi {{ n }} ta test, eskisidan yangisiga. Chiziqlar: 50% va 80%.{% endblocktranslate %}</p>
       </section>
     {% endif %}
   </div>
